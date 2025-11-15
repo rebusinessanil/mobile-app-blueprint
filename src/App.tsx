@@ -11,6 +11,7 @@ import Dashboard from "./pages/Dashboard";
 import Categories from "./pages/Categories";
 import Messages from "./pages/Messages";
 import Profile from "./pages/Profile";
+import ProfileEdit from "./pages/ProfileEdit";
 
 const queryClient = new QueryClient();
 
@@ -28,6 +29,7 @@ const App = () => (
           <Route path="/categories" element={<Categories />} />
           <Route path="/messages" element={<Messages />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/profile-edit" element={<ProfileEdit />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
