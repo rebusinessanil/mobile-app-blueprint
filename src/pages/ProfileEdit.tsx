@@ -27,20 +27,10 @@ export default function ProfileEdit() {
         navigate("/login");
         return;
       }
-      console.log("Authenticated user ID:", user.id);
       setUserId(user.id);
     };
     getUser();
   }, [navigate]);
-
-  // Check if profile exists after loading
-  useEffect(() => {
-    if (userId && !profileLoading && !profile && !profileError) {
-      console.error("Profile does not exist for user:", userId);
-      toast.error("Profile not found. Please complete your profile setup.");
-      navigate("/profile-setup");
-    }
-  }, [userId, profile, profileLoading, profileError, navigate]);
   
   const [formData, setFormData] = useState({
     title: "mr",

@@ -10,7 +10,7 @@ import { useProfile } from "@/hooks/useProfile";
 export default function Profile() {
   const navigate = useNavigate();
   const [userId, setUserId] = useState<string | null>(null);
-  const { profile, loading, error: profileError } = useProfile(userId || undefined);
+  const { profile, loading } = useProfile(userId || undefined);
 
   useEffect(() => {
     const getUser = async () => {
@@ -19,20 +19,10 @@ export default function Profile() {
         navigate("/login");
         return;
       }
-      console.log("Profile page - User ID:", user.id);
       setUserId(user.id);
     };
     getUser();
   }, [navigate]);
-
-  // Check if profile exists after loading
-  useEffect(() => {
-    if (userId && !loading && !profile && !profileError) {
-      console.error("Profile does not exist for user:", userId);
-      toast.error("Profile not found. Please complete your profile setup.");
-      navigate("/profile-setup");
-    }
-  }, [userId, profile, loading, profileError, navigate]);
 
   const handleLogout = async () => {
     try {
