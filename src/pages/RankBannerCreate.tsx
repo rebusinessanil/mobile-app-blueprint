@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Upload, Image as ImageIcon } from "lucide-react";
+import { ArrowLeft, ImagePlus, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import UplineCarousel from "@/components/UplineCarousel";
+import BackgroundRemoverModal from "@/components/BackgroundRemoverModal";
 import { ranks } from "@/data/ranks";
 import { toast } from "sonner";
+import { removeBackground, loadImage } from "@/lib/backgroundRemover";
 
 interface Upline {
   id: string;
@@ -24,10 +25,10 @@ export default function RankBannerCreate() {
   const [formData, setFormData] = useState({
     name: "",
     teamCity: "",
-    amount: "",
-    message: "",
   });
   const [photo, setPhoto] = useState<string | null>(null);
+  const [showBgRemover, setShowBgRemover] = useState(false);
+  const [processingBg, setProcessingBg] = useState(false);
 
   if (!rank) {
     return null;
@@ -39,14 +40,42 @@ export default function RankBannerCreate() {
       const reader = new FileReader();
       reader.onload = () => {
         setPhoto(reader.result as string);
+        setShowBgRemover(true);
       };
       reader.readAsDataURL(file);
     }
   };
 
+  const handleKeepBackground = () => {
+    setShowBgRemover(false);
+  };
+
+  const handleRemoveBackground = async () => {
+    if (!photo) return;
+    
+    setShowBgRemover(false);
+    setProcessingBg(true);
+    
+    try {
+      const img = await loadImage(await fetch(photo).then(r => r.blob()));
+      const processedBlob = await removeBackground(img);
+      const reader = new FileReader();
+      reader.onload = () => {
+        setPhoto(reader.result as string);
+        toast.success("Background removed successfully!");
+      };
+      reader.readAsDataURL(processedBlob);
+    } catch (error) {
+      console.error("Background removal error:", error);
+      toast.error("Failed to remove background. Keeping original image.");
+    } finally {
+      setProcessingBg(false);
+    }
+  };
+
   const handleCreate = () => {
     if (!formData.name || !formData.teamCity) {
-      toast.error("Please fill in Name and Team/City");
+      toast.error("Please fill in Name and From Team/City");
       return;
     }
 
@@ -61,7 +90,7 @@ export default function RankBannerCreate() {
   };
 
   const handleReset = () => {
-    setFormData({ name: "", teamCity: "", amount: "", message: "" });
+    setFormData({ name: "", teamCity: "" });
     setPhoto(null);
     setUplines([]);
   };
@@ -70,25 +99,30 @@ export default function RankBannerCreate() {
     <div className="min-h-screen bg-navy-dark pb-6">
       {/* Header */}
       <header className="sticky top-0 bg-navy-dark/95 backdrop-blur-sm z-40 px-6 py-4 border-b border-primary/20">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center justify-between">
           <button
             onClick={() => navigate("/rank-selection")}
             className="w-10 h-10 rounded-xl border-2 border-primary flex items-center justify-center hover:bg-primary/10 transition-colors"
           >
             <ArrowLeft className="w-5 h-5 text-primary" />
           </button>
-          <div>
-            <h1 className="text-xl font-bold text-primary">{rank.name} Promotion</h1>
-            <p className="text-sm text-foreground">Please fill up Achiever Details</p>
+          <div className="flex items-center gap-2">
+            <Info className="w-5 h-5 text-muted-foreground" />
           </div>
         </div>
       </header>
 
       <div className="px-6 py-6 space-y-6">
-        {/* Rank Badge Display */}
-        <div className={`${rank.gradient} rounded-3xl p-6 text-center gold-border`}>
-          <div className="text-6xl mb-3">{rank.icon}</div>
-          <h2 className="text-2xl font-bold text-white">{rank.name}</h2>
+        {/* Rank Badge Display with Title */}
+        <div className="flex items-start gap-4">
+          <div className={`${rank.gradient} rounded-3xl p-6 flex items-center justify-center gold-border flex-shrink-0 w-32 h-32`}>
+            <div className="text-5xl">{rank.icon}</div>
+          </div>
+          <div className="flex-1 pt-2">
+            <p className="text-sm text-muted-foreground mb-1">Please fill up</p>
+            <h1 className="text-3xl font-bold text-primary mb-1">{rank.name}</h1>
+            <p className="text-lg text-blue-400">Achiever Details</p>
+          </div>
         </div>
 
         {/* Mode Toggle */}
@@ -119,93 +153,69 @@ export default function RankBannerCreate() {
         </div>
 
         {/* Uplines Carousel */}
-        <div className="space-y-2">
-          <label className="text-sm text-foreground font-semibold">Uplines</label>
-          <div className="gold-border bg-card rounded-2xl p-4">
+        <div className="space-y-3">
+          <div className="inline-block px-4 py-2 bg-secondary/80 border border-muted rounded-full">
+            <span className="text-sm font-semibold text-foreground">Top Uplines</span>
+          </div>
+          <div className="gold-border bg-card/30 rounded-2xl p-4">
             <UplineCarousel uplines={uplines} onUplinesChange={setUplines} />
           </div>
         </div>
 
         {/* Section Label */}
-        <div className="inline-block px-4 py-2 bg-primary/20 border border-primary rounded-full">
-          <span className="text-sm font-semibold text-primary">{rank.name} Achiever Details</span>
+        <div className="inline-block px-4 py-2 bg-secondary/80 border border-muted rounded-full">
+          <span className="text-sm font-semibold text-foreground">{rank.name} Achiever Details</span>
         </div>
 
-        {/* Form Fields */}
-        <div className="space-y-5">
-          {/* Name */}
-          <div className="space-y-2">
-            <label className="text-sm text-foreground">Name *</label>
-            <Input
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="Enter achiever name"
-              className="gold-border bg-secondary text-foreground h-12"
-            />
-          </div>
+        {/* Form Fields with Photo Upload Side by Side */}
+        <div className="flex gap-4">
+          {/* Form Fields */}
+          <div className="flex-1 space-y-5">
+            {/* Name */}
+            <div className="space-y-2">
+              <label className="text-sm text-foreground">Name</label>
+              <Input
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder="Enter your Name"
+                className="bg-transparent border-0 border-b-2 border-muted rounded-none text-foreground h-12 focus-visible:ring-0 focus-visible:border-primary"
+              />
+            </div>
 
-          {/* Team/City */}
-          <div className="space-y-2">
-            <label className="text-sm text-foreground">Team / City *</label>
-            <Input
-              value={formData.teamCity}
-              onChange={(e) => setFormData({ ...formData, teamCity: e.target.value })}
-              placeholder="Enter team name or city"
-              className="gold-border bg-secondary text-foreground h-12"
-            />
-          </div>
-
-          {/* Cheque Amount */}
-          <div className="space-y-2">
-            <label className="text-sm text-foreground">Cheque Amount (Optional)</label>
-            <Input
-              type="number"
-              value={formData.amount}
-              onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-              placeholder="Enter amount"
-              className="gold-border bg-secondary text-foreground h-12"
-            />
-          </div>
-
-          {/* Message */}
-          <div className="space-y-2">
-            <label className="text-sm text-foreground">Message (Optional)</label>
-            <Textarea
-              value={formData.message}
-              onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-              placeholder="Enter congratulatory message"
-              className="gold-border bg-secondary text-foreground min-h-24"
-            />
+            {/* From Team/City */}
+            <div className="space-y-2">
+              <label className="text-sm text-foreground">From Team/City</label>
+              <Input
+                value={formData.teamCity}
+                onChange={(e) => setFormData({ ...formData, teamCity: e.target.value })}
+                placeholder="Enter Team/City"
+                className="bg-transparent border-0 border-b-2 border-muted rounded-none text-foreground h-12 focus-visible:ring-0 focus-visible:border-primary"
+              />
+            </div>
           </div>
 
           {/* Photo Upload */}
           {mode === "myPhoto" && (
-            <div className="space-y-2">
-              <label className="text-sm text-foreground">Upload Photo *</label>
+            <div className="w-48 flex-shrink-0">
               {photo ? (
-                <div className="relative gold-border rounded-2xl overflow-hidden">
-                  <img src={photo} alt="Uploaded" className="w-full h-64 object-cover" />
-                  <button
-                    onClick={() => setPhoto(null)}
-                    className="absolute top-3 right-3 w-8 h-8 bg-destructive rounded-full flex items-center justify-center"
-                  >
-                    <ArrowLeft className="w-4 h-4 text-white rotate-180" />
-                  </button>
+                <div className="relative w-full h-48 gold-border rounded-2xl overflow-hidden bg-secondary">
+                  <img src={photo} alt="Uploaded" className="w-full h-full object-cover" />
+                  {processingBg && (
+                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                      <div className="text-white text-sm">Processing...</div>
+                    </div>
+                  )}
                 </div>
               ) : (
-                <label className="gold-border bg-secondary rounded-2xl p-8 flex flex-col items-center justify-center gap-3 cursor-pointer hover:gold-glow transition-all">
+                <label className="w-full h-48 gold-border bg-secondary/50 rounded-2xl flex flex-col items-center justify-center gap-3 cursor-pointer hover:gold-glow transition-all">
                   <input
                     type="file"
                     accept="image/*"
                     onChange={handlePhotoUpload}
                     className="hidden"
                   />
-                  <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center">
-                    <Upload className="w-8 h-8 text-primary" />
-                  </div>
-                  <div className="text-center">
-                    <p className="text-sm font-semibold text-foreground">Upload Your Photo</p>
-                    <p className="text-xs text-muted-foreground">Tap to select image</p>
+                  <div className="w-16 h-16 bg-primary/20 rounded-xl flex items-center justify-center">
+                    <ImagePlus className="w-8 h-8 text-primary" />
                   </div>
                 </label>
               )}
@@ -230,6 +240,14 @@ export default function RankBannerCreate() {
           </Button>
         </div>
       </div>
+
+      {/* Background Remover Modal */}
+      <BackgroundRemoverModal
+        open={showBgRemover}
+        onKeep={handleKeepBackground}
+        onRemove={handleRemoveBackground}
+        onClose={() => setShowBgRemover(false)}
+      />
     </div>
   );
 }
