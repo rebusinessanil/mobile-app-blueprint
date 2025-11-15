@@ -10,6 +10,7 @@ import ComingSoon from "./pages/ComingSoon";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import OTPVerification from "./pages/OTPVerification";
+import ProfileSetup from "./pages/ProfileSetup";
 import Dashboard from "./pages/Dashboard";
 import Categories from "./pages/Categories";
 import Messages from "./pages/Messages";
@@ -36,6 +37,7 @@ const App = () => (
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/otp-verification" element={<OTPVerification />} />
+          <Route path="/profile-setup" element={<ProfileSetup />} />
           
           {/* Protected routes - auth required */}
           <Route path="/dashboard" element={<AuthGuard><Dashboard /></AuthGuard>} />
