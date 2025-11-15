@@ -68,7 +68,7 @@ export const useProfile = (userId?: string) => {
   }, [userId]);
 
   const updateProfile = async (updates: Partial<Profile>) => {
-    if (!userId) return { error: new Error('No user ID provided') };
+    if (!userId) return { error: new Error('No user ID provided'), data: null };
 
     try {
       const { data, error } = await supabase
@@ -76,9 +76,14 @@ export const useProfile = (userId?: string) => {
         .update(updates)
         .eq('user_id', userId)
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
+      
+      if (!data) {
+        throw new Error('Profile not found');
+      }
+      
       setProfile(data);
       return { data, error: null };
     } catch (err) {
