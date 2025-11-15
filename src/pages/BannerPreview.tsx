@@ -4,6 +4,7 @@ import { ArrowLeft, Settings, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useProfile } from "@/hooks/useProfile";
+import { useProfilePhotos } from "@/hooks/useProfilePhotos";
 import { supabase } from "@/integrations/supabase/client";
 import type { Sticker } from "@/hooks/useStickers";
 interface BannerData {
@@ -30,14 +31,16 @@ export default function BannerPreview() {
 
   // Mock user ID - replace with actual auth when implemented
   const mockUserId = "mock-user-123";
-  const {
-    profile
-  } = useProfile(mockUserId);
+  const { profile } = useProfile(mockUserId);
+  const { photos: profilePhotos } = useProfilePhotos(mockUserId);
 
   // Use profile data for bottom section, fallback to banner data
   const displayName = profile?.name || bannerData?.name || "";
   const displayContact = profile?.mobile || profile?.whatsapp || "9876543210";
   const displayRank = profile?.rank || "Diamond";
+  
+  // Get primary profile photo or first photo
+  const primaryPhoto = profile?.profile_photo || profilePhotos[0]?.photo_url || bannerData.photo;
 
   // Fetch selected stickers
   useEffect(() => {
@@ -61,9 +64,6 @@ export default function BannerPreview() {
     navigate("/rank-selection");
     return null;
   }
-
-  // Mock profile photos (user uploaded photos)
-  const profilePhotos = [bannerData.photo, bannerData.photo, bannerData.photo, bannerData.photo].filter(Boolean);
 
   // Template color variations with different backgrounds
   const templateColors = [{
@@ -119,14 +119,14 @@ export default function BannerPreview() {
           }}>
               <div className="absolute inset-0">
                 
-                {/* Left Side - Main Achievement Photo */}
-                {bannerData.photo && <div className="absolute overflow-hidden shadow-2xl" style={{
+                {/* Left Side - Main Achievement Photo (Use Profile Photo) */}
+                {primaryPhoto && <div className="absolute overflow-hidden shadow-2xl" style={{
                 left: '2%',
                 top: '8%',
                 width: '42%',
                 height: '65%'
               }}>
-                    <img src={bannerData.photo} alt={bannerData.name} className="w-full h-full object-cover" />
+                    <img src={primaryPhoto} alt={bannerData.name} className="w-full h-full object-cover" />
                   </div>}
 
                 {/* Right Side - Name and Team */}
@@ -142,12 +142,12 @@ export default function BannerPreview() {
                 }}>
                     {bannerData.name.toUpperCase()}
                   </h2>
-                  <p className="text-white font-bold text-right mt-2 tracking-widest" style={{
+                  {bannerData.teamCity && <p className="text-white font-bold text-right mt-2 tracking-widest" style={{
                   fontSize: 'clamp(16px,3vw,32px)',
                   textShadow: '2px 2px 4px rgba(0,0,0,0.8)'
                 }}>
-                    TEMA - {bannerData.teamCity.toUpperCase()}
-                  </p>
+                    TEAM - {bannerData.teamCity.toUpperCase()}
+                  </p>}
                 </div>
 
                 {/* Achievement Stickers - Dynamic from Selection */}
@@ -193,7 +193,7 @@ export default function BannerPreview() {
                 width: '32%',
                 height: '38%'
               }}>
-                  <img src={profile?.profile_photo || bannerData.photo || "/placeholder.svg"} alt={displayName} className="w-full h-full object-cover" />
+                  <img src={primaryPhoto || "/placeholder.svg"} alt={displayName} className="w-full h-full object-cover" />
                 </div>
 
                 {/* Bottom Right - Profile Name and Rank (Auto-Sync) */}
@@ -236,12 +236,20 @@ export default function BannerPreview() {
           </div>
         </div>
 
-        {/* Profile Photos Row */}
+        {/* Profile Photos Row - Max 6 photos from user's profile gallery */}
         {profilePhotos.length > 0 && <div className="flex gap-3 justify-center overflow-x-auto pb-2">
-            {profilePhotos.map((photo, idx) => <div key={idx} className="w-20 h-20 rounded-xl overflow-hidden border-2 border-primary/50 flex-shrink-0">
-                <img src={photo!} alt={`Profile ${idx + 1}`} className="w-full h-full object-cover" />
+            {profilePhotos.slice(0, 6).map((photo, idx) => <div key={photo.id} className="w-20 h-20 rounded-xl overflow-hidden border-2 border-primary/50 flex-shrink-0">
+                <img src={photo.photo_url} alt={`Profile ${idx + 1}`} className="w-full h-full object-cover" />
               </div>)}
           </div>}
+
+        {/* Download Button */}
+        <div className="flex justify-center">
+          <Button onClick={handleDownload} className="h-16 px-12 bg-teal-600 hover:bg-teal-700 text-white text-xl font-bold rounded-2xl flex items-center gap-3">
+            <Download className="w-6 h-6" />
+            DOWNLOAD
+          </Button>
+        </div>
 
         {/* Template Color Selection Grid */}
         <div className="grid grid-cols-3 gap-4">
@@ -250,14 +258,6 @@ export default function BannerPreview() {
                 <div className="text-5xl">💚</div>
               </div>
             </button>)}
-        </div>
-
-        {/* Download Button */}
-        <div className="flex justify-center">
-          <Button onClick={handleDownload} className="h-16 px-12 bg-teal-600 hover:bg-teal-700 text-white text-xl font-bold rounded-2xl flex items-center gap-3">
-            <Download className="w-6 h-6" />
-            DOWNLOAD
-          </Button>
         </div>
 
       </div>
