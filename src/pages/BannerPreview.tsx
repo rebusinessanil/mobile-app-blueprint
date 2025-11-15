@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft, Settings, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { useProfile } from "@/hooks/useProfile";
 
 interface BannerData {
   rankName: string;
@@ -21,6 +22,15 @@ export default function BannerPreview() {
   const bannerData = location.state as BannerData;
 
   const [selectedTemplate, setSelectedTemplate] = useState(0);
+  
+  // Mock user ID - replace with actual auth when implemented
+  const mockUserId = "mock-user-123";
+  const { profile } = useProfile(mockUserId);
+
+  // Use profile data for bottom section, fallback to banner data
+  const displayName = profile?.name || bannerData?.name || "";
+  const displayContact = profile?.mobile || profile?.whatsapp || "9876543210";
+  const displayRank = profile?.rank || "Diamond";
 
   // Early return if no banner data
   if (!bannerData) {
@@ -182,55 +192,47 @@ export default function BannerPreview() {
                 )}
 
                 {/* Bottom Right - Profile Photo (Auto-Sync from Profile) */}
-                {bannerData.uplines.length > 0 && (
-                  <div 
-                    className="absolute overflow-hidden shadow-2xl"
-                    style={{ 
-                      bottom: '8%', 
-                      right: '3%', 
-                      width: '32%', 
-                      height: '38%' 
-                    }}
-                  >
-                    {bannerData.uplines[0].avatar ? (
-                      <img 
-                        src={bannerData.uplines[0].avatar} 
-                        alt={bannerData.uplines[0].name}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-gray-700" />
-                    )}
-                  </div>
-                )}
+                <div 
+                  className="absolute overflow-hidden shadow-2xl"
+                  style={{ 
+                    bottom: '8%', 
+                    right: '3%', 
+                    width: '32%', 
+                    height: '38%' 
+                  }}
+                >
+                  <img 
+                    src={profile?.profile_photo || bannerData.photo || "/placeholder.svg"} 
+                    alt={displayName}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
 
                 {/* Bottom Right - Profile Name and Rank (Auto-Sync) */}
-                {bannerData.uplines.length > 0 && (
-                  <div 
-                    className="absolute text-center"
-                    style={{ bottom: '48%', right: '3%', width: '32%' }}
+                <div 
+                  className="absolute text-center"
+                  style={{ bottom: '48%', right: '3%', width: '32%' }}
+                >
+                  <p 
+                    className="text-white font-bold leading-tight tracking-wide"
+                    style={{ 
+                      fontSize: 'clamp(14px,2.5vw,24px)',
+                      textShadow: '2px 2px 4px rgba(0,0,0,0.8)'
+                    }}
                   >
-                    <p 
-                      className="text-white font-bold leading-tight tracking-wide"
-                      style={{ 
-                        fontSize: 'clamp(14px,2.5vw,24px)',
-                        textShadow: '2px 2px 4px rgba(0,0,0,0.8)'
-                      }}
-                    >
-                      {bannerData.uplines[0].name.toUpperCase()}
-                    </p>
-                    <p 
-                      className="font-semibold leading-tight mt-1"
-                      style={{ 
-                        fontSize: 'clamp(10px,1.8vw,16px)',
-                        color: '#FFD700',
-                        textShadow: '1px 1px 2px rgba(0,0,0,0.8)'
-                      }}
-                    >
-                      ROYAL AMBASSADOR
-                    </p>
-                  </div>
-                )}
+                    {displayName.toUpperCase()}
+                  </p>
+                  <p 
+                    className="font-semibold leading-tight mt-1"
+                    style={{ 
+                      fontSize: 'clamp(10px,1.8vw,16px)',
+                      color: '#FFD700',
+                      textShadow: '1px 1px 2px rgba(0,0,0,0.8)'
+                    }}
+                  >
+                    {displayRank.toUpperCase()}
+                  </p>
+                </div>
 
                 {/* Bottom Left - Contact Info (Auto-Sync from Profile) */}
                 <div 
@@ -245,7 +247,7 @@ export default function BannerPreview() {
                       textShadow: '2px 2px 4px rgba(0,0,0,0.8)'
                     }}
                   >
-                    +91 9549477444
+                    +91 {displayContact}
                   </p>
                 </div>
 

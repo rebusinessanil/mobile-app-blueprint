@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, FileText, Award } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -7,29 +7,67 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import PhotoUploadGrid from "@/components/PhotoUploadGrid";
 import { toast } from "sonner";
+import { useProfile } from "@/hooks/useProfile";
 
 export default function ProfileEdit() {
   const navigate = useNavigate();
   const [photos, setPhotos] = useState<string[]>([]);
+  
+  // Mock user ID - replace with actual auth when implemented
+  const mockUserId = "mock-user-123";
+  const { profile, updateProfile } = useProfile(mockUserId);
+  
   const [formData, setFormData] = useState({
     title: "mr",
-    name: "Dilip Singh Rathore",
-    mobile: "7734990035",
-    whatsapp: "9549477444",
+    name: "",
+    mobile: "",
+    whatsapp: "",
     role: "royal-ambassador",
     language: "eng",
     gender: "male",
     married: false,
   });
 
-  const handleSave = () => {
+  // Load profile data when available
+  useEffect(() => {
+    if (profile) {
+      setFormData({
+        title: "mr",
+        name: profile.name || "",
+        mobile: profile.mobile || "",
+        whatsapp: profile.whatsapp || "",
+        role: profile.role || "royal-ambassador",
+        language: "eng",
+        gender: "male",
+        married: false,
+      });
+      if (profile.profile_photo) {
+        setPhotos([profile.profile_photo]);
+      }
+    }
+  }, [profile]);
+
+  const handleSave = async () => {
     if (photos.length === 0) {
       toast.error("Please upload at least 1 profile photo");
       return;
     }
     
-    // TODO: Implement save logic
-    toast.success("Profile updated successfully!");
+    const { error } = await updateProfile({
+      name: formData.name,
+      mobile: formData.mobile,
+      whatsapp: formData.whatsapp,
+      role: formData.role,
+      rank: formData.role,
+      profile_photo: photos[0],
+    });
+
+    if (error) {
+      toast.error("Failed to update profile");
+      return;
+    }
+
+    toast.success("Profile updated successfully! Your banners will auto-update.");
     navigate("/profile");
   };
 
