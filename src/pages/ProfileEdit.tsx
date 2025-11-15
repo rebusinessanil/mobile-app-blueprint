@@ -8,14 +8,29 @@ import { Switch } from "@/components/ui/switch";
 import PhotoUploadGrid from "@/components/PhotoUploadGrid";
 import { toast } from "sonner";
 import { useProfile } from "@/hooks/useProfile";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function ProfileEdit() {
   const navigate = useNavigate();
   const [photos, setPhotos] = useState<string[]>([]);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
   
-  // Mock user ID - replace with actual auth when implemented
-  const mockUserId = "mock-user-123";
-  const { profile, updateProfile } = useProfile(mockUserId);
+  const { profile, updateProfile } = useProfile(userId || undefined);
+  
+  // Get authenticated user
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("Please login to edit your profile");
+        navigate("/login");
+        return;
+      }
+      setUserId(user.id);
+    };
+    getUser();
+  }, [navigate]);
   
   const [formData, setFormData] = useState({
     title: "mr",
@@ -48,27 +63,58 @@ export default function ProfileEdit() {
   }, [profile]);
 
   const handleSave = async () => {
+    // Validation
+    if (!formData.name.trim()) {
+      toast.error("Name is required");
+      return;
+    }
+
+    if (formData.name.length > 100) {
+      toast.error("Name must be less than 100 characters");
+      return;
+    }
+
     if (photos.length === 0) {
       toast.error("Please upload at least 1 profile photo");
       return;
     }
-    
-    const { error } = await updateProfile({
-      name: formData.name,
-      mobile: formData.mobile,
-      whatsapp: formData.whatsapp,
-      role: formData.role,
-      rank: formData.role,
-      profile_photo: photos[0],
-    });
 
-    if (error) {
-      toast.error("Failed to update profile");
+    if (formData.mobile && !/^\d{10}$/.test(formData.mobile.replace(/\D/g, ''))) {
+      toast.error("Please enter a valid 10-digit mobile number");
       return;
     }
 
-    toast.success("Profile updated successfully! Your banners will auto-update.");
-    navigate("/profile");
+    if (formData.whatsapp && !/^\d{10}$/.test(formData.whatsapp.replace(/\D/g, ''))) {
+      toast.error("Please enter a valid 10-digit WhatsApp number");
+      return;
+    }
+
+    setLoading(true);
+    
+    try {
+      const { error } = await updateProfile({
+        name: formData.name.trim(),
+        mobile: formData.mobile || null,
+        whatsapp: formData.whatsapp || null,
+        role: formData.role,
+        rank: formData.role,
+        profile_photo: photos[0],
+      });
+
+      if (error) {
+        console.error("Profile update error:", error);
+        toast.error(error.message || "Failed to update profile. Please try again.");
+        return;
+      }
+
+      toast.success("Profile updated successfully! Your banners will auto-update.");
+      navigate("/profile");
+    } catch (err) {
+      console.error("Unexpected error during profile update:", err);
+      toast.error("An unexpected error occurred. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -242,9 +288,10 @@ export default function ProfileEdit() {
         {/* Save Button */}
         <Button
           onClick={handleSave}
-          className="w-full h-14 bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-lg rounded-2xl"
+          disabled={loading || !userId}
+          className="w-full h-14 bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-lg rounded-2xl disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          SAVE
+          {loading ? "Saving..." : "SAVE"}
         </Button>
       </div>
     </div>
