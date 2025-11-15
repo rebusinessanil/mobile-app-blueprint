@@ -21,18 +21,23 @@ export default function BannerPreview() {
 
   const [selectedTemplate, setSelectedTemplate] = useState(0);
 
-  // Mock template variations (colors/gradients)
-  const templateVariations = [
-    { id: 0, name: "Original", bgColor: "from-pink-900 to-purple-900" },
-    { id: 1, name: "Blue", bgColor: "from-blue-900 to-indigo-900" },
-    { id: 2, name: "Green", bgColor: "from-emerald-900 to-teal-900" },
-  ];
+  // Mock profile photos (user uploaded photos)
+  const profilePhotos = [
+    bannerData.photo,
+    bannerData.photo,
+    bannerData.photo,
+    bannerData.photo,
+  ].filter(Boolean);
 
-  // Mock grid templates (12 variations)
-  const gridTemplates = Array(12).fill(null).map((_, i) => ({
-    id: i,
-    variant: i % 4,
-  }));
+  // Template color variations with different backgrounds
+  const templateColors = [
+    { id: 0, name: "Purple Pink", bgColor: "from-pink-900 to-purple-900" },
+    { id: 1, name: "Blue Indigo", bgColor: "from-blue-900 to-indigo-900" },
+    { id: 2, name: "Emerald Teal", bgColor: "from-emerald-900 to-teal-900" },
+    { id: 3, name: "Red Pink", bgColor: "from-red-900 to-pink-900" },
+    { id: 4, name: "Purple Blue", bgColor: "from-purple-900 to-blue-900" },
+    { id: 5, name: "Orange Yellow", bgColor: "from-yellow-900 to-orange-900" },
+  ];
 
   const handleDownload = () => {
     // TODO: Implement actual banner generation and download
@@ -66,7 +71,7 @@ export default function BannerPreview() {
         {/* Main Banner Preview - Square Format with Green Border */}
         <div className="relative">
           <div className="border-4 border-[#00FF00] rounded-2xl overflow-hidden shadow-2xl">
-            <div className={`aspect-square bg-gradient-to-br ${templateVariations[selectedTemplate].bgColor} relative`}>
+            <div className={`aspect-square bg-gradient-to-br ${templateColors[selectedTemplate].bgColor} relative`}>
               {/* Company Logo Top Left */}
               <div className="absolute top-4 left-4 text-white">
                 <div className="text-lg font-bold">Asclepius</div>
@@ -158,19 +163,39 @@ export default function BannerPreview() {
           </div>
         </div>
 
-        {/* Template Selection Row (3 options) */}
-        <div className="flex gap-4 justify-center">
-          {templateVariations.map((template) => (
+        {/* Profile Photos Row */}
+        {profilePhotos.length > 0 && (
+          <div className="flex gap-3 justify-center overflow-x-auto pb-2">
+            {profilePhotos.map((photo, idx) => (
+              <div
+                key={idx}
+                className="w-20 h-20 rounded-xl overflow-hidden border-2 border-primary/50 flex-shrink-0"
+              >
+                <img
+                  src={photo!}
+                  alt={`Profile ${idx + 1}`}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Template Color Selection Grid */}
+        <div className="grid grid-cols-3 gap-4">
+          {templateColors.map((template) => (
             <button
               key={template.id}
               onClick={() => setSelectedTemplate(template.id)}
-              className={`w-24 h-24 rounded-xl overflow-hidden transition-all ${
+              className={`aspect-square rounded-2xl overflow-hidden transition-all relative ${
                 selectedTemplate === template.id
-                  ? "border-4 border-red-500 scale-105"
-                  : "border-2 border-muted opacity-60 hover:opacity-100"
+                  ? "border-4 border-[#00FF00] scale-105 shadow-lg shadow-[#00FF00]/30"
+                  : "border-2 border-muted/30 hover:border-primary/50"
               }`}
             >
-              <div className={`w-full h-full bg-gradient-to-br ${template.bgColor}`} />
+              <div className={`w-full h-full bg-gradient-to-br ${template.bgColor} flex items-center justify-center`}>
+                <div className="text-5xl">💚</div>
+              </div>
             </button>
           ))}
         </div>
@@ -186,29 +211,6 @@ export default function BannerPreview() {
           </Button>
         </div>
 
-        {/* Template Grid (4x3) */}
-        <div className="grid grid-cols-4 gap-3 mt-8">
-          {gridTemplates.map((template) => (
-            <button
-              key={template.id}
-              className="aspect-square rounded-lg overflow-hidden border-2 border-yellow-500 hover:border-primary transition-all hover:scale-105"
-            >
-              <div
-                className={`w-full h-full bg-gradient-to-br ${
-                  template.variant === 0
-                    ? "from-pink-900 to-purple-900"
-                    : template.variant === 1
-                    ? "from-red-900 to-pink-900"
-                    : template.variant === 2
-                    ? "from-purple-900 to-blue-900"
-                    : "from-yellow-900 to-orange-900"
-                } relative flex items-center justify-center`}
-              >
-                <div className="text-4xl">{bannerData.rankIcon}</div>
-              </div>
-            </button>
-          ))}
-        </div>
       </div>
     </div>
   );
