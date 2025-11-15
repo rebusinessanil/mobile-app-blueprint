@@ -38,7 +38,7 @@ export default function AuthGuard({ children }: AuthGuardProps) {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
-  // Check if user has a profile
+  // Check if user has a profile, create one if it doesn't exist
   useEffect(() => {
     const checkProfile = async () => {
       if (!user) {
@@ -59,9 +59,19 @@ export default function AuthGuard({ children }: AuthGuardProps) {
       }
 
       if (!profile) {
-        // User doesn't have a profile, redirect to setup
-        navigate("/profile-setup", { replace: true });
-        return;
+        // Auto-create profile for existing user
+        const { error: insertError } = await supabase
+          .from('profiles')
+          .insert({
+            user_id: user.id,
+            name: user.email?.split('@')[0] || 'User',
+          });
+
+        if (insertError) {
+          console.error('Error creating profile:', insertError);
+          navigate("/profile-setup", { replace: true });
+          return;
+        }
       }
 
       setCheckingProfile(false);
