@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import UplineCarousel from "@/components/UplineCarousel";
 import BackgroundRemoverModal from "@/components/BackgroundRemoverModal";
+import StickerSelector from "@/components/StickerSelector";
 import { ranks } from "@/data/ranks";
 import { adminPresetUplines } from "@/data/adminPresets";
 import { toast } from "sonner";
@@ -30,6 +31,7 @@ export default function RankBannerCreate() {
   const [photo, setPhoto] = useState<string | null>(null);
   const [showBgRemover, setShowBgRemover] = useState(false);
   const [processingBg, setProcessingBg] = useState(false);
+  const [selectedStickers, setSelectedStickers] = useState<string[]>([]);
   if (!rank) {
     return null;
   }
@@ -87,7 +89,8 @@ export default function RankBannerCreate() {
         teamCity: formData.teamCity,
         chequeAmount: formData.chequeAmount,
         photo,
-        uplines
+        uplines,
+        selectedStickers
       }
     });
   };
@@ -201,6 +204,21 @@ export default function RankBannerCreate() {
                   </div>
                 </label>}
             </div>}
+
+        {/* Sticker Selection */}
+        <div className="gold-border bg-card rounded-2xl p-5">
+          <StickerSelector
+            selectedStickers={selectedStickers}
+            onStickerToggle={(stickerId) => {
+              setSelectedStickers(prev =>
+                prev.includes(stickerId)
+                  ? prev.filter(id => id !== stickerId)
+                  : [...prev, stickerId]
+              );
+            }}
+            maxStickers={3}
+          />
+        </div>
         </div>
 
         {/* Action Buttons */}

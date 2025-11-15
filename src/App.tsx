@@ -16,6 +16,7 @@ import RankSelection from "./pages/RankSelection";
 import RankBannerCreate from "./pages/RankBannerCreate";
 import BannerSettings from "./pages/BannerSettings";
 import BannerPreview from "./pages/BannerPreview";
+import AdminStickers from "./pages/AdminStickers";
 
 const queryClient = new QueryClient();
 
@@ -34,10 +35,11 @@ const App = () => (
           <Route path="/messages" element={<Messages />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/profile-edit" element={<ProfileEdit />} />
-        <Route path="/rank-selection" element={<RankSelection />} />
+          <Route path="/rank-selection" element={<RankSelection />} />
         <Route path="/rank-banner-create/:rankId" element={<RankBannerCreate />} />
         <Route path="/banner-settings" element={<BannerSettings />} />
         <Route path="/banner-preview" element={<BannerPreview />} />
+          <Route path="/admin/stickers" element={<AdminStickers />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

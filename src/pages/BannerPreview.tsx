@@ -4,6 +4,8 @@ import { ArrowLeft, Settings, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useProfile } from "@/hooks/useProfile";
+import { supabase } from "@/integrations/supabase/client";
+import type { Sticker } from "@/hooks/useStickers";
 
 interface BannerData {
   rankName: string;
@@ -14,6 +16,7 @@ interface BannerData {
   chequeAmount?: string;
   photo: string | null;
   uplines: Array<{ id: string; name: string; avatar?: string }>;
+  selectedStickers?: string[];
 }
 
 export default function BannerPreview() {
@@ -22,6 +25,7 @@ export default function BannerPreview() {
   const bannerData = location.state as BannerData;
 
   const [selectedTemplate, setSelectedTemplate] = useState(0);
+  const [stickers, setStickers] = useState<Sticker[]>([]);
   
   // Mock user ID - replace with actual auth when implemented
   const mockUserId = "mock-user-123";
@@ -31,6 +35,26 @@ export default function BannerPreview() {
   const displayName = profile?.name || bannerData?.name || "";
   const displayContact = profile?.mobile || profile?.whatsapp || "9876543210";
   const displayRank = profile?.rank || "Diamond";
+
+  // Fetch selected stickers
+  useEffect(() => {
+    const fetchStickers = async () => {
+      if (!bannerData?.selectedStickers || bannerData.selectedStickers.length === 0) {
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('stickers')
+        .select('*')
+        .in('id', bannerData.selectedStickers);
+
+      if (!error && data) {
+        setStickers(data);
+      }
+    };
+
+    fetchStickers();
+  }, [bannerData?.selectedStickers]);
 
   // Early return if no banner data
   if (!bannerData) {
@@ -129,41 +153,24 @@ export default function BannerPreview() {
                   </p>
                 </div>
 
-                {/* Achievement Stickers - Circular Images Bottom Left */}
-                <div className="absolute flex gap-[2%]" style={{ bottom: '33%', left: '2%', width: '44%' }}>
-                  {/* First circular sticker - Andaman with text */}
-                  <div 
-                    className="rounded-full border-[5px] border-yellow-400 overflow-hidden shadow-xl relative"
-                    style={{ width: '30%', aspectRatio: '1/1' }}
-                  >
-                    <div className="w-full h-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-end justify-center pb-2">
-                      <span 
-                        className="text-white font-bold italic drop-shadow-lg"
-                        style={{ 
-                          fontSize: 'clamp(10px,1.8vw,16px)',
-                          fontFamily: 'cursive',
-                          textShadow: '1px 1px 2px rgba(0,0,0,0.8)'
-                        }}
+                {/* Achievement Stickers - Dynamic from Selection */}
+                {stickers.length > 0 && (
+                  <div className="absolute flex gap-[2%]" style={{ bottom: '33%', left: '2%', width: '44%' }}>
+                    {stickers.map((sticker, index) => (
+                      <div 
+                        key={sticker.id}
+                        className="rounded-full border-[5px] border-yellow-400 overflow-hidden shadow-xl"
+                        style={{ width: '30%', aspectRatio: '1/1' }}
                       >
-                        Andaman
-                      </span>
-                    </div>
+                        <img
+                          src={sticker.image_url}
+                          alt={sticker.name}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    ))}
                   </div>
-                  {/* Second circular sticker */}
-                  <div 
-                    className="rounded-full border-[5px] border-yellow-400 overflow-hidden shadow-xl"
-                    style={{ width: '30%', aspectRatio: '1/1' }}
-                  >
-                    <div className="w-full h-full bg-gradient-to-br from-green-400 to-green-600" />
-                  </div>
-                  {/* Third circular sticker */}
-                  <div 
-                    className="rounded-full border-[5px] border-yellow-400 overflow-hidden shadow-xl"
-                    style={{ width: '30%', aspectRatio: '1/1' }}
-                  >
-                    <div className="w-full h-full bg-gradient-to-br from-cyan-300 to-cyan-500" />
-                  </div>
-                </div>
+                )}
 
                 {/* Income Section - Bottom Left */}
                 {bannerData.chequeAmount && (
