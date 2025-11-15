@@ -206,19 +206,7 @@ export default function RankBannerCreate() {
             </div>}
 
         {/* Sticker Selection */}
-        <div className="gold-border bg-card rounded-2xl p-5">
-          <StickerSelector
-            selectedStickers={selectedStickers}
-            onStickerToggle={(stickerId) => {
-              setSelectedStickers(prev =>
-                prev.includes(stickerId)
-                  ? prev.filter(id => id !== stickerId)
-                  : [...prev, stickerId]
-              );
-            }}
-            maxStickers={3}
-          />
-        </div>
+        
         </div>
 
         {/* Action Buttons */}
