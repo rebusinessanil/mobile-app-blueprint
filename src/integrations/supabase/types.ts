@@ -14,7 +14,95 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      banners: {
+        Row: {
+          achievement_photo: string | null
+          cheque_amount: string | null
+          created_at: string | null
+          id: string
+          rank_gradient: string | null
+          rank_icon: string | null
+          rank_name: string
+          team_city: string | null
+          template_color: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          achievement_photo?: string | null
+          cheque_amount?: string | null
+          created_at?: string | null
+          id?: string
+          rank_gradient?: string | null
+          rank_icon?: string | null
+          rank_name: string
+          team_city?: string | null
+          template_color?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          achievement_photo?: string | null
+          cheque_amount?: string | null
+          created_at?: string | null
+          id?: string
+          rank_gradient?: string | null
+          rank_icon?: string | null
+          rank_name?: string
+          team_city?: string | null
+          template_color?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "banners_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string | null
+          id: string
+          mobile: string | null
+          name: string
+          profile_photo: string | null
+          rank: string | null
+          role: string | null
+          updated_at: string | null
+          user_id: string
+          whatsapp: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          mobile?: string | null
+          name: string
+          profile_photo?: string | null
+          rank?: string | null
+          role?: string | null
+          updated_at?: string | null
+          user_id: string
+          whatsapp?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          mobile?: string | null
+          name?: string
+          profile_photo?: string | null
+          rank?: string | null
+          role?: string | null
+          updated_at?: string | null
+          user_id?: string
+          whatsapp?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
