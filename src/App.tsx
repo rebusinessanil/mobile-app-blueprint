@@ -17,6 +17,7 @@ import RankBannerCreate from "./pages/RankBannerCreate";
 import BannerSettings from "./pages/BannerSettings";
 import BannerPreview from "./pages/BannerPreview";
 import AdminStickers from "./pages/AdminStickers";
+import AdminTemplates from "./pages/AdminTemplates";
 
 const queryClient = new QueryClient();
 
@@ -40,6 +41,7 @@ const App = () => (
         <Route path="/banner-settings" element={<BannerSettings />} />
         <Route path="/banner-preview" element={<BannerPreview />} />
           <Route path="/admin/stickers" element={<AdminStickers />} />
+          <Route path="/admin/templates" element={<AdminTemplates />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

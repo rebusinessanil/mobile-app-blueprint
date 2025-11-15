@@ -210,6 +210,145 @@ export type Database = {
           },
         ]
       }
+      stories: {
+        Row: {
+          category_id: string | null
+          content_url: string | null
+          cover_image_url: string
+          created_at: string | null
+          display_order: number | null
+          id: string
+          is_active: boolean | null
+          title: string
+          type: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          category_id?: string | null
+          content_url?: string | null
+          cover_image_url: string
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          title: string
+          type?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          category_id?: string | null
+          content_url?: string | null
+          cover_image_url?: string
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          title?: string
+          type?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stories_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "template_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      template_categories: {
+        Row: {
+          cover_image_url: string | null
+          created_at: string | null
+          description: string | null
+          display_order: number | null
+          icon: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          slug: string
+          updated_at: string | null
+        }
+        Insert: {
+          cover_image_url?: string | null
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          slug: string
+          updated_at?: string | null
+        }
+        Update: {
+          cover_image_url?: string | null
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          slug?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      templates: {
+        Row: {
+          category_id: string | null
+          cover_thumbnail_url: string
+          created_at: string | null
+          description: string | null
+          display_order: number | null
+          gradient_colors: string[] | null
+          id: string
+          is_active: boolean | null
+          layout_config: Json | null
+          name: string
+          required_fields: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          category_id?: string | null
+          cover_thumbnail_url: string
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          gradient_colors?: string[] | null
+          id?: string
+          is_active?: boolean | null
+          layout_config?: Json | null
+          name: string
+          required_fields?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          category_id?: string | null
+          cover_thumbnail_url?: string
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          gradient_colors?: string[] | null
+          id?: string
+          is_active?: boolean | null
+          layout_config?: Json | null
+          name?: string
+          required_fields?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "templates_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "template_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string | null

@@ -1,8 +1,12 @@
 import { Link } from "react-router-dom";
 import BottomNav from "@/components/BottomNav";
-import { Menu, Bell, Star, Calendar, Zap, Award, Gift } from "lucide-react";
+import { Menu, Bell, Star, Calendar, Zap, Award } from "lucide-react";
+import { useTemplateCategories, useTemplates } from "@/hooks/useTemplates";
 
 export default function Dashboard() {
+  const { categories } = useTemplateCategories();
+  const { templates: allTemplates } = useTemplates();
+
   const quickActions = [
     { icon: Calendar, label: "Festival Banner", color: "bg-icon-purple" },
     { icon: Zap, label: "Motivational Quote", color: "bg-icon-orange" },
@@ -10,24 +14,10 @@ export default function Dashboard() {
     { label: "Special Offer Today", color: "bg-secondary", special: true },
   ];
 
-  const categories = [
-    {
-      title: "Rank Promotion",
-      icon: "🏆",
-      link: "/rank-selection",
-      templates: Array(3).fill({ title: "CHANE COVER", subtitle: "{ BACKEND INTEGRATED }" }),
-    },
-    {
-      title: "Bonanza",
-      icon: "🎁",
-      templates: Array(3).fill({ title: "CHANE COVER", subtitle: "{ BACKEND INTEGRATED }" }),
-    },
-    {
-      title: "BIRTHDAY - ANNIVERSARY BANNER",
-      icon: "🎀",
-      templates: Array(3).fill({ title: "CHANE COVER", subtitle: "{ BACKEND INTEGRATED }" }),
-    },
-  ];
+  // Get templates for each category
+  const getCategoryTemplates = (categoryId: string) => {
+    return allTemplates.filter(t => t.category_id === categoryId).slice(0, 3);
+  };
 
   return (
     <div className="min-h-screen bg-navy-dark pb-24">
@@ -83,36 +73,69 @@ export default function Dashboard() {
           ))}
         </div>
 
-        {/* Category Sections */}
-        {categories.map((category, catIndex) => (
-          <div key={catIndex} className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-2xl">{category.icon}</span>
-                <h2 className="text-lg font-bold text-foreground">{category.title}</h2>
-              </div>
-              <Link 
-                to={category.link || "/categories"} 
-                className="text-primary text-sm font-semibold hover:underline"
-              >
-                View All
-              </Link>
-            </div>
-
-            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-              {category.templates.map((template, index) => (
-                <Link
-                  key={index}
-                  to={`/template/${catIndex}-${index}`}
-                  className="flex-shrink-0 w-36 h-48 gold-border bg-gradient-to-br from-card to-secondary rounded-2xl flex flex-col items-center justify-center text-center p-4 hover:gold-glow transition-all"
+        {/* Category Sections - Backend Integrated */}
+        {categories.map((category) => {
+          const categoryTemplates = getCategoryTemplates(category.id);
+          
+          return (
+            <div key={category.id} className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">{category.icon}</span>
+                  <h2 className="text-lg font-bold text-foreground">{category.name}</h2>
+                </div>
+                <Link 
+                  to={category.slug === 'rank-promotion' ? '/rank-selection' : `/categories/${category.slug}`}
+                  className="text-primary text-sm font-semibold hover:underline"
                 >
-                  <h3 className="text-lg font-bold text-foreground">{template.title}</h3>
-                  <p className="text-xs text-muted-foreground mt-1">{template.subtitle}</p>
+                  See All →
                 </Link>
-              ))}
+              </div>
+
+              {/* Template Scroll - Dynamic from Backend */}
+              <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                {categoryTemplates.length > 0 ? (
+                  categoryTemplates.map((template) => (
+                    <Link
+                      key={template.id}
+                      to={category.slug === 'rank-promotion' ? '/rank-selection' : `/template/${template.id}`}
+                      className="min-w-[140px] gold-border bg-card rounded-2xl overflow-hidden flex-shrink-0 hover:gold-glow transition-all"
+                    >
+                      {template.cover_thumbnail_url ? (
+                        <div className="h-32 relative">
+                          <img 
+                            src={template.cover_thumbnail_url} 
+                            alt={template.name}
+                            className="w-full h-full object-cover"
+                          />
+                          <div className="absolute bottom-0 left-0 right-0 bg-black/70 p-1">
+                            <p className="text-white text-xs text-center font-medium truncate">
+                              Backend Integrated ✓
+                            </p>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="h-32 bg-gradient-to-br from-secondary to-card flex items-center justify-center">
+                          <div className="text-center px-2">
+                            <p className="text-white font-bold text-sm">CHANGE COVER</p>
+                            <p className="text-primary text-xs mt-1">{"{ BACKEND }"}</p>
+                          </div>
+                        </div>
+                      )}
+                      <div className="p-2 text-center">
+                        <p className="text-xs text-muted-foreground truncate">{template.name}</p>
+                      </div>
+                    </Link>
+                  ))
+                ) : (
+                  <div className="min-w-[140px] gold-border bg-card rounded-2xl overflow-hidden flex-shrink-0 p-4">
+                    <p className="text-xs text-muted-foreground text-center">No templates yet</p>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <BottomNav />
