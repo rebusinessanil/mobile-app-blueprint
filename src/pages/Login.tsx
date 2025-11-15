@@ -4,12 +4,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Lock, MessageCircle } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export default function Login() {
   const navigate = useNavigate();
   const [emailOrMobile, setEmailOrMobile] = useState("");
   const [pin, setPin] = useState(["", "", "", ""]);
   const [rememberMe, setRememberMe] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handlePinChange = (index: number, value: string) => {
     if (value.length <= 1 && /^\d*$/.test(value)) {
@@ -23,9 +26,47 @@ export default function Login() {
     }
   };
 
-  const handleLogin = () => {
-    // TODO: Implement login logic
-    navigate("/dashboard");
+  const handleLogin = async () => {
+    // Validation
+    if (!emailOrMobile.trim()) {
+      toast.error("Please enter your email");
+      return;
+    }
+
+    const pinString = pin.join("");
+    if (pinString.length !== 4) {
+      toast.error("Please enter your 4-digit PIN");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // Sign in with email and PIN as password
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: emailOrMobile,
+        password: pinString,
+      });
+
+      if (error) {
+        if (error.message.includes("Invalid login credentials")) {
+          toast.error("Invalid email or PIN. Please try again.");
+        } else {
+          toast.error(error.message);
+        }
+        return;
+      }
+
+      if (data.user) {
+        toast.success("Login successful!");
+        navigate("/dashboard");
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      toast.error("An unexpected error occurred. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -90,9 +131,10 @@ export default function Login() {
           {/* Login Button */}
           <Button
             onClick={handleLogin}
-            className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-base rounded-xl"
+            disabled={loading}
+            className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-base rounded-xl disabled:opacity-50"
           >
-            LOGIN
+            {loading ? "Logging in..." : "LOGIN"}
           </Button>
 
           {/* Sign Up Link */}
