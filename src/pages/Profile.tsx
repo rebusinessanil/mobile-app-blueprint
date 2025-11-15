@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 
 export default function Profile() {
   const menuItems = [
-    { icon: User, label: "My Profile", description: "Edit your personal information", path: "/profile/edit" },
+    { icon: User, label: "My Profile", description: "Edit your personal information", path: "/profile-edit" },
     { icon: Wallet, label: "My Wallet", description: "Manage your wallet balance", path: "/wallet" },
     { icon: Download, label: "My Downloads", description: "View all your created banners", path: "/downloads" },
     { icon: Settings, label: "Banner Settings", description: "Customize default banner preferences", path: "/settings" },
