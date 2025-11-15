@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import UplineCarousel from "@/components/UplineCarousel";
 import BackgroundRemoverModal from "@/components/BackgroundRemoverModal";
 import { ranks } from "@/data/ranks";
+import { adminPresetUplines } from "@/data/adminPresets";
 import { toast } from "sonner";
 import { removeBackground, loadImage } from "@/lib/backgroundRemover";
 
@@ -158,7 +159,12 @@ export default function RankBannerCreate() {
             <span className="text-sm font-semibold text-foreground">Top Uplines</span>
           </div>
           <div className="gold-border bg-card/30 rounded-2xl p-4">
-            <UplineCarousel uplines={uplines} onUplinesChange={setUplines} />
+            <UplineCarousel 
+              uplines={uplines} 
+              onUplinesChange={setUplines}
+              maxUplines={5}
+              adminPresets={adminPresetUplines}
+            />
           </div>
         </div>
 
