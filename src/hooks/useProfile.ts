@@ -71,23 +71,49 @@ export const useProfile = (userId?: string) => {
     if (!userId) return { error: new Error('No user ID provided'), data: null };
 
     try {
+      // First check if profile exists
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (!existingProfile) {
+        // Create profile if it doesn't exist
+        const { data, error } = await supabase
+          .from('profiles')
+          .insert({
+            user_id: userId,
+            name: updates.name || 'User',
+            mobile: updates.mobile || null,
+            whatsapp: updates.whatsapp || null,
+            rank: updates.rank || null,
+            role: updates.role || null,
+            profile_photo: updates.profile_photo || null,
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+        setProfile(data);
+        return { data, error: null };
+      }
+
+      // Update existing profile
       const { data, error } = await supabase
         .from('profiles')
         .update(updates)
         .eq('user_id', userId)
         .select()
-        .maybeSingle();
+        .single();
 
       if (error) throw error;
-      
-      if (!data) {
-        throw new Error('Profile not found');
-      }
-      
       setProfile(data);
       return { data, error: null };
     } catch (err) {
-      return { data: null, error: err as Error };
+      const error = err as Error;
+      console.error('Profile update error:', error);
+      return { data: null, error };
     }
   };
 
