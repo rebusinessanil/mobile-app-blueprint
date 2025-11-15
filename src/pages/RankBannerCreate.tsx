@@ -24,7 +24,8 @@ export default function RankBannerCreate() {
   const [uplines, setUplines] = useState<Upline[]>([]);
   const [formData, setFormData] = useState({
     name: "",
-    teamCity: ""
+    teamCity: "",
+    chequeAmount: ""
   });
   const [photo, setPhoto] = useState<string | null>(null);
   const [showBgRemover, setShowBgRemover] = useState(false);
@@ -84,6 +85,7 @@ export default function RankBannerCreate() {
         rankGradient: rank.gradient,
         name: formData.name,
         teamCity: formData.teamCity,
+        chequeAmount: formData.chequeAmount,
         photo,
         uplines
       }
@@ -92,7 +94,8 @@ export default function RankBannerCreate() {
   const handleReset = () => {
     setFormData({
       name: "",
-      teamCity: ""
+      teamCity: "",
+      chequeAmount: ""
     });
     setPhoto(null);
     setUplines([]);
@@ -165,6 +168,27 @@ export default function RankBannerCreate() {
               ...formData,
               teamCity: e.target.value
             })} placeholder="Enter Team/City" className="bg-transparent border-0 border-b-2 border-muted rounded-none text-foreground h-12 focus-visible:ring-0 focus-visible:border-primary" />
+            </div>
+
+            {/* Cheque Amount (Optional) */}
+            <div className="space-y-2">
+              <label className="text-sm text-foreground">Cheque Amount <span className="text-muted-foreground">(optional)</span></label>
+              <div className="relative">
+                <span className="absolute left-0 top-1/2 -translate-y-1/2 text-foreground text-lg">₹</span>
+                <Input 
+                  value={formData.chequeAmount} 
+                  onChange={e => {
+                    // Only allow numbers
+                    const value = e.target.value.replace(/[^0-9]/g, '');
+                    setFormData({
+                      ...formData,
+                      chequeAmount: value
+                    });
+                  }} 
+                  placeholder="Enter amount" 
+                  className="bg-transparent border-0 border-b-2 border-muted rounded-none text-foreground h-12 focus-visible:ring-0 focus-visible:border-primary pl-6" 
+                />
+              </div>
             </div>
           </div>
 
