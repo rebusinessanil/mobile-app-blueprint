@@ -236,12 +236,23 @@ export default function BannerPreview() {
           </div>
         </div>
 
-        {/* Profile Photos Row - Max 6 photos from user's profile gallery */}
-        {profilePhotos.length > 0 && <div className="flex gap-3 justify-center overflow-x-auto pb-2">
-            {profilePhotos.slice(0, 6).map((photo, idx) => <div key={photo.id} className="w-20 h-20 rounded-xl overflow-hidden border-2 border-primary/50 flex-shrink-0">
-                <img src={photo.photo_url} alt={`Profile ${idx + 1}`} className="w-full h-full object-cover" />
-              </div>)}
-          </div>}
+        {/* Profile Photos Gallery - 1-6 Square Thumbnails */}
+        {profilePhotos.length > 0 && (
+          <div className="flex gap-3 justify-center overflow-x-auto pb-2 px-4">
+            {profilePhotos.slice(0, 6).map((photo, idx) => (
+              <div 
+                key={photo.id} 
+                className="w-16 h-16 aspect-square rounded-lg overflow-hidden border-2 border-primary shadow-md flex-shrink-0"
+              >
+                <img 
+                  src={photo.photo_url} 
+                  alt={`Profile ${idx + 1}`} 
+                  className="w-full h-full object-cover object-center" 
+                />
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Download Button */}
         <div className="flex justify-center">
