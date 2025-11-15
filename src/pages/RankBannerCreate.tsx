@@ -76,9 +76,18 @@ export default function RankBannerCreate() {
       return;
     }
 
-    // TODO: Implement banner creation logic
-    toast.success("Banner created successfully!");
-    navigate("/downloads");
+    // Navigate to banner preview with data
+    navigate("/banner-preview", {
+      state: {
+        rankName: rank.name,
+        rankIcon: rank.icon,
+        rankGradient: rank.gradient,
+        name: formData.name,
+        teamCity: formData.teamCity,
+        photo,
+        uplines
+      }
+    });
   };
   const handleReset = () => {
     setFormData({

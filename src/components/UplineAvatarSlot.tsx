@@ -169,7 +169,7 @@ export default function UplineAvatarSlot({
           {tempImage && <ImageCropper image={tempImage} onCropComplete={handleCropComplete} onCancel={() => {
           setShowCrop(false);
           setTempImage(null);
-        }} className="mx-0 px-0 my-0 py-0" />}
+        }} />}
         </DialogContent>
       </Dialog>
 
