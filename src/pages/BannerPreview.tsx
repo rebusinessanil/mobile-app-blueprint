@@ -10,6 +10,7 @@ interface BannerData {
   rankGradient: string;
   name: string;
   teamCity: string;
+  chequeAmount?: string;
   photo: string | null;
   uplines: Array<{ id: string; name: string; avatar?: string }>;
 }
@@ -150,7 +151,9 @@ export default function BannerPreview() {
               {/* Income Section */}
               <div className="absolute bottom-12 left-8 bg-purple-900/90 rounded-xl px-4 py-2 border-2 border-yellow-400">
                 <p className="text-xs text-white">THIS WEEK INCOME QUALIFY FOR</p>
-                <p className="text-3xl font-bold text-yellow-400">₹ 2,500/-</p>
+                <p className="text-3xl font-bold text-yellow-400">
+                  ₹ {bannerData.chequeAmount ? Number(bannerData.chequeAmount).toLocaleString('en-IN') : '2,500'}/-
+                </p>
               </div>
 
               {/* Bottom Right - Upline Info */}
