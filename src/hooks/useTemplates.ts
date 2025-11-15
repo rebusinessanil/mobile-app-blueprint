@@ -67,9 +67,9 @@ export const useTemplateCategories = () => {
 
     fetchCategories();
 
-    // Set up real-time subscription for live updates
+    // Set up real-time subscription for instant category updates
     const channel = supabase
-      .channel('template-categories-changes')
+      .channel(`template-categories-changes-${Math.random()}`)
       .on(
         'postgres_changes',
         {
@@ -77,7 +77,8 @@ export const useTemplateCategories = () => {
           schema: 'public',
           table: 'template_categories',
         },
-        () => {
+        (payload) => {
+          console.log('📡 Category update received:', payload);
           fetchCategories();
         }
       )
@@ -122,9 +123,9 @@ export const useTemplates = (categoryId?: string) => {
 
     fetchTemplates();
 
-    // Real-time subscription
+    // Real-time subscription for instant updates
     const channel = supabase
-      .channel('templates-changes')
+      .channel(`templates-changes-${Math.random()}`)
       .on(
         'postgres_changes',
         {
@@ -132,7 +133,8 @@ export const useTemplates = (categoryId?: string) => {
           schema: 'public',
           table: 'templates',
         },
-        () => {
+        (payload) => {
+          console.log('📡 Template update received:', payload);
           fetchTemplates();
         }
       )
