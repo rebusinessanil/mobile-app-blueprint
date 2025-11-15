@@ -8,7 +8,7 @@ export default function Profile() {
     { icon: User, label: "My Profile", description: "Edit your personal information", path: "/profile-edit" },
     { icon: Wallet, label: "My Wallet", description: "Manage your wallet balance", path: "/wallet" },
     { icon: Download, label: "My Downloads", description: "View all your created banners", path: "/downloads" },
-    { icon: Settings, label: "Banner Settings", description: "Customize default banner preferences", path: "/settings" },
+    { icon: Settings, label: "Banner Settings", description: "Customize default banner preferences", path: "/banner-settings" },
     { icon: Lock, label: "Change PIN", description: "Update your security PIN", path: "/change-pin" },
     { icon: HelpCircle, label: "Help & FAQ", description: "Get help and find answers", path: "/help" },
     { icon: MessageCircle, label: "Contact Support", description: "Get in touch with our team", path: "/support" },
