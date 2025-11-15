@@ -21,6 +21,12 @@ export default function BannerPreview() {
 
   const [selectedTemplate, setSelectedTemplate] = useState(0);
 
+  // Early return if no banner data
+  if (!bannerData) {
+    navigate("/rank-selection");
+    return null;
+  }
+
   // Mock profile photos (user uploaded photos)
   const profilePhotos = [
     bannerData.photo,
@@ -43,11 +49,6 @@ export default function BannerPreview() {
     // TODO: Implement actual banner generation and download
     toast.success("Banner downloaded successfully!");
   };
-
-  if (!bannerData) {
-    navigate("/rank-selection");
-    return null;
-  }
 
   return (
     <div className="min-h-screen bg-navy-dark pb-20">
