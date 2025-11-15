@@ -151,7 +151,7 @@ export default function UplineAvatarSlot({
           </DialogHeader>
           <div className="grid grid-cols-3 gap-4 max-h-96 overflow-y-auto">
             {adminPresets.map(preset => <button key={preset.id} onClick={() => handlePresetSelect(preset)} className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-secondary transition-colors">
-                <div className="w-16 h-16 rounded-full gold-border overflow-hidden">
+                <div className="w-16 h-16 rounded-full gold-border overflow-hidden mx-0 px-0 my-0 py-0">
                   <img src={preset.avatar} alt={preset.name} className="w-full h-full object-cover" />
                 </div>
                 <span className="text-xs text-foreground text-center line-clamp-2">{preset.name}</span>
@@ -169,7 +169,7 @@ export default function UplineAvatarSlot({
           {tempImage && <ImageCropper image={tempImage} onCropComplete={handleCropComplete} onCancel={() => {
           setShowCrop(false);
           setTempImage(null);
-        }} />}
+        }} className="mx-0 px-0 my-0 py-0" />}
         </DialogContent>
       </Dialog>
 

@@ -9,32 +9,29 @@ import { ranks } from "@/data/ranks";
 import { adminPresetUplines } from "@/data/adminPresets";
 import { toast } from "sonner";
 import { removeBackground, loadImage } from "@/lib/backgroundRemover";
-
 interface Upline {
   id: string;
   name: string;
   avatar?: string;
 }
-
 export default function RankBannerCreate() {
   const navigate = useNavigate();
-  const { rankId } = useParams();
+  const {
+    rankId
+  } = useParams();
   const rank = ranks.find(r => r.id === rankId);
-
   const [mode, setMode] = useState<"myPhoto" | "others">("myPhoto");
   const [uplines, setUplines] = useState<Upline[]>([]);
   const [formData, setFormData] = useState({
     name: "",
-    teamCity: "",
+    teamCity: ""
   });
   const [photo, setPhoto] = useState<string | null>(null);
   const [showBgRemover, setShowBgRemover] = useState(false);
   const [processingBg, setProcessingBg] = useState(false);
-
   if (!rank) {
     return null;
   }
-
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -46,17 +43,13 @@ export default function RankBannerCreate() {
       reader.readAsDataURL(file);
     }
   };
-
   const handleKeepBackground = () => {
     setShowBgRemover(false);
   };
-
   const handleRemoveBackground = async () => {
     if (!photo) return;
-    
     setShowBgRemover(false);
     setProcessingBg(true);
-    
     try {
       const img = await loadImage(await fetch(photo).then(r => r.blob()));
       const processedBlob = await removeBackground(img);
@@ -73,13 +66,11 @@ export default function RankBannerCreate() {
       setProcessingBg(false);
     }
   };
-
   const handleCreate = () => {
     if (!formData.name || !formData.teamCity) {
       toast.error("Please fill in Name and From Team/City");
       return;
     }
-
     if (mode === "myPhoto" && !photo) {
       toast.error("Please upload your photo");
       return;
@@ -89,22 +80,19 @@ export default function RankBannerCreate() {
     toast.success("Banner created successfully!");
     navigate("/downloads");
   };
-
   const handleReset = () => {
-    setFormData({ name: "", teamCity: "" });
+    setFormData({
+      name: "",
+      teamCity: ""
+    });
     setPhoto(null);
     setUplines([]);
   };
-
-  return (
-    <div className="min-h-screen bg-navy-dark pb-6">
+  return <div className="min-h-screen bg-navy-dark pb-6">
       {/* Header */}
       <header className="sticky top-0 bg-navy-dark/95 backdrop-blur-sm z-40 px-6 py-4 border-b border-primary/20">
         <div className="flex items-center justify-between">
-          <button
-            onClick={() => navigate("/rank-selection")}
-            className="w-10 h-10 rounded-xl border-2 border-primary flex items-center justify-center hover:bg-primary/10 transition-colors"
-          >
+          <button onClick={() => navigate("/rank-selection")} className="w-10 h-10 rounded-xl border-2 border-primary flex items-center justify-center hover:bg-primary/10 transition-colors">
             <ArrowLeft className="w-5 h-5 text-primary" />
           </button>
           <div className="flex items-center gap-2">
@@ -130,48 +118,23 @@ export default function RankBannerCreate() {
         <div className="space-y-2">
           <label className="text-sm text-foreground font-semibold">Banner Type</label>
           <div className="flex gap-3">
-            <button
-              onClick={() => setMode("myPhoto")}
-              className={`flex-1 h-12 rounded-xl font-semibold transition-all ${
-                mode === "myPhoto"
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-secondary text-foreground border-2 border-primary"
-              }`}
-            >
+            <button onClick={() => setMode("myPhoto")} className={`flex-1 h-12 rounded-xl font-semibold transition-all ${mode === "myPhoto" ? "bg-primary text-primary-foreground" : "bg-secondary text-foreground border-2 border-primary"}`}>
               With My Photo
             </button>
-            <button
-              onClick={() => setMode("others")}
-              className={`flex-1 h-12 rounded-xl font-semibold transition-all ${
-                mode === "others"
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-secondary text-foreground border-2 border-primary"
-              }`}
-            >
-              With Others
-            </button>
+            
           </div>
         </div>
 
         {/* Uplines Carousel */}
         <div className="space-y-3">
-          <div className="inline-block px-4 py-2 bg-secondary/80 border border-muted rounded-full">
-            <span className="text-sm font-semibold text-foreground">Top Uplines</span>
-          </div>
+          
           <div className="gold-border bg-card/30 rounded-2xl p-4">
-            <UplineCarousel 
-              uplines={uplines} 
-              onUplinesChange={setUplines}
-              maxUplines={5}
-              adminPresets={adminPresetUplines}
-            />
+            <UplineCarousel uplines={uplines} onUplinesChange={setUplines} maxUplines={5} adminPresets={adminPresetUplines} />
           </div>
         </div>
 
         {/* Section Label */}
-        <div className="inline-block px-4 py-2 bg-secondary/80 border border-muted rounded-full">
-          <span className="text-sm font-semibold text-foreground">{rank.name} Achiever Details</span>
-        </div>
+        
 
         {/* Form Fields with Photo Upload Side by Side */}
         <div className="flex gap-4">
@@ -180,80 +143,50 @@ export default function RankBannerCreate() {
             {/* Name */}
             <div className="space-y-2">
               <label className="text-sm text-foreground">Name</label>
-              <Input
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="Enter your Name"
-                className="bg-transparent border-0 border-b-2 border-muted rounded-none text-foreground h-12 focus-visible:ring-0 focus-visible:border-primary"
-              />
+              <Input value={formData.name} onChange={e => setFormData({
+              ...formData,
+              name: e.target.value
+            })} placeholder="Enter your Name" className="bg-transparent border-0 border-b-2 border-muted rounded-none text-foreground h-12 focus-visible:ring-0 focus-visible:border-primary" />
             </div>
 
             {/* From Team/City */}
             <div className="space-y-2">
               <label className="text-sm text-foreground">From Team/City</label>
-              <Input
-                value={formData.teamCity}
-                onChange={(e) => setFormData({ ...formData, teamCity: e.target.value })}
-                placeholder="Enter Team/City"
-                className="bg-transparent border-0 border-b-2 border-muted rounded-none text-foreground h-12 focus-visible:ring-0 focus-visible:border-primary"
-              />
+              <Input value={formData.teamCity} onChange={e => setFormData({
+              ...formData,
+              teamCity: e.target.value
+            })} placeholder="Enter Team/City" className="bg-transparent border-0 border-b-2 border-muted rounded-none text-foreground h-12 focus-visible:ring-0 focus-visible:border-primary" />
             </div>
           </div>
 
           {/* Photo Upload */}
-          {mode === "myPhoto" && (
-            <div className="w-48 flex-shrink-0">
-              {photo ? (
-                <div className="relative w-full h-48 gold-border rounded-2xl overflow-hidden bg-secondary">
+          {mode === "myPhoto" && <div className="w-48 flex-shrink-0">
+              {photo ? <div className="relative w-full h-48 gold-border rounded-2xl overflow-hidden bg-secondary">
                   <img src={photo} alt="Uploaded" className="w-full h-full object-cover" />
-                  {processingBg && (
-                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                  {processingBg && <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                       <div className="text-white text-sm">Processing...</div>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <label className="w-full h-48 gold-border bg-secondary/50 rounded-2xl flex flex-col items-center justify-center gap-3 cursor-pointer hover:gold-glow transition-all">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handlePhotoUpload}
-                    className="hidden"
-                  />
+                    </div>}
+                </div> : <label className="w-full h-48 gold-border bg-secondary/50 rounded-2xl flex flex-col items-center justify-center gap-3 cursor-pointer hover:gold-glow transition-all">
+                  <input type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" />
                   <div className="w-16 h-16 bg-primary/20 rounded-xl flex items-center justify-center">
                     <ImagePlus className="w-8 h-8 text-primary" />
                   </div>
-                </label>
-              )}
-            </div>
-          )}
+                </label>}
+            </div>}
         </div>
 
         {/* Action Buttons */}
         <div className="flex gap-3">
-          <Button
-            onClick={handleReset}
-            variant="outline"
-            className="flex-1 h-12 border-2 border-primary text-foreground hover:bg-primary/10"
-          >
+          <Button onClick={handleReset} variant="outline" className="flex-1 h-12 border-2 border-primary text-foreground hover:bg-primary/10">
             RESET
           </Button>
-          <Button
-            onClick={handleCreate}
-            className="flex-1 h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-bold"
-          >
+          <Button onClick={handleCreate} className="flex-1 h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-bold">
             CREATE
           </Button>
         </div>
       </div>
 
       {/* Background Remover Modal */}
-      <BackgroundRemoverModal
-        open={showBgRemover}
-        onKeep={handleKeepBackground}
-        onRemove={handleRemoveBackground}
-        onClose={() => setShowBgRemover(false)}
-      />
-    </div>
-  );
+      <BackgroundRemoverModal open={showBgRemover} onKeep={handleKeepBackground} onRemove={handleRemoveBackground} onClose={() => setShowBgRemover(false)} />
+    </div>;
 }
