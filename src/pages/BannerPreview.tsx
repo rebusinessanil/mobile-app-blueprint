@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft, Settings, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,7 @@ import { useProfile } from "@/hooks/useProfile";
 import { useProfilePhotos } from "@/hooks/useProfilePhotos";
 import { supabase } from "@/integrations/supabase/client";
 import type { Sticker } from "@/hooks/useStickers";
+import html2canvas from "html2canvas";
 interface BannerData {
   rankName: string;
   rankIcon: string;
@@ -28,6 +29,8 @@ export default function BannerPreview() {
   const bannerData = location.state as BannerData;
   const [selectedTemplate, setSelectedTemplate] = useState(0);
   const [stickers, setStickers] = useState<Sticker[]>([]);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const bannerRef = useRef<HTMLDivElement>(null);
 
   // Mock user ID - replace with actual auth when implemented
   const mockUserId = "mock-user-123";
@@ -91,9 +94,54 @@ export default function BannerPreview() {
     name: "Orange Yellow",
     bgColor: "from-yellow-900 to-orange-900"
   }];
-  const handleDownload = () => {
-    // TODO: Implement actual banner generation and download
-    toast.success("Banner downloaded successfully!");
+  const handleDownload = async () => {
+    if (!bannerRef.current) {
+      toast.error("Banner not ready for download");
+      return;
+    }
+
+    setIsDownloading(true);
+    const loadingToast = toast.loading("Generating high-quality banner...");
+
+    try {
+      // Capture the banner at 1080x1080 resolution
+      const canvas = await html2canvas(bannerRef.current, {
+        scale: 2, // Higher scale for better quality
+        backgroundColor: null,
+        logging: false,
+        useCORS: true,
+        allowTaint: true,
+        width: 1080,
+        height: 1080,
+      });
+
+      // Convert to blob and download
+      canvas.toBlob((blob) => {
+        toast.dismiss(loadingToast);
+        
+        if (!blob) {
+          toast.error("Failed to generate image");
+          return;
+        }
+
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        const timestamp = new Date().getTime();
+        link.download = `ReBusiness-Banner-${bannerData.rankName}-${timestamp}.png`;
+        link.href = url;
+        link.click();
+        
+        URL.revokeObjectURL(url);
+        toast.success("Banner downloaded successfully!");
+      }, "image/png", 1.0);
+
+    } catch (error) {
+      console.error("Download error:", error);
+      toast.dismiss(loadingToast);
+      toast.error("Failed to download banner. Please try again.");
+    } finally {
+      setIsDownloading(false);
+    }
   };
   return <div className="min-h-screen bg-navy-dark pb-20">
       {/* Header */}
@@ -112,7 +160,7 @@ export default function BannerPreview() {
       <div className="px-6 py-6 space-y-6">
         {/* Main Banner Preview - Fixed Square Format (1080x1080 base) */}
         <div className="relative w-full max-w-[600px] mx-auto">
-          <div className="border-4 border-primary rounded-2xl overflow-hidden shadow-2xl">
+          <div ref={bannerRef} className="border-4 border-primary rounded-2xl overflow-hidden shadow-2xl">
             {/* Fixed aspect ratio container - scales proportionally on all devices */}
             <div className={`relative w-full bg-gradient-to-br ${templateColors[selectedTemplate].bgColor}`} style={{
             paddingBottom: '100%'
@@ -256,9 +304,13 @@ export default function BannerPreview() {
 
         {/* Download Button */}
         <div className="flex justify-center">
-          <Button onClick={handleDownload} className="h-16 px-12 bg-teal-600 hover:bg-teal-700 text-white text-xl font-bold rounded-2xl flex items-center gap-3">
+          <Button 
+            onClick={handleDownload} 
+            disabled={isDownloading}
+            className="h-16 px-12 bg-teal-600 hover:bg-teal-700 disabled:bg-teal-800 disabled:cursor-not-allowed text-white text-xl font-bold rounded-2xl flex items-center gap-3"
+          >
             <Download className="w-6 h-6" />
-            DOWNLOAD
+            {isDownloading ? "GENERATING..." : "DOWNLOAD"}
           </Button>
         </div>
 
