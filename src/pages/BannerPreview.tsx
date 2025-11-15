@@ -77,38 +77,17 @@ export default function BannerPreview() {
             <div className={`relative w-full bg-gradient-to-br ${templateColors[selectedTemplate].bgColor}`} style={{ paddingBottom: '100%' }}>
               <div className="absolute inset-0">
                 
-                {/* Company Logo Top Left */}
-                <div className="absolute text-white" style={{ top: '2.5%', left: '2.5%' }}>
-                  <div className="text-[clamp(16px,2.5vw,22px)] font-bold leading-tight tracking-wide">Asclepius</div>
-                  <div className="text-[clamp(9px,1.3vw,13px)] leading-tight opacity-90">Empowering Wellness</div>
-                </div>
-
-                {/* Congratulations Text */}
-                <div className="absolute left-1/2 -translate-x-1/2 text-center" style={{ top: '11%', width: '90%' }}>
-                  <h2 
-                    className="font-black leading-none tracking-tight mb-2"
+                {/* Left Side - Main Achievement Photo */}
+                {bannerData.photo && (
+                  <div 
+                    className="absolute overflow-hidden shadow-2xl" 
                     style={{ 
-                      fontSize: 'clamp(36px,7.5vw,70px)',
-                      color: '#333',
-                      textShadow: '2px 2px 0 rgba(255,255,255,0.3), -1px -1px 0 rgba(0,0,0,0.8)',
-                      WebkitTextStroke: '1px rgba(255,255,255,0.1)'
+                      left: '2%', 
+                      top: '8%', 
+                      width: '42%', 
+                      height: '65%' 
                     }}
                   >
-                    Congratulations!
-                  </h2>
-                  <p className="text-[clamp(18px,3.2vw,28px)] italic leading-tight opacity-80" style={{ fontFamily: 'cursive', color: '#888' }}>
-                    Our Brand New Leader
-                  </p>
-                </div>
-
-                {/* User Photo - Left Side */}
-                {bannerData.photo && (
-                  <div className="absolute rounded-lg overflow-hidden shadow-2xl" style={{ 
-                    left: '4%', 
-                    top: '25%', 
-                    width: '40%', 
-                    height: '50%' 
-                  }}>
                     <img
                       src={bannerData.photo}
                       alt={bannerData.name}
@@ -117,165 +96,157 @@ export default function BannerPreview() {
                   </div>
                 )}
 
-                {/* Name Badge - Center Right */}
-                <div 
-                  className="absolute rounded-2xl px-6 py-4 shadow-2xl"
-                  style={{ 
-                    top: '28%', 
-                    right: '8%', 
-                    maxWidth: '50%',
-                    background: 'linear-gradient(135deg, #7e1a3d 0%, #4a0e23 100%)',
-                    border: '3px solid #FFD700'
-                  }}
-                >
-                  <p className="text-white font-black text-[clamp(16px,3vw,26px)] text-center leading-tight tracking-widest">
+                {/* Right Side - Name and Team */}
+                <div className="absolute" style={{ top: '20%', right: '6%', width: '48%' }}>
+                  <h2 
+                    className="text-white font-black leading-none tracking-wider text-right"
+                    style={{ 
+                      fontSize: 'clamp(32px,6.5vw,68px)',
+                      textShadow: '3px 3px 6px rgba(0,0,0,0.8)',
+                      letterSpacing: '0.05em'
+                    }}
+                  >
                     {bannerData.name.toUpperCase()}
-                  </p>
-                  <p className="text-[clamp(11px,1.8vw,16px)] text-yellow-200 text-center leading-tight mt-2 font-semibold tracking-wide">
+                  </h2>
+                  <p 
+                    className="text-white font-bold text-right mt-2 tracking-widest"
+                    style={{ 
+                      fontSize: 'clamp(16px,3vw,32px)',
+                      textShadow: '2px 2px 4px rgba(0,0,0,0.8)'
+                    }}
+                  >
                     TEMA - {bannerData.teamCity.toUpperCase()}
                   </p>
                 </div>
 
-                {/* Achieved Text */}
-                <div className="absolute text-center" style={{ top: '44%', right: '8%', maxWidth: '50%' }}>
-                  <p className="text-[clamp(16px,2.8vw,24px)] italic leading-tight opacity-70" style={{ fontFamily: 'cursive', color: '#d4af37' }}>
-                    Achieved
-                  </p>
-                </div>
-
-                {/* Rank Achievement - Large Embossed Text */}
-                <div className="absolute text-center" style={{ top: '48%', right: '5%', width: '55%' }}>
-                  <div 
-                    className="font-black leading-none tracking-tighter"
-                    style={{ 
-                      fontSize: 'clamp(42px,8.5vw,85px)',
-                      color: '#2a1810',
-                      textShadow: `
-                        3px 3px 0 rgba(0,0,0,0.8),
-                        -1px -1px 0 rgba(255,215,0,0.2),
-                        0 0 20px rgba(0,0,0,0.5)
-                      `,
-                      WebkitTextStroke: '1px rgba(0,0,0,0.5)',
-                      letterSpacing: '-0.03em'
-                    }}
-                  >
-                    {bannerData.rankName.toUpperCase()}
-                  </div>
-                  <div className="text-[clamp(18px,3.2vw,30px)] font-bold leading-tight mt-1" style={{ color: '#2a1810' }}>
-                    DS RANK
-                  </div>
-                </div>
-
-                {/* Trip/Achievement Info */}
-                <div className="absolute text-center" style={{ top: '65%', right: '5%', width: '55%' }}>
-                  <p className="text-[clamp(14px,2.5vw,24px)] font-bold leading-tight tracking-wide" style={{ color: '#d4af37' }}>
-                    & ANDAMAN NICOBAR ISLAND
-                  </p>
-                  <p className="text-[clamp(11px,1.8vw,18px)] italic leading-tight mt-1 opacity-80" style={{ fontFamily: 'cursive', color: '#888' }}>
-                    Trip With Couple / Child
-                  </p>
-                </div>
-
                 {/* Achievement Stickers - Circular Images Bottom Left */}
-                <div className="absolute flex gap-[2%]" style={{ bottom: '30%', left: '4%', width: '42%' }}>
-                  {/* First circular sticker */}
+                <div className="absolute flex gap-[2%]" style={{ bottom: '33%', left: '2%', width: '44%' }}>
+                  {/* First circular sticker - Andaman with text */}
                   <div 
-                    className="rounded-full border-[4px] border-yellow-400 overflow-hidden bg-blue-400 shadow-xl"
+                    className="rounded-full border-[5px] border-yellow-400 overflow-hidden shadow-xl relative"
                     style={{ width: '30%', aspectRatio: '1/1' }}
                   >
-                    <div className="w-full h-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-end justify-center p-2">
-                      <span className="text-[clamp(8px,1.5vw,14px)] font-bold text-white italic" style={{ fontFamily: 'cursive' }}>Andaman</span>
+                    <div className="w-full h-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-end justify-center pb-2">
+                      <span 
+                        className="text-white font-bold italic drop-shadow-lg"
+                        style={{ 
+                          fontSize: 'clamp(10px,1.8vw,16px)',
+                          fontFamily: 'cursive',
+                          textShadow: '1px 1px 2px rgba(0,0,0,0.8)'
+                        }}
+                      >
+                        Andaman
+                      </span>
                     </div>
                   </div>
                   {/* Second circular sticker */}
                   <div 
-                    className="rounded-full border-[4px] border-yellow-400 overflow-hidden bg-green-500 shadow-xl"
+                    className="rounded-full border-[5px] border-yellow-400 overflow-hidden shadow-xl"
                     style={{ width: '30%', aspectRatio: '1/1' }}
                   >
                     <div className="w-full h-full bg-gradient-to-br from-green-400 to-green-600" />
                   </div>
                   {/* Third circular sticker */}
                   <div 
-                    className="rounded-full border-[4px] border-yellow-400 overflow-hidden bg-cyan-400 shadow-xl"
+                    className="rounded-full border-[5px] border-yellow-400 overflow-hidden shadow-xl"
                     style={{ width: '30%', aspectRatio: '1/1' }}
                   >
                     <div className="w-full h-full bg-gradient-to-br from-cyan-300 to-cyan-500" />
                   </div>
                 </div>
 
-                {/* Income Section - Bottom Left with Arrow Design */}
+                {/* Income Section - Bottom Left */}
                 {bannerData.chequeAmount && (
-                  <div className="absolute" style={{ bottom: '11%', left: '4%' }}>
-                    {/* Arrow-shaped background */}
-                    <div 
-                      className="relative px-6 py-3 shadow-2xl"
-                      style={{
-                        background: 'linear-gradient(135deg, #8b0000 0%, #5a0000 100%)',
-                        clipPath: 'polygon(0 0, 95% 0, 100% 50%, 95% 100%, 0 100%)',
-                        minWidth: '280px'
+                  <div className="absolute" style={{ bottom: '16%', left: '2%', width: '55%' }}>
+                    <p 
+                      className="text-white font-bold leading-tight mb-1"
+                      style={{ 
+                        fontSize: 'clamp(10px,1.8vw,16px)',
+                        letterSpacing: '0.1em'
                       }}
                     >
-                      <p className="text-[clamp(7px,1.1vw,10px)] text-white font-bold leading-tight tracking-wider">
-                        THIS WEEK INCOME QUALIFY FOR
-                      </p>
-                      <p className="text-[clamp(28px,5.5vw,52px)] font-black leading-tight mt-1" style={{ 
-                        color: '#d4af37',
-                        textShadow: '2px 2px 0 rgba(0,0,0,0.5)'
-                      }}>
-                        ₹{Number(bannerData.chequeAmount).toLocaleString('en-IN')}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {/* Bottom Right - Mentor Photo */}
-                {bannerData.uplines.length > 0 && (
-                  <>
-                    <div 
-                      className="absolute rounded-lg overflow-hidden shadow-2xl"
-                      style={{ bottom: '11%', right: '4%', width: '24%', height: '30%' }}
+                      THIS WEEK INCOME QUALIFY FOR
+                    </p>
+                    <p 
+                      className="font-black leading-none"
+                      style={{ 
+                        fontSize: 'clamp(48px,9vw,90px)',
+                        color: '#FFFFFF',
+                        textShadow: '4px 4px 8px rgba(0,0,0,0.9)',
+                        letterSpacing: '0.02em'
+                      }}
                     >
-                      {bannerData.uplines[0].avatar ? (
-                        <img 
-                          src={bannerData.uplines[0].avatar} 
-                          alt={bannerData.uplines[0].name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-gray-700" />
-                      )}
-                    </div>
-
-                    {/* Mentor Info - Above Photo */}
-                    <div className="absolute text-center" style={{ bottom: '43%', right: '4%', width: '24%' }}>
-                      <p className="text-[clamp(13px,2.2vw,20px)] italic leading-tight" style={{ fontFamily: 'cursive', color: '#d4af37' }}>
-                        Best Wishes
-                      </p>
-                      <p className="text-[clamp(10px,1.6vw,14px)] italic leading-tight font-medium" style={{ color: '#888' }}>
-                        FROM
-                      </p>
-                      <p className="text-[clamp(12px,2.2vw,18px)] font-bold text-white leading-tight mt-1 tracking-wide">
-                        {bannerData.uplines[0].name.toUpperCase()}
-                      </p>
-                      <p className="text-[clamp(9px,1.5vw,13px)] leading-tight font-semibold mt-1" style={{ color: '#d4af37' }}>
-                        ROYAL AMBASSADOR
-                      </p>
-                    </div>
-                  </>
-                )}
-
-                {/* Contact Info - Bottom Left */}
-                <div 
-                  className="absolute flex items-center gap-2 rounded-xl px-4 py-2"
-                  style={{ bottom: '2%', left: '4%', background: 'rgba(0,0,0,0.7)' }}
-                >
-                  <span className="text-[clamp(14px,2.5vw,20px)]">📞</span>
-                  <div>
-                    <p className="text-[clamp(6px,0.9vw,8px)] text-white leading-none opacity-80">FOR SUCCESS CALL ON</p>
-                    <p className="text-[clamp(11px,1.8vw,16px)] font-bold leading-tight" style={{ color: '#d4af37' }}>
-                      +91 7856891547
+                      {Number(bannerData.chequeAmount).toLocaleString('en-IN')}
                     </p>
                   </div>
+                )}
+
+                {/* Bottom Right - Profile Photo (Auto-Sync from Profile) */}
+                {bannerData.uplines.length > 0 && (
+                  <div 
+                    className="absolute overflow-hidden shadow-2xl"
+                    style={{ 
+                      bottom: '8%', 
+                      right: '3%', 
+                      width: '32%', 
+                      height: '38%' 
+                    }}
+                  >
+                    {bannerData.uplines[0].avatar ? (
+                      <img 
+                        src={bannerData.uplines[0].avatar} 
+                        alt={bannerData.uplines[0].name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gray-700" />
+                    )}
+                  </div>
+                )}
+
+                {/* Bottom Right - Profile Name and Rank (Auto-Sync) */}
+                {bannerData.uplines.length > 0 && (
+                  <div 
+                    className="absolute text-center"
+                    style={{ bottom: '48%', right: '3%', width: '32%' }}
+                  >
+                    <p 
+                      className="text-white font-bold leading-tight tracking-wide"
+                      style={{ 
+                        fontSize: 'clamp(14px,2.5vw,24px)',
+                        textShadow: '2px 2px 4px rgba(0,0,0,0.8)'
+                      }}
+                    >
+                      {bannerData.uplines[0].name.toUpperCase()}
+                    </p>
+                    <p 
+                      className="font-semibold leading-tight mt-1"
+                      style={{ 
+                        fontSize: 'clamp(10px,1.8vw,16px)',
+                        color: '#FFD700',
+                        textShadow: '1px 1px 2px rgba(0,0,0,0.8)'
+                      }}
+                    >
+                      ROYAL AMBASSADOR
+                    </p>
+                  </div>
+                )}
+
+                {/* Bottom Left - Contact Info (Auto-Sync from Profile) */}
+                <div 
+                  className="absolute"
+                  style={{ bottom: '3%', left: '2%' }}
+                >
+                  <p 
+                    className="font-bold leading-tight"
+                    style={{ 
+                      fontSize: 'clamp(14px,2.5vw,22px)',
+                      color: '#FFFFFF',
+                      textShadow: '2px 2px 4px rgba(0,0,0,0.8)'
+                    }}
+                  >
+                    +91 9549477444
+                  </p>
                 </div>
 
               </div>
