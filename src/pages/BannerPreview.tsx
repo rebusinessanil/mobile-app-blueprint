@@ -78,62 +78,36 @@ export default function BannerPreview() {
               <div className="absolute inset-0">
                 
                 {/* Company Logo Top Left */}
-                <div className="absolute text-white" style={{ top: '3%', left: '3%' }}>
-                  <div className="text-[clamp(14px,2.2vw,20px)] font-bold leading-tight">Asclepius</div>
-                  <div className="text-[clamp(9px,1.2vw,12px)] leading-tight opacity-90">Empowering Wellness</div>
-                </div>
-
-                {/* Uplines Row - Top Center */}
-                {bannerData.uplines.length > 0 && (
-                  <div className="absolute left-1/2 -translate-x-1/2 flex gap-[1.5%]" style={{ top: '3%' }}>
-                    {bannerData.uplines.slice(0, 9).map((upline, idx) => (
-                      <div
-                        key={idx}
-                        className="rounded-full border-[3px] border-yellow-400 overflow-hidden bg-secondary"
-                        style={{ width: '7%', aspectRatio: '1/1' }}
-                      >
-                        {upline.avatar ? (
-                          <img src={upline.avatar} alt={upline.name} className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="w-full h-full bg-primary/20" />
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Company Logo Top Right */}
-                <div className="absolute text-white text-right" style={{ top: '3%', right: '3%' }}>
-                  <div className="text-[clamp(14px,2.2vw,20px)] font-bold leading-tight">FIGHTER</div>
-                  <div className="text-[clamp(9px,1.2vw,12px)] leading-tight opacity-90">SUCCESS SYSTEM</div>
-                </div>
-
-                {/* Confetti Decoration */}
-                <div className="absolute" style={{ top: '15%', left: '30%', right: '30%' }}>
-                  <div className="flex justify-center gap-1">
-                    {['🎊', '🎉', '✨', '🎈', '🎊'].map((emoji, i) => (
-                      <span key={i} className="text-[clamp(12px,2vw,20px)] animate-pulse">{emoji}</span>
-                    ))}
-                  </div>
+                <div className="absolute text-white" style={{ top: '2.5%', left: '2.5%' }}>
+                  <div className="text-[clamp(16px,2.5vw,22px)] font-bold leading-tight tracking-wide">Asclepius</div>
+                  <div className="text-[clamp(9px,1.3vw,13px)] leading-tight opacity-90">Empowering Wellness</div>
                 </div>
 
                 {/* Congratulations Text */}
-                <div className="absolute left-1/2 -translate-x-1/2 text-center" style={{ top: '17%', width: '85%' }}>
-                  <h2 className="text-[clamp(24px,5vw,40px)] font-extrabold text-white drop-shadow-[0_4px_12px_rgba(0,0,0,0.8)] mb-1 leading-none">
+                <div className="absolute left-1/2 -translate-x-1/2 text-center" style={{ top: '11%', width: '90%' }}>
+                  <h2 
+                    className="font-black leading-none tracking-tight mb-2"
+                    style={{ 
+                      fontSize: 'clamp(36px,7.5vw,70px)',
+                      color: '#333',
+                      textShadow: '2px 2px 0 rgba(255,255,255,0.3), -1px -1px 0 rgba(0,0,0,0.8)',
+                      WebkitTextStroke: '1px rgba(255,255,255,0.1)'
+                    }}
+                  >
                     Congratulations!
                   </h2>
-                  <p className="text-[clamp(16px,2.8vw,24px)] text-yellow-300 italic leading-tight mt-2" style={{ fontFamily: 'cursive' }}>
+                  <p className="text-[clamp(18px,3.2vw,28px)] italic leading-tight opacity-80" style={{ fontFamily: 'cursive', color: '#888' }}>
                     Our Brand New Leader
                   </p>
                 </div>
 
-                {/* User Photo - Left Side with proper positioning */}
+                {/* User Photo - Left Side */}
                 {bannerData.photo && (
                   <div className="absolute rounded-lg overflow-hidden shadow-2xl" style={{ 
-                    left: '5%', 
-                    top: '32%', 
-                    width: '38%', 
-                    height: '45%' 
+                    left: '4%', 
+                    top: '25%', 
+                    width: '40%', 
+                    height: '50%' 
                   }}>
                     <img
                       src={bannerData.photo}
@@ -143,72 +117,123 @@ export default function BannerPreview() {
                   </div>
                 )}
 
-                {/* Trophy/Ribbon Sticker - overlays on photo */}
-                <div className="absolute" style={{ bottom: '45%', left: '3%', width: '18%' }}>
-                  <div className="text-[clamp(40px,7vw,80px)] drop-shadow-lg">🏆</div>
-                </div>
-
-                {/* Name Badge - Top Right Area */}
+                {/* Name Badge - Center Right */}
                 <div 
-                  className="absolute bg-fuchsia-700/95 rounded-3xl px-5 py-3 border-[3px] border-yellow-400 shadow-xl"
-                  style={{ top: '35%', right: '5%', maxWidth: '48%' }}
+                  className="absolute rounded-2xl px-6 py-4 shadow-2xl"
+                  style={{ 
+                    top: '28%', 
+                    right: '8%', 
+                    maxWidth: '50%',
+                    background: 'linear-gradient(135deg, #7e1a3d 0%, #4a0e23 100%)',
+                    border: '3px solid #FFD700'
+                  }}
                 >
-                  <p className="text-white font-black text-[clamp(13px,2.2vw,18px)] text-center leading-tight tracking-wide">
+                  <p className="text-white font-black text-[clamp(16px,3vw,26px)] text-center leading-tight tracking-widest">
                     {bannerData.name.toUpperCase()}
                   </p>
-                  <p className="text-[clamp(10px,1.5vw,13px)] text-yellow-200 text-center leading-tight mt-1 font-medium">
-                    TEAM {bannerData.teamCity.toUpperCase()}
+                  <p className="text-[clamp(11px,1.8vw,16px)] text-yellow-200 text-center leading-tight mt-2 font-semibold tracking-wide">
+                    TEMA - {bannerData.teamCity.toUpperCase()}
                   </p>
                 </div>
 
-                {/* Team Location Label */}
-                <div className="absolute text-center" style={{ top: '47%', right: '5%', maxWidth: '48%' }}>
-                  <p className="text-[clamp(11px,1.8vw,16px)] text-yellow-300 font-bold leading-tight tracking-wider">
-                    {bannerData.teamCity.toUpperCase()} FIGHTER
-                  </p>
-                </div>
-
-                {/* Rank Achievement - Large Text */}
-                <div className="absolute left-1/2 -translate-x-1/2 text-center" style={{ top: '52%', width: '90%' }}>
-                  <p className="text-[clamp(18px,3vw,28px)] text-yellow-300 italic mb-1 leading-tight" style={{ fontFamily: 'cursive' }}>
+                {/* Achieved Text */}
+                <div className="absolute text-center" style={{ top: '44%', right: '8%', maxWidth: '50%' }}>
+                  <p className="text-[clamp(16px,2.8vw,24px)] italic leading-tight opacity-70" style={{ fontFamily: 'cursive', color: '#d4af37' }}>
                     Achieved
                   </p>
+                </div>
+
+                {/* Rank Achievement - Large Embossed Text */}
+                <div className="absolute text-center" style={{ top: '48%', right: '5%', width: '55%' }}>
                   <div 
-                    className="font-black text-yellow-400 drop-shadow-[0_6px_20px_rgba(0,0,0,0.9)] leading-none tracking-tighter"
+                    className="font-black leading-none tracking-tighter"
                     style={{ 
-                      fontSize: 'clamp(48px,10vw,90px)',
-                      textShadow: '4px 4px 0 rgba(0,0,0,0.5), -2px -2px 0 rgba(255,215,0,0.3)'
+                      fontSize: 'clamp(42px,8.5vw,85px)',
+                      color: '#2a1810',
+                      textShadow: `
+                        3px 3px 0 rgba(0,0,0,0.8),
+                        -1px -1px 0 rgba(255,215,0,0.2),
+                        0 0 20px rgba(0,0,0,0.5)
+                      `,
+                      WebkitTextStroke: '1px rgba(0,0,0,0.5)',
+                      letterSpacing: '-0.03em'
                     }}
                   >
                     {bannerData.rankName.toUpperCase()}
                   </div>
-                  <p className="text-[clamp(20px,3.5vw,32px)] text-yellow-300 italic mt-1 leading-tight" style={{ fontFamily: 'cursive' }}>
-                    D's Rank
+                  <div className="text-[clamp(18px,3.2vw,30px)] font-bold leading-tight mt-1" style={{ color: '#2a1810' }}>
+                    DS RANK
+                  </div>
+                </div>
+
+                {/* Trip/Achievement Info */}
+                <div className="absolute text-center" style={{ top: '65%', right: '5%', width: '55%' }}>
+                  <p className="text-[clamp(14px,2.5vw,24px)] font-bold leading-tight tracking-wide" style={{ color: '#d4af37' }}>
+                    & ANDAMAN NICOBAR ISLAND
+                  </p>
+                  <p className="text-[clamp(11px,1.8vw,18px)] italic leading-tight mt-1 opacity-80" style={{ fontFamily: 'cursive', color: '#888' }}>
+                    Trip With Couple / Child
                   </p>
                 </div>
 
-                {/* Income Section - Bottom Left */}
-                {bannerData.chequeAmount && (
+                {/* Achievement Stickers - Circular Images Bottom Left */}
+                <div className="absolute flex gap-[2%]" style={{ bottom: '30%', left: '4%', width: '42%' }}>
+                  {/* First circular sticker */}
                   <div 
-                    className="absolute bg-fuchsia-800/95 rounded-2xl px-4 py-2 border-[3px] border-yellow-400 shadow-xl"
-                    style={{ bottom: '8%', left: '5%', maxWidth: '48%' }}
+                    className="rounded-full border-[4px] border-yellow-400 overflow-hidden bg-blue-400 shadow-xl"
+                    style={{ width: '30%', aspectRatio: '1/1' }}
                   >
-                    <p className="text-[clamp(8px,1.3vw,11px)] text-white font-bold leading-tight tracking-wide">
-                      THIS WEEK INCOME QUALIFY FOR
-                    </p>
-                    <p className="text-[clamp(20px,4vw,36px)] font-black text-yellow-300 leading-tight mt-1">
-                      ₹ {Number(bannerData.chequeAmount).toLocaleString('en-IN')}/-
-                    </p>
+                    <div className="w-full h-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-end justify-center p-2">
+                      <span className="text-[clamp(8px,1.5vw,14px)] font-bold text-white italic" style={{ fontFamily: 'cursive' }}>Andaman</span>
+                    </div>
+                  </div>
+                  {/* Second circular sticker */}
+                  <div 
+                    className="rounded-full border-[4px] border-yellow-400 overflow-hidden bg-green-500 shadow-xl"
+                    style={{ width: '30%', aspectRatio: '1/1' }}
+                  >
+                    <div className="w-full h-full bg-gradient-to-br from-green-400 to-green-600" />
+                  </div>
+                  {/* Third circular sticker */}
+                  <div 
+                    className="rounded-full border-[4px] border-yellow-400 overflow-hidden bg-cyan-400 shadow-xl"
+                    style={{ width: '30%', aspectRatio: '1/1' }}
+                  >
+                    <div className="w-full h-full bg-gradient-to-br from-cyan-300 to-cyan-500" />
+                  </div>
+                </div>
+
+                {/* Income Section - Bottom Left with Arrow Design */}
+                {bannerData.chequeAmount && (
+                  <div className="absolute" style={{ bottom: '11%', left: '4%' }}>
+                    {/* Arrow-shaped background */}
+                    <div 
+                      className="relative px-6 py-3 shadow-2xl"
+                      style={{
+                        background: 'linear-gradient(135deg, #8b0000 0%, #5a0000 100%)',
+                        clipPath: 'polygon(0 0, 95% 0, 100% 50%, 95% 100%, 0 100%)',
+                        minWidth: '280px'
+                      }}
+                    >
+                      <p className="text-[clamp(7px,1.1vw,10px)] text-white font-bold leading-tight tracking-wider">
+                        THIS WEEK INCOME QUALIFY FOR
+                      </p>
+                      <p className="text-[clamp(28px,5.5vw,52px)] font-black leading-tight mt-1" style={{ 
+                        color: '#d4af37',
+                        textShadow: '2px 2px 0 rgba(0,0,0,0.5)'
+                      }}>
+                        ₹{Number(bannerData.chequeAmount).toLocaleString('en-IN')}
+                      </p>
+                    </div>
                   </div>
                 )}
 
-                {/* Bottom Right - Mentor Photo & Info */}
+                {/* Bottom Right - Mentor Photo */}
                 {bannerData.uplines.length > 0 && (
                   <>
-                    {/* Mentor Photo */}
                     <div 
-                      className="absolute rounded-lg overflow-hidden border-[3px] border-yellow-400 shadow-xl"
-                      style={{ bottom: '8%', right: '5%', width: '22%', height: '28%' }}
+                      className="absolute rounded-lg overflow-hidden shadow-2xl"
+                      style={{ bottom: '11%', right: '4%', width: '24%', height: '30%' }}
                     >
                       {bannerData.uplines[0].avatar ? (
                         <img 
@@ -217,50 +242,40 @@ export default function BannerPreview() {
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <div className="w-full h-full bg-primary/30" />
+                        <div className="w-full h-full bg-gray-700" />
                       )}
                     </div>
 
-                    {/* Mentor Info Text */}
-                    <div className="absolute text-center" style={{ bottom: '38%', right: '5%', maxWidth: '45%' }}>
-                      <p className="text-[clamp(12px,2vw,18px)] text-yellow-300 italic leading-tight" style={{ fontFamily: 'cursive' }}>
+                    {/* Mentor Info - Above Photo */}
+                    <div className="absolute text-center" style={{ bottom: '43%', right: '4%', width: '24%' }}>
+                      <p className="text-[clamp(13px,2.2vw,20px)] italic leading-tight" style={{ fontFamily: 'cursive', color: '#d4af37' }}>
                         Best Wishes
                       </p>
-                      <p className="text-[clamp(11px,1.8vw,16px)] text-yellow-200 italic leading-tight font-medium">
+                      <p className="text-[clamp(10px,1.6vw,14px)] italic leading-tight font-medium" style={{ color: '#888' }}>
                         FROM
                       </p>
                       <p className="text-[clamp(12px,2.2vw,18px)] font-bold text-white leading-tight mt-1 tracking-wide">
                         {bannerData.uplines[0].name.toUpperCase()}
                       </p>
-                      <p className="text-[clamp(9px,1.5vw,13px)] text-yellow-200 leading-tight font-medium">
-                        BLUE DIAMOND AWPL
+                      <p className="text-[clamp(9px,1.5vw,13px)] leading-tight font-semibold mt-1" style={{ color: '#d4af37' }}>
+                        ROYAL AMBASSADOR
                       </p>
                     </div>
                   </>
                 )}
 
-                {/* Contact Info - Bottom Center/Left */}
+                {/* Contact Info - Bottom Left */}
                 <div 
-                  className="absolute flex items-center gap-2 bg-blue-900/80 rounded-xl px-3 py-2 border-2 border-yellow-400"
-                  style={{ bottom: '1.5%', left: '3%' }}
+                  className="absolute flex items-center gap-2 rounded-xl px-4 py-2"
+                  style={{ bottom: '2%', left: '4%', background: 'rgba(0,0,0,0.7)' }}
                 >
-                  <span className="text-[clamp(16px,3vw,24px)]">📞</span>
+                  <span className="text-[clamp(14px,2.5vw,20px)]">📞</span>
                   <div>
-                    <p className="text-[clamp(7px,1vw,9px)] text-white leading-none">FOR SUCCESS CALL ON</p>
-                    <p className="text-[clamp(10px,1.6vw,14px)] font-bold text-yellow-300 leading-tight">
+                    <p className="text-[clamp(6px,0.9vw,8px)] text-white leading-none opacity-80">FOR SUCCESS CALL ON</p>
+                    <p className="text-[clamp(11px,1.8vw,16px)] font-bold leading-tight" style={{ color: '#d4af37' }}>
                       +91 7856891547
                     </p>
                   </div>
-                </div>
-
-                {/* Social Media Icons - Bottom Right */}
-                <div className="absolute flex gap-1" style={{ bottom: '1.5%', right: '28%' }}>
-                  {['📘', '📷', '▶️', '💬'].map((icon, i) => (
-                    <div key={i} className="text-[clamp(12px,2vw,16px)]">{icon}</div>
-                  ))}
-                  <span className="text-[clamp(8px,1.3vw,11px)] text-yellow-200 font-medium ml-1">
-                    /AJAY KUMAR GUPTA
-                  </span>
                 </div>
 
               </div>
