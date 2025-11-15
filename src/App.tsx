@@ -12,6 +12,8 @@ import Categories from "./pages/Categories";
 import Messages from "./pages/Messages";
 import Profile from "./pages/Profile";
 import ProfileEdit from "./pages/ProfileEdit";
+import RankSelection from "./pages/RankSelection";
+import RankBannerCreate from "./pages/RankBannerCreate";
 
 const queryClient = new QueryClient();
 
@@ -30,6 +32,8 @@ const App = () => (
           <Route path="/messages" element={<Messages />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/profile-edit" element={<ProfileEdit />} />
+          <Route path="/rank-selection" element={<RankSelection />} />
+          <Route path="/rank-banner-create/:rankId" element={<RankBannerCreate />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

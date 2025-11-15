@@ -14,6 +14,7 @@ export default function Dashboard() {
     {
       title: "Rank Promotion",
       icon: "🏆",
+      link: "/rank-selection",
       templates: Array(3).fill({ title: "CHANE COVER", subtitle: "{ BACKEND INTEGRATED }" }),
     },
     {
@@ -90,7 +91,10 @@ export default function Dashboard() {
                 <span className="text-2xl">{category.icon}</span>
                 <h2 className="text-lg font-bold text-foreground">{category.title}</h2>
               </div>
-              <Link to="/categories" className="text-primary text-sm font-semibold hover:underline">
+              <Link 
+                to={category.link || "/categories"} 
+                className="text-primary text-sm font-semibold hover:underline"
+              >
                 View All
               </Link>
             </div>
