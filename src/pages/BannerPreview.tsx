@@ -8,6 +8,12 @@ import { useProfilePhotos } from "@/hooks/useProfilePhotos";
 import { supabase } from "@/integrations/supabase/client";
 import type { Sticker } from "@/hooks/useStickers";
 import html2canvas from "html2canvas";
+interface Upline {
+  id: string;
+  name: string;
+  avatar?: string;
+}
+
 interface BannerData {
   rankName: string;
   rankIcon: string;
@@ -16,11 +22,7 @@ interface BannerData {
   teamCity: string;
   chequeAmount?: string;
   photo: string | null;
-  uplines: Array<{
-    id: string;
-    name: string;
-    avatar?: string;
-  }>;
+  uplines: Upline[];
   selectedStickers?: string[];
 }
 export default function BannerPreview() {
@@ -38,14 +40,14 @@ export default function BannerPreview() {
   const { photos: profilePhotos } = useProfilePhotos(mockUserId);
 
   // Use profile data for bottom section, fallback to banner data
-  const displayName = profile?.name || bannerData?.name || "";
-  const displayContact = profile?.mobile || profile?.whatsapp || "9876543210";
-  const displayRank = profile?.rank || "Diamond";
+  const displayName: string = profile?.name || bannerData?.name || "";
+  const displayContact: string = profile?.mobile || profile?.whatsapp || "9876543210";
+  const displayRank: string = profile?.rank || "Diamond";
   
   // Get primary profile photo or first photo
-  const primaryPhoto = profile?.profile_photo || 
-                       (profilePhotos[0]?.photo_url) || 
-                       (bannerData?.photo) || 
+  const primaryPhoto: string | null = profile?.profile_photo || 
+                       profilePhotos[0]?.photo_url || 
+                       bannerData?.photo || 
                        null;
 
   // Fetch selected stickers
