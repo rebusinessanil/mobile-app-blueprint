@@ -43,7 +43,10 @@ export default function BannerPreview() {
   const displayRank = profile?.rank || "Diamond";
   
   // Get primary profile photo or first photo
-  const primaryPhoto = profile?.profile_photo || profilePhotos[0]?.photo_url || bannerData?.photo;
+  const primaryPhoto = profile?.profile_photo || 
+                       (profilePhotos[0]?.photo_url) || 
+                       (bannerData?.photo) || 
+                       null;
 
   // Fetch selected stickers
   useEffect(() => {
