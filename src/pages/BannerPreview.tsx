@@ -72,26 +72,25 @@ export default function BannerPreview() {
       <div className="px-6 py-6 space-y-6">
         {/* Main Banner Preview - Fixed Square Format (1080x1080 base) */}
         <div className="relative w-full max-w-[600px] mx-auto">
-          <div className="border-4 border-[#00FF00] rounded-2xl overflow-hidden shadow-2xl">
+          <div className="border-4 border-primary rounded-2xl overflow-hidden shadow-2xl">
             {/* Fixed aspect ratio container - scales proportionally on all devices */}
             <div className={`relative w-full bg-gradient-to-br ${templateColors[selectedTemplate].bgColor}`} style={{ paddingBottom: '100%' }}>
               <div className="absolute inset-0">
-                {/* All elements use percentage-based positioning for cross-device consistency */}
                 
-                {/* Company Logo Top Left - 4% from top/left */}
-                <div className="absolute text-white" style={{ top: '4%', left: '4%' }}>
-                  <div className="text-[clamp(14px,2vw,18px)] font-bold leading-tight">Asclepius</div>
-                  <div className="text-[clamp(10px,1.2vw,12px)] leading-tight">Empowering Wellness</div>
+                {/* Company Logo Top Left */}
+                <div className="absolute text-white" style={{ top: '3%', left: '3%' }}>
+                  <div className="text-[clamp(14px,2.2vw,20px)] font-bold leading-tight">Asclepius</div>
+                  <div className="text-[clamp(9px,1.2vw,12px)] leading-tight opacity-90">Empowering Wellness</div>
                 </div>
 
-                {/* Uplines Row - Top Center - 4% from top */}
+                {/* Uplines Row - Top Center */}
                 {bannerData.uplines.length > 0 && (
-                  <div className="absolute left-1/2 -translate-x-1/2 flex gap-2" style={{ top: '4%' }}>
-                    {bannerData.uplines.slice(0, 5).map((upline, idx) => (
+                  <div className="absolute left-1/2 -translate-x-1/2 flex gap-[1.5%]" style={{ top: '3%' }}>
+                    {bannerData.uplines.slice(0, 9).map((upline, idx) => (
                       <div
                         key={idx}
-                        className="rounded-full gold-border overflow-hidden bg-secondary"
-                        style={{ width: '8%', aspectRatio: '1/1' }}
+                        className="rounded-full border-[3px] border-yellow-400 overflow-hidden bg-secondary"
+                        style={{ width: '7%', aspectRatio: '1/1' }}
                       >
                         {upline.avatar ? (
                           <img src={upline.avatar} alt={upline.name} className="w-full h-full object-cover" />
@@ -103,28 +102,38 @@ export default function BannerPreview() {
                   </div>
                 )}
 
-                {/* Company Logo Top Right - 4% from top/right */}
-                <div className="absolute text-white text-right" style={{ top: '4%', right: '4%' }}>
-                  <div className="text-[clamp(14px,2vw,18px)] font-bold leading-tight">FIGHTER</div>
+                {/* Company Logo Top Right */}
+                <div className="absolute text-white text-right" style={{ top: '3%', right: '3%' }}>
+                  <div className="text-[clamp(14px,2.2vw,20px)] font-bold leading-tight">FIGHTER</div>
+                  <div className="text-[clamp(9px,1.2vw,12px)] leading-tight opacity-90">SUCCESS SYSTEM</div>
                 </div>
 
-                {/* Congratulations Text - 18% from top */}
-                <div className="absolute left-1/2 -translate-x-1/2 text-center" style={{ top: '18%', width: '80%' }}>
-                  <h2 className="text-[clamp(20px,4vw,32px)] font-bold text-white drop-shadow-lg mb-1 leading-tight">
+                {/* Confetti Decoration */}
+                <div className="absolute" style={{ top: '15%', left: '30%', right: '30%' }}>
+                  <div className="flex justify-center gap-1">
+                    {['🎊', '🎉', '✨', '🎈', '🎊'].map((emoji, i) => (
+                      <span key={i} className="text-[clamp(12px,2vw,20px)] animate-pulse">{emoji}</span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Congratulations Text */}
+                <div className="absolute left-1/2 -translate-x-1/2 text-center" style={{ top: '17%', width: '85%' }}>
+                  <h2 className="text-[clamp(24px,5vw,40px)] font-extrabold text-white drop-shadow-[0_4px_12px_rgba(0,0,0,0.8)] mb-1 leading-none">
                     Congratulations!
                   </h2>
-                  <p className="text-[clamp(14px,2.5vw,20px)] text-yellow-400 font-script italic leading-tight">
+                  <p className="text-[clamp(16px,2.8vw,24px)] text-yellow-300 italic leading-tight mt-2" style={{ fontFamily: 'cursive' }}>
                     Our Brand New Leader
                   </p>
                 </div>
 
-                {/* User Photo - Left Side - positioned at 30% from top, 7% from left */}
+                {/* User Photo - Left Side with proper positioning */}
                 {bannerData.photo && (
-                  <div className="absolute rounded-lg overflow-hidden" style={{ 
-                    left: '7%', 
-                    top: '30%', 
-                    width: '40%', 
-                    height: '48%' 
+                  <div className="absolute rounded-lg overflow-hidden shadow-2xl" style={{ 
+                    left: '5%', 
+                    top: '32%', 
+                    width: '38%', 
+                    height: '45%' 
                   }}>
                     <img
                       src={bannerData.photo}
@@ -134,51 +143,126 @@ export default function BannerPreview() {
                   </div>
                 )}
 
-                {/* Name Badge - positioned at 33% from top, 52% from left */}
+                {/* Trophy/Ribbon Sticker - overlays on photo */}
+                <div className="absolute" style={{ bottom: '45%', left: '3%', width: '18%' }}>
+                  <div className="text-[clamp(40px,7vw,80px)] drop-shadow-lg">🏆</div>
+                </div>
+
+                {/* Name Badge - Top Right Area */}
                 <div 
-                  className="absolute bg-purple-800/90 rounded-2xl px-4 py-2 border-2 border-yellow-400"
-                  style={{ top: '33%', right: '7%', maxWidth: '45%' }}
+                  className="absolute bg-fuchsia-700/95 rounded-3xl px-5 py-3 border-[3px] border-yellow-400 shadow-xl"
+                  style={{ top: '35%', right: '5%', maxWidth: '48%' }}
                 >
-                  <p className="text-white font-bold text-[clamp(12px,2vw,16px)] text-center leading-tight">
+                  <p className="text-white font-black text-[clamp(13px,2.2vw,18px)] text-center leading-tight tracking-wide">
                     {bannerData.name.toUpperCase()}
                   </p>
-                  <p className="text-[clamp(10px,1.5vw,13px)] text-yellow-200 text-center leading-tight mt-1">
+                  <p className="text-[clamp(10px,1.5vw,13px)] text-yellow-200 text-center leading-tight mt-1 font-medium">
                     TEAM {bannerData.teamCity.toUpperCase()}
                   </p>
                 </div>
 
-                {/* Rank Achievement - centered at 60% from top */}
-                <div className="absolute left-1/2 -translate-x-1/2 text-center" style={{ bottom: '28%', width: '90%' }}>
-                  <p className="text-[clamp(14px,2.5vw,22px)] text-yellow-400 font-script italic mb-1 leading-tight">Achieved</p>
-                  <div className="text-[clamp(32px,8vw,64px)] font-black text-yellow-500 drop-shadow-lg leading-tight">
-                    {bannerData.rankName.toUpperCase()}
-                  </div>
-                  <p className="text-[clamp(16px,3.5vw,28px)] text-yellow-400 font-script italic mt-1 leading-tight">D's Rank</p>
-                </div>
-
-                {/* Ribbon Badge - 42% from bottom, 10% from left */}
-                <div className="absolute" style={{ bottom: '42%', left: '10%' }}>
-                  <div className="text-[clamp(32px,6vw,56px)]">🏆</div>
-                </div>
-
-                {/* Income Section - 10% from bottom/left */}
-                <div 
-                  className="absolute bg-purple-900/90 rounded-xl px-3 py-2 border-2 border-yellow-400"
-                  style={{ bottom: '10%', left: '7%', maxWidth: '42%' }}
-                >
-                  <p className="text-[clamp(8px,1.2vw,10px)] text-white leading-tight">THIS WEEK INCOME QUALIFY FOR</p>
-                  <p className="text-[clamp(16px,3.5vw,28px)] font-bold text-yellow-400 leading-tight mt-1">
-                    ₹ {bannerData.chequeAmount ? Number(bannerData.chequeAmount).toLocaleString('en-IN') : '2,500'}/-
+                {/* Team Location Label */}
+                <div className="absolute text-center" style={{ top: '47%', right: '5%', maxWidth: '48%' }}>
+                  <p className="text-[clamp(11px,1.8vw,16px)] text-yellow-300 font-bold leading-tight tracking-wider">
+                    {bannerData.teamCity.toUpperCase()} FIGHTER
                   </p>
                 </div>
 
-                {/* Bottom Right - Upline Info - 7% from bottom/right */}
-                <div className="absolute text-right" style={{ bottom: '7%', right: '7%', maxWidth: '45%' }}>
-                  <p className="text-[clamp(12px,2vw,16px)] text-yellow-400 font-script italic leading-tight">Best Wishes</p>
-                  <p className="text-[clamp(12px,2vw,16px)] text-yellow-400 italic leading-tight">FROM</p>
-                  <p className="text-[clamp(13px,2.2vw,18px)] font-bold text-white leading-tight mt-1">MR. AJAY KUMAR GUPTA</p>
-                  <p className="text-[clamp(10px,1.5vw,13px)] text-yellow-200 leading-tight">BLUE DIAMOND AWPL</p>
+                {/* Rank Achievement - Large Text */}
+                <div className="absolute left-1/2 -translate-x-1/2 text-center" style={{ top: '52%', width: '90%' }}>
+                  <p className="text-[clamp(18px,3vw,28px)] text-yellow-300 italic mb-1 leading-tight" style={{ fontFamily: 'cursive' }}>
+                    Achieved
+                  </p>
+                  <div 
+                    className="font-black text-yellow-400 drop-shadow-[0_6px_20px_rgba(0,0,0,0.9)] leading-none tracking-tighter"
+                    style={{ 
+                      fontSize: 'clamp(48px,10vw,90px)',
+                      textShadow: '4px 4px 0 rgba(0,0,0,0.5), -2px -2px 0 rgba(255,215,0,0.3)'
+                    }}
+                  >
+                    {bannerData.rankName.toUpperCase()}
+                  </div>
+                  <p className="text-[clamp(20px,3.5vw,32px)] text-yellow-300 italic mt-1 leading-tight" style={{ fontFamily: 'cursive' }}>
+                    D's Rank
+                  </p>
                 </div>
+
+                {/* Income Section - Bottom Left */}
+                {bannerData.chequeAmount && (
+                  <div 
+                    className="absolute bg-fuchsia-800/95 rounded-2xl px-4 py-2 border-[3px] border-yellow-400 shadow-xl"
+                    style={{ bottom: '8%', left: '5%', maxWidth: '48%' }}
+                  >
+                    <p className="text-[clamp(8px,1.3vw,11px)] text-white font-bold leading-tight tracking-wide">
+                      THIS WEEK INCOME QUALIFY FOR
+                    </p>
+                    <p className="text-[clamp(20px,4vw,36px)] font-black text-yellow-300 leading-tight mt-1">
+                      ₹ {Number(bannerData.chequeAmount).toLocaleString('en-IN')}/-
+                    </p>
+                  </div>
+                )}
+
+                {/* Bottom Right - Mentor Photo & Info */}
+                {bannerData.uplines.length > 0 && (
+                  <>
+                    {/* Mentor Photo */}
+                    <div 
+                      className="absolute rounded-lg overflow-hidden border-[3px] border-yellow-400 shadow-xl"
+                      style={{ bottom: '8%', right: '5%', width: '22%', height: '28%' }}
+                    >
+                      {bannerData.uplines[0].avatar ? (
+                        <img 
+                          src={bannerData.uplines[0].avatar} 
+                          alt={bannerData.uplines[0].name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-primary/30" />
+                      )}
+                    </div>
+
+                    {/* Mentor Info Text */}
+                    <div className="absolute text-center" style={{ bottom: '38%', right: '5%', maxWidth: '45%' }}>
+                      <p className="text-[clamp(12px,2vw,18px)] text-yellow-300 italic leading-tight" style={{ fontFamily: 'cursive' }}>
+                        Best Wishes
+                      </p>
+                      <p className="text-[clamp(11px,1.8vw,16px)] text-yellow-200 italic leading-tight font-medium">
+                        FROM
+                      </p>
+                      <p className="text-[clamp(12px,2.2vw,18px)] font-bold text-white leading-tight mt-1 tracking-wide">
+                        {bannerData.uplines[0].name.toUpperCase()}
+                      </p>
+                      <p className="text-[clamp(9px,1.5vw,13px)] text-yellow-200 leading-tight font-medium">
+                        BLUE DIAMOND AWPL
+                      </p>
+                    </div>
+                  </>
+                )}
+
+                {/* Contact Info - Bottom Center/Left */}
+                <div 
+                  className="absolute flex items-center gap-2 bg-blue-900/80 rounded-xl px-3 py-2 border-2 border-yellow-400"
+                  style={{ bottom: '1.5%', left: '3%' }}
+                >
+                  <span className="text-[clamp(16px,3vw,24px)]">📞</span>
+                  <div>
+                    <p className="text-[clamp(7px,1vw,9px)] text-white leading-none">FOR SUCCESS CALL ON</p>
+                    <p className="text-[clamp(10px,1.6vw,14px)] font-bold text-yellow-300 leading-tight">
+                      +91 7856891547
+                    </p>
+                  </div>
+                </div>
+
+                {/* Social Media Icons - Bottom Right */}
+                <div className="absolute flex gap-1" style={{ bottom: '1.5%', right: '28%' }}>
+                  {['📘', '📷', '▶️', '💬'].map((icon, i) => (
+                    <div key={i} className="text-[clamp(12px,2vw,16px)]">{icon}</div>
+                  ))}
+                  <span className="text-[clamp(8px,1.3vw,11px)] text-yellow-200 font-medium ml-1">
+                    /AJAY KUMAR GUPTA
+                  </span>
+                </div>
+
               </div>
             </div>
           </div>
