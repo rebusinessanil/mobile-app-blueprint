@@ -151,7 +151,7 @@ export default function RankBannerCreate() {
         {/* Form Fields with Photo Upload Side by Side */}
         <div className="flex gap-4">
           {/* Form Fields */}
-          <div className="flex-1 space-y-5">
+          <div className="flex-1 space-y-5 py-0 mx-0 px-0 my-0">
             {/* Name */}
             <div className="space-y-2">
               <label className="text-sm text-foreground">Name</label>
@@ -175,19 +175,14 @@ export default function RankBannerCreate() {
               <label className="text-sm text-foreground">Cheque Amount <span className="text-muted-foreground">(optional)</span></label>
               <div className="relative">
                 <span className="absolute left-0 top-1/2 -translate-y-1/2 text-foreground text-lg">₹</span>
-                <Input 
-                  value={formData.chequeAmount} 
-                  onChange={e => {
-                    // Only allow numbers
-                    const value = e.target.value.replace(/[^0-9]/g, '');
-                    setFormData({
-                      ...formData,
-                      chequeAmount: value
-                    });
-                  }} 
-                  placeholder="Enter amount" 
-                  className="bg-transparent border-0 border-b-2 border-muted rounded-none text-foreground h-12 focus-visible:ring-0 focus-visible:border-primary pl-6" 
-                />
+                <Input value={formData.chequeAmount} onChange={e => {
+                // Only allow numbers
+                const value = e.target.value.replace(/[^0-9]/g, '');
+                setFormData({
+                  ...formData,
+                  chequeAmount: value
+                });
+              }} placeholder="Enter amount" className="bg-transparent border-0 border-b-2 border-muted rounded-none text-foreground h-12 focus-visible:ring-0 focus-visible:border-primary pl-6" />
               </div>
             </div>
           </div>
