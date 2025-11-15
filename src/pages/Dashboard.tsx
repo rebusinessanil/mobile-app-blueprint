@@ -1,11 +1,23 @@
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import BottomNav from "@/components/BottomNav";
 import { Menu, Bell, Star, Calendar, Zap, Award } from "lucide-react";
 import { useTemplateCategories, useTemplates } from "@/hooks/useTemplates";
+import { useProfile } from "@/hooks/useProfile";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function Dashboard() {
   const { categories } = useTemplateCategories();
   const { templates: allTemplates } = useTemplates();
+  const [userId, setUserId] = useState<string | null>(null);
+  const { profile } = useProfile(userId ?? undefined);
+
+  // Get authenticated user
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUserId(session?.user?.id ?? null);
+    });
+  }, []);
 
   const quickActions = [
     { icon: Calendar, label: "Festival Banner", color: "bg-icon-purple" },
@@ -30,7 +42,9 @@ export default function Dashboard() {
             </div>
             <div>
               <h1 className="text-xl font-bold text-foreground">ReBusiness</h1>
-              <p className="text-sm text-muted-foreground">Welcome back, John Doe!</p>
+              <p className="text-sm text-muted-foreground">
+                Welcome back, {profile?.name || "User"}!
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-3">
