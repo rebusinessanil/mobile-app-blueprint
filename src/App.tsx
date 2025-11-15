@@ -3,8 +3,10 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import AuthGuard from "@/components/AuthGuard";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import ComingSoon from "./pages/ComingSoon";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
@@ -28,22 +30,29 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
+          {/* Public routes - no auth required */}
           <Route path="/" element={<Login />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/categories" element={<Categories />} />
-          <Route path="/messages" element={<Messages />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/profile-edit" element={<ProfileEdit />} />
-          <Route path="/rank-selection" element={<RankSelection />} />
-        <Route path="/rank-banner-create/:rankId" element={<RankBannerCreate />} />
-        <Route path="/banner-settings" element={<BannerSettings />} />
-        <Route path="/banner-preview" element={<BannerPreview />} />
-          <Route path="/admin/stickers" element={<AdminStickers />} />
-          <Route path="/admin/templates" element={<AdminTemplates />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
+          
+          {/* Protected routes - auth required */}
+          <Route path="/dashboard" element={<AuthGuard><Dashboard /></AuthGuard>} />
+          <Route path="/categories" element={<AuthGuard><Categories /></AuthGuard>} />
+          <Route path="/category/:slug" element={<AuthGuard><ComingSoon /></AuthGuard>} />
+          <Route path="/messages" element={<AuthGuard><Messages /></AuthGuard>} />
+          <Route path="/profile" element={<AuthGuard><Profile /></AuthGuard>} />
+          <Route path="/profile-edit" element={<AuthGuard><ProfileEdit /></AuthGuard>} />
+          <Route path="/rank-selection" element={<AuthGuard><RankSelection /></AuthGuard>} />
+          <Route path="/rank-banner-create/:rankId" element={<AuthGuard><RankBannerCreate /></AuthGuard>} />
+          <Route path="/banner-settings" element={<AuthGuard><BannerSettings /></AuthGuard>} />
+          <Route path="/banner-preview" element={<AuthGuard><BannerPreview /></AuthGuard>} />
+          
+          {/* Admin routes - auth required */}
+          <Route path="/admin/stickers" element={<AuthGuard><AdminStickers /></AuthGuard>} />
+          <Route path="/admin/templates" element={<AuthGuard><AdminTemplates /></AuthGuard>} />
+          
+          {/* Catch-all for undefined routes */}
+          <Route path="*" element={<AuthGuard><ComingSoon /></AuthGuard>} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>

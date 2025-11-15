@@ -32,12 +32,18 @@ export default function BannerPreview() {
   const [selectedTemplate, setSelectedTemplate] = useState(0);
   const [stickers, setStickers] = useState<Sticker[]>([]);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
   const bannerRef = useRef<HTMLDivElement>(null);
 
-  // Mock user ID - replace with actual auth when implemented
-  const mockUserId = "mock-user-123";
-  const { profile } = useProfile(mockUserId);
-  const { photos: profilePhotos } = useProfilePhotos(mockUserId);
+  // Get authenticated user
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUserId(session?.user?.id ?? null);
+    });
+  }, []);
+
+  const { profile } = useProfile(userId ?? undefined);
+  const { photos: profilePhotos } = useProfilePhotos(userId ?? undefined);
 
   // Use profile data for bottom section, fallback to banner data
   const displayName: string = profile?.name || bannerData?.name || "";
