@@ -307,15 +307,20 @@ export default function ProfileSetup() {
 
       {/* Image Cropper Modal */}
       {cropperOpen && currentImage && (
-        <ImageCropper
-          imageUrl={currentImage}
-          onCropComplete={handleCropComplete}
-          onCancel={() => {
-            setCropperOpen(false);
-            setCurrentImage(null);
-            setCurrentFile(null);
-          }}
-        />
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-6">
+          <div className="gold-border bg-card rounded-3xl p-6 max-w-2xl w-full">
+            <h2 className="text-xl font-bold text-foreground mb-4">Crop Your Photo</h2>
+            <ImageCropper
+              image={currentImage}
+              onCropComplete={handleCropComplete}
+              onCancel={() => {
+                setCropperOpen(false);
+                setCurrentImage(null);
+                setCurrentFile(null);
+              }}
+            />
+          </div>
+        </div>
       )}
     </div>
   );
