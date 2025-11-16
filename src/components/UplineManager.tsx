@@ -72,37 +72,38 @@ export default function UplineManager({
   const uploadAvatar = async (dataUrl: string) => {
     if (editingIndex === null) return;
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user?.id) throw new Error('Not authenticated');
+
       const blob = await fetch(dataUrl).then(r => r.blob());
       const fileName = `upline_${Date.now()}.png`;
-      const {
-        data: uploadData,
-        error: uploadError
-      } = await supabase.storage.from('profile-photos').upload(fileName, blob, {
-        contentType: 'image/png'
-      });
+      const filePath = `${user.id}/uplines/${fileName}`;
+
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('profile-photos')
+        .upload(filePath, blob, { contentType: 'image/png', upsert: true, cacheControl: '3600' });
       if (uploadError) throw uploadError;
-      const {
-        data: {
-          publicUrl
-        }
-      } = supabase.storage.from('profile-photos').getPublicUrl(uploadData.path);
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('profile-photos')
+        .getPublicUrl(uploadData.path);
+
       const newUplines = [...uplines];
       if (newUplines[editingIndex]) {
-        newUplines[editingIndex] = {
-          ...newUplines[editingIndex],
-          avatar_url: publicUrl
-        };
+        newUplines[editingIndex] = { ...newUplines[editingIndex], avatar_url: publicUrl };
       } else {
-        newUplines[editingIndex] = {
-          name: `Upline ${editingIndex + 1}`,
-          avatar_url: publicUrl
-        };
+        newUplines[editingIndex] = { name: `Upline ${editingIndex + 1}`, avatar_url: publicUrl };
       }
       onUplinesChange(newUplines);
       toast.success("Avatar uploaded successfully");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Upload failed:", error);
-      toast.error("Failed to upload avatar");
+      const msg = (error?.message || '').toString().toLowerCase();
+      if (msg.includes('row-level security')) {
+        toast.error('Upload blocked by security policy (RLS). Please configure storage policies.');
+      } else {
+        toast.error("Failed to upload avatar");
+      }
     } finally {
       setEditingIndex(null);
       setTempImage("");
