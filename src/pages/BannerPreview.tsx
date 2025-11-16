@@ -13,6 +13,7 @@ interface Upline {
   name: string;
   avatar?: string;
 }
+
 interface BannerData {
   rankName: string;
   rankIcon: string;
@@ -36,28 +37,24 @@ export default function BannerPreview() {
 
   // Get authenticated user
   useEffect(() => {
-    supabase.auth.getSession().then(({
-      data: {
-        session
-      }
-    }) => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
       setUserId(session?.user?.id ?? null);
     });
   }, []);
-  const {
-    profile
-  } = useProfile(userId ?? undefined);
-  const {
-    photos: profilePhotos
-  } = useProfilePhotos(userId ?? undefined);
+
+  const { profile } = useProfile(userId ?? undefined);
+  const { photos: profilePhotos } = useProfilePhotos(userId ?? undefined);
 
   // Use profile data for bottom section, fallback to banner data
   const displayName: string = profile?.name || bannerData?.name || "";
   const displayContact: string = profile?.mobile || profile?.whatsapp || "9876543210";
   const displayRank: string = profile?.rank || "Diamond";
-
+  
   // Get primary profile photo or first photo
-  const primaryPhoto: string | null = profile?.profile_photo || profilePhotos[0]?.photo_url || bannerData?.photo || null;
+  const primaryPhoto: string | null = profile?.profile_photo || 
+                       profilePhotos[0]?.photo_url || 
+                       bannerData?.photo || 
+                       null;
 
   // Fetch selected stickers
   useEffect(() => {
@@ -113,37 +110,42 @@ export default function BannerPreview() {
       toast.error("Banner not ready for download");
       return;
     }
+
     setIsDownloading(true);
     const loadingToast = toast.loading("Generating high-quality banner...");
+
     try {
       // Capture the banner at 1080x1080 resolution
       const canvas = await html2canvas(bannerRef.current, {
-        scale: 2,
-        // Higher scale for better quality
+        scale: 2, // Higher scale for better quality
         backgroundColor: null,
         logging: false,
         useCORS: true,
         allowTaint: true,
         width: 1080,
-        height: 1080
+        height: 1080,
       });
 
       // Convert to blob and download
-      canvas.toBlob(blob => {
+      canvas.toBlob((blob) => {
         toast.dismiss(loadingToast);
+        
         if (!blob) {
           toast.error("Failed to generate image");
           return;
         }
+
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
         const timestamp = new Date().getTime();
         link.download = `ReBusiness-Banner-${bannerData.rankName}-${timestamp}.png`;
         link.href = url;
         link.click();
+        
         URL.revokeObjectURL(url);
         toast.success("Banner downloaded successfully!");
       }, "image/png", 1.0);
+
     } catch (error) {
       console.error("Download error:", error);
       toast.dismiss(loadingToast);
@@ -174,7 +176,7 @@ export default function BannerPreview() {
             <div className={`relative w-full bg-gradient-to-br ${templateColors[selectedTemplate].bgColor}`} style={{
             paddingBottom: '100%'
           }}>
-              <div className="absolute inset-0 mx-0 my-0">
+              <div className="absolute inset-0">
                 
                 {/* Left Side - Main Achievement Photo (Use Profile Photo) */}
                 {primaryPhoto && <div className="absolute overflow-hidden shadow-2xl" style={{
@@ -192,17 +194,17 @@ export default function BannerPreview() {
                 right: '6%',
                 width: '48%'
               }}>
-                  <h2 style={{
+                  <h2 className="text-white font-black leading-none tracking-wider text-right" style={{
                   fontSize: 'clamp(32px,6.5vw,68px)',
                   textShadow: '3px 3px 6px rgba(0,0,0,0.8)',
                   letterSpacing: '0.05em'
-                }} className="text-white leading-none tracking-wider text-right text-base font-semibold font-sans">
+                }}>
                     {bannerData.name.toUpperCase()}
                   </h2>
-                  {bannerData.teamCity && <p style={{
+                  {bannerData.teamCity && <p className="text-white font-bold text-right mt-2 tracking-widest" style={{
                   fontSize: 'clamp(16px,3vw,32px)',
                   textShadow: '2px 2px 4px rgba(0,0,0,0.8)'
-                }} className="text-white text-right mt-2 tracking-widest text-xs font-sans font-normal my-[3px]">
+                }}>
                     TEAM - {bannerData.teamCity.toUpperCase()}
                   </p>}
                 </div>
@@ -222,23 +224,23 @@ export default function BannerPreview() {
                   </div>}
 
                 {/* Income Section - Bottom Left */}
-                {bannerData.chequeAmount && <div style={{
+                {bannerData.chequeAmount && <div className="absolute" style={{
                 bottom: '16%',
                 left: '2%',
                 width: '55%'
-              }} className="absolute mx-[7px] my-[236px]">
+              }}>
                     <p style={{
                   fontSize: 'clamp(10px,1.8vw,16px)',
                   letterSpacing: '0.1em'
-                }} className="text-white leading-tight mb-1 text-xs font-thin text-left mx-0 px-0 my-0 py-0">
+                }} className="text-white leading-tight mb-1 text-xs font-thin text-left my-0 px-0 py-0 mx-0">
                       THIS WEEK INCOME 
                     </p>
-                    <p style={{
+                    <p className="font-black leading-none" style={{
                   fontSize: 'clamp(48px,9vw,90px)',
                   color: '#FFFFFF',
                   textShadow: '4px 4px 8px rgba(0,0,0,0.9)',
                   letterSpacing: '0.02em'
-                }} className="font-black leading-none px-0 py-0 my-0 text-3xl mx-0">
+                }}>
                       {Number(bannerData.chequeAmount).toLocaleString('en-IN')}
                     </p>
                   </div>}
@@ -283,7 +285,7 @@ export default function BannerPreview() {
                   fontSize: 'clamp(14px,2.5vw,22px)',
                   color: '#FFFFFF',
                   textShadow: '2px 2px 4px rgba(0,0,0,0.8)'
-                }} className="leading-tight py-0 font-normal font-sans text-xs mx-[2px] my-0 px-0">
+                }} className="font-bold leading-tight px-0 py-0 text-xs mx-[5px] my-0">
                     +91 {displayContact}
                   </p>
                 </div>
@@ -294,15 +296,30 @@ export default function BannerPreview() {
         </div>
 
         {/* Profile Photos Gallery - 1-6 Square Thumbnails */}
-        {profilePhotos.length > 0 && <div className="flex gap-3 justify-center overflow-x-auto pb-2 px-4">
-            {profilePhotos.slice(0, 6).map((photo, idx) => <div key={photo.id} className="w-16 h-16 aspect-square rounded-lg overflow-hidden border-2 border-primary shadow-md flex-shrink-0">
-                <img src={photo.photo_url} alt={`Profile ${idx + 1}`} className="w-full h-full object-cover object-center" />
-              </div>)}
-          </div>}
+        {profilePhotos.length > 0 && (
+          <div className="flex gap-3 justify-center overflow-x-auto pb-2 px-4">
+            {profilePhotos.slice(0, 6).map((photo, idx) => (
+              <div 
+                key={photo.id} 
+                className="w-16 h-16 aspect-square rounded-lg overflow-hidden border-2 border-primary shadow-md flex-shrink-0"
+              >
+                <img 
+                  src={photo.photo_url} 
+                  alt={`Profile ${idx + 1}`} 
+                  className="w-full h-full object-cover object-center" 
+                />
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Download Button */}
         <div className="flex justify-center">
-          <Button onClick={handleDownload} disabled={isDownloading} className="h-16 px-12 bg-teal-600 hover:bg-teal-700 disabled:bg-teal-800 disabled:cursor-not-allowed text-white text-xl font-bold rounded-2xl flex items-center gap-3">
+          <Button 
+            onClick={handleDownload} 
+            disabled={isDownloading}
+            className="h-16 px-12 bg-teal-600 hover:bg-teal-700 disabled:bg-teal-800 disabled:cursor-not-allowed text-white text-xl font-bold rounded-2xl flex items-center gap-3"
+          >
             <Download className="w-6 h-6" />
             {isDownloading ? "GENERATING..." : "DOWNLOAD"}
           </Button>
