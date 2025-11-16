@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Save } from "lucide-react";
+import { ArrowLeft, Save, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { useBannerSettings } from "@/hooks/useBannerSettings";
@@ -10,6 +10,11 @@ import UplineManager from "@/components/UplineManager";
 export default function BannerSettings() {
   const navigate = useNavigate();
   const [userId, setUserId] = useState<string | null>(null);
+  const [uploadingLeft, setUploadingLeft] = useState(false);
+  const [uploadingRight, setUploadingRight] = useState(false);
+  const leftFileInputRef = useRef<HTMLInputElement>(null);
+  const rightFileInputRef = useRef<HTMLInputElement>(null);
+  
   const {
     settings,
     updateSettings,
@@ -19,28 +24,66 @@ export default function BannerSettings() {
   // Get authenticated user
   useEffect(() => {
     const getUser = async () => {
-      const {
-        data: {
-          user
-        }
-      } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         setUserId(user.id);
       }
     };
     getUser();
   }, []);
-  const handleSave = async () => {
-    if (!settings) return;
-    const {
-      error
-    } = await updateSettings(settings);
-    if (error) {
-      toast.error("Failed to save settings");
-    } else {
-      toast.success("Banner settings saved successfully!");
-      navigate("/profile");
+
+  const handleLogoUpload = async (file: File, position: 'left' | 'right') => {
+    const setUploading = position === 'left' ? setUploadingLeft : setUploadingRight;
+    setUploading(true);
+
+    try {
+      if (!file.type.startsWith('image/')) {
+        toast.error("Please upload an image file");
+        return;
+      }
+
+      if (file.size > 2 * 1024 * 1024) {
+        toast.error("Image must be less than 2MB");
+        return;
+      }
+
+      const fileExt = file.name.split('.').pop();
+      const fileName = `logo-${position}-${userId}-${Date.now()}.${fileExt}`;
+      const filePath = `logos/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('profile-photos')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('profile-photos')
+        .getPublicUrl(filePath);
+
+      await updateSettings({
+        [position === 'left' ? 'logo_left' : 'logo_right']: publicUrl
+      });
+
+      toast.success(`${position === 'left' ? 'Left' : 'Right'} logo uploaded successfully!`);
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast.error("Failed to upload logo");
+    } finally {
+      setUploading(false);
     }
+  };
+
+  const handleRemoveLogo = async (position: 'left' | 'right') => {
+    await updateSettings({
+      [position === 'left' ? 'logo_left' : 'logo_right']: null
+    });
+    toast.success(`${position === 'left' ? 'Left' : 'Right'} logo removed`);
+  };
+
+  const handleSave = async () => {
+    toast.success("All settings are auto-saved!");
+    navigate("/profile");
   };
   if (loading || !settings) {
     return <div className="min-h-screen bg-navy-dark flex items-center justify-center">
@@ -78,6 +121,104 @@ export default function BannerSettings() {
           <p className="text-xs text-muted-foreground text-center">
             Upload up to 5 upline/mentor avatars. You can change these anytime in Profile settings.
           </p>
+        </div>
+
+        {/* Banner Logos */}
+        <div className="space-y-3">
+          <div>
+            <h2 className="text-xl font-bold text-foreground mb-1">Banner Logos</h2>
+            <p className="text-sm text-muted-foreground">
+              Upload custom logos for your banners (optional)
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            {/* Left Logo */}
+            <div className="gold-border bg-card rounded-2xl p-4 space-y-3">
+              <h3 className="text-sm font-semibold text-foreground">Left Logo</h3>
+              
+              {settings.logo_left ? (
+                <div className="relative aspect-square rounded-xl overflow-hidden bg-muted">
+                  <img 
+                    src={settings.logo_left} 
+                    alt="Left logo" 
+                    className="w-full h-full object-contain"
+                  />
+                  <button
+                    onClick={() => handleRemoveLogo('left')}
+                    className="absolute top-2 right-2 w-8 h-8 rounded-full bg-destructive/90 hover:bg-destructive flex items-center justify-center transition-colors"
+                  >
+                    <X className="w-4 h-4 text-destructive-foreground" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => leftFileInputRef.current?.click()}
+                  disabled={uploadingLeft}
+                  className="w-full aspect-square rounded-xl border-2 border-dashed border-primary/30 hover:border-primary/60 bg-card hover:bg-muted/50 flex flex-col items-center justify-center gap-2 transition-colors disabled:opacity-50"
+                >
+                  <Upload className="w-8 h-8 text-primary" />
+                  <span className="text-sm text-muted-foreground">
+                    {uploadingLeft ? 'Uploading...' : 'Upload Logo'}
+                  </span>
+                </button>
+              )}
+              
+              <input
+                ref={leftFileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleLogoUpload(file, 'left');
+                }}
+              />
+            </div>
+
+            {/* Right Logo */}
+            <div className="gold-border bg-card rounded-2xl p-4 space-y-3">
+              <h3 className="text-sm font-semibold text-foreground">Right Logo</h3>
+              
+              {settings.logo_right ? (
+                <div className="relative aspect-square rounded-xl overflow-hidden bg-muted">
+                  <img 
+                    src={settings.logo_right} 
+                    alt="Right logo" 
+                    className="w-full h-full object-contain"
+                  />
+                  <button
+                    onClick={() => handleRemoveLogo('right')}
+                    className="absolute top-2 right-2 w-8 h-8 rounded-full bg-destructive/90 hover:bg-destructive flex items-center justify-center transition-colors"
+                  >
+                    <X className="w-4 h-4 text-destructive-foreground" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => rightFileInputRef.current?.click()}
+                  disabled={uploadingRight}
+                  className="w-full aspect-square rounded-xl border-2 border-dashed border-primary/30 hover:border-primary/60 bg-card hover:bg-muted/50 flex flex-col items-center justify-center gap-2 transition-colors disabled:opacity-50"
+                >
+                  <Upload className="w-8 h-8 text-primary" />
+                  <span className="text-sm text-muted-foreground">
+                    {uploadingRight ? 'Uploading...' : 'Upload Logo'}
+                  </span>
+                </button>
+              )}
+              
+              <input
+                ref={rightFileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleLogoUpload(file, 'right');
+                }}
+              />
+            </div>
+          </div>
         </div>
 
         {/* Display Preferences */}
@@ -136,10 +277,18 @@ export default function BannerSettings() {
         </div>
 
         {/* Save Button */}
-        <Button onClick={handleSave} className="w-full h-14 bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-lg rounded-2xl">
-          <Save className="w-5 h-5 mr-2" />
-          SAVE SETTINGS
-        </Button>
+        <div className="space-y-3">
+          <p className="text-xs text-muted-foreground text-center">
+            ✨ All changes are saved automatically in real-time
+          </p>
+          <Button 
+            onClick={handleSave} 
+            className="w-full h-14 bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-lg rounded-2xl"
+          >
+            <Save className="w-5 h-5 mr-2" />
+            DONE
+          </Button>
+        </div>
       </div>
     </div>;
 }

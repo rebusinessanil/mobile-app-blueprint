@@ -86,6 +86,11 @@ export const useBannerSettings = (userId?: string) => {
     if (!userId) return { data: null, error: new Error('No user ID') };
 
     try {
+      // Optimistically update local state first for instant UI feedback
+      if (settings) {
+        setSettings({ ...settings, ...updates });
+      }
+
       const { data: existingData } = await supabase
         .from('user_banner_settings')
         .select('id')
@@ -104,10 +109,22 @@ export const useBannerSettings = (userId?: string) => {
         if (error) throw error;
         return { data, error: null };
       } else {
-        // Insert new
+        // Insert new with defaults from current settings
+        const insertData = {
+          user_id: userId,
+          upline_avatars: settings?.upline_avatars || [],
+          logo_left: settings?.logo_left || null,
+          logo_right: settings?.logo_right || null,
+          show_upline_names: settings?.show_upline_names ?? true,
+          show_contact_info: settings?.show_contact_info ?? true,
+          show_rank_badge: settings?.show_rank_badge ?? true,
+          auto_share_to_feed: settings?.auto_share_to_feed ?? false,
+          ...updates
+        };
+
         const { data, error } = await supabase
           .from('user_banner_settings')
-          .insert({ user_id: userId, ...updates })
+          .insert(insertData)
           .select()
           .single();
 
@@ -115,6 +132,18 @@ export const useBannerSettings = (userId?: string) => {
         return { data, error: null };
       }
     } catch (err) {
+      // Revert optimistic update on error
+      if (settings) {
+        const { data, error: fetchError } = await supabase
+          .from('user_banner_settings')
+          .select('*')
+          .eq('user_id', userId)
+          .single();
+        
+        if (!fetchError && data) {
+          setSettings(data as unknown as UserBannerSettings);
+        }
+      }
       return { data: null, error: err as Error };
     }
   };
