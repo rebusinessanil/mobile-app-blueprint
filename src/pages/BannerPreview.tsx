@@ -113,16 +113,18 @@ export default function BannerPreview() {
     setIsDownloading(true);
     const loadingToast = toast.loading("Generating high-quality banner...");
     try {
-      // Capture the banner at 1080x1080 resolution
+      // Capture the banner at 1080x1080 resolution with transparent background
       const canvas = await html2canvas(bannerRef.current, {
-        scale: 2,
+        scale: 3,
         // Higher scale for better quality
         backgroundColor: null,
+        // Transparent background
         logging: false,
         useCORS: true,
         allowTaint: true,
         width: 1080,
-        height: 1080
+        height: 1080,
+        imageTimeout: 0
       });
 
       // Convert to blob and download
@@ -179,12 +181,12 @@ export default function BannerPreview() {
               style={{ paddingBottom: '100%' }}
             >
               <div className="absolute inset-0">
-                {/* Top - Small circular upline avatars */}
-                <div className="absolute top-[3%] left-1/2 -translate-x-1/2 flex gap-2 z-20">
+                {/* Top - Small circular upline avatars (70% scale) */}
+                <div className="absolute top-[3%] left-1/2 -translate-x-1/2 flex gap-1.5 z-20">
                   {bannerData.uplines?.slice(0, 5).map((upline, idx) => (
                     <div
                       key={upline.id}
-                      className="w-12 h-12 rounded-full border-3 border-white overflow-hidden shadow-lg"
+                      className="w-8 h-8 rounded-full border-2 border-white overflow-hidden shadow-lg"
                     >
                       <img
                         src={upline.avatar || primaryPhoto || "/placeholder.svg"}
@@ -229,9 +231,9 @@ export default function BannerPreview() {
                   </svg>
                 </div>
 
-                {/* CENTER-RIGHT - Name and Team */}
+                {/* CENTER-RIGHT - Name and Team with auto font scaling */}
                 <div
-                  className="absolute"
+                  className="absolute px-2"
                   style={{
                     top: '25%',
                     right: '5%',
@@ -240,11 +242,14 @@ export default function BannerPreview() {
                   }}
                 >
                   <h2
-                    className="text-white font-black tracking-wider whitespace-nowrap overflow-hidden text-ellipsis"
+                    className="text-white font-black tracking-wider whitespace-nowrap overflow-hidden"
                     style={{
-                      fontSize: 'clamp(24px, 5vw, 56px)',
+                      fontSize: bannerData.name.length > 20 ? 'clamp(18px, 3.5vw, 36px)' : 
+                                bannerData.name.length > 15 ? 'clamp(22px, 4vw, 44px)' : 
+                                'clamp(24px, 5vw, 56px)',
                       textShadow: '3px 3px 6px rgba(0,0,0,0.9)',
-                      lineHeight: '1'
+                      lineHeight: '1',
+                      transform: bannerData.name.length > 20 ? 'scaleX(0.9)' : 'none'
                     }}
                   >
                     {bannerData.name.toUpperCase()}
@@ -294,7 +299,7 @@ export default function BannerPreview() {
                   </div>
                 )}
 
-                {/* BOTTOM LEFT - Phone */}
+                {/* LOWER THIRD - User Name and Phone */}
                 <div
                   className="absolute"
                   style={{
@@ -302,6 +307,16 @@ export default function BannerPreview() {
                     left: '5%'
                   }}
                 >
+                  <p
+                    className="text-white font-bold tracking-wide"
+                    style={{
+                      fontSize: 'clamp(8px, 1.5vw, 16px)',
+                      textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
+                      marginBottom: '2px'
+                    }}
+                  >
+                    {displayName.toUpperCase()}
+                  </p>
                   <p
                     className="text-white font-bold tracking-wide"
                     style={{

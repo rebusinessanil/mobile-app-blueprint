@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import UplineCarousel from "@/components/UplineCarousel";
 import BackgroundRemoverModal from "@/components/BackgroundRemoverModal";
+import ImageCropper from "@/components/ImageCropper";
 import StickerSelector from "@/components/StickerSelector";
 import { ranks } from "@/data/ranks";
 import { toast } from "sonner";
@@ -35,6 +36,8 @@ export default function RankBannerCreate() {
     chequeAmount: ""
   });
   const [photo, setPhoto] = useState<string | null>(null);
+  const [tempPhoto, setTempPhoto] = useState<string | null>(null);
+  const [showCropper, setShowCropper] = useState(false);
   const [showBgRemover, setShowBgRemover] = useState(false);
   const [processingBg, setProcessingBg] = useState(false);
   const [selectedStickers, setSelectedStickers] = useState<string[]>([]);
@@ -79,11 +82,22 @@ export default function RankBannerCreate() {
     if (file) {
       const reader = new FileReader();
       reader.onload = () => {
-        setPhoto(reader.result as string);
-        setShowBgRemover(true);
+        setTempPhoto(reader.result as string);
+        setShowCropper(true);
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleCropComplete = (croppedImage: string) => {
+    setPhoto(croppedImage);
+    setShowCropper(false);
+    setShowBgRemover(true);
+  };
+
+  const handleCropCancel = () => {
+    setShowCropper(false);
+    setTempPhoto(null);
   };
   const handleKeepBackground = () => {
     setShowBgRemover(false);
@@ -258,6 +272,16 @@ export default function RankBannerCreate() {
           </Button>
         </div>
       </div>
+
+      {/* Image Cropper Modal (4:5 Portrait Ratio) */}
+      {showCropper && tempPhoto && (
+        <ImageCropper
+          image={tempPhoto}
+          onCropComplete={handleCropComplete}
+          onCancel={handleCropCancel}
+          aspect={4 / 5}
+        />
+      )}
 
       {/* Background Remover Modal */}
       <BackgroundRemoverModal open={showBgRemover} onKeep={handleKeepBackground} onRemove={handleRemoveBackground} onClose={() => setShowBgRemover(false)} />
