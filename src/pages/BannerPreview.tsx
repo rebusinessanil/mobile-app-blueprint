@@ -273,9 +273,7 @@ export default function BannerPreview() {
                 width: '20%',
                 height: '8%'
               }}>
-                  <svg viewBox="0 0 100 50" className="w-full h-full fill-[#FFD700]">
-                    <path d="M10 40 L20 10 L30 35 L40 5 L50 30 L60 5 L70 35 L80 10 L90 40 C85 45 75 48 50 48 C25 48 15 45 10 40 Z" />
-                  </svg>
+                  
                 </div>
 
                 {/* CENTER-RIGHT - Name and Team with auto font scaling */}
@@ -308,17 +306,17 @@ export default function BannerPreview() {
                 left: '5%',
                 width: '55%'
               }}>
-                    <p className="text-white font-light tracking-widest" style={{
+                    <p style={{
                   fontSize: 'clamp(8px, 1.5vw, 14px)',
                   textShadow: '1px 1px 2px rgba(0,0,0,0.8)'
-                }}>
-                      THIS WEEK INCOME QUALIFY FOR
+                }} className="text-white font-light tracking-widest text-left text-xs">
+                      THIS WEEK INCOME 
                     </p>
-                    <p className="text-white font-black tracking-tight" style={{
+                    <p style={{
                   fontSize: 'clamp(32px, 7vw, 72px)',
                   textShadow: '4px 4px 8px rgba(0,0,0,0.9)',
                   lineHeight: '1'
-                }}>
+                }} className="font-black tracking-tight text-left text-2xl mx-0 my-0 text-yellow-500 font-serif">
                       {Number(bannerData.chequeAmount).toLocaleString('en-IN')}
                     </p>
                   </div>}
