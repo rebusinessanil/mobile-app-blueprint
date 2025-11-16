@@ -7,27 +7,28 @@ import UplineCarousel from "@/components/UplineCarousel";
 import BackgroundRemoverModal from "@/components/BackgroundRemoverModal";
 import StickerSelector from "@/components/StickerSelector";
 import { ranks } from "@/data/ranks";
-import { adminPresetUplines } from "@/data/adminPresets";
 import { toast } from "sonner";
 import { removeBackground, loadImage } from "@/lib/backgroundRemover";
 import { useProfile } from "@/hooks/useProfile";
+import { useBannerSettings } from "@/hooks/useBannerSettings";
 import { supabase } from "@/integrations/supabase/client";
+
 interface Upline {
   id: string;
   name: string;
   avatar?: string;
 }
+
 export default function RankBannerCreate() {
   const navigate = useNavigate();
-  const {
-    rankId
-  } = useParams();
+  const { rankId } = useParams();
   const rank = ranks.find(r => r.id === rankId);
   const [mode, setMode] = useState<"myPhoto" | "others">("myPhoto");
-  const [uplines, setUplines] = useState<Upline[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
   const { profile } = useProfile(userId || undefined);
+  const { settings: bannerSettings } = useBannerSettings(userId || undefined);
   
+  const [uplines, setUplines] = useState<Upline[]>([]);
   const [formData, setFormData] = useState({
     name: "",
     teamCity: "",
@@ -58,6 +59,18 @@ export default function RankBannerCreate() {
       }));
     }
   }, [profile]);
+
+  // Load default uplines from banner settings
+  useEffect(() => {
+    if (bannerSettings && uplines.length === 0) {
+      const defaultUplines = bannerSettings.upline_avatars.map((upline, index) => ({
+        id: `upline-${index}`,
+        name: upline.name,
+        avatar: upline.avatar_url
+      }));
+      setUplines(defaultUplines);
+    }
+  }, [bannerSettings]);
   if (!rank) {
     return null;
   }
@@ -170,7 +183,7 @@ export default function RankBannerCreate() {
         <div className="space-y-3">
           
           <div className="gold-border bg-card/30 rounded-2xl p-4">
-            <UplineCarousel uplines={uplines} onUplinesChange={setUplines} maxUplines={5} adminPresets={adminPresetUplines} />
+            <UplineCarousel uplines={uplines} onUplinesChange={setUplines} maxUplines={5} />
           </div>
         </div>
 
