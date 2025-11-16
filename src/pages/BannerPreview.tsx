@@ -426,15 +426,19 @@ export default function BannerPreview() {
                   </div>
                 )}
 
-                {/* BOTTOM RIGHT - Mentor Name and Title */}
-                <div className="absolute text-center" style={{
-                bottom: '45%',
+                {/* BOTTOM RIGHT - Mentor Name and Title (Moved to bottom-most position) */}
+                <div className="absolute text-right" style={{
+                bottom: '3%',
                 right: '5%',
-                width: '30%'
+                width: '40%'
               }}>
                   <p className="text-white font-bold tracking-wide" style={{
                   fontSize: 'clamp(10px, 2vw, 20px)',
-                  textShadow: '2px 2px 4px rgba(0,0,0,0.8)'
+                  textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  transform: mentorName.length > 15 ? 'scaleX(0.9)' : 'none'
                 }}>
                     {mentorName.toUpperCase()}
                   </p>
