@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import BottomNav from "@/components/BottomNav";
-import { User, Wallet, Download, Settings, Lock, HelpCircle, MessageCircle, LogOut, Star, Edit } from "lucide-react";
+import { User, Wallet, Download, Settings, Lock, HelpCircle, MessageCircle, LogOut, Star, Edit, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -10,6 +10,7 @@ import { useProfile } from "@/hooks/useProfile";
 export default function Profile() {
   const navigate = useNavigate();
   const [userId, setUserId] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const { profile, loading } = useProfile(userId || undefined);
 
   useEffect(() => {
@@ -20,6 +21,10 @@ export default function Profile() {
         return;
       }
       setUserId(user.id);
+      
+      // Check if user is admin
+      const { data: adminCheck } = await supabase.rpc('is_admin', { user_id: user.id });
+      setIsAdmin(adminCheck || false);
     };
     getUser();
   }, [navigate]);
@@ -45,6 +50,16 @@ export default function Profile() {
     { icon: HelpCircle, label: "Help & FAQ", description: "Get help and find answers", path: "/help" },
     { icon: MessageCircle, label: "Contact Support", description: "Get in touch with our team", path: "/support" },
   ];
+
+  // Add admin menu item if user is admin
+  const adminMenuItem = { 
+    icon: Shield, 
+    label: "Admin Dashboard", 
+    description: "Manage users, analytics & system", 
+    path: "/admin" 
+  };
+
+  const allMenuItems = isAdmin ? [adminMenuItem, ...menuItems] : menuItems;
 
   return (
     <div className="min-h-screen bg-navy-dark pb-24">
@@ -92,7 +107,7 @@ export default function Profile() {
 
       {/* Menu Items */}
       <div className="px-6 space-y-3">
-        {menuItems.map((item, index) => {
+        {allMenuItems.map((item, index) => {
           const Icon = item.icon;
           return (
             <Link
