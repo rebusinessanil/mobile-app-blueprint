@@ -42,18 +42,19 @@ export default function BannerSettings() {
         return;
       }
 
-      if (file.size > 2 * 1024 * 1024) {
-        toast.error("Image must be less than 2MB");
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("Only PNG/JPG images up to 5MB allowed");
         return;
       }
 
-      const fileExt = file.name.split('.').pop();
-      const fileName = `logo-${position}-${userId}-${Date.now()}.${fileExt}`;
-      const filePath = `logos/${fileName}`;
+      const fileExt = (file.name.split('.').pop() || 'jpg').toLowerCase();
+      const safeUserId = userId || 'unknown';
+      const fileName = `logo-${position}-${safeUserId}-${Date.now()}.${fileExt}`;
+      const filePath = `${safeUserId}/logos/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from('profile-photos')
-        .upload(filePath, file, { upsert: true });
+        .upload(filePath, file, { upsert: true, contentType: file.type, cacheControl: '3600' });
 
       if (uploadError) throw uploadError;
 
@@ -66,9 +67,14 @@ export default function BannerSettings() {
       });
 
       toast.success(`${position === 'left' ? 'Left' : 'Right'} logo uploaded successfully!`);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Upload error:', error);
-      toast.error("Failed to upload logo");
+      const msg = (error?.message || '').toString().toLowerCase();
+      if (msg.includes('row-level security')) {
+        toast.error('Upload blocked by security policy (RLS). Please configure storage policies.');
+      } else {
+        toast.error('Failed to upload logo');
+      }
     } finally {
       setUploading(false);
     }
