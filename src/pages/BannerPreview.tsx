@@ -295,13 +295,18 @@ export default function BannerPreview() {
                 textAlign: 'center'
               }}>
                   <h2 style={{
-                  fontSize: bannerData.name.length > 25 ? 'clamp(16px, 3vw, 32px)' : bannerData.name.length > 20 ? 'clamp(18px, 3.5vw, 36px)' : bannerData.name.length > 15 ? 'clamp(22px, 4vw, 44px)' : 'clamp(24px, 5vw, 56px)',
+                  fontSize: bannerData.name.length > 30 ? 'clamp(14px, 2.5vw, 28px)' : 
+                            bannerData.name.length > 25 ? 'clamp(16px, 3vw, 32px)' : 
+                            bannerData.name.length > 20 ? 'clamp(18px, 3.5vw, 36px)' : 
+                            bannerData.name.length > 15 ? 'clamp(22px, 4vw, 44px)' : 
+                            'clamp(24px, 5vw, 56px)',
                   textShadow: '3px 3px 6px rgba(0,0,0,0.9)',
                   lineHeight: '1',
-                  transform: bannerData.name.length > 25 ? 'scaleX(0.85)' : bannerData.name.length > 20 ? 'scaleX(0.9)' : 'none',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis'
+                  transform: bannerData.name.length > 30 ? 'scaleX(0.75)' : 
+                             bannerData.name.length > 25 ? 'scaleX(0.85)' : 
+                             bannerData.name.length > 20 ? 'scaleX(0.9)' : 
+                             'none',
+                  whiteSpace: 'nowrap'
                 }} className="text-white tracking-wider font-bold mx-0 my-0 px-0 py-0">
                     {bannerData.name.toUpperCase()}
                   </h2>
@@ -433,12 +438,16 @@ export default function BannerPreview() {
                 width: '40%'
               }}>
                   <p className="text-white font-bold tracking-wide" style={{
-                  fontSize: 'clamp(10px, 2vw, 20px)',
+                  fontSize: mentorName.length > 25 ? 'clamp(8px, 1.5vw, 16px)' :
+                            mentorName.length > 20 ? 'clamp(9px, 1.75vw, 18px)' :
+                            mentorName.length > 15 ? 'clamp(10px, 1.85vw, 19px)' :
+                            'clamp(10px, 2vw, 20px)',
                   textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
                   whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  transform: mentorName.length > 15 ? 'scaleX(0.9)' : 'none'
+                  transform: mentorName.length > 25 ? 'scaleX(0.8)' :
+                             mentorName.length > 20 ? 'scaleX(0.85)' :
+                             mentorName.length > 15 ? 'scaleX(0.9)' : 
+                             'none'
                 }}>
                     {mentorName.toUpperCase()}
                   </p>
