@@ -33,6 +33,7 @@ export default function BannerPreview() {
   const [isDownloading, setIsDownloading] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [isPhotoFlipped, setIsPhotoFlipped] = useState(false);
+  const [isMentorPhotoFlipped, setIsMentorPhotoFlipped] = useState(false);
   const [selectedMentorPhotoIndex, setSelectedMentorPhotoIndex] = useState(0);
   const [showPhotoSelector, setShowPhotoSelector] = useState(false);
   const bannerRef = useRef<HTMLDivElement>(null);
@@ -64,7 +65,7 @@ export default function BannerPreview() {
 
   // Get mentor/upline photo - use selected profile photo or default to primary
   const mentorPhoto: string | null = profilePhotos[selectedMentorPhotoIndex]?.photo_url || primaryPhoto || profile?.profile_photo || null;
-  const mentorName: string = bannerData?.uplines?.[0]?.name || displayName;
+  const mentorName: string = displayName; // Always use user's profile name
 
   // Fetch selected stickers
   useEffect(() => {
@@ -353,13 +354,17 @@ export default function BannerPreview() {
                   </p>
                 </div>
 
-                {/* BOTTOM RIGHT - Mentor Photo with rounded corners */}
-                {mentorPhoto && <div className="absolute overflow-hidden shadow-2xl rounded-xl" style={{
-                bottom: '8%',
-                right: '5%',
-                width: '30%',
-                height: '35%'
-              }}>
+                {/* BOTTOM RIGHT - Mentor Photo with rounded corners and flip interaction */}
+                {mentorPhoto && <div 
+                  className="absolute overflow-hidden shadow-2xl rounded-xl cursor-pointer transition-transform duration-500 ease-in-out" 
+                  onClick={() => setIsMentorPhotoFlipped(!isMentorPhotoFlipped)}
+                  style={{
+                    bottom: '8%',
+                    right: '5%',
+                    width: '30%',
+                    height: '35%',
+                    transform: isMentorPhotoFlipped ? 'scaleX(-1)' : 'scaleX(1)'
+                  }}>
                     <img src={mentorPhoto} alt={mentorName} className="w-full h-full object-cover object-top" />
                   </div>}
 
