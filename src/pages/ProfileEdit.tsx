@@ -48,20 +48,33 @@ export default function ProfileEdit() {
     gender: "male",
     married: false
   });
+  const [customRole, setCustomRole] = useState("");
 
   // Load profile data when available
   useEffect(() => {
     if (profile) {
+      const predefinedRoles = ["bronze", "silver", "gold", "platinum", "emerald", "topaz", 
+        "ruby-star", "sapphire", "star-sapphire", "diamond", "blue-diamond", "black-diamond",
+        "royal-diamond", "crown-diamond", "ambassador", "royal-ambassador", 
+        "crown-ambassador", "brand-ambassador"];
+      
+      const isCustomRole = profile.role && !predefinedRoles.includes(profile.role);
+      
       setFormData({
         title: "mr",
         name: profile.name || "",
         mobile: profile.mobile || "",
         whatsapp: profile.whatsapp || "",
-        role: profile.role || "royal-ambassador",
+        role: isCustomRole ? "custom" : (profile.role || "royal-ambassador"),
         language: "eng",
         gender: "male",
         married: false
       });
+      
+      if (isCustomRole && profile.role) {
+        setCustomRole(profile.role);
+      }
+      
       if (profile.profile_photo) {
         setPhotos([profile.profile_photo]);
       }
@@ -89,16 +102,23 @@ export default function ProfileEdit() {
       toast.error("Please enter a valid 10-digit WhatsApp number");
       return;
     }
+    if (formData.role === "custom" && !customRole.trim()) {
+      toast.error("Please enter a custom role name");
+      return;
+    }
+    
     setLoading(true);
     try {
+      const finalRole = formData.role === "custom" ? customRole.trim() : formData.role;
+      
       const {
         error
       } = await updateProfile({
         name: formData.name.trim(),
         mobile: formData.mobile || null,
         whatsapp: formData.whatsapp || null,
-        role: formData.role,
-        rank: formData.role,
+        role: finalRole,
+        rank: finalRole,
         profile_photo: photos[0]
       });
       if (error) {
@@ -209,16 +229,36 @@ export default function ProfileEdit() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="bg-card border-primary">
+                <SelectItem value="custom">Custom Name</SelectItem>
                 <SelectItem value="bronze">Bronze</SelectItem>
                 <SelectItem value="silver">Silver</SelectItem>
                 <SelectItem value="gold">Gold</SelectItem>
                 <SelectItem value="platinum">Platinum</SelectItem>
+                <SelectItem value="emerald">Emerald</SelectItem>
+                <SelectItem value="topaz">Topaz</SelectItem>
+                <SelectItem value="ruby-star">Ruby Star</SelectItem>
+                <SelectItem value="sapphire">Sapphire</SelectItem>
+                <SelectItem value="star-sapphire">Star Sapphire</SelectItem>
                 <SelectItem value="diamond">Diamond</SelectItem>
+                <SelectItem value="blue-diamond">Blue Diamond</SelectItem>
+                <SelectItem value="black-diamond">Black Diamond</SelectItem>
+                <SelectItem value="royal-diamond">Royal Diamond</SelectItem>
+                <SelectItem value="crown-diamond">Crown Diamond</SelectItem>
                 <SelectItem value="ambassador">Ambassador</SelectItem>
                 <SelectItem value="royal-ambassador">Royal Ambassador</SelectItem>
                 <SelectItem value="crown-ambassador">Crown Ambassador</SelectItem>
+                <SelectItem value="brand-ambassador">Brand Ambassador</SelectItem>
               </SelectContent>
             </Select>
+            
+            {formData.role === "custom" && (
+              <Input 
+                value={customRole} 
+                onChange={e => setCustomRole(e.target.value)}
+                placeholder="Enter custom role name"
+                className="gold-border bg-secondary text-foreground h-12 border-b-2 border-t-0 border-x-0 rounded-none mt-2"
+              />
+            )}
           </div>
 
           {/* Default Language */}
