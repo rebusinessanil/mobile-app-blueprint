@@ -13,7 +13,6 @@ interface Upline {
   name: string;
   avatar?: string;
 }
-
 interface BannerData {
   rankName: string;
   rankIcon: string;
@@ -37,24 +36,28 @@ export default function BannerPreview() {
 
   // Get authenticated user
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({
+      data: {
+        session
+      }
+    }) => {
       setUserId(session?.user?.id ?? null);
     });
   }, []);
-
-  const { profile } = useProfile(userId ?? undefined);
-  const { photos: profilePhotos } = useProfilePhotos(userId ?? undefined);
+  const {
+    profile
+  } = useProfile(userId ?? undefined);
+  const {
+    photos: profilePhotos
+  } = useProfilePhotos(userId ?? undefined);
 
   // Use profile data for bottom section, fallback to banner data
   const displayName: string = profile?.name || bannerData?.name || "";
   const displayContact: string = profile?.mobile || profile?.whatsapp || "9876543210";
   const displayRank: string = profile?.rank || "Diamond";
-  
+
   // Get primary profile photo or first photo
-  const primaryPhoto: string | null = profile?.profile_photo || 
-                       profilePhotos[0]?.photo_url || 
-                       bannerData?.photo || 
-                       null;
+  const primaryPhoto: string | null = profile?.profile_photo || profilePhotos[0]?.photo_url || bannerData?.photo || null;
 
   // Fetch selected stickers
   useEffect(() => {
@@ -110,42 +113,37 @@ export default function BannerPreview() {
       toast.error("Banner not ready for download");
       return;
     }
-
     setIsDownloading(true);
     const loadingToast = toast.loading("Generating high-quality banner...");
-
     try {
       // Capture the banner at 1080x1080 resolution
       const canvas = await html2canvas(bannerRef.current, {
-        scale: 2, // Higher scale for better quality
+        scale: 2,
+        // Higher scale for better quality
         backgroundColor: null,
         logging: false,
         useCORS: true,
         allowTaint: true,
         width: 1080,
-        height: 1080,
+        height: 1080
       });
 
       // Convert to blob and download
-      canvas.toBlob((blob) => {
+      canvas.toBlob(blob => {
         toast.dismiss(loadingToast);
-        
         if (!blob) {
           toast.error("Failed to generate image");
           return;
         }
-
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
         const timestamp = new Date().getTime();
         link.download = `ReBusiness-Banner-${bannerData.rankName}-${timestamp}.png`;
         link.href = url;
         link.click();
-        
         URL.revokeObjectURL(url);
         toast.success("Banner downloaded successfully!");
       }, "image/png", 1.0);
-
     } catch (error) {
       console.error("Download error:", error);
       toast.dismiss(loadingToast);
@@ -194,17 +192,17 @@ export default function BannerPreview() {
                 right: '6%',
                 width: '48%'
               }}>
-                  <h2 className="text-white font-black leading-none tracking-wider text-right" style={{
+                  <h2 style={{
                   fontSize: 'clamp(32px,6.5vw,68px)',
                   textShadow: '3px 3px 6px rgba(0,0,0,0.8)',
                   letterSpacing: '0.05em'
-                }}>
+                }} className="text-white font-black leading-none tracking-wider text-right text-base">
                     {bannerData.name.toUpperCase()}
                   </h2>
-                  {bannerData.teamCity && <p className="text-white font-bold text-right mt-2 tracking-widest" style={{
+                  {bannerData.teamCity && <p style={{
                   fontSize: 'clamp(16px,3vw,32px)',
                   textShadow: '2px 2px 4px rgba(0,0,0,0.8)'
-                }}>
+                }} className="text-white text-right mt-2 tracking-widest text-xs font-thin font-sans mx-0 my-0">
                     TEAM - {bannerData.teamCity.toUpperCase()}
                   </p>}
                 </div>
@@ -296,30 +294,15 @@ export default function BannerPreview() {
         </div>
 
         {/* Profile Photos Gallery - 1-6 Square Thumbnails */}
-        {profilePhotos.length > 0 && (
-          <div className="flex gap-3 justify-center overflow-x-auto pb-2 px-4">
-            {profilePhotos.slice(0, 6).map((photo, idx) => (
-              <div 
-                key={photo.id} 
-                className="w-16 h-16 aspect-square rounded-lg overflow-hidden border-2 border-primary shadow-md flex-shrink-0"
-              >
-                <img 
-                  src={photo.photo_url} 
-                  alt={`Profile ${idx + 1}`} 
-                  className="w-full h-full object-cover object-center" 
-                />
-              </div>
-            ))}
-          </div>
-        )}
+        {profilePhotos.length > 0 && <div className="flex gap-3 justify-center overflow-x-auto pb-2 px-4">
+            {profilePhotos.slice(0, 6).map((photo, idx) => <div key={photo.id} className="w-16 h-16 aspect-square rounded-lg overflow-hidden border-2 border-primary shadow-md flex-shrink-0">
+                <img src={photo.photo_url} alt={`Profile ${idx + 1}`} className="w-full h-full object-cover object-center" />
+              </div>)}
+          </div>}
 
         {/* Download Button */}
         <div className="flex justify-center">
-          <Button 
-            onClick={handleDownload} 
-            disabled={isDownloading}
-            className="h-16 px-12 bg-teal-600 hover:bg-teal-700 disabled:bg-teal-800 disabled:cursor-not-allowed text-white text-xl font-bold rounded-2xl flex items-center gap-3"
-          >
+          <Button onClick={handleDownload} disabled={isDownloading} className="h-16 px-12 bg-teal-600 hover:bg-teal-700 disabled:bg-teal-800 disabled:cursor-not-allowed text-white text-xl font-bold rounded-2xl flex items-center gap-3">
             <Download className="w-6 h-6" />
             {isDownloading ? "GENERATING..." : "DOWNLOAD"}
           </Button>
