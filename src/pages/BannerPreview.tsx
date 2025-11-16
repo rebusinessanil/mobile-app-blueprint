@@ -33,6 +33,8 @@ export default function BannerPreview() {
   const [isDownloading, setIsDownloading] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [isPhotoFlipped, setIsPhotoFlipped] = useState(false);
+  const [selectedMentorPhotoIndex, setSelectedMentorPhotoIndex] = useState(0);
+  const [showPhotoSelector, setShowPhotoSelector] = useState(false);
   const bannerRef = useRef<HTMLDivElement>(null);
 
   // Get authenticated user
@@ -60,8 +62,8 @@ export default function BannerPreview() {
   // Get primary profile photo - prioritize uploaded photo from banner creation
   const primaryPhoto: string | null = bannerData?.photo || profile?.profile_photo || profilePhotos[0]?.photo_url || null;
 
-  // Get mentor/upline photo - defaults to user's own profile photo
-  const mentorPhoto: string | null = bannerData?.uplines?.find(u => u.avatar)?.avatar || primaryPhoto || profilePhotos[0]?.photo_url || null;
+  // Get mentor/upline photo - use selected profile photo or default to primary
+  const mentorPhoto: string | null = profilePhotos[selectedMentorPhotoIndex]?.photo_url || primaryPhoto || profile?.profile_photo || null;
   const mentorName: string = bannerData?.uplines?.[0]?.name || displayName;
 
   // Fetch selected stickers
@@ -351,8 +353,8 @@ export default function BannerPreview() {
                   </p>
                 </div>
 
-                {/* BOTTOM RIGHT - Mentor Photo */}
-                {mentorPhoto && <div className="absolute overflow-hidden shadow-2xl" style={{
+                {/* BOTTOM RIGHT - Mentor Photo with rounded corners */}
+                {mentorPhoto && <div className="absolute overflow-hidden shadow-2xl rounded-xl" style={{
                 bottom: '8%',
                 right: '5%',
                 width: '30%',
@@ -360,6 +362,56 @@ export default function BannerPreview() {
               }}>
                     <img src={mentorPhoto} alt={mentorName} className="w-full h-full object-cover object-top" />
                   </div>}
+
+                {/* Change Photo Button - Only show if multiple photos exist */}
+                {profilePhotos.length > 1 && (
+                  <button
+                    onClick={() => setShowPhotoSelector(!showPhotoSelector)}
+                    className="absolute text-[#FFD700] text-[10px] font-bold tracking-wider bg-black/60 px-2 py-1 rounded hover:bg-black/80 transition-colors"
+                    style={{
+                      bottom: '43%',
+                      right: '5%',
+                      fontSize: 'clamp(8px, 1.5vw, 12px)'
+                    }}
+                  >
+                    CHANGE
+                  </button>
+                )}
+
+                {/* Photo Selector Dropdown */}
+                {showPhotoSelector && profilePhotos.length > 1 && (
+                  <div 
+                    className="absolute bg-[#111827] border-2 border-[#FFD700] rounded-lg p-2 shadow-2xl z-50"
+                    style={{
+                      bottom: '48%',
+                      right: '5%',
+                      width: '32%'
+                    }}
+                  >
+                    <div className="grid grid-cols-2 gap-2">
+                      {profilePhotos.slice(0, 4).map((photo, idx) => (
+                        <button
+                          key={photo.id}
+                          onClick={() => {
+                            setSelectedMentorPhotoIndex(idx);
+                            setShowPhotoSelector(false);
+                          }}
+                          className={`aspect-square rounded-lg overflow-hidden border-2 transition-all ${
+                            selectedMentorPhotoIndex === idx 
+                              ? 'border-[#FFD700] scale-105' 
+                              : 'border-gray-600 hover:border-gray-400'
+                          }`}
+                        >
+                          <img 
+                            src={photo.photo_url} 
+                            alt={`Profile ${idx + 1}`} 
+                            className="w-full h-full object-cover"
+                          />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* BOTTOM RIGHT - Mentor Name and Title */}
                 <div className="absolute text-center" style={{
@@ -395,13 +447,13 @@ export default function BannerPreview() {
               </div>)}
           </div>
 
-          {/* Right - Download Button */}
-          <Button onClick={handleDownload} disabled={isDownloading} className="h-20 px-8 bg-gradient-to-br from-cyan-500 to-teal-600 hover:from-cyan-600 hover:to-teal-700 disabled:opacity-50 text-white rounded-2xl flex flex-col items-center justify-center gap-1 shadow-xl">
-            <ChevronDown className="w-8 h-8" />
-            <ChevronDown className="w-8 h-8 -mt-4" />
-            <span className="text-sm font-bold tracking-wider">
-              {isDownloading ? "LOADING..." : "DOWNLOAD"}
-            </span>
+          {/* Right - Download Button (Small & Minimal) */}
+          <Button 
+            onClick={handleDownload} 
+            disabled={isDownloading} 
+            className="h-10 px-6 bg-gradient-to-br from-[#FFD700] to-[#FFC93C] hover:from-[#FFC93C] hover:to-[#FFD700] disabled:opacity-50 text-black font-bold text-sm tracking-wider rounded-lg shadow-lg transition-all"
+          >
+            {isDownloading ? "Loading..." : "Download"}
           </Button>
         </div>
 
