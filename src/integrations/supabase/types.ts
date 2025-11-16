@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      banner_defaults: {
+        Row: {
+          created_at: string | null
+          id: string
+          logo_left: string | null
+          logo_right: string | null
+          updated_at: string | null
+          upline_avatars: Json | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          logo_left?: string | null
+          logo_right?: string | null
+          updated_at?: string | null
+          upline_avatars?: Json | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          logo_left?: string | null
+          logo_right?: string | null
+          updated_at?: string | null
+          upline_avatars?: Json | null
+        }
+        Relationships: []
+      }
       banner_stickers: {
         Row: {
           banner_id: string | null
@@ -386,6 +413,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_banner_settings: {
+        Row: {
+          auto_share_to_feed: boolean | null
+          created_at: string | null
+          id: string
+          logo_left: string | null
+          logo_right: string | null
+          show_contact_info: boolean | null
+          show_rank_badge: boolean | null
+          show_upline_names: boolean | null
+          updated_at: string | null
+          upline_avatars: Json | null
+          user_id: string
+        }
+        Insert: {
+          auto_share_to_feed?: boolean | null
+          created_at?: string | null
+          id?: string
+          logo_left?: string | null
+          logo_right?: string | null
+          show_contact_info?: boolean | null
+          show_rank_badge?: boolean | null
+          show_upline_names?: boolean | null
+          updated_at?: string | null
+          upline_avatars?: Json | null
+          user_id: string
+        }
+        Update: {
+          auto_share_to_feed?: boolean | null
+          created_at?: string | null
+          id?: string
+          logo_left?: string | null
+          logo_right?: string | null
+          show_contact_info?: boolean | null
+          show_rank_badge?: boolean | null
+          show_upline_names?: boolean | null
+          updated_at?: string | null
+          upline_avatars?: Json | null
+          user_id?: string
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {
