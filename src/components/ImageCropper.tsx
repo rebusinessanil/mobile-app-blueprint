@@ -64,7 +64,7 @@ export default function ImageCropper({ image, onCropComplete, onCancel }: ImageC
           };
           reader.readAsDataURL(blob);
         }
-      }, "image/jpeg");
+      }, "image/png", 1.0);
     });
   };
 

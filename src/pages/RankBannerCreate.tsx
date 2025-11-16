@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, ImagePlus, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,8 @@ import { ranks } from "@/data/ranks";
 import { adminPresetUplines } from "@/data/adminPresets";
 import { toast } from "sonner";
 import { removeBackground, loadImage } from "@/lib/backgroundRemover";
+import { useProfile } from "@/hooks/useProfile";
+import { supabase } from "@/integrations/supabase/client";
 interface Upline {
   id: string;
   name: string;
@@ -23,6 +25,9 @@ export default function RankBannerCreate() {
   const rank = ranks.find(r => r.id === rankId);
   const [mode, setMode] = useState<"myPhoto" | "others">("myPhoto");
   const [uplines, setUplines] = useState<Upline[]>([]);
+  const [userId, setUserId] = useState<string | null>(null);
+  const { profile } = useProfile(userId || undefined);
+  
   const [formData, setFormData] = useState({
     name: "",
     teamCity: "",
@@ -32,6 +37,27 @@ export default function RankBannerCreate() {
   const [showBgRemover, setShowBgRemover] = useState(false);
   const [processingBg, setProcessingBg] = useState(false);
   const [selectedStickers, setSelectedStickers] = useState<string[]>([]);
+
+  // Get authenticated user and load profile data
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUserId(user.id);
+      }
+    };
+    getUser();
+  }, []);
+
+  // Auto-fill name from profile
+  useEffect(() => {
+    if (profile && !formData.name) {
+      setFormData(prev => ({
+        ...prev,
+        name: profile.name
+      }));
+    }
+  }, [profile]);
   if (!rank) {
     return null;
   }
