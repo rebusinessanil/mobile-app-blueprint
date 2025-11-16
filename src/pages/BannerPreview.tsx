@@ -56,8 +56,8 @@ export default function BannerPreview() {
   const displayContact: string = profile?.mobile || profile?.whatsapp || "9876543210";
   const displayRank: string = profile?.rank || "ROYAL AMBASSADOR";
 
-  // Get primary profile photo
-  const primaryPhoto: string | null = profile?.profile_photo || profilePhotos[0]?.photo_url || bannerData?.photo || null;
+  // Get primary profile photo - prioritize uploaded photo from banner creation
+  const primaryPhoto: string | null = bannerData?.photo || profile?.profile_photo || profilePhotos[0]?.photo_url || null;
 
   // Get mentor/upline photo - defaults to user's own profile photo
   const mentorPhoto: string | null = bannerData?.uplines?.find(u => u.avatar)?.avatar || primaryPhoto || profilePhotos[0]?.photo_url || null;
