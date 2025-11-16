@@ -137,7 +137,7 @@ export default function ProfileEdit() {
             <FileText className="w-5 h-5 text-white" />
           </div>
           <div className="flex-1">
-            <p className="text-xs text-muted-foreground">#Dilip Singh Rathore</p>
+            <p className="text-xs text-muted-foreground">Update Profile</p>
           </div>
           <div className="px-4 py-1 bg-primary rounded-full">
             <div className="flex items-center gap-1">
