@@ -60,11 +60,11 @@ export default function BannerPreview() {
   const displayContact: string = profile?.mobile || profile?.whatsapp || "9876543210";
   const displayRank: string = profile?.rank || "ROYAL AMBASSADOR";
 
-  // Get primary profile photo - prioritize uploaded photo from banner creation
+  // Get primary profile photo - prioritize uploaded photo from banner creation for LEFT side
   const primaryPhoto: string | null = bannerData?.photo || profile?.profile_photo || profilePhotos[0]?.photo_url || null;
 
-  // Get mentor/upline photo - use selected profile photo or default to primary
-  const mentorPhoto: string | null = profilePhotos[selectedMentorPhotoIndex]?.photo_url || primaryPhoto || profile?.profile_photo || null;
+  // Get mentor/upline photo (RIGHT-BOTTOM) - ONLY use profile photos, never uploads
+  const mentorPhoto: string | null = profilePhotos[selectedMentorPhotoIndex]?.photo_url || profilePhotos[0]?.photo_url || profile?.profile_photo || null;
   const mentorName: string = displayName; // Always use user's profile name
 
   // Fetch selected stickers
@@ -354,7 +354,7 @@ export default function BannerPreview() {
                   </p>
                 </div>
 
-                {/* BOTTOM RIGHT - Mentor Photo with rounded corners and flip interaction */}
+                {/* BOTTOM RIGHT - Mentor Photo with rounded corners, feather fade, and flip interaction */}
                 {mentorPhoto && <div 
                   className="absolute overflow-hidden shadow-2xl rounded-xl cursor-pointer transition-transform duration-500 ease-in-out" 
                   onClick={() => setIsMentorPhotoFlipped(!isMentorPhotoFlipped)}
@@ -366,6 +366,14 @@ export default function BannerPreview() {
                     transform: isMentorPhotoFlipped ? 'scaleX(-1)' : 'scaleX(1)'
                   }}>
                     <img src={mentorPhoto} alt={mentorName} className="w-full h-full object-cover object-top" />
+                    {/* Bottom feather fade overlay */}
+                    <div 
+                      className="absolute bottom-0 left-0 right-0 pointer-events-none"
+                      style={{
+                        height: '30%',
+                        background: 'linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 100%)'
+                      }}
+                    />
                   </div>}
 
                 {/* Change Photo Button - Only show if multiple photos exist */}
