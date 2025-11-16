@@ -8,6 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import PhotoUploadGrid from "@/components/PhotoUploadGrid";
 import { toast } from "sonner";
 import { useProfile } from "@/hooks/useProfile";
+import { useProfilePhotos } from "@/hooks/useProfilePhotos";
 import { supabase } from "@/integrations/supabase/client";
 export default function ProfileEdit() {
   const navigate = useNavigate();
@@ -20,6 +21,7 @@ export default function ProfileEdit() {
     error: profileError,
     updateProfile
   } = useProfile(userId || undefined);
+  const { photos: profilePhotos } = useProfilePhotos(userId || undefined);
 
   // Get authenticated user
   useEffect(() => {
@@ -74,12 +76,71 @@ export default function ProfileEdit() {
       if (isCustomRole && profile.role) {
         setCustomRole(profile.role);
       }
-      
-      if (profile.profile_photo) {
-        setPhotos([profile.profile_photo]);
-      }
     }
   }, [profile]);
+
+  // Load profile photos
+  useEffect(() => {
+    if (profilePhotos && profilePhotos.length > 0) {
+      setPhotos(profilePhotos.map(p => p.photo_url));
+    }
+  }, [profilePhotos]);
+  const handlePhotosChange = async (newPhotos: string[]) => {
+    if (!userId) return;
+    
+    setPhotos(newPhotos);
+    
+    try {
+      // Delete all existing photos
+      const { error: deleteError } = await supabase
+        .from('profile_photos')
+        .delete()
+        .eq('user_id', userId);
+      
+      if (deleteError) throw deleteError;
+      
+      // Upload new photos
+      for (let i = 0; i < newPhotos.length; i++) {
+        const photo = newPhotos[i];
+        
+        // Convert base64 to blob
+        const response = await fetch(photo);
+        const blob = await response.blob();
+        
+        // Upload to storage
+        const fileName = `${userId}_${Date.now()}_${i}.png`;
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('profile-photos')
+          .upload(fileName, blob, {
+            contentType: 'image/png',
+            upsert: true
+          });
+        
+        if (uploadError) throw uploadError;
+        
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('profile-photos')
+          .getPublicUrl(fileName);
+        
+        // Insert into profile_photos table
+        const { error: insertError } = await supabase
+          .from('profile_photos')
+          .insert({
+            user_id: userId,
+            photo_url: publicUrl,
+            display_order: i,
+            is_primary: i === 0
+          });
+        
+        if (insertError) throw insertError;
+      }
+    } catch (error) {
+      console.error("Error saving photos:", error);
+      toast.error("Failed to save photos. Please try again.");
+    }
+  };
+
   const handleSave = async () => {
     // Validation
     if (!formData.name.trim()) {
@@ -92,6 +153,10 @@ export default function ProfileEdit() {
     }
     if (photos.length === 0) {
       toast.error("Please upload at least 1 profile photo");
+      return;
+    }
+    if (photos.length > 5) {
+      toast.error("You can upload only 5 photos.");
       return;
     }
     if (formData.mobile && !/^\d{10}$/.test(formData.mobile.replace(/\D/g, ''))) {
@@ -169,8 +234,8 @@ export default function ProfileEdit() {
 
         {/* Photo Gallery */}
         <div className="space-y-3">
-          <PhotoUploadGrid photos={photos} onPhotosChange={setPhotos} maxPhotos={10} />
-          <p className="text-center text-sm text-primary">Profile Images</p>
+          <PhotoUploadGrid photos={photos} onPhotosChange={handlePhotosChange} maxPhotos={5} />
+          <p className="text-center text-sm text-primary">Profile Images (Max 5)</p>
         </div>
 
         {/* Form Fields */}

@@ -2,7 +2,10 @@ import { useState } from "react";
 import { ImagePlus, X, Edit } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import ImageCropper from "./ImageCropper";
+import BackgroundRemoverModal from "./BackgroundRemoverModal";
+import { removeBackground, loadImage } from "@/lib/backgroundRemover";
 
 interface PhotoUploadGridProps {
   photos: string[];
@@ -10,14 +13,30 @@ interface PhotoUploadGridProps {
   maxPhotos?: number;
 }
 
-export default function PhotoUploadGrid({ photos, onPhotosChange, maxPhotos = 10 }: PhotoUploadGridProps) {
+export default function PhotoUploadGrid({ photos, onPhotosChange, maxPhotos = 5 }: PhotoUploadGridProps) {
   const [cropModalOpen, setCropModalOpen] = useState(false);
+  const [bgRemovalModalOpen, setBgRemovalModalOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [croppedImage, setCroppedImage] = useState<string>("");
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (photos.length >= maxPhotos) {
+      toast.error(`You can upload only ${maxPhotos} photos.`);
+      e.target.value = "";
+      return;
+    }
+    
     const file = e.target.files?.[0];
     if (file) {
+      // Validate file type
+      if (!file.type.match(/^image\/(jpeg|jpg|png)$/)) {
+        toast.error("Upload JPG or PNG only.");
+        e.target.value = "";
+        return;
+      }
+      
       const reader = new FileReader();
       reader.onload = () => {
         setSelectedImage(reader.result as string);
@@ -26,9 +45,16 @@ export default function PhotoUploadGrid({ photos, onPhotosChange, maxPhotos = 10
       };
       reader.readAsDataURL(file);
     }
+    e.target.value = "";
   };
 
-  const handleCropComplete = (croppedImage: string) => {
+  const handleCropComplete = (croppedImageData: string) => {
+    setCroppedImage(croppedImageData);
+    setCropModalOpen(false);
+    setBgRemovalModalOpen(true);
+  };
+
+  const handleKeepOriginal = () => {
     if (editingIndex !== null) {
       const newPhotos = [...photos];
       if (editingIndex < photos.length) {
@@ -38,9 +64,57 @@ export default function PhotoUploadGrid({ photos, onPhotosChange, maxPhotos = 10
       }
       onPhotosChange(newPhotos);
     }
-    setCropModalOpen(false);
+    setBgRemovalModalOpen(false);
+    setCroppedImage("");
     setSelectedImage(null);
     setEditingIndex(null);
+  };
+
+  const handleRemoveBackground = async () => {
+    setIsProcessing(true);
+    try {
+      // Convert base64 to blob
+      const response = await fetch(croppedImage);
+      const blob = await response.blob();
+      
+      // Load image
+      const img = await loadImage(blob);
+      
+      // Remove background
+      const processedBlob = await removeBackground(img);
+      
+      // Convert back to base64
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const processedImage = reader.result as string;
+        
+        if (editingIndex !== null) {
+          const newPhotos = [...photos];
+          if (editingIndex < photos.length) {
+            newPhotos[editingIndex] = processedImage;
+          } else {
+            newPhotos.push(processedImage);
+          }
+          onPhotosChange(newPhotos);
+        }
+        
+        setBgRemovalModalOpen(false);
+        setCroppedImage("");
+        setSelectedImage(null);
+        setEditingIndex(null);
+        setIsProcessing(false);
+        toast.success("Background removed successfully!");
+      };
+      reader.readAsDataURL(processedBlob);
+    } catch (error) {
+      console.error("Background removal error:", error);
+      toast.error("Image processing failed. Try another photo.");
+      setIsProcessing(false);
+      setBgRemovalModalOpen(false);
+      setCroppedImage("");
+      setSelectedImage(null);
+      setEditingIndex(null);
+    }
   };
 
   const handleRemovePhoto = (index: number) => {
@@ -52,6 +126,13 @@ export default function PhotoUploadGrid({ photos, onPhotosChange, maxPhotos = 10
     setSelectedImage(photos[index]);
     setEditingIndex(index);
     setCropModalOpen(true);
+  };
+
+  const handleCancelBgRemoval = () => {
+    setBgRemovalModalOpen(false);
+    setCroppedImage("");
+    setSelectedImage(null);
+    setEditingIndex(null);
   };
 
   const emptySlots = Array(maxPhotos - photos.length).fill(null);
@@ -83,7 +164,7 @@ export default function PhotoUploadGrid({ photos, onPhotosChange, maxPhotos = 10
           <label className="aspect-square gold-border bg-secondary rounded-2xl flex items-center justify-center cursor-pointer hover:gold-glow transition-all">
             <input
               type="file"
-              accept="image/*"
+              accept="image/jpeg,image/jpg,image/png"
               onChange={handleFileSelect}
               className="hidden"
             />
@@ -119,6 +200,21 @@ export default function PhotoUploadGrid({ photos, onPhotosChange, maxPhotos = 10
           )}
         </DialogContent>
       </Dialog>
+
+      <BackgroundRemoverModal
+        open={bgRemovalModalOpen}
+        onKeep={handleKeepOriginal}
+        onRemove={handleRemoveBackground}
+        onClose={handleCancelBgRemoval}
+      />
+
+      {isProcessing && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-card p-6 rounded-xl border-2 border-primary">
+            <p className="text-foreground">Processing image...</p>
+          </div>
+        </div>
+      )}
     </>
   );
 }

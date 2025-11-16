@@ -1,25 +1,34 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import UplineCarousel from "@/components/UplineCarousel";
-import { adminPresetUplines } from "@/data/adminPresets";
+import { useProfilePhotos } from "@/hooks/useProfilePhotos";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-interface Upline {
-  id: string;
-  name: string;
-  avatar?: string;
-}
+
 export default function BannerSettings() {
   const navigate = useNavigate();
-  const [uplines, setUplines] = useState<Upline[]>([]);
+  const [userId, setUserId] = useState<string | null>(null);
+  const { photos: profilePhotos } = useProfilePhotos(userId || undefined);
+  
   const [settings, setSettings] = useState({
     showUplineNames: true,
     showContactInfo: true,
     showRankBadge: true,
     autoShareToFeed: false
   });
+
+  // Get authenticated user
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUserId(user.id);
+      }
+    };
+    getUser();
+  }, []);
   const handleSave = () => {
     // TODO: Save to backend
     toast.success("Banner settings saved successfully!");
@@ -40,21 +49,43 @@ export default function BannerSettings() {
       </header>
 
       <div className="px-6 py-6 space-y-6">
-        {/* Default Uplines Section */}
+        {/* Profile Photos - Auto Synced */}
         <div className="space-y-3">
           <div>
-            <h2 className="text-lg font-semibold text-foreground mb-1">Default Top Uplines</h2>
+            <h2 className="text-lg font-semibold text-foreground mb-1">Profile Photos</h2>
             <p className="text-sm text-muted-foreground">
-              These avatars will appear by default on all your banners
+              Auto-synced from your profile (max 5 photos)
             </p>
           </div>
           
           <div className="gold-border bg-card rounded-2xl p-5">
-            <UplineCarousel uplines={uplines} onUplinesChange={setUplines} maxUplines={5} adminPresets={adminPresetUplines} />
+            {profilePhotos && profilePhotos.length > 0 ? (
+              <div className="grid grid-cols-5 gap-3">
+                {profilePhotos.map((photo, index) => (
+                  <div key={photo.id} className="relative aspect-square gold-border bg-card rounded-2xl overflow-hidden">
+                    <img 
+                      src={photo.photo_url} 
+                      alt={`Profile ${index + 1}`} 
+                      className="w-full h-full object-cover" 
+                    />
+                    {photo.is_primary && (
+                      <div className="absolute top-1 left-1 bg-primary rounded-full px-2 py-0.5">
+                        <span className="text-xs text-primary-foreground font-semibold">Primary</span>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <p>No profile photos yet.</p>
+                <p className="text-sm mt-2">Add photos in your Profile section and they'll appear here automatically.</p>
+              </div>
+            )}
           </div>
           
           <p className="text-xs text-muted-foreground text-center">
-            Upload up to 5 upline/mentor avatars. You can change these anytime in Profile settings.
+            These photos are automatically synced from your Profile. Edit them in Profile settings.
           </p>
         </div>
 
@@ -82,10 +113,13 @@ export default function BannerSettings() {
                   <p className="font-medium text-foreground">Show Contact Info</p>
                   <p className="text-sm text-muted-foreground">Include mobile/WhatsApp on banners</p>
                 </div>
-                <Switch checked={settings.showContactInfo} onCheckedChange={checked => setSettings({
-                ...settings,
-                showContactInfo: checked
-              })} className="data-[state=checked]:bg-primary" />
+                <Switch
+                  checked={settings.showContactInfo}
+                  onCheckedChange={(checked) =>
+                    setSettings({ ...settings, showContactInfo: checked })
+                  }
+                  className="data-[state=checked]:bg-primary"
+                />
               </div>
             </div>
 
@@ -93,12 +127,15 @@ export default function BannerSettings() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-medium text-foreground">Show Rank Badge</p>
-                  <p className="text-sm text-muted-foreground">Display rank icon on banners</p>
+                  <p className="text-sm text-muted-foreground">Display rank/achievement badge</p>
                 </div>
-                <Switch checked={settings.showRankBadge} onCheckedChange={checked => setSettings({
-                ...settings,
-                showRankBadge: checked
-              })} className="data-[state=checked]:bg-primary" />
+                <Switch
+                  checked={settings.showRankBadge}
+                  onCheckedChange={(checked) =>
+                    setSettings({ ...settings, showRankBadge: checked })
+                  }
+                  className="data-[state=checked]:bg-primary"
+                />
               </div>
             </div>
 
@@ -106,12 +143,15 @@ export default function BannerSettings() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-medium text-foreground">Auto Share to Feed</p>
-                  <p className="text-sm text-muted-foreground">Automatically post to community feed</p>
+                  <p className="text-sm text-muted-foreground">Automatically post banners to community feed</p>
                 </div>
-                <Switch checked={settings.autoShareToFeed} onCheckedChange={checked => setSettings({
-                ...settings,
-                autoShareToFeed: checked
-              })} className="data-[state=checked]:bg-primary" />
+                <Switch
+                  checked={settings.autoShareToFeed}
+                  onCheckedChange={(checked) =>
+                    setSettings({ ...settings, autoShareToFeed: checked })
+                  }
+                  className="data-[state=checked]:bg-primary"
+                />
               </div>
             </div>
           </div>
