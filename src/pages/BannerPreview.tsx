@@ -32,6 +32,7 @@ export default function BannerPreview() {
   const [stickers, setStickers] = useState<Sticker[]>([]);
   const [isDownloading, setIsDownloading] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [isPhotoFlipped, setIsPhotoFlipped] = useState(false);
   const bannerRef = useRef<HTMLDivElement>(null);
 
   // Get authenticated user
@@ -245,14 +246,30 @@ export default function BannerPreview() {
                     </div>)}
                 </div>
 
-                {/* LEFT - Main User Photo (Full height) */}
-                {primaryPhoto && <div className="absolute overflow-hidden" style={{
-                left: '3%',
-                top: '12%',
-                width: '40%',
-                height: '75%'
-              }}>
-                    <img src={primaryPhoto} alt={bannerData.name} className="w-full h-full object-cover object-top" />
+                {/* LEFT - Main User Photo (85% height, rounded, bottom fade, flippable) */}
+                {primaryPhoto && <div 
+                  className="absolute overflow-hidden rounded-2xl cursor-pointer transition-transform duration-500 ease-in-out"
+                  onClick={() => setIsPhotoFlipped(!isPhotoFlipped)}
+                  style={{
+                    left: '3%',
+                    top: '12%',
+                    width: '40%',
+                    height: '63.75%', // 75% * 85% = 63.75%
+                    transform: isPhotoFlipped ? 'scaleX(-1)' : 'scaleX(1)'
+                  }}>
+                    <img 
+                      src={primaryPhoto} 
+                      alt={bannerData.name} 
+                      className="w-full h-full object-cover object-top" 
+                    />
+                    {/* Bottom feather fade overlay */}
+                    <div 
+                      className="absolute bottom-0 left-0 right-0 pointer-events-none"
+                      style={{
+                        height: '30%',
+                        background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%)'
+                      }}
+                    />
                   </div>}
 
                 {/* Golden Crown below user photo */}
