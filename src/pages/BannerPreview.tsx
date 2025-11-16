@@ -250,29 +250,20 @@ export default function BannerPreview() {
                 </div>
 
                 {/* LEFT - Main User Photo (85% height, rounded, bottom fade, flippable) */}
-                {primaryPhoto && <div 
-                  className="absolute overflow-hidden rounded-2xl cursor-pointer transition-transform duration-500 ease-in-out"
-                  onClick={() => setIsPhotoFlipped(!isPhotoFlipped)}
-                  style={{
-                    left: '3%',
-                    top: '12%',
-                    width: '40%',
-                    height: '63.75%', // 75% * 85% = 63.75%
-                    transform: isPhotoFlipped ? 'scaleX(-1)' : 'scaleX(1)'
-                  }}>
-                    <img 
-                      src={primaryPhoto} 
-                      alt={bannerData.name} 
-                      className="w-full h-full object-cover object-top" 
-                    />
+                {primaryPhoto && <div className="absolute overflow-hidden rounded-2xl cursor-pointer transition-transform duration-500 ease-in-out" onClick={() => setIsPhotoFlipped(!isPhotoFlipped)} style={{
+                left: '3%',
+                top: '12%',
+                width: '40%',
+                height: '63.75%',
+                // 75% * 85% = 63.75%
+                transform: isPhotoFlipped ? 'scaleX(-1)' : 'scaleX(1)'
+              }}>
+                    <img src={primaryPhoto} alt={bannerData.name} className="w-full h-full object-cover object-top" />
                     {/* Bottom feather fade overlay */}
-                    <div 
-                      className="absolute bottom-0 left-0 right-0 pointer-events-none"
-                      style={{
-                        height: '30%',
-                        background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%)'
-                      }}
-                    />
+                    <div className="absolute bottom-0 left-0 right-0 pointer-events-none" style={{
+                  height: '30%',
+                  background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%)'
+                }} />
                   </div>}
 
                 {/* Golden Crown below user photo */}
@@ -295,26 +286,19 @@ export default function BannerPreview() {
                 textAlign: 'center'
               }}>
                   <h2 style={{
-                  fontSize: bannerData.name.length > 30 ? 'clamp(14px, 2.5vw, 28px)' : 
-                            bannerData.name.length > 25 ? 'clamp(16px, 3vw, 32px)' : 
-                            bannerData.name.length > 20 ? 'clamp(18px, 3.5vw, 36px)' : 
-                            bannerData.name.length > 15 ? 'clamp(22px, 4vw, 44px)' : 
-                            'clamp(24px, 5vw, 56px)',
+                  fontSize: bannerData.name.length > 30 ? 'clamp(14px, 2.5vw, 28px)' : bannerData.name.length > 25 ? 'clamp(16px, 3vw, 32px)' : bannerData.name.length > 20 ? 'clamp(18px, 3.5vw, 36px)' : bannerData.name.length > 15 ? 'clamp(22px, 4vw, 44px)' : 'clamp(24px, 5vw, 56px)',
                   textShadow: '3px 3px 6px rgba(0,0,0,0.9)',
                   lineHeight: '1',
-                  transform: bannerData.name.length > 30 ? 'scaleX(0.75)' : 
-                             bannerData.name.length > 25 ? 'scaleX(0.85)' : 
-                             bannerData.name.length > 20 ? 'scaleX(0.9)' : 
-                             'none',
+                  transform: bannerData.name.length > 30 ? 'scaleX(0.75)' : bannerData.name.length > 25 ? 'scaleX(0.85)' : bannerData.name.length > 20 ? 'scaleX(0.9)' : 'none',
                   whiteSpace: 'nowrap'
-                }} className="text-white tracking-wider font-bold mx-0 my-0 px-0 py-0">
+                }} className="text-white tracking-wider mx-0 my-0 px-0 py-0 text-xs font-extrabold text-center">
                     {bannerData.name.toUpperCase()}
                   </h2>
                   
                   {bannerData.teamCity && <p style={{
                   fontSize: 'clamp(12px, 2.5vw, 28px)',
                   textShadow: '2px 2px 4px rgba(0,0,0,0.8)'
-                }} className="text-white font-semibold tracking-widest mt-2 mx-0 text-xs my-0">
+                }} className="text-white tracking-widest mt-2 text-xs font-thin font-sans text-center mx-[15px] my-0">
                       {bannerData.teamCity.toUpperCase()}
                     </p>}
                 </div>
@@ -360,76 +344,45 @@ export default function BannerPreview() {
                 </div>
 
                 {/* BOTTOM RIGHT - Mentor Photo with rounded corners, feather fade, and flip interaction */}
-                {mentorPhoto && <div 
-                  className="absolute overflow-hidden shadow-2xl rounded-xl cursor-pointer transition-transform duration-500 ease-in-out" 
-                  onClick={() => setIsMentorPhotoFlipped(!isMentorPhotoFlipped)}
-                  style={{
-                    bottom: '8%',
-                    right: '5%',
-                    width: '30%',
-                    height: '35%',
-                    transform: isMentorPhotoFlipped ? 'scaleX(-1)' : 'scaleX(1)'
-                  }}>
+                {mentorPhoto && <div className="absolute overflow-hidden shadow-2xl rounded-xl cursor-pointer transition-transform duration-500 ease-in-out" onClick={() => setIsMentorPhotoFlipped(!isMentorPhotoFlipped)} style={{
+                bottom: '8%',
+                right: '5%',
+                width: '30%',
+                height: '35%',
+                transform: isMentorPhotoFlipped ? 'scaleX(-1)' : 'scaleX(1)'
+              }}>
                     <img src={mentorPhoto} alt={mentorName} className="w-full h-full object-cover object-top" />
                     {/* Bottom feather fade overlay */}
-                    <div 
-                      className="absolute bottom-0 left-0 right-0 pointer-events-none"
-                      style={{
-                        height: '30%',
-                        background: 'linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 100%)'
-                      }}
-                    />
+                    <div className="absolute bottom-0 left-0 right-0 pointer-events-none" style={{
+                  height: '30%',
+                  background: 'linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 100%)'
+                }} />
                   </div>}
 
                 {/* Change Photo Button - Only show if multiple photos exist */}
-                {profilePhotos.length > 1 && (
-                  <button
-                    onClick={() => setShowPhotoSelector(!showPhotoSelector)}
-                    className="absolute text-[#FFD700] text-[10px] font-bold tracking-wider bg-black/60 px-2 py-1 rounded hover:bg-black/80 transition-colors"
-                    style={{
-                      bottom: '43%',
-                      right: '5%',
-                      fontSize: 'clamp(8px, 1.5vw, 12px)'
-                    }}
-                  >
+                {profilePhotos.length > 1 && <button onClick={() => setShowPhotoSelector(!showPhotoSelector)} className="absolute text-[#FFD700] text-[10px] font-bold tracking-wider bg-black/60 px-2 py-1 rounded hover:bg-black/80 transition-colors" style={{
+                bottom: '43%',
+                right: '5%',
+                fontSize: 'clamp(8px, 1.5vw, 12px)'
+              }}>
                     CHANGE
-                  </button>
-                )}
+                  </button>}
 
                 {/* Photo Selector Dropdown */}
-                {showPhotoSelector && profilePhotos.length > 1 && (
-                  <div 
-                    className="absolute bg-[#111827] border-2 border-[#FFD700] rounded-lg p-2 shadow-2xl z-50"
-                    style={{
-                      bottom: '48%',
-                      right: '5%',
-                      width: '32%'
-                    }}
-                  >
+                {showPhotoSelector && profilePhotos.length > 1 && <div className="absolute bg-[#111827] border-2 border-[#FFD700] rounded-lg p-2 shadow-2xl z-50" style={{
+                bottom: '48%',
+                right: '5%',
+                width: '32%'
+              }}>
                     <div className="grid grid-cols-2 gap-2">
-                      {profilePhotos.slice(0, 4).map((photo, idx) => (
-                        <button
-                          key={photo.id}
-                          onClick={() => {
-                            setSelectedMentorPhotoIndex(idx);
-                            setShowPhotoSelector(false);
-                          }}
-                          className={`aspect-square rounded-lg overflow-hidden border-2 transition-all ${
-                            selectedMentorPhotoIndex === idx 
-                              ? 'border-[#FFD700] scale-105' 
-                              : 'border-gray-600 hover:border-gray-400'
-                          }`}
-                        >
-                          <img 
-                            src={photo.photo_url} 
-                            alt={`Profile ${idx + 1}`} 
-                            className="w-full h-full object-cover"
-                          />
-                        </button>
-                      ))}
+                      {profilePhotos.slice(0, 4).map((photo, idx) => <button key={photo.id} onClick={() => {
+                    setSelectedMentorPhotoIndex(idx);
+                    setShowPhotoSelector(false);
+                  }} className={`aspect-square rounded-lg overflow-hidden border-2 transition-all ${selectedMentorPhotoIndex === idx ? 'border-[#FFD700] scale-105' : 'border-gray-600 hover:border-gray-400'}`}>
+                          <img src={photo.photo_url} alt={`Profile ${idx + 1}`} className="w-full h-full object-cover" />
+                        </button>)}
                     </div>
-                  </div>
-                )}
+                  </div>}
 
                 {/* BOTTOM RIGHT - Mentor Name and Title (Moved to bottom-most position) */}
                 <div className="absolute text-right" style={{
@@ -438,16 +391,10 @@ export default function BannerPreview() {
                 width: '40%'
               }}>
                   <p className="text-white font-bold tracking-wide" style={{
-                  fontSize: mentorName.length > 25 ? 'clamp(8px, 1.5vw, 16px)' :
-                            mentorName.length > 20 ? 'clamp(9px, 1.75vw, 18px)' :
-                            mentorName.length > 15 ? 'clamp(10px, 1.85vw, 19px)' :
-                            'clamp(10px, 2vw, 20px)',
+                  fontSize: mentorName.length > 25 ? 'clamp(8px, 1.5vw, 16px)' : mentorName.length > 20 ? 'clamp(9px, 1.75vw, 18px)' : mentorName.length > 15 ? 'clamp(10px, 1.85vw, 19px)' : 'clamp(10px, 2vw, 20px)',
                   textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
                   whiteSpace: 'nowrap',
-                  transform: mentorName.length > 25 ? 'scaleX(0.8)' :
-                             mentorName.length > 20 ? 'scaleX(0.85)' :
-                             mentorName.length > 15 ? 'scaleX(0.9)' : 
-                             'none'
+                  transform: mentorName.length > 25 ? 'scaleX(0.8)' : mentorName.length > 20 ? 'scaleX(0.85)' : mentorName.length > 15 ? 'scaleX(0.9)' : 'none'
                 }}>
                     {mentorName.toUpperCase()}
                   </p>
@@ -474,11 +421,7 @@ export default function BannerPreview() {
           </div>
 
           {/* Right - Download Button (Small & Minimal) */}
-          <Button 
-            onClick={handleDownload} 
-            disabled={isDownloading} 
-            className="h-10 px-6 bg-gradient-to-br from-[#FFD700] to-[#FFC93C] hover:from-[#FFC93C] hover:to-[#FFD700] disabled:opacity-50 text-black font-bold text-sm tracking-wider rounded-lg shadow-lg transition-all"
-          >
+          <Button onClick={handleDownload} disabled={isDownloading} className="h-10 px-6 bg-gradient-to-br from-[#FFD700] to-[#FFC93C] hover:from-[#FFC93C] hover:to-[#FFD700] disabled:opacity-50 text-black font-bold text-sm tracking-wider rounded-lg shadow-lg transition-all">
             {isDownloading ? "Loading..." : "Download"}
           </Button>
         </div>
