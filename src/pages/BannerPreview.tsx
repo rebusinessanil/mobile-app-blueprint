@@ -326,13 +326,7 @@ export default function BannerPreview() {
                 bottom: '3%',
                 left: '5%'
               }}>
-                  <p className="text-white font-bold tracking-wide" style={{
-                  fontSize: 'clamp(8px, 1.5vw, 16px)',
-                  textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
-                  marginBottom: '2px'
-                }}>
-                    {displayName.toUpperCase()}
-                  </p>
+                  
                   <p className="text-white font-bold tracking-wide" style={{
                   fontSize: 'clamp(10px, 2vw, 20px)',
                   textShadow: '2px 2px 4px rgba(0,0,0,0.8)'
