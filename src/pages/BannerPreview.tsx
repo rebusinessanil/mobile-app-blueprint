@@ -59,8 +59,8 @@ export default function BannerPreview() {
   // Get primary profile photo
   const primaryPhoto: string | null = profile?.profile_photo || profilePhotos[0]?.photo_url || bannerData?.photo || null;
 
-  // Get mentor/upline photo (first upline with avatar)
-  const mentorPhoto: string | null = bannerData?.uplines?.find(u => u.avatar)?.avatar || profilePhotos[1]?.photo_url || primaryPhoto;
+  // Get mentor/upline photo - defaults to user's own profile photo
+  const mentorPhoto: string | null = bannerData?.uplines?.find(u => u.avatar)?.avatar || primaryPhoto || profilePhotos[0]?.photo_url || null;
   const mentorName: string = bannerData?.uplines?.[0]?.name || displayName;
 
   // Fetch selected stickers
@@ -238,9 +238,9 @@ export default function BannerPreview() {
             paddingBottom: '100%'
           }}>
               <div className="absolute inset-0">
-                {/* Top - Small circular upline avatars (70% scale) */}
+                {/* Top - Small circular upline avatars (70% scale = smaller) */}
                 <div className="absolute top-[3%] left-1/2 -translate-x-1/2 flex gap-1.5 z-20">
-                  {bannerData.uplines?.slice(0, 5).map((upline, idx) => <div key={upline.id} className="w-8 h-8 rounded-full border-2 border-white overflow-hidden shadow-lg">
+                  {bannerData.uplines?.slice(0, 5).map((upline, idx) => <div key={upline.id} className="w-7 h-7 rounded-full border-2 border-white overflow-hidden shadow-lg">
                       <img src={upline.avatar || primaryPhoto || "/placeholder.svg"} alt={upline.name} className="w-full h-full object-cover" />
                     </div>)}
                 </div>
@@ -275,11 +275,14 @@ export default function BannerPreview() {
                 textAlign: 'center'
               }}>
                   <h2 style={{
-                  fontSize: bannerData.name.length > 20 ? 'clamp(18px, 3.5vw, 36px)' : bannerData.name.length > 15 ? 'clamp(22px, 4vw, 44px)' : 'clamp(24px, 5vw, 56px)',
+                  fontSize: bannerData.name.length > 25 ? 'clamp(16px, 3vw, 32px)' : bannerData.name.length > 20 ? 'clamp(18px, 3.5vw, 36px)' : bannerData.name.length > 15 ? 'clamp(22px, 4vw, 44px)' : 'clamp(24px, 5vw, 56px)',
                   textShadow: '3px 3px 6px rgba(0,0,0,0.9)',
                   lineHeight: '1',
-                  transform: bannerData.name.length > 20 ? 'scaleX(0.9)' : 'none'
-                }} className="text-white tracking-wider whitespace-nowrap overflow-hidden text-xs font-thin mx-0 my-0 px-0 py-0">
+                  transform: bannerData.name.length > 25 ? 'scaleX(0.85)' : bannerData.name.length > 20 ? 'scaleX(0.9)' : 'none',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis'
+                }} className="text-white tracking-wider font-bold mx-0 my-0 px-0 py-0">
                     {bannerData.name.toUpperCase()}
                   </h2>
                   

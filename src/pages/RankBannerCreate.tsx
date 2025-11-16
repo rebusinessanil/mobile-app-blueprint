@@ -92,6 +92,7 @@ export default function RankBannerCreate() {
   const handleCropComplete = (croppedImage: string) => {
     setPhoto(croppedImage);
     setShowCropper(false);
+    setTempPhoto(null);
     setShowBgRemover(true);
   };
 
@@ -149,12 +150,28 @@ export default function RankBannerCreate() {
   };
   const handleReset = () => {
     setFormData({
-      name: "",
+      name: profile?.name || "",
       teamCity: "",
       chequeAmount: ""
     });
     setPhoto(null);
-    setUplines([]);
+    setTempPhoto(null);
+    setShowCropper(false);
+    setShowBgRemover(false);
+    setProcessingBg(false);
+    // Reset uplines to default from banner settings
+    if (bannerSettings) {
+      const defaultUplines = bannerSettings.upline_avatars.map((upline, index) => ({
+        id: `upline-${index}`,
+        name: upline.name,
+        avatar: upline.avatar_url
+      }));
+      setUplines(defaultUplines);
+    } else {
+      setUplines([]);
+    }
+    setSelectedStickers([]);
+    toast.success("Form reset to default values");
   };
   return <div className="min-h-screen bg-navy-dark pb-6">
       {/* Header */}
@@ -273,14 +290,20 @@ export default function RankBannerCreate() {
         </div>
       </div>
 
-      {/* Image Cropper Modal (4:5 Portrait Ratio) */}
+      {/* Image Cropper Modal - 3:4 Portrait Ratio for Rank Banners */}
       {showCropper && tempPhoto && (
-        <ImageCropper
-          image={tempPhoto}
-          onCropComplete={handleCropComplete}
-          onCancel={handleCropCancel}
-          aspect={4 / 5}
-        />
+        <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
+          <div className="bg-[#0B0E15] rounded-2xl p-6 w-full max-w-2xl border-2 border-primary shadow-2xl">
+            <h3 className="text-xl font-bold text-white mb-2">Crop Your Photo</h3>
+            <p className="text-sm text-muted-foreground mb-4">Adjust to 3:4 portrait ratio for perfect banner fit</p>
+            <ImageCropper
+              image={tempPhoto}
+              onCropComplete={handleCropComplete}
+              onCancel={handleCropCancel}
+              aspect={0.75}
+            />
+          </div>
+        </div>
       )}
 
       {/* Background Remover Modal */}
