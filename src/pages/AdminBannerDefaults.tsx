@@ -21,15 +21,35 @@ export default function AdminBannerDefaults() {
 
   useEffect(() => {
     const checkAdmin = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError) {
+        console.error("Auth error:", userError);
+        toast.error("Authentication error");
+        navigate("/login");
+        return;
+      }
+      
       if (!user) {
+        console.log("No user found, redirecting to login");
         navigate("/login");
         return;
       }
 
-      const { data: adminCheck } = await supabase.rpc('is_admin', { user_id: user.id });
+      console.log("Checking admin status for user:", user.id);
+      const { data: adminCheck, error: adminError } = await supabase.rpc('is_admin', { user_id: user.id });
+      
+      if (adminError) {
+        console.error("Admin check error:", adminError);
+        toast.error("Failed to verify admin status");
+        navigate("/dashboard");
+        return;
+      }
+      
+      console.log("Admin check result:", adminCheck);
+      
       if (!adminCheck) {
-        toast.error("Access denied");
+        toast.error("Access denied - Admin privileges required. Please log out and log back in.");
         navigate("/dashboard");
         return;
       }
