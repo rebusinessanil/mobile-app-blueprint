@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useProfile } from "@/hooks/useProfile";
 import { useProfilePhotos } from "@/hooks/useProfilePhotos";
+import { useBannerSettings } from "@/hooks/useBannerSettings";
 import { supabase } from "@/integrations/supabase/client";
 import type { Sticker } from "@/hooks/useStickers";
 import html2canvas from "html2canvas";
@@ -54,6 +55,9 @@ export default function BannerPreview() {
   const {
     photos: profilePhotos
   } = useProfilePhotos(userId ?? undefined);
+  const {
+    settings: bannerSettings
+  } = useBannerSettings(userId ?? undefined);
 
   // Use profile data, fallback to banner data
   const displayName: string = profile?.name || bannerData?.name || "";
@@ -242,6 +246,26 @@ export default function BannerPreview() {
             paddingBottom: '100%'
           }}>
               <div className="absolute inset-0">
+                {/* Top-Left Logo */}
+                {bannerSettings?.logo_left && <div className="absolute z-30" style={{
+                  top: '3%',
+                  left: '3%',
+                  width: '15%',
+                  height: '8%'
+                }}>
+                    <img src={bannerSettings.logo_left} alt="Left Logo" className="w-full h-full object-contain drop-shadow-lg" />
+                  </div>}
+
+                {/* Top-Right Logo */}
+                {bannerSettings?.logo_right && <div className="absolute z-30" style={{
+                  top: '3%',
+                  right: '3%',
+                  width: '15%',
+                  height: '8%'
+                }}>
+                    <img src={bannerSettings.logo_right} alt="Right Logo" className="w-full h-full object-contain drop-shadow-lg" />
+                  </div>}
+
                 {/* Top - Small circular upline avatars (70% scale = smaller) */}
                 <div className="absolute top-[3%] left-1/2 -translate-x-1/2 flex gap-1.5 z-20">
                   {bannerData.uplines?.slice(0, 5).map((upline, idx) => <div key={upline.id} className="w-7 h-7 rounded-full border-2 border-white overflow-hidden shadow-lg">
