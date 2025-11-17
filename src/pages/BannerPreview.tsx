@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { useProfile } from "@/hooks/useProfile";
 import { useProfilePhotos } from "@/hooks/useProfilePhotos";
 import { useBannerSettings } from "@/hooks/useBannerSettings";
+import { useTemplateBackgrounds } from "@/hooks/useTemplateBackgrounds";
 import { supabase } from "@/integrations/supabase/client";
 import type { Sticker } from "@/hooks/useStickers";
 import html2canvas from "html2canvas";
@@ -58,6 +59,9 @@ export default function BannerPreview() {
   const {
     settings: bannerSettings
   } = useBannerSettings(userId ?? undefined);
+  const {
+    backgrounds: templateBackgrounds
+  } = useTemplateBackgrounds();
 
   // Use profile data, fallback to banner data
   const displayName: string = profile?.name || bannerData?.name || "";
@@ -246,6 +250,15 @@ export default function BannerPreview() {
             paddingBottom: '100%'
           }}>
               <div className="absolute inset-0">
+                {/* Background Image (if uploaded) or Gradient Background */}
+                {templateBackgrounds[selectedTemplate] ? (
+                  <img 
+                    src={templateBackgrounds[selectedTemplate]} 
+                    alt="Template background" 
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                ) : null}
+
                 {/* Top-Left Logo */}
                 {bannerSettings?.logo_left && <div className="absolute z-30" style={{
                   top: '3%',
