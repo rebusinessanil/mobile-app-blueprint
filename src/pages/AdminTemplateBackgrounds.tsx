@@ -54,18 +54,27 @@ export default function AdminTemplateBackgrounds() {
     const file = event.target.files?.[0];
     if (!file || !selectedTemplate) return;
 
+    if (backgrounds.length >= 16) {
+      toast.error('Maximum 16 backgrounds per template');
+      return;
+    }
+
+    // Find next available slot (0-15)
+    const usedSlots = backgrounds.map(bg => bg.display_order);
+    const nextSlot = Array.from({ length: 16 }, (_, i) => i).find(i => !usedSlots.includes(i)) ?? backgrounds.length;
+
     setUploading(true);
     const { url, error } = await uploadTemplateBackground(
       selectedTemplate,
       file,
-      backgrounds.length
+      nextSlot
     );
 
     if (error) {
       toast.error('Failed to upload background');
       console.error(error);
     } else {
-      toast.success('Background uploaded successfully');
+      toast.success(`Background uploaded to slot ${nextSlot + 1}`);
     }
     setUploading(false);
     event.target.value = '';
@@ -169,8 +178,10 @@ export default function AdminTemplateBackgrounds() {
       {selectedTemplate && (
         <Card>
           <CardHeader>
-            <CardTitle>Template Backgrounds</CardTitle>
-            <CardDescription>Upload and manage background images for this template</CardDescription>
+            <CardTitle>Template Backgrounds (16 Slots)</CardTitle>
+            <CardDescription>
+              Each template supports up to 16 background images. Users will only see backgrounds for the template they select.
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Upload Section */}
@@ -182,55 +193,68 @@ export default function AdminTemplateBackgrounds() {
                   type="file"
                   accept="image/png,image/jpeg,image/jpg"
                   onChange={handleUpload}
-                  disabled={uploading}
+                  disabled={uploading || backgrounds.length >= 16}
                   className="flex-1"
                 />
                 {uploading && <Loader2 className="h-5 w-5 animate-spin text-gold" />}
               </div>
+              <p className="text-sm text-muted-foreground">
+                {backgrounds.length} of 16 slots filled
+                {backgrounds.length >= 16 && " (Maximum reached)"}
+              </p>
             </div>
 
-            {/* Backgrounds Grid */}
+            {/* 16-Slot Grid */}
             {backgroundsLoading ? (
               <Loader2 className="h-6 w-6 animate-spin text-gold" />
-            ) : backgrounds.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground">
-                <Upload className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>No backgrounds uploaded yet</p>
-              </div>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {backgrounds.map((bg) => (
-                  <Card key={bg.id} className={!bg.is_active ? 'opacity-50' : ''}>
-                    <CardContent className="p-4 space-y-2">
-                      <img
-                        src={bg.background_image_url}
-                        alt="Background"
-                        className="w-full h-32 object-cover rounded"
-                      />
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleToggleActive(bg.id, bg.is_active)}
-                          className="flex-1"
-                        >
-                          {bg.is_active ? (
-                            <><EyeOff className="h-4 w-4 mr-1" /> Hide</>
-                          ) : (
-                            <><Eye className="h-4 w-4 mr-1" /> Show</>
-                          )}
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => handleRemove(bg.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4">
+                {Array.from({ length: 16 }, (_, index) => {
+                  const bg = backgrounds.find(b => b.display_order === index);
+                  return (
+                    <Card key={index} className={bg ? (bg.is_active ? '' : 'opacity-50') : 'border-dashed'}>
+                      <CardContent className="p-4 space-y-2">
+                        <div className="text-xs font-medium text-muted-foreground mb-1">
+                          Slot {index + 1}
+                        </div>
+                        {bg ? (
+                          <>
+                            <img
+                              src={bg.background_image_url}
+                              alt={`Background ${index + 1}`}
+                              className="w-full h-32 object-cover rounded"
+                            />
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleToggleActive(bg.id, bg.is_active)}
+                                className="flex-1"
+                              >
+                                {bg.is_active ? (
+                                  <><EyeOff className="h-4 w-4 mr-1" /> Hide</>
+                                ) : (
+                                  <><Eye className="h-4 w-4 mr-1" /> Show</>
+                                )}
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => handleRemove(bg.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </>
+                        ) : (
+                          <div className="w-full h-32 flex items-center justify-center border-2 border-dashed rounded bg-muted/10">
+                            <Upload className="h-8 w-8 text-muted-foreground/50" />
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
             )}
           </CardContent>
