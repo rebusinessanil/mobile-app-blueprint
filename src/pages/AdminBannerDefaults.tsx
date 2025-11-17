@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Save, Upload, X } from "lucide-react";
+import { ArrowLeft, Save, Upload, X, ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useBannerDefaults } from "@/hooks/useBannerDefaults";
+import { useTemplateBackgrounds, uploadTemplateBackground, removeTemplateBackground } from "@/hooks/useTemplateBackgrounds";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import UplineManager from "@/components/UplineManager";
@@ -10,14 +11,17 @@ import UplineManager from "@/components/UplineManager";
 export default function AdminBannerDefaults() {
   const navigate = useNavigate();
   const { defaults, loading } = useBannerDefaults();
+  const { backgrounds, loading: backgroundsLoading } = useTemplateBackgrounds();
   const [uplineAvatars, setUplineAvatars] = useState<Array<{ name: string; avatar_url: string }>>([]);
   const [logoLeft, setLogoLeft] = useState<string | null>(null);
   const [logoRight, setLogoRight] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [uploadingLeft, setUploadingLeft] = useState(false);
   const [uploadingRight, setUploadingRight] = useState(false);
+  const [uploadingBackground, setUploadingBackground] = useState<number | null>(null);
   const leftFileInputRef = useRef<HTMLInputElement>(null);
   const rightFileInputRef = useRef<HTMLInputElement>(null);
+  const backgroundFileInputRefs = useRef<{ [key: number]: HTMLInputElement | null }>({});
 
   useEffect(() => {
     const checkAdmin = async () => {
@@ -125,6 +129,46 @@ export default function AdminBannerDefaults() {
     toast.success(`${position === 'left' ? 'Left' : 'Right'} logo removed`);
   };
 
+  const handleBackgroundUpload = async (file: File, templateIndex: number) => {
+    setUploadingBackground(templateIndex);
+
+    try {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        toast.error("Please upload an image file");
+        return;
+      }
+
+      // Validate file size (max 5MB for backgrounds)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("Image must be less than 5MB");
+        return;
+      }
+
+      const { url, error } = await uploadTemplateBackground(templateIndex, file);
+
+      if (error) throw error;
+
+      toast.success(`Background uploaded for Template ${templateIndex + 1}!`);
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast.error("Failed to upload background");
+    } finally {
+      setUploadingBackground(null);
+    }
+  };
+
+  const handleRemoveBackground = async (templateIndex: number) => {
+    try {
+      const { error } = await removeTemplateBackground(templateIndex);
+      if (error) throw error;
+      toast.success(`Background removed for Template ${templateIndex + 1}`);
+    } catch (error) {
+      console.error('Remove error:', error);
+      toast.error("Failed to remove background");
+    }
+  };
+
   const handleSave = async () => {
     if (!defaults?.id) return;
 
@@ -145,7 +189,27 @@ export default function AdminBannerDefaults() {
     }
   };
 
-  if (!isAdmin || loading) {
+  // Template colors for background previews
+  const templateColors = [
+    { id: 0, name: "Green Black", bgColor: "from-green-500 to-black" },
+    { id: 1, name: "Blue Purple", bgColor: "from-blue-500 to-purple-600" },
+    { id: 2, name: "Red Orange", bgColor: "from-red-500 to-orange-600" },
+    { id: 3, name: "Pink Violet", bgColor: "from-pink-500 to-violet-600" },
+    { id: 4, name: "Teal Cyan", bgColor: "from-teal-500 to-cyan-600" },
+    { id: 5, name: "Yellow Green", bgColor: "from-yellow-500 to-green-600" },
+    { id: 6, name: "Indigo Blue", bgColor: "from-indigo-500 to-blue-600" },
+    { id: 7, name: "Rose Red", bgColor: "from-rose-500 to-red-600" },
+    { id: 8, name: "Emerald Teal", bgColor: "from-emerald-500 to-teal-600" },
+    { id: 9, name: "Amber Orange", bgColor: "from-amber-500 to-orange-600" },
+    { id: 10, name: "Purple Fuchsia", bgColor: "from-purple-500 to-fuchsia-600" },
+    { id: 11, name: "Lime Green", bgColor: "from-lime-500 to-green-600" },
+    { id: 12, name: "Sky Blue", bgColor: "from-sky-500 to-blue-600" },
+    { id: 13, name: "Orange Red", bgColor: "from-orange-500 to-red-600" },
+    { id: 14, name: "Violet Purple", bgColor: "from-violet-500 to-purple-600" },
+    { id: 15, name: "Cyan Teal", bgColor: "from-cyan-500 to-teal-600" },
+  ];
+
+  if (!isAdmin || loading || backgroundsLoading) {
     return (
       <div className="min-h-screen bg-navy-dark flex items-center justify-center">
         <p className="text-muted-foreground">Loading...</p>
@@ -302,6 +366,71 @@ export default function AdminBannerDefaults() {
           <Save className="w-5 h-5 mr-2" />
           SAVE ALL DEFAULTS
         </Button>
+
+        {/* Template Backgrounds Section */}
+        <div className="space-y-3 mt-8">
+          <div>
+            <h2 className="text-xl font-bold text-foreground mb-1">Template Backgrounds</h2>
+            <p className="text-sm text-muted-foreground">
+              Upload background images for each template color option (replaces solid color backgrounds)
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {templateColors.map((template) => (
+              <div key={template.id} className="gold-border bg-card rounded-2xl p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-semibold text-foreground">{template.name}</h3>
+                  <span className="text-xs text-muted-foreground">#{template.id}</span>
+                </div>
+                
+                {backgrounds[template.id] ? (
+                  <div className="relative aspect-square rounded-lg overflow-hidden bg-muted">
+                    <img 
+                      src={backgrounds[template.id]} 
+                      alt={`${template.name} background`} 
+                      className="w-full h-full object-cover"
+                    />
+                    <button
+                      onClick={() => handleRemoveBackground(template.id)}
+                      className="absolute top-1 right-1 w-6 h-6 rounded-full bg-destructive/90 hover:bg-destructive flex items-center justify-center transition-colors"
+                    >
+                      <X className="w-3 h-3 text-destructive-foreground" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className={`relative aspect-square rounded-lg overflow-hidden bg-gradient-to-br ${template.bgColor}`}>
+                    <button
+                      onClick={() => backgroundFileInputRefs.current[template.id]?.click()}
+                      disabled={uploadingBackground === template.id}
+                      className="absolute inset-0 bg-black/40 hover:bg-black/60 flex flex-col items-center justify-center gap-1 transition-colors disabled:opacity-50"
+                    >
+                      <ImageIcon className="w-6 h-6 text-white" />
+                      <span className="text-xs text-white">
+                        {uploadingBackground === template.id ? 'Uploading...' : 'Upload BG'}
+                      </span>
+                    </button>
+                  </div>
+                )}
+                
+                <input
+                  ref={(el) => (backgroundFileInputRefs.current[template.id] = el)}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleBackgroundUpload(file, template.id);
+                  }}
+                />
+              </div>
+            ))}
+          </div>
+          
+          <p className="text-xs text-muted-foreground text-center">
+            Background images will replace solid colors in banner previews. If no image is uploaded, the default gradient color will be used.
+          </p>
+        </div>
       </div>
     </div>
   );

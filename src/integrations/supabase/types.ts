@@ -352,6 +352,30 @@ export type Database = {
           },
         ]
       }
+      template_backgrounds: {
+        Row: {
+          background_image_url: string
+          created_at: string | null
+          id: string
+          template_index: number
+          updated_at: string | null
+        }
+        Insert: {
+          background_image_url: string
+          created_at?: string | null
+          id?: string
+          template_index: number
+          updated_at?: string | null
+        }
+        Update: {
+          background_image_url?: string
+          created_at?: string | null
+          id?: string
+          template_index?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       template_categories: {
         Row: {
           cover_image_url: string | null
