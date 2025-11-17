@@ -23,6 +23,7 @@ import BannerPreview from "./pages/BannerPreview";
 import AdminStickers from "./pages/AdminStickers";
 import AdminTemplates from "./pages/AdminTemplates";
 import AdminBannerDefaults from "./pages/AdminBannerDefaults";
+import AdminTemplateBackgrounds from "./pages/AdminTemplateBackgrounds";
 import AdminDashboard from "./pages/AdminDashboard";
 
 const queryClient = new QueryClient();
@@ -58,6 +59,7 @@ const App = () => (
           <Route path="/admin/stickers" element={<AuthGuard><AdminStickers /></AuthGuard>} />
           <Route path="/admin/templates" element={<AuthGuard><AdminTemplates /></AuthGuard>} />
           <Route path="/admin/banner-defaults" element={<AuthGuard><AdminBannerDefaults /></AuthGuard>} />
+          <Route path="/admin/template-backgrounds" element={<AuthGuard><AdminTemplateBackgrounds /></AuthGuard>} />
           
           {/* Catch-all for undefined routes */}
           <Route path="*" element={<AuthGuard><ComingSoon /></AuthGuard>} />

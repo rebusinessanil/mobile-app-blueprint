@@ -356,25 +356,39 @@ export type Database = {
         Row: {
           background_image_url: string
           created_at: string | null
+          display_order: number | null
           id: string
-          template_index: number
+          is_active: boolean | null
+          template_id: string
           updated_at: string | null
         }
         Insert: {
           background_image_url: string
           created_at?: string | null
+          display_order?: number | null
           id?: string
-          template_index: number
+          is_active?: boolean | null
+          template_id: string
           updated_at?: string | null
         }
         Update: {
           background_image_url?: string
           created_at?: string | null
+          display_order?: number | null
           id?: string
-          template_index?: number
+          is_active?: boolean | null
+          template_id?: string
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "template_backgrounds_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "templates"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       template_categories: {
         Row: {

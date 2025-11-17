@@ -7,6 +7,7 @@ import { useProfile } from "@/hooks/useProfile";
 import { useProfilePhotos } from "@/hooks/useProfilePhotos";
 import { useBannerSettings } from "@/hooks/useBannerSettings";
 import { useTemplateBackgrounds } from "@/hooks/useTemplateBackgrounds";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Sticker } from "@/hooks/useStickers";
 import html2canvas from "html2canvas";
@@ -59,9 +60,22 @@ export default function BannerPreview() {
   const {
     settings: bannerSettings
   } = useBannerSettings(userId ?? undefined);
-  const {
-    backgrounds: templateBackgrounds
-  } = useTemplateBackgrounds();
+  // Get template ID from selectedTemplateIndex
+  const { data: templates } = useQuery({
+    queryKey: ['templates'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('templates')
+        .select('id, display_order')
+        .order('display_order', { ascending: true });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const selectedTemplateId = templates?.[selectedTemplate]?.id;
+  const { backgrounds } = useTemplateBackgrounds(selectedTemplateId);
+  const backgroundImage = backgrounds[0]?.background_image_url || null;
 
   // Use profile data, fallback to banner data
   const displayName: string = profile?.name || bannerData?.name || "";
@@ -251,9 +265,9 @@ export default function BannerPreview() {
           }}>
               <div className="absolute inset-0">
                 {/* Background Image (if uploaded) or Gradient Background */}
-                {templateBackgrounds[selectedTemplate] ? (
+                {backgroundImage ? (
                   <img 
-                    src={templateBackgrounds[selectedTemplate]} 
+                    src={backgroundImage} 
                     alt="Template background" 
                     className="absolute inset-0 w-full h-full object-cover"
                   />
