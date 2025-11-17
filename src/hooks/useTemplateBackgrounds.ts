@@ -3,33 +3,37 @@ import { supabase } from '@/integrations/supabase/client';
 
 export interface TemplateBackground {
   id: string;
-  template_index: number;
+  template_id: string;
   background_image_url: string;
+  display_order: number;
+  is_active: boolean;
   created_at: string;
   updated_at: string;
 }
 
-export const useTemplateBackgrounds = () => {
-  const [backgrounds, setBackgrounds] = useState<Record<number, string>>({});
+export const useTemplateBackgrounds = (templateId?: string) => {
+  const [backgrounds, setBackgrounds] = useState<TemplateBackground[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
     const fetchBackgrounds = async () => {
       try {
-        const { data, error } = await supabase
+        let query = supabase
           .from('template_backgrounds')
           .select('*')
-          .order('template_index', { ascending: true });
+          .eq('is_active', true)
+          .order('display_order', { ascending: true });
+
+        if (templateId) {
+          query = query.eq('template_id', templateId);
+        }
+
+        const { data, error } = await query;
 
         if (error) throw error;
 
-        // Convert array to record for easy lookup
-        const backgroundsMap: Record<number, string> = {};
-        data?.forEach((bg) => {
-          backgroundsMap[bg.template_index] = bg.background_image_url;
-        });
-        setBackgrounds(backgroundsMap);
+        setBackgrounds(data || []);
       } catch (err) {
         setError(err as Error);
       } finally {
@@ -58,19 +62,20 @@ export const useTemplateBackgrounds = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [templateId]);
 
   return { backgrounds, loading, error };
 };
 
 export const uploadTemplateBackground = async (
-  templateIndex: number,
-  file: File
-): Promise<{ url: string | null; error: Error | null }> => {
+  templateId: string,
+  file: File,
+  displayOrder: number = 0
+): Promise<{ id: string | null; url: string | null; error: Error | null }> => {
   try {
     // Upload to storage
     const fileExt = file.name.split('.').pop();
-    const fileName = `template-${templateIndex}-${Date.now()}.${fileExt}`;
+    const fileName = `template-${templateId}-${Date.now()}.${fileExt}`;
     const filePath = `${fileName}`;
 
     const { error: uploadError } = await supabase.storage
@@ -84,33 +89,51 @@ export const uploadTemplateBackground = async (
       .from('template-backgrounds')
       .getPublicUrl(filePath);
 
-    // Update or insert in database
-    const { error: dbError } = await supabase
+    // Insert in database
+    const { data, error: dbError } = await supabase
       .from('template_backgrounds')
-      .upsert(
-        {
-          template_index: templateIndex,
-          background_image_url: publicUrl,
-        },
-        { onConflict: 'template_index' }
-      );
+      .insert({
+        template_id: templateId,
+        background_image_url: publicUrl,
+        display_order: displayOrder,
+        is_active: true,
+      })
+      .select()
+      .single();
 
     if (dbError) throw dbError;
 
-    return { url: publicUrl, error: null };
+    return { id: data.id, url: publicUrl, error: null };
   } catch (err) {
-    return { url: null, error: err as Error };
+    return { id: null, url: null, error: err as Error };
   }
 };
 
 export const removeTemplateBackground = async (
-  templateIndex: number
+  backgroundId: string
 ): Promise<{ error: Error | null }> => {
   try {
     const { error } = await supabase
       .from('template_backgrounds')
       .delete()
-      .eq('template_index', templateIndex);
+      .eq('id', backgroundId);
+
+    if (error) throw error;
+    return { error: null };
+  } catch (err) {
+    return { error: err as Error };
+  }
+};
+
+export const toggleBackgroundActive = async (
+  backgroundId: string,
+  isActive: boolean
+): Promise<{ error: Error | null }> => {
+  try {
+    const { error } = await supabase
+      .from('template_backgrounds')
+      .update({ is_active: isActive })
+      .eq('id', backgroundId);
 
     if (error) throw error;
     return { error: null };
