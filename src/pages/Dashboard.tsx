@@ -110,7 +110,7 @@ export default function Dashboard() {
 
               {/* Template Scroll - Dynamic from Backend */}
               <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-                {categoryTemplates.length > 0 ? categoryTemplates.map(template => <Link key={template.id} to={category.slug === 'rank-promotion' ? '/rank-selection' : `/template/${template.id}`} className="min-w-[140px] gold-border bg-card rounded-2xl overflow-hidden flex-shrink-0 hover:gold-glow transition-all mx-0 my-0 py-0 px-[97px]">
+                {categoryTemplates.length > 0 ? categoryTemplates.map(template => <Link key={template.id} to={category.slug === 'rank-promotion' ? '/rank-selection' : `/template/${template.id}`} className="min-w-[140px] gold-border bg-card rounded-2xl overflow-hidden flex-shrink-0 hover:gold-glow transition-all mx-0 my-0 py-0 px-0">
                       {template.cover_thumbnail_url ? <div className="h-32 relative">
                           <img src={template.cover_thumbnail_url} alt={template.name} className="w-full h-full -bottom" />
                           
