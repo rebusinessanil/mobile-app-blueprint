@@ -7,11 +7,13 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { useTemplateCategories, useTemplates, useAdminTemplates } from "@/hooks/useTemplates";
+import { useTemplateCategories, useTemplates, useAdminTemplates, useRanks } from "@/hooks/useTemplates";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function AdminTemplates() {
   const navigate = useNavigate();
   const { categories } = useTemplateCategories();
+  const { ranks } = useRanks();
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const { templates } = useTemplates(selectedCategory);
   const { updateCategoryCover, updateTemplateCover, createTemplate } = useAdminTemplates();
@@ -20,6 +22,7 @@ export default function AdminTemplates() {
   const [uploadForm, setUploadForm] = useState({
     name: "",
     categoryId: "",
+    rankId: "",
     description: "",
     file: null as File | null,
   });
@@ -62,7 +65,8 @@ export default function AdminTemplates() {
       uploadForm.categoryId,
       uploadForm.name,
       uploadForm.file,
-      uploadForm.description
+      uploadForm.description,
+      uploadForm.rankId || undefined
     );
 
     if (error) {
@@ -72,7 +76,7 @@ export default function AdminTemplates() {
 
     toast.success("Template created successfully!");
     setIsUploadOpen(false);
-    setUploadForm({ name: "", categoryId: "", description: "", file: null });
+    setUploadForm({ name: "", categoryId: "", rankId: "", description: "", file: null });
   };
 
   return (
@@ -121,6 +125,23 @@ export default function AdminTemplates() {
                       </option>
                     ))}
                   </select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-foreground">Rank (Optional)</Label>
+                  <Select value={uploadForm.rankId} onValueChange={(value) => setUploadForm({ ...uploadForm, rankId: value })}>
+                    <SelectTrigger className="w-full gold-border bg-secondary text-foreground">
+                      <SelectValue placeholder="Select rank (optional)" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-card border-primary z-50">
+                      <SelectItem value="">None</SelectItem>
+                      {ranks.map((rank) => (
+                        <SelectItem key={rank.id} value={rank.id} className="text-foreground">
+                          {rank.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="space-y-2">

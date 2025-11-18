@@ -14,9 +14,22 @@ export interface TemplateCategory {
   updated_at: string;
 }
 
+export interface Rank {
+  id: string;
+  name: string;
+  color: string;
+  gradient: string;
+  icon: string;
+  display_order: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Template {
   id: string;
   category_id: string;
+  rank_id: string | null;
   name: string;
   description: string | null;
   cover_thumbnail_url: string;
@@ -274,7 +287,8 @@ export const useAdminTemplates = () => {
     categoryId: string,
     name: string,
     file: File,
-    description?: string
+    description?: string,
+    rankId?: string
   ) => {
     try {
       const fileExt = file.name.split('.').pop();
@@ -298,6 +312,7 @@ export const useAdminTemplates = () => {
           name,
           description,
           cover_thumbnail_url: publicUrl,
+          rank_id: rankId || null,
         })
         .select()
         .single();
@@ -310,4 +325,33 @@ export const useAdminTemplates = () => {
   };
 
   return { updateCategoryCover, updateTemplateCover, createTemplate };
+};
+
+export const useRanks = () => {
+  const [ranks, setRanks] = useState<Rank[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    const fetchRanks = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('ranks')
+          .select('*')
+          .eq('is_active', true)
+          .order('display_order', { ascending: true });
+
+        if (error) throw error;
+        setRanks(data || []);
+      } catch (err) {
+        setError(err as Error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRanks();
+  }, []);
+
+  return { ranks, loading, error };
 };
