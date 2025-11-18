@@ -237,6 +237,42 @@ export type Database = {
         }
         Relationships: []
       }
+      ranks: {
+        Row: {
+          color: string
+          created_at: string | null
+          display_order: number | null
+          gradient: string
+          icon: string
+          id: string
+          is_active: boolean | null
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          color: string
+          created_at?: string | null
+          display_order?: number | null
+          gradient: string
+          icon: string
+          id: string
+          is_active?: boolean | null
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          color?: string
+          created_at?: string | null
+          display_order?: number | null
+          gradient?: string
+          icon?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       sticker_categories: {
         Row: {
           created_at: string | null
@@ -441,6 +477,7 @@ export type Database = {
           is_active: boolean | null
           layout_config: Json | null
           name: string
+          rank_id: string | null
           required_fields: Json | null
           updated_at: string | null
         }
@@ -455,6 +492,7 @@ export type Database = {
           is_active?: boolean | null
           layout_config?: Json | null
           name: string
+          rank_id?: string | null
           required_fields?: Json | null
           updated_at?: string | null
         }
@@ -469,6 +507,7 @@ export type Database = {
           is_active?: boolean | null
           layout_config?: Json | null
           name?: string
+          rank_id?: string | null
           required_fields?: Json | null
           updated_at?: string | null
         }
@@ -478,6 +517,13 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "template_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "templates_rank_id_fkey"
+            columns: ["rank_id"]
+            isOneToOne: false
+            referencedRelation: "ranks"
             referencedColumns: ["id"]
           },
         ]
