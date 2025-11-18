@@ -5,6 +5,7 @@ import { Menu, Bell, Star, Calendar, Zap, Award } from "lucide-react";
 import { useTemplateCategories, useTemplates } from "@/hooks/useTemplates";
 import { useProfile } from "@/hooks/useProfile";
 import { supabase } from "@/integrations/supabase/client";
+import { ranks } from "@/data/ranks";
 export default function Dashboard() {
   const {
     categories
@@ -97,34 +98,54 @@ export default function Dashboard() {
         {/* Category Sections - Backend Integrated */}
         {categories.map(category => {
         const categoryTemplates = getCategoryTemplates(category.id);
+        const isRankPromotion = category.slug === 'rank-promotion';
+        
         return <div key={category.id} className="space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="text-2xl">{category.icon}</span>
                   <h2 className="text-lg font-bold text-foreground">{category.name}</h2>
                 </div>
-                <Link to={category.slug === 'rank-promotion' ? '/rank-selection' : `/categories/${category.slug}`} className="text-primary text-sm font-semibold hover:underline">
+                <Link to={isRankPromotion ? '/rank-selection' : `/categories/${category.slug}`} className="text-primary text-sm font-semibold hover:underline">
                   See All →
                 </Link>
               </div>
 
-              {/* Template Scroll - Dynamic from Backend */}
-              <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-                {categoryTemplates.length > 0 ? categoryTemplates.map(template => <Link key={template.id} to={category.slug === 'rank-promotion' ? '/rank-selection' : `/template/${template.id}`} className="min-w-[140px] gold-border bg-card rounded-2xl overflow-hidden flex-shrink-0 hover:gold-glow transition-all mx-0 my-0 py-0 px-0">
-                      {template.cover_thumbnail_url ? <div className="h-32 relative">
-                          <img src={template.cover_thumbnail_url} alt={template.name} className="w-full h-full -bottom" />
-                          
-                        </div> : <div className="h-32 bg-gradient-to-br from-secondary to-card flex items-center justify-center">
-                          <div className="text-center px-2">
-                            <p className="text-white font-bold text-sm">CHANGE COVER</p>
-                            <p className="text-primary text-xs mt-1">{"{ BACKEND }"}</p>
-                          </div>
-                        </div>}
-                      
-                    </Link>) : <div className="min-w-[140px] gold-border bg-card rounded-2xl overflow-hidden flex-shrink-0 p-4">
-                    <p className="text-xs text-muted-foreground text-center">No templates yet</p>
-                  </div>}
-              </div>
+              {/* Rank Promotion - Show Ranks Slider */}
+              {isRankPromotion ? (
+                <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                  {ranks.map(rank => (
+                    <Link 
+                      key={rank.id} 
+                      to={`/rank-banner-create/${rank.id}`}
+                      className="min-w-[140px] gold-border bg-card rounded-2xl overflow-hidden flex-shrink-0 hover:gold-glow transition-all"
+                    >
+                      <div className={`h-24 ${rank.gradient} flex items-center justify-center text-4xl`}>
+                        {rank.icon}
+                      </div>
+                      <div className="p-3 text-center">
+                        <p className="text-sm font-semibold text-foreground leading-tight">{rank.name}</p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                /* Template Scroll - Dynamic from Backend */
+                <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                  {categoryTemplates.length > 0 ? categoryTemplates.map(template => <Link key={template.id} to={`/template/${template.id}`} className="min-w-[140px] gold-border bg-card rounded-2xl overflow-hidden flex-shrink-0 hover:gold-glow transition-all mx-0 my-0 py-0 px-0">
+                        {template.cover_thumbnail_url ? <div className="h-32 relative">
+                            <img src={template.cover_thumbnail_url} alt={template.name} className="w-full h-full object-cover" />
+                          </div> : <div className="h-32 bg-gradient-to-br from-secondary to-card flex items-center justify-center">
+                            <div className="text-center px-2">
+                              <p className="text-white font-bold text-sm">CHANGE COVER</p>
+                              <p className="text-primary text-xs mt-1">{"{ BACKEND }"}</p>
+                            </div>
+                          </div>}
+                      </Link>) : <div className="min-w-[140px] gold-border bg-card rounded-2xl overflow-hidden flex-shrink-0 p-4">
+                      <p className="text-xs text-muted-foreground text-center">No templates yet</p>
+                    </div>}
+                </div>
+              )}
             </div>;
       })}
       </div>
