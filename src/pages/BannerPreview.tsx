@@ -412,7 +412,7 @@ export default function BannerPreview() {
                   marginBottom: '0.5px',
                   textTransform: 'uppercase'
                 }}>
-                    CALL FORMENTORSHIP          
+                    CALL FOR MENTORSHIP                                                                 
                   </p>
                   <p title={`+91 ${displayContact}`} className="text-foreground font-bold tracking-wide" style={{
                   fontSize: 'clamp(10px, 2vw, 20px)',
