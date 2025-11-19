@@ -20,8 +20,8 @@ export default function AdminTemplates() {
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [uploadForm, setUploadForm] = useState({
     name: "",
-    categoryId: "",
-    rankId: "",
+    categoryId: undefined as string | undefined,
+    rankId: undefined as string | undefined,
     description: "",
     file: null as File | null,
   });
@@ -75,7 +75,7 @@ export default function AdminTemplates() {
 
     toast.success("Template created successfully!");
     setIsUploadOpen(false);
-    setUploadForm({ name: "", categoryId: "", rankId: "", description: "", file: null });
+    setUploadForm({ name: "", categoryId: undefined, rankId: undefined, description: "", file: null });
   };
 
   return (
@@ -111,7 +111,7 @@ export default function AdminTemplates() {
                 <div className="space-y-2">
                   <Label>Category</Label>
                   <Select
-                    value={uploadForm.categoryId}
+                    value={uploadForm.categoryId || undefined}
                     onValueChange={(value) => setUploadForm({ ...uploadForm, categoryId: value })}
                   >
                     <SelectTrigger className="bg-background border-primary/20">
@@ -129,7 +129,7 @@ export default function AdminTemplates() {
                 <div className="space-y-2">
                   <Label>Rank (Optional)</Label>
                   <Select
-                    value={uploadForm.rankId}
+                    value={uploadForm.rankId || undefined}
                     onValueChange={(value) => setUploadForm({ ...uploadForm, rankId: value })}
                   >
                     <SelectTrigger className="bg-background border-primary/20">
