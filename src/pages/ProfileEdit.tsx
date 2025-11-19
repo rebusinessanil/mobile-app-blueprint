@@ -89,6 +89,31 @@ export default function ProfileEdit() {
     }
   }, [profilePhotos]);
   
+  const handleSetPrimaryPhoto = async (index: number) => {
+    if (!userId || !profilePhotos[index]) return;
+    
+    try {
+      // First, unset all photos as primary
+      await supabase
+        .from('profile_photos')
+        .update({ is_primary: false })
+        .eq('user_id', userId);
+      
+      // Then set the selected photo as primary
+      const { error } = await supabase
+        .from('profile_photos')
+        .update({ is_primary: true })
+        .eq('id', profilePhotos[index].id);
+      
+      if (error) throw error;
+      
+      toast.success("Primary photo updated!");
+    } catch (error) {
+      console.error("Error setting primary photo:", error);
+      toast.error("Failed to set primary photo");
+    }
+  };
+  
   const handlePhotosChange = async (newPhotos: string[]) => {
     if (!userId) return;
     
@@ -239,7 +264,13 @@ export default function ProfileEdit() {
 
         {/* Photo Gallery */}
         <div className="space-y-3">
-          <PhotoUploadGrid photos={photos} onPhotosChange={handlePhotosChange} maxPhotos={5} />
+          <PhotoUploadGrid 
+            photos={photos} 
+            onPhotosChange={handlePhotosChange} 
+            maxPhotos={5}
+            primaryPhotoIndex={profilePhotos.findIndex(p => p.is_primary)}
+            onSetPrimary={handleSetPrimaryPhoto}
+          />
           <p className="text-center text-sm text-primary">Profile Images (Max 5)</p>
         </div>
 
