@@ -98,12 +98,15 @@ export default function BannerPreview() {
   const selectedSlot = selectedTemplate + 1;
   const backgroundImage = backgrounds.find(bg => bg.slot_number === selectedSlot)?.background_image_url || null;
 
-  // CRITICAL: Always prioritize bannerData.name (what user typed in form) over profile.name
-  const displayName: string = bannerData?.name || profile?.name || "";
-
-  // Truncate name to 20 characters max with ellipsis
+  // Main banner name - ALWAYS from user input in form (bannerData.name)
+  const mainBannerName: string = bannerData?.name || "";
   const MAX_NAME_LENGTH = 20;
-  const truncatedName = displayName.length > MAX_NAME_LENGTH ? displayName.slice(0, MAX_NAME_LENGTH) + "..." : displayName;
+  const truncatedMainName = mainBannerName.length > MAX_NAME_LENGTH ? mainBannerName.slice(0, MAX_NAME_LENGTH) + "..." : mainBannerName;
+
+  // Bottom profile name - ALWAYS from user profile (never changes)
+  const profileName: string = profile?.name || "";
+  const truncatedProfileName = profileName.length > MAX_NAME_LENGTH ? profileName.slice(0, MAX_NAME_LENGTH) + "..." : profileName;
+
   const displayContact: string = profile?.mobile || profile?.whatsapp || "9876543210";
   const displayRank: string = (profile?.rank || "ROYAL AMBASSADOR").replace(/[-–—]/g, ' ');
 
@@ -112,7 +115,6 @@ export default function BannerPreview() {
 
   // Get mentor/upline photo (RIGHT-BOTTOM) - ONLY use profile photos, never uploads
   const mentorPhoto: string | null = profilePhotos[selectedMentorPhotoIndex]?.photo_url || profilePhotos[0]?.photo_url || profile?.profile_photo || null;
-  const mentorName: string = displayName; // Always use user's profile name
 
   // Fetch selected stickers
   useEffect(() => {
@@ -343,7 +345,7 @@ export default function BannerPreview() {
                 height: '63.75%',
                 transform: isPhotoFlipped ? 'scaleX(-1)' : 'scaleX(1)'
               }}>
-                    <img src={primaryPhoto} alt={displayName} className="w-full h-full object-cover object-top" />
+                    <img src={primaryPhoto} alt={mainBannerName} className="w-full h-full object-cover object-top" />
                     {/* Bottom feather fade overlay */}
                     <div className="absolute bottom-0 left-0 right-0 pointer-events-none" style={{
                   height: '30%',
@@ -368,8 +370,8 @@ export default function BannerPreview() {
                 width: '50%',
                 maxWidth: '50%'
               }}>
-                  <h2 title={displayName.toUpperCase()} className="banner-preview-name text-foreground tracking-wider font-extrabold text-center mx-auto">
-                    {truncatedName.toUpperCase()}
+                  <h2 title={mainBannerName.toUpperCase()} className="banner-preview-name text-foreground tracking-wider font-extrabold text-center mx-auto">
+                    {truncatedMainName.toUpperCase()}
                   </h2>
                   
                   {bannerData.teamCity && <p title={bannerData.teamCity.toUpperCase()} className="banner-team text-foreground tracking-widest mt-1 sm:mt-2 font-light font-sans text-center">
@@ -430,7 +432,7 @@ export default function BannerPreview() {
                 height: '38.5%',
                 transform: isMentorPhotoFlipped ? 'scaleX(-1)' : 'scaleX(1)'
               }}>
-                    <img src={mentorPhoto} alt={mentorName} className="w-full h-full object-cover object-top" />
+                    <img src={mentorPhoto} alt={profileName} className="w-full h-full object-cover object-top" />
                     {/* Bottom feather fade overlay */}
                     <div className="absolute bottom-0 left-0 right-0 pointer-events-none" style={{
                   height: '30%',
@@ -448,7 +450,7 @@ export default function BannerPreview() {
                 maxWidth: '80%',
                 zIndex: 3
               }}>
-                  <p title={displayName} className="banner-profile-name text-foreground font-extrabold tracking-wider" style={{
+                  <p title={profileName} className="banner-profile-name text-foreground font-extrabold tracking-wider" style={{
                   fontSize: '11px',
                   textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
                   whiteSpace: 'nowrap',
@@ -456,7 +458,7 @@ export default function BannerPreview() {
                   textOverflow: 'ellipsis',
                   marginBottom: '1px'
                 }}>
-                    {truncatedName.toUpperCase()}
+                    {truncatedProfileName.toUpperCase()}
                   </p>
                   <p className="banner-profile-rank text-yellow-500 font-semibold tracking-widest" style={{
                   fontSize: '7px',
