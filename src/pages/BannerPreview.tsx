@@ -435,10 +435,10 @@ export default function BannerPreview() {
 
                 {/* BOTTOM RIGHT - Mentor Photo with rounded corners and feather fade (tap to flip) */}
                 {mentorPhoto && <div className="absolute overflow-hidden shadow-2xl rounded-xl cursor-pointer transition-transform duration-500 ease-in-out" onClick={() => setIsMentorPhotoFlipped(!isMentorPhotoFlipped)} style={{
-                bottom: '8%',
-                right: '5%',
-                width: '30%',
-                height: '35%',
+                bottom: 0,
+                right: 0,
+                width: '33%',
+                height: '38.5%',
                 transform: isMentorPhotoFlipped ? 'scaleX(-1)' : 'scaleX(1)'
               }}>
                     <img src={mentorPhoto} alt={mentorName} className="w-full h-full object-cover object-top" />
