@@ -123,7 +123,7 @@ export default function RankBannerCreate() {
       setProcessingBg(false);
     }
   };
-  const handleCreate = () => {
+  const handleCreate = async () => {
     if (!formData.name || !formData.teamCity) {
       toast.error("Please fill in Name and From Team/City");
       return;
@@ -132,6 +132,13 @@ export default function RankBannerCreate() {
       toast.error("Please upload your photo");
       return;
     }
+
+    // Fetch template_id for this rank to ensure correct background slot mapping
+    const { data: template } = await supabase
+      .from('templates')
+      .select('id')
+      .eq('rank_id', rankId)
+      .single();
 
     // Navigate to banner preview with data
     navigate("/banner-preview", {
@@ -144,7 +151,9 @@ export default function RankBannerCreate() {
         chequeAmount: formData.chequeAmount,
         photo,
         uplines,
-        selectedStickers
+        selectedStickers,
+        templateId: template?.id,
+        rankId: rankId
       }
     });
   };
