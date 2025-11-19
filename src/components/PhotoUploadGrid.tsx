@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ImagePlus, X, Edit } from "lucide-react";
+import { ImagePlus, X, Edit, Star } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -11,9 +11,11 @@ interface PhotoUploadGridProps {
   photos: string[];
   onPhotosChange: (photos: string[]) => void;
   maxPhotos?: number;
+  primaryPhotoIndex?: number;
+  onSetPrimary?: (index: number) => void;
 }
 
-export default function PhotoUploadGrid({ photos, onPhotosChange, maxPhotos = 5 }: PhotoUploadGridProps) {
+export default function PhotoUploadGrid({ photos, onPhotosChange, maxPhotos = 5, primaryPhotoIndex, onSetPrimary }: PhotoUploadGridProps) {
   const [cropModalOpen, setCropModalOpen] = useState(false);
   const [bgRemovalModalOpen, setBgRemovalModalOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -141,17 +143,35 @@ export default function PhotoUploadGrid({ photos, onPhotosChange, maxPhotos = 5 
     <>
       <div className="grid grid-cols-5 gap-3">
         {photos.map((photo, index) => (
-          <div key={index} className="relative aspect-square gold-border bg-card rounded-2xl overflow-hidden group">
+          <div 
+            key={index} 
+            className="relative aspect-square gold-border bg-card rounded-2xl overflow-hidden group cursor-pointer"
+            onClick={() => onSetPrimary?.(index)}
+          >
             <img src={photo} alt={`Profile ${index + 1}`} className="w-full h-full object-cover" />
-            <div className="absolute top-1 right-1 flex gap-1">
+            
+            {/* Primary Star Badge */}
+            {primaryPhotoIndex === index && (
+              <div className="absolute top-2 left-2 w-7 h-7 bg-[#FFD700] rounded-full flex items-center justify-center shadow-lg z-10">
+                <Star className="w-4 h-4 text-[#111827] fill-[#111827]" />
+              </div>
+            )}
+            
+            <div className="absolute top-1 right-1 flex gap-1 z-20">
               <button
-                onClick={() => handleEditPhoto(index)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleEditPhoto(index);
+                }}
                 className="w-6 h-6 bg-primary rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
               >
                 <Edit className="w-3 h-3 text-primary-foreground" />
               </button>
               <button
-                onClick={() => handleRemovePhoto(index)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleRemovePhoto(index);
+                }}
                 className="w-6 h-6 bg-destructive rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
               >
                 <X className="w-3 h-3 text-white" />
