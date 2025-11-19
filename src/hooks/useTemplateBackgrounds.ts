@@ -19,6 +19,7 @@ export const useTemplateBackgrounds = (templateId?: string) => {
   useEffect(() => {
     const fetchBackgrounds = async () => {
       try {
+        setLoading(true);
         let query = supabase
           .from('template_backgrounds')
           .select('*')
@@ -34,8 +35,10 @@ export const useTemplateBackgrounds = (templateId?: string) => {
         if (error) throw error;
 
         setBackgrounds(data || []);
+        setError(null);
       } catch (err) {
         setError(err as Error);
+        console.error('Error fetching backgrounds:', err);
       } finally {
         setLoading(false);
       }
@@ -43,17 +46,19 @@ export const useTemplateBackgrounds = (templateId?: string) => {
 
     fetchBackgrounds();
 
-    // Set up real-time subscription
+    // Set up real-time subscription for instant updates
     const channel = supabase
-      .channel('template-backgrounds-changes')
+      .channel(`template-backgrounds-${templateId || 'all'}`)
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
           table: 'template_backgrounds',
+          filter: templateId ? `template_id=eq.${templateId}` : undefined,
         },
-        () => {
+        (payload) => {
+          console.log('Background changed:', payload);
           fetchBackgrounds();
         }
       )

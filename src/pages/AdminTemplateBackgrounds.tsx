@@ -64,20 +64,23 @@ export default function AdminTemplateBackgrounds() {
     const nextSlot = Array.from({ length: 16 }, (_, i) => i).find(i => !usedSlots.includes(i)) ?? backgrounds.length;
 
     setUploading(true);
-    const { url, error } = await uploadTemplateBackground(
-      selectedTemplate,
-      file,
-      nextSlot
-    );
+    try {
+      const { url, error } = await uploadTemplateBackground(
+        selectedTemplate,
+        file,
+        nextSlot
+      );
 
-    if (error) {
-      toast.error('Failed to upload background');
-      console.error(error);
-    } else {
-      toast.success(`Background uploaded to slot ${nextSlot + 1}`);
+      if (error) {
+        toast.error('Failed to upload background');
+        console.error(error);
+      } else {
+        toast.success(`Background uploaded to slot ${nextSlot + 1} - Updates will sync instantly`);
+      }
+    } finally {
+      setUploading(false);
+      event.target.value = '';
     }
-    setUploading(false);
-    event.target.value = '';
   };
 
   const handleRemove = async (backgroundId: string) => {
