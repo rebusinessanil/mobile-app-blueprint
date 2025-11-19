@@ -19,6 +19,11 @@ export default function Dashboard() {
     profile
   } = useProfile(userId ?? undefined);
 
+  // Get rank templates with covers
+  const getRankTemplates = () => {
+    return allTemplates.filter(t => t.rank_id && ranks.some(r => r.id === t.rank_id));
+  };
+
   // Get authenticated user
   useEffect(() => {
     supabase.auth.getSession().then(({
@@ -112,23 +117,36 @@ export default function Dashboard() {
                 </Link>
               </div>
 
-              {/* Rank Promotion - Show Ranks Slider */}
+              {/* Rank Promotion - Show Ranks with Cover Images */}
               {isRankPromotion ? (
                 <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-                  {ranks.map(rank => (
-                    <Link 
-                      key={rank.id} 
-                      to={`/rank-banner-create/${rank.id}`}
-                      className="min-w-[140px] gold-border bg-card rounded-2xl overflow-hidden flex-shrink-0 hover:gold-glow transition-all"
-                    >
-                      <div className={`h-24 ${rank.gradient} flex items-center justify-center text-4xl`}>
-                        {rank.icon}
-                      </div>
-                      <div className="p-3 text-center">
-                        <p className="text-sm font-semibold text-foreground leading-tight">{rank.name}</p>
-                      </div>
-                    </Link>
-                  ))}
+                  {getRankTemplates().map(template => {
+                    const rank = ranks.find(r => r.id === template.rank_id);
+                    return (
+                      <Link 
+                        key={template.id} 
+                        to={`/rank-banner-create/${template.rank_id}`}
+                        className="min-w-[140px] gold-border bg-card rounded-2xl overflow-hidden flex-shrink-0 hover:gold-glow transition-all"
+                      >
+                        {template.cover_thumbnail_url ? (
+                          <div className="h-24 relative">
+                            <img 
+                              src={template.cover_thumbnail_url} 
+                              alt={template.name} 
+                              className="w-full h-full object-cover" 
+                            />
+                          </div>
+                        ) : (
+                          <div className={`h-24 ${rank?.gradient || 'bg-gradient-to-br from-secondary to-card'} flex items-center justify-center text-4xl`}>
+                            {rank?.icon || '🏆'}
+                          </div>
+                        )}
+                        <div className="p-3 text-center">
+                          <p className="text-sm font-semibold text-foreground leading-tight">{template.name}</p>
+                        </div>
+                      </Link>
+                    );
+                  })}
                 </div>
               ) : (
                 /* Template Scroll - Dynamic from Backend */
