@@ -445,7 +445,7 @@ export default function BannerPreview() {
                 <div className="absolute text-center" style={{
                 bottom: '3%',
                 left: '50%',
-                transform: 'translateX(-35%)',
+                transform: 'translateX(-45%)',
                 width: 'max-content',
                 maxWidth: '80%',
                 zIndex: 3
