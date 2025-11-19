@@ -120,6 +120,10 @@ export default function RankBannerCreate() {
       toast.error("Please enter Name");
       return;
     }
+    if (formData.name.length > 20) {
+      toast.error("Name can't exceed 20 characters");
+      return;
+    }
     if (mode === "myPhoto" && !photo) {
       toast.error("Please upload your photo");
       return;
@@ -228,11 +232,23 @@ export default function RankBannerCreate() {
           <div className="flex-1 space-y-5 py-0 mx-0 px-0 my-0">
             {/* Name */}
             <div className="space-y-2">
-              <label className="text-sm text-foreground">Name</label>
-              <Input value={formData.name} onChange={e => setFormData({
-              ...formData,
-              name: e.target.value
-            })} placeholder="Enter Name" className="bg-transparent border-0 border-b-2 border-muted rounded-none text-foreground h-12 focus-visible:ring-0 focus-visible:border-primary" />
+              <label className="text-sm text-foreground">Name (Max 20 characters)</label>
+              <Input 
+                value={formData.name} 
+                onChange={e => {
+                  const value = e.target.value;
+                  if (value.length <= 20) {
+                    setFormData({
+                      ...formData,
+                      name: value
+                    });
+                  }
+                }} 
+                placeholder="Enter Name" 
+                maxLength={20}
+                className="bg-transparent border-0 border-b-2 border-muted rounded-none text-foreground h-12 focus-visible:ring-0 focus-visible:border-primary" 
+              />
+              <p className="text-xs text-muted-foreground">{formData.name.length}/20 characters</p>
             </div>
 
             {/* From Team/City */}

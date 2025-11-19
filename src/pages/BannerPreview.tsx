@@ -221,24 +221,39 @@ export default function BannerPreview() {
       return;
     }
     setIsDownloading(true);
-    const loadingToast = toast.loading("Generating high-quality banner...");
+    const loadingToast = toast.loading("Generating Full HD banner...");
     try {
-      // Capture the banner at 1080x1080 resolution with transparent background
+      // Fixed dimensions for Full HD export (1080×1350)
+      const TARGET_WIDTH = 1080;
+      const TARGET_HEIGHT = 1350;
+      
       const canvas = await html2canvas(bannerRef.current, {
-        scale: 3,
-        // Higher scale for better quality
-        backgroundColor: null,
-        // Transparent background
+        scale: 1,
+        backgroundColor: "#000000",
         logging: false,
         useCORS: true,
         allowTaint: true,
-        width: 1080,
-        height: 1080,
+        width: TARGET_WIDTH,
+        height: TARGET_HEIGHT,
+        windowWidth: TARGET_WIDTH,
+        windowHeight: TARGET_HEIGHT,
+        x: 0,
+        y: 0,
         imageTimeout: 0
       });
 
-      // Convert to blob and download
-      canvas.toBlob(blob => {
+      // Ensure canvas matches exact target dimensions
+      const finalCanvas = document.createElement('canvas');
+      finalCanvas.width = TARGET_WIDTH;
+      finalCanvas.height = TARGET_HEIGHT;
+      const ctx = finalCanvas.getContext('2d');
+      
+      if (ctx) {
+        ctx.drawImage(canvas, 0, 0, TARGET_WIDTH, TARGET_HEIGHT);
+      }
+
+      // Convert to JPG blob with quality 0.95
+      finalCanvas.toBlob(blob => {
         toast.dismiss(loadingToast);
         if (!blob) {
           toast.error("Failed to generate image");
@@ -247,12 +262,12 @@ export default function BannerPreview() {
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
         const timestamp = new Date().getTime();
-        link.download = `ReBusiness-Banner-${bannerData.rankName}-${timestamp}.png`;
+        link.download = `ReBusiness-Banner-${bannerData.rankName}-${timestamp}.jpg`;
         link.href = url;
         link.click();
         URL.revokeObjectURL(url);
-        toast.success("Banner downloaded successfully!");
-      }, "image/png", 1.0);
+        toast.success("Banner downloaded! (1080×1350 Full HD JPG)");
+      }, "image/jpeg", 0.95);
     } catch (error) {
       console.error("Download error:", error);
       toast.dismiss(loadingToast);
@@ -343,7 +358,7 @@ export default function BannerPreview() {
                   
                 </div>
 
-                {/* CENTER-RIGHT - Name and Team with auto font scaling */}
+                {/* CENTER-RIGHT - Name with auto font resize (max 20 chars) */}
                 <div className="absolute px-2" style={{
                 top: '25%',
                 right: '5%',
@@ -351,10 +366,9 @@ export default function BannerPreview() {
                 textAlign: 'center'
               }}>
                   <h2 style={{
-                  fontSize: bannerData.name.length > 30 ? 'clamp(14px, 2.5vw, 28px)' : bannerData.name.length > 25 ? 'clamp(16px, 3vw, 32px)' : bannerData.name.length > 20 ? 'clamp(18px, 3.5vw, 36px)' : bannerData.name.length > 15 ? 'clamp(22px, 4vw, 44px)' : 'clamp(24px, 5vw, 56px)',
+                  fontSize: bannerData.name.length > 18 ? '26px' : bannerData.name.length > 15 ? '30px' : '36px',
                   textShadow: '3px 3px 6px rgba(0,0,0,0.9)',
                   lineHeight: '1',
-                  transform: bannerData.name.length > 30 ? 'scaleX(0.75)' : bannerData.name.length > 25 ? 'scaleX(0.85)' : bannerData.name.length > 20 ? 'scaleX(0.9)' : 'none',
                   whiteSpace: 'nowrap'
                 }} className="text-white tracking-wider mx-0 my-0 px-0 py-0 text-xs font-extrabold text-center">
                     {bannerData.name.toUpperCase()}
