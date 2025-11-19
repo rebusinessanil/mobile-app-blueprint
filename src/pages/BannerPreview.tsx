@@ -469,11 +469,11 @@ export default function BannerPreview() {
           </div>
         </div>
 
-        {/* Background Slot Selector - Horizontal Scrollable */}
+        {/* Background Slot Selector - Vertical Scrollable */}
         {backgrounds.length > 0 && (
           <div className="px-2">
             <h3 className="text-white text-sm font-semibold mb-3 tracking-wider">SELECT BACKGROUND</h3>
-            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+            <div className="grid grid-cols-4 gap-3 max-h-[400px] overflow-y-auto scrollbar-hide">
               {Array.from({ length: 16 }, (_, i) => i + 1).map((slotNum) => {
                 const bg = backgrounds.find(b => b.slot_number === slotNum);
                 const isSelected = selectedTemplate === slotNum - 1;
@@ -482,9 +482,9 @@ export default function BannerPreview() {
                   <button
                     key={slotNum}
                     onClick={() => setSelectedTemplate(slotNum - 1)}
-                    className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden transition-all ${
+                    className={`aspect-square rounded-lg overflow-hidden transition-all ${
                       isSelected 
-                        ? 'border-4 border-[#FFD700] scale-110 shadow-[0_0_20px_rgba(255,215,0,0.5)]' 
+                        ? 'border-4 border-[#FFD700] scale-105 shadow-[0_0_20px_rgba(255,215,0,0.5)]' 
                         : 'border-2 border-gray-600 hover:border-[#FFD700] hover:scale-105'
                     }`}
                   >
