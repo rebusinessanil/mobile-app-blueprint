@@ -451,12 +451,14 @@ export default function BannerPreview() {
                 zIndex: 3
               }}>
                   <p title={profileName} className="banner-profile-name text-foreground font-extrabold tracking-wider" style={{
-                  fontSize: '11px',
+                  fontSize: '9px',
                   textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
-                  marginBottom: '1px'
+                  marginBottom: '1px',
+                  position: 'relative',
+                  top: '15%'
                 }}>
                     {truncatedProfileName.toUpperCase()}
                   </p>
