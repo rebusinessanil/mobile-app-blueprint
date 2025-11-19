@@ -460,6 +460,43 @@ export default function BannerPreview() {
           </div>
         </div>
 
+        {/* Background Slot Selector - Horizontal Scrollable */}
+        {backgrounds.length > 0 && (
+          <div className="px-2">
+            <h3 className="text-white text-sm font-semibold mb-3 tracking-wider">SELECT BACKGROUND</h3>
+            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+              {Array.from({ length: 16 }, (_, i) => i + 1).map((slotNum) => {
+                const bg = backgrounds.find(b => b.slot_number === slotNum);
+                const isSelected = selectedTemplate === slotNum - 1;
+                
+                return (
+                  <button
+                    key={slotNum}
+                    onClick={() => setSelectedTemplate(slotNum - 1)}
+                    className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden transition-all ${
+                      isSelected 
+                        ? 'border-4 border-[#FFD700] scale-110 shadow-[0_0_20px_rgba(255,215,0,0.5)]' 
+                        : 'border-2 border-gray-600 hover:border-[#FFD700] hover:scale-105'
+                    }`}
+                  >
+                    {bg?.background_image_url ? (
+                      <img 
+                        src={bg.background_image_url} 
+                        alt={`Slot ${slotNum}`} 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className={`w-full h-full bg-gradient-to-br ${templateColors[slotNum - 1]?.bgColor || 'from-gray-800 to-gray-900'} flex items-center justify-center`}>
+                        <span className="text-white text-xs font-bold">{slotNum}</span>
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Thumbnails and Download Button Row */}
         <div className="flex items-center justify-between gap-4 px-2">
           {/* Left - Two thumbnail previews */}
