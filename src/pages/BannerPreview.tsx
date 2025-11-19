@@ -484,23 +484,43 @@ export default function BannerPreview() {
           </button>
         </div>
 
-        {/* Background Slot Selector - Vertical Scrollable */}
-        {backgrounds.length > 0 && <div className="px-2">
-            
-            <div className="grid grid-cols-4 gap-3 max-h-[400px] overflow-y-auto scrollbar-hide">
-              {Array.from({
-            length: 16
-          }, (_, i) => i + 1).map(slotNum => {
-            const bg = backgrounds.find(b => b.slot_number === slotNum);
-            const isSelected = selectedTemplate === slotNum - 1;
-            return <button key={slotNum} onClick={() => setSelectedTemplate(slotNum - 1)} className={`aspect-square rounded-lg overflow-hidden transition-all ${isSelected ? 'border-4 border-[#FFD700] scale-105 shadow-[0_0_20px_rgba(255,215,0,0.5)]' : 'border-2 border-gray-600 hover:border-[#FFD700] hover:scale-105'}`}>
-                    {bg?.background_image_url ? <img src={bg.background_image_url} alt={`Slot ${slotNum}`} className="w-full h-full object-cover" /> : <div className={`w-full h-full bg-gradient-to-br ${templateColors[slotNum - 1]?.bgColor || 'from-gray-800 to-gray-900'} flex items-center justify-center`}>
-                        <span className="text-white text-xs font-bold">{slotNum}</span>
-                      </div>}
-                  </button>;
-          })}
+        {/* Background Slot Selector */}
+        {backgrounds.length > 0 && (
+          <div className="px-4 mt-6">
+            <h2 className="text-2xl font-bold text-white tracking-widest mb-4 text-center">
+              SELECT BACKGROUND
+            </h2>
+            <div className="grid grid-cols-4 gap-3 max-h-[500px] overflow-y-auto scrollbar-hide pb-4">
+              {Array.from({ length: 16 }, (_, i) => i + 1).map(slotNum => {
+                const bg = backgrounds.find(b => b.slot_number === slotNum);
+                const isSelected = selectedTemplate === slotNum - 1;
+                return (
+                  <button 
+                    key={slotNum} 
+                    onClick={() => setSelectedTemplate(slotNum - 1)} 
+                    className={`aspect-square rounded-xl overflow-hidden transition-all duration-300 ${
+                      isSelected 
+                        ? 'border-4 border-[#FFD700] scale-105 shadow-[0_0_24px_rgba(255,215,0,0.6)] ring-2 ring-[#FFD700]/50' 
+                        : 'border-2 border-gray-700 hover:border-[#FFD700] hover:scale-102 hover:shadow-[0_0_16px_rgba(255,215,0,0.3)]'
+                    }`}
+                  >
+                    {bg?.background_image_url ? (
+                      <img 
+                        src={bg.background_image_url} 
+                        alt={`Slot ${slotNum}`} 
+                        className="w-full h-full object-cover" 
+                      />
+                    ) : (
+                      <div className={`w-full h-full bg-gradient-to-br ${templateColors[slotNum - 1]?.bgColor || 'from-gray-800 to-gray-900'} flex items-center justify-center`}>
+                        <span className="text-white text-lg font-bold tracking-wider">{slotNum}</span>
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
             </div>
-          </div>}
+          </div>
+        )}
         
       </div>
     </div>;
