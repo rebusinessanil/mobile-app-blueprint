@@ -216,12 +216,30 @@ export default function BannerPreview() {
     border: "border-slate-500"
   }];
 
-  // Auto-resize font based on name length (shared logic for preview and download)
-  const getNameFontSize = (nameLength: number): number => {
-    if (nameLength > 18) return 26;
-    if (nameLength > 15) return 30;
-    return 36;
+  // Dynamic font scaling - measures actual text width and fits to container
+  const getDynamicFontSize = (text: string, maxWidth: number, maxFontSize: number = 36, minFontSize: number = 16): number => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return maxFontSize;
+
+    let fontSize = maxFontSize;
+    ctx.font = `bold ${fontSize}px Poppins, sans-serif`;
+    let textWidth = ctx.measureText(text.toUpperCase()).width;
+
+    // Iteratively reduce font size until text fits
+    while (textWidth > maxWidth && fontSize > minFontSize) {
+      fontSize -= 1;
+      ctx.font = `bold ${fontSize}px Poppins, sans-serif`;
+      textWidth = ctx.measureText(text.toUpperCase()).width;
+    }
+
+    return fontSize;
   };
+
+  // Calculate responsive font size based on banner width
+  const bannerWidth = bannerRef.current?.offsetWidth || 600;
+  const nameContainerWidth = bannerWidth * 0.45; // 45% of banner width for name
+  const dynamicNameFontSize = getDynamicFontSize(bannerData.name, nameContainerWidth);
   const handleDownload = async () => {
     if (!bannerRef.current) {
       toast.error("Banner not ready for download");
@@ -233,6 +251,18 @@ export default function BannerPreview() {
       // Fixed dimensions for Full HD Square export (1080×1080)
       const TARGET_WIDTH = 1080;
       const TARGET_HEIGHT = 1080;
+      
+      // Calculate precise font size for export at 1080px width
+      const exportNameContainerWidth = TARGET_WIDTH * 0.45;
+      const exportFontSize = getDynamicFontSize(bannerData.name, exportNameContainerWidth);
+      
+      // Temporarily update font size for export
+      const nameElement = bannerRef.current.querySelector('h2');
+      const originalFontSize = nameElement?.style.fontSize;
+      if (nameElement) {
+        nameElement.style.fontSize = `${exportFontSize}px`;
+      }
+      
       const canvas = await html2canvas(bannerRef.current, {
         scale: 1,
         backgroundColor: "#000000",
@@ -247,6 +277,11 @@ export default function BannerPreview() {
         y: 0,
         imageTimeout: 0
       });
+      
+      // Restore original font size
+      if (nameElement && originalFontSize) {
+        nameElement.style.fontSize = originalFontSize;
+      }
 
       // Ensure canvas matches exact target dimensions
       const finalCanvas = document.createElement('canvas');
@@ -281,15 +316,15 @@ export default function BannerPreview() {
       setIsDownloading(false);
     }
   };
-  return <div className="h-screen overflow-hidden bg-[#0B0E15] flex flex-col">
+  return <div className="min-h-screen overflow-auto bg-[#0B0E15] flex flex-col pb-safe">
       {/* Header - Fixed */}
-      <header className="bg-[#0B0E15]/95 backdrop-blur-sm z-40 px-6 py-4 flex-shrink-0">
+      <header className="bg-[#0B0E15]/95 backdrop-blur-sm z-40 px-4 sm:px-6 py-3 sm:py-4 flex-shrink-0 sticky top-0">
         <div className="flex items-center justify-between">
           <button onClick={() => navigate(-1)} className="w-10 h-10 rounded-xl border-2 border-white flex items-center justify-center hover:bg-white/10 transition-colors">
             <ArrowLeft className="w-5 h-5 text-white" />
           </button>
           
-          <h1 className="text-2xl font-bold text-white tracking-widest">BANNER PREVIEW</h1>
+          <h1 className="text-lg sm:text-2xl font-bold text-white tracking-widest">BANNER PREVIEW</h1>
           
           <button className="w-10 h-10 rounded-xl border-2 border-white flex items-center justify-center hover:bg-white/10 transition-colors">
             <Settings className="w-5 h-5 text-white" />
@@ -297,10 +332,10 @@ export default function BannerPreview() {
         </div>
       </header>
 
-      {/* Banner Preview and Download - Fixed */}
-      <div className="px-4 py-4 flex-shrink-0">
-        {/* Main Banner Preview - Gold outer border, Green inner border */}
-        <div className="relative w-full max-w-[600px] mx-auto">
+      {/* Banner Preview and Download - Responsive */}
+      <div className="px-3 sm:px-4 py-3 sm:py-4 flex-shrink-0">
+        {/* Main Banner Preview - Gold outer border, responsive */}
+        <div className="relative w-full max-w-[95vw] sm:max-w-[600px] mx-auto">
           <div className="border-4 border-[#FFD700] rounded-lg overflow-hidden">
           <div ref={bannerRef} className={`border-4 ${templateColors[selectedTemplate].border} relative w-full bg-gradient-to-br ${templateColors[selectedTemplate].bgColor}`} style={{
             paddingBottom: '100%'
@@ -370,7 +405,7 @@ export default function BannerPreview() {
                 textAlign: 'center'
               }}>
                 <h2 style={{
-                  fontSize: `${getNameFontSize(bannerData.name.length)}px`,
+                  fontSize: `${dynamicNameFontSize}px`,
                   textShadow: '3px 3px 6px rgba(0,0,0,0.9)',
                   lineHeight: '1',
                   whiteSpace: 'nowrap'
@@ -465,31 +500,31 @@ export default function BannerPreview() {
         </div>
 
         {/* Profile Avatars (Left) + Download Button (Right) */}
-        <div className="flex items-center justify-between px-4 mt-4">
+        <div className="flex items-center justify-between px-2 sm:px-4 mt-3 sm:mt-4 gap-2">
           {/* Left: Profile Images Row - Clickable to change main photo */}
-          <div className="flex gap-3 overflow-x-auto">
+          <div className="flex gap-2 sm:gap-3 overflow-x-auto scrollbar-hide">
             {profilePhotos.slice(0, 6).map((photo, idx) => <button key={photo.id} onClick={() => {
             setSelectedMentorPhotoIndex(idx);
             setIsMentorPhotoFlipped(!isMentorPhotoFlipped);
-          }} className={`h-10 w-10 rounded-full border-2 object-cover flex-shrink-0 shadow-lg transition-all hover:scale-105 ${selectedMentorPhotoIndex === idx ? 'border-[#FFD700] ring-2 ring-[#FFD700] ring-offset-2 ring-offset-[#0B0E15]' : 'border-gray-500 hover:border-[#FFD700]'}`}>
+          }} className={`h-8 w-8 sm:h-10 sm:w-10 rounded-full border-2 object-cover flex-shrink-0 shadow-lg transition-all hover:scale-105 active:scale-95 ${selectedMentorPhotoIndex === idx ? 'border-[#FFD700] ring-2 ring-[#FFD700] ring-offset-2 ring-offset-[#0B0E15]' : 'border-gray-500 hover:border-[#FFD700]'}`}>
                 <img src={photo.photo_url} alt="Profile" className="w-full h-full rounded-full object-cover" />
               </button>)}
-            {profilePhotos.length > 6 && <div className="h-10 w-10 rounded-full border-2 border-[#FFD700] bg-[#111827] flex items-center justify-center text-[#FFD700] text-xs font-bold flex-shrink-0">
+            {profilePhotos.length > 6 && <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full border-2 border-[#FFD700] bg-[#111827] flex items-center justify-center text-[#FFD700] text-[10px] sm:text-xs font-bold flex-shrink-0">
                 +{profilePhotos.length - 6}
               </div>}
           </div>
 
           {/* Right: Download Button */}
-          <button onClick={handleDownload} disabled={isDownloading} className="cursor-pointer transition-transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ml-4 flex-shrink-0">
-            <img src={downloadIcon} alt="Download" className="h-16 w-auto" />
+          <button onClick={handleDownload} disabled={isDownloading} className="cursor-pointer transition-transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0">
+            <img src={downloadIcon} alt="Download" className="h-12 w-auto sm:h-16" />
           </button>
         </div>
       </div>
 
       {/* Scrollable Slot Selector Box */}
-      {backgrounds.length > 0 && <div className="flex-1 overflow-hidden px-4 pb-4">
-          <div className="h-full overflow-y-auto rounded-3xl bg-[#111827]/50 border-2 border-[#FFD700]/20 p-4 shadow-[0_0_30px_rgba(255,215,0,0.1)]">
-            <div className="grid grid-cols-4 gap-3">
+      {backgrounds.length > 0 && <div className="flex-1 overflow-hidden px-3 sm:px-4 pb-3 sm:pb-4 mb-16 sm:mb-0">
+          <div className="h-full overflow-y-auto rounded-2xl sm:rounded-3xl bg-[#111827]/50 border-2 border-[#FFD700]/20 p-3 sm:p-4 shadow-[0_0_30px_rgba(255,215,0,0.1)]">
+            <div className="grid grid-cols-4 gap-2 sm:gap-3">
               {Array.from({
             length: 16
           }, (_, i) => i + 1).map(slotNum => {
