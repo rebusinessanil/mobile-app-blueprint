@@ -75,19 +75,7 @@ export default function BannerPreview() {
 
   const selectedTemplateId = templates?.[selectedTemplate]?.id;
   const { backgrounds } = useTemplateBackgrounds(selectedTemplateId);
-  
-  // Background selector state - use display_order as index
-  const [selectedBackgroundSlot, setSelectedBackgroundSlot] = useState(0);
-  
-  // Get active backgrounds sorted by display_order
-  const activeBackgrounds = backgrounds.filter(bg => bg.is_active).sort((a, b) => 
-    (a.display_order ?? 0) - (b.display_order ?? 0)
-  );
-  
-  // Get background by selected slot (display_order)
-  const selectedBackground = activeBackgrounds.find(bg => bg.display_order === selectedBackgroundSlot) 
-    || activeBackgrounds[0];
-  const backgroundImage = selectedBackground?.background_image_url || null;
+  const backgroundImage = backgrounds[0]?.background_image_url || null;
 
   // Use profile data, fallback to banner data
   const displayName: string = profile?.name || bannerData?.name || "";
@@ -480,35 +468,6 @@ export default function BannerPreview() {
             {isDownloading ? "Loading..." : "Download"}
           </Button>
         </div>
-
-        {/* Background Selector - 4x4 Grid showing available backgrounds */}
-        {activeBackgrounds.length > 1 && (
-          <div className="px-2 mb-4">
-            <p className="text-xs text-gold font-semibold mb-2">SELECT BACKGROUND</p>
-            <div className="grid grid-cols-4 gap-2">
-              {activeBackgrounds.slice(0, 16).map((bg) => (
-                <button
-                  key={bg.id}
-                  onClick={() => setSelectedBackgroundSlot(bg.display_order ?? 0)}
-                  className={`aspect-square rounded-lg overflow-hidden transition-all border-2 relative ${
-                    selectedBackgroundSlot === bg.display_order
-                      ? 'ring-2 ring-gold border-gold scale-105'
-                      : 'border-gray-600 opacity-70 hover:opacity-100'
-                  }`}
-                >
-                  <img
-                    src={bg.background_image_url}
-                    alt={`Background ${(bg.display_order ?? 0) + 1}`}
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute top-1 left-1 bg-black/60 text-white text-[8px] px-1 rounded">
-                    {(bg.display_order ?? 0) + 1}
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* 4x4 Template Grid */}
         <div className="grid grid-cols-4 gap-3 px-2">

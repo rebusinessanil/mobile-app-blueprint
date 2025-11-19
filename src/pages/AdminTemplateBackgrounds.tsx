@@ -59,11 +59,9 @@ export default function AdminTemplateBackgrounds() {
       return;
     }
 
-    // Find next available slot (0-15) - matching database display_order exactly
-    const usedSlots = backgrounds.map(bg => bg.display_order ?? 0);
-    const nextSlot = Array.from({ length: 16 }, (_, i) => i).find(i => !usedSlots.includes(i)) ?? 0;
-
-    console.log('Uploading to slot:', nextSlot, 'Used slots:', usedSlots);
+    // Find next available slot (0-15)
+    const usedSlots = backgrounds.map(bg => bg.display_order);
+    const nextSlot = Array.from({ length: 16 }, (_, i) => i).find(i => !usedSlots.includes(i)) ?? backgrounds.length;
 
     setUploading(true);
     try {
@@ -77,7 +75,7 @@ export default function AdminTemplateBackgrounds() {
         toast.error('Failed to upload background');
         console.error(error);
       } else {
-        toast.success(`Background uploaded to Slot ${nextSlot + 1} (display_order: ${nextSlot})`);
+        toast.success(`Background uploaded to slot ${nextSlot + 1} - Updates will sync instantly`);
       }
     } finally {
       setUploading(false);
@@ -233,19 +231,18 @@ export default function AdminTemplateBackgrounds() {
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4">
                 {Array.from({ length: 16 }, (_, index) => {
-                  // Find background by exact display_order match
-                  const bg = backgrounds.find(b => (b.display_order ?? -1) === index);
+                  const bg = backgrounds.find(b => b.display_order === index);
                   return (
                     <Card key={index} className={bg ? (bg.is_active ? '' : 'opacity-50') : 'border-dashed'}>
                       <CardContent className="p-4 space-y-2">
                         <div className="text-xs font-medium text-muted-foreground mb-1">
-                          Slot {index + 1} {bg && `(DB: ${bg.display_order})`}
+                          Slot {index + 1}
                         </div>
                         {bg ? (
                           <>
                             <img
                               src={bg.background_image_url}
-                              alt={`Slot ${index + 1}`}
+                              alt={`Background ${index + 1}`}
                               className="w-full h-32 object-cover rounded"
                             />
                             <div className="flex gap-2">
