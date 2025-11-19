@@ -40,6 +40,11 @@ export interface Template {
   display_order: number;
   created_at: string;
   updated_at: string;
+  ranks?: {
+    name: string;
+    color: string;
+    icon: string;
+  } | null;
 }
 
 export interface Story {
@@ -115,7 +120,7 @@ export const useTemplates = (categoryId?: string) => {
       try {
         let query = supabase
           .from('templates')
-          .select('*')
+          .select('*, ranks(name, color, icon)')
           .eq('is_active', true)
           .order('display_order', { ascending: true });
 

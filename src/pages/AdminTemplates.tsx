@@ -248,6 +248,12 @@ export default function AdminTemplates() {
                   </div>
                   <div className="p-3 space-y-2">
                     <h3 className="font-semibold text-foreground truncate">{template.name}</h3>
+                    {template.ranks && (
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-lg">{template.ranks.icon}</span>
+                        <span className="text-xs text-muted-foreground">{template.ranks.name}</span>
+                      </div>
+                    )}
                     <label className="block cursor-pointer">
                       <input
                         type="file"
