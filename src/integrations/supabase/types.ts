@@ -394,7 +394,6 @@ export type Database = {
           created_at: string | null
           id: string
           is_active: boolean | null
-          "Rank 2": string | null
           slot_number: number | null
           template_id: string
           updated_at: string | null
@@ -404,7 +403,6 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_active?: boolean | null
-          "Rank 2"?: string | null
           slot_number?: number | null
           template_id: string
           updated_at?: string | null
@@ -414,7 +412,6 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_active?: boolean | null
-          "Rank 2"?: string | null
           slot_number?: number | null
           template_id?: string
           updated_at?: string | null
