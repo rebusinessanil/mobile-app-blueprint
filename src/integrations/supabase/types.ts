@@ -395,6 +395,7 @@ export type Database = {
           display_order: number | null
           id: string
           is_active: boolean | null
+          "Rank 2": string | null
           template_id: string
           updated_at: string | null
         }
@@ -404,6 +405,7 @@ export type Database = {
           display_order?: number | null
           id?: string
           is_active?: boolean | null
+          "Rank 2"?: string | null
           template_id: string
           updated_at?: string | null
         }
@@ -413,6 +415,7 @@ export type Database = {
           display_order?: number | null
           id?: string
           is_active?: boolean | null
+          "Rank 2"?: string | null
           template_id?: string
           updated_at?: string | null
         }
