@@ -131,6 +131,68 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+
+  /* Banner Preview Responsive System */
+  .preview-banner-wrapper {
+    @apply relative w-full mx-auto;
+    max-width: 100vw;
+  }
+
+  @media (min-width: 640px) {
+    .preview-banner-wrapper {
+      max-width: 520px;
+    }
+  }
+
+  .preview-banner {
+    @apply relative w-full overflow-hidden;
+    aspect-ratio: 1 / 1;
+  }
+
+  .banner-name {
+    font-size: clamp(14px, 3.2vw, 36px);
+    line-height: 1.1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    display: block;
+  }
+
+  .banner-team {
+    font-size: clamp(10px, 2.2vw, 18px);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+
+  .banner-contact {
+    font-size: clamp(10px, 2vw, 20px);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  @media (max-width: 480px) {
+    .banner-name {
+      font-size: clamp(12px, 4vw, 24px);
+      max-width: 94%;
+    }
+    
+    .banner-team {
+      font-size: clamp(9px, 3vw, 14px);
+      max-width: 94%;
+    }
+
+    .banner-contact {
+      font-size: clamp(9px, 2.5vw, 16px);
+    }
+
+    .preview-banner {
+      border-radius: 13px;
+    }
+  }
 }
 
 @layer utilities {
