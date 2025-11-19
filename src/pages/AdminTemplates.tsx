@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Upload, Image, Plus } from "lucide-react";
+import { Upload, Image, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { toast } from "sonner";
 import { useTemplateCategories, useTemplates, useAdminTemplates, useRanks } from "@/hooks/useTemplates";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import AdminLayout from "@/components/admin/AdminLayout";
 
 export default function AdminTemplates() {
   const { categories } = useTemplateCategories();
@@ -79,20 +79,19 @@ export default function AdminTemplates() {
   };
 
   return (
-    <div className="min-h-screen bg-navy-dark pb-6">
-      <header className="sticky top-0 bg-navy-dark/95 backdrop-blur-sm z-40 px-6 py-4 border-b border-primary/20">
+    <AdminLayout>
+      <div className="space-y-6">
+        {/* Header */}
         <div className="flex items-center justify-between">
-          <button
-            onClick={() => navigate(-1)}
-            className="w-10 h-10 rounded-xl border-2 border-primary flex items-center justify-center hover:bg-primary/10 transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5 text-primary" />
-          </button>
-          <h1 className="text-xl font-bold text-primary">Template Management</h1>
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Templates Management</h1>
+            <p className="text-muted-foreground mt-1">Create and manage banner templates</p>
+          </div>
           <Dialog open={isUploadOpen} onOpenChange={setIsUploadOpen}>
             <DialogTrigger asChild>
-              <Button size="icon" className="w-10 h-10 rounded-xl bg-primary hover:bg-primary/90">
-                <Plus className="w-5 h-5" />
+              <Button>
+                <Plus className="w-4 h-4 mr-2" />
+                Create Template
               </Button>
             </DialogTrigger>
             <DialogContent className="bg-card border-primary">
@@ -101,180 +100,175 @@ export default function AdminTemplates() {
               </DialogHeader>
               <div className="space-y-4 py-4">
                 <div className="space-y-2">
-                  <Label className="text-foreground">Template Name *</Label>
+                  <Label>Template Name</Label>
                   <Input
                     value={uploadForm.name}
                     onChange={(e) => setUploadForm({ ...uploadForm, name: e.target.value })}
-                    placeholder="e.g., Diamond Rank Banner"
-                    className="gold-border bg-secondary text-foreground"
+                    placeholder="Enter template name"
+                    className="bg-background border-primary/20"
                   />
                 </div>
-
                 <div className="space-y-2">
-                  <Label className="text-foreground">Category *</Label>
-                  <select
+                  <Label>Category</Label>
+                  <Select
                     value={uploadForm.categoryId}
-                    onChange={(e) => setUploadForm({ ...uploadForm, categoryId: e.target.value })}
-                    className="w-full gold-border bg-secondary text-foreground rounded-lg px-3 py-2"
+                    onValueChange={(value) => setUploadForm({ ...uploadForm, categoryId: value })}
                   >
-                    <option value="">Select category</option>
-                    {categories.map((cat) => (
-                      <option key={cat.id} value={cat.id}>
-                        {cat.name}
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger className="bg-background border-primary/20">
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map((cat) => (
+                        <SelectItem key={cat.id} value={cat.id}>
+                          {cat.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-
                 <div className="space-y-2">
-                  <Label className="text-foreground">Rank (Optional)</Label>
-                  <Select value={uploadForm.rankId} onValueChange={(value) => setUploadForm({ ...uploadForm, rankId: value })}>
-                    <SelectTrigger className="w-full gold-border bg-secondary text-foreground">
+                  <Label>Rank (Optional)</Label>
+                  <Select
+                    value={uploadForm.rankId}
+                    onValueChange={(value) => setUploadForm({ ...uploadForm, rankId: value })}
+                  >
+                    <SelectTrigger className="bg-background border-primary/20">
                       <SelectValue placeholder="Select rank (optional)" />
                     </SelectTrigger>
-                    <SelectContent className="bg-card border-primary z-50">
-                      <SelectItem value="">None</SelectItem>
+                    <SelectContent>
                       {ranks.map((rank) => (
-                        <SelectItem key={rank.id} value={rank.id} className="text-foreground">
+                        <SelectItem key={rank.id} value={rank.id}>
                           {rank.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
-
                 <div className="space-y-2">
-                  <Label className="text-foreground">Cover Image *</Label>
+                  <Label>Description (Optional)</Label>
                   <Input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileChange}
-                    className="gold-border bg-secondary text-foreground"
+                    value={uploadForm.description}
+                    onChange={(e) => setUploadForm({ ...uploadForm, description: e.target.value })}
+                    placeholder="Enter description"
+                    className="bg-background border-primary/20"
                   />
                 </div>
-
-                <Button
-                  onClick={handleCreateTemplate}
-                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
-                >
+                <div className="space-y-2">
+                  <Label>Template Cover Image</Label>
+                  <Input
+                    type="file"
+                    onChange={handleFileChange}
+                    accept="image/*"
+                    className="bg-background border-primary/20"
+                  />
+                </div>
+                <Button onClick={handleCreateTemplate} className="w-full">
                   Create Template
                 </Button>
               </div>
             </DialogContent>
           </Dialog>
         </div>
-      </header>
 
-      <div className="px-6 py-6 space-y-6">
-        {/* Category Covers Section */}
-        <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-primary">
-            Category Covers <span className="text-sm text-muted-foreground">(Backend Integrated)</span>
-          </h2>
-          <div className="grid grid-cols-2 gap-4">
-            {categories.map((category) => (
-              <div key={category.id} className="gold-border bg-card rounded-xl overflow-hidden">
-                <div className="aspect-video relative bg-secondary">
-                  {category.cover_image_url ? (
+        {/* Tabs for Categories and Templates */}
+        <Tabs defaultValue="categories" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="categories">Categories</TabsTrigger>
+            <TabsTrigger value="templates">Templates</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="categories" className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {categories.map((category) => (
+                <div key={category.id} className="gold-border bg-card rounded-xl p-4 space-y-3">
+                  {category.cover_image_url && (
                     <img
                       src={category.cover_image_url}
                       alt={category.name}
-                      className="w-full h-full object-cover"
+                      className="w-full h-40 object-cover rounded-lg"
                     />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <Image className="w-12 h-12 text-muted-foreground" />
-                    </div>
                   )}
-                </div>
-                <div className="p-3 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-2xl">{category.icon}</span>
-                    <h3 className="font-semibold text-foreground flex-1">{category.name}</h3>
-                  </div>
-                  <label className="block cursor-pointer">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) handleCategoryCoverChange(category.id, file);
-                      }}
-                      className="hidden"
-                    />
-                    <div className="w-full border-2 border-primary text-primary hover:bg-primary/10 rounded-lg px-4 py-2 text-sm font-medium flex items-center justify-center gap-2 transition-colors">
-                      <Upload className="w-4 h-4" />
-                      Change Cover
-                    </div>
-                  </label>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Templates Section */}
-        <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-primary">Template Covers</h2>
-          <Tabs defaultValue={categories[0]?.id} onValueChange={setSelectedCategory}>
-            <TabsList className="grid w-full grid-cols-4 bg-secondary">
-              {categories.slice(0, 4).map((category) => (
-                <TabsTrigger
-                  key={category.id}
-                  value={category.id}
-                  className="text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-                >
-                  {category.icon}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
-
-          {templates.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground">No templates in this category. Create one!</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 gap-4">
-              {templates.map((template) => (
-                <div key={template.id} className="gold-border bg-card rounded-xl overflow-hidden">
-                  <div className="aspect-square relative">
-                    <img
-                      src={template.cover_thumbnail_url}
-                      alt={template.name}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div className="p-3 space-y-2">
-                    <h3 className="font-semibold text-foreground truncate">{template.name}</h3>
-                    {template.ranks && (
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-lg">{template.ranks.icon}</span>
-                        <span className="text-xs text-muted-foreground">{template.ranks.name}</span>
-                      </div>
-                    )}
-                    <label className="block cursor-pointer">
-                      <input
+                  <h3 className="font-semibold text-foreground">{category.name}</h3>
+                  <p className="text-sm text-muted-foreground">{category.description}</p>
+                  <div className="flex gap-2">
+                    <label className="flex-1">
+                      <Input
                         type="file"
-                        accept="image/*"
+                        className="hidden"
                         onChange={(e) => {
                           const file = e.target.files?.[0];
-                          if (file) handleTemplateCoverChange(template.id, file);
+                          if (file) handleCategoryCoverChange(category.id, file);
                         }}
-                        className="hidden"
+                        accept="image/*"
                       />
-                      <div className="w-full border-2 border-primary text-primary hover:bg-primary/10 rounded-lg px-4 py-2 text-sm font-medium flex items-center justify-center gap-2 transition-colors">
-                        <Upload className="w-4 h-4" />
-                        Change Cover
-                      </div>
+                      <Button variant="outline" className="w-full" asChild>
+                        <span className="flex items-center justify-center gap-2">
+                          <Upload className="w-4 h-4" />
+                          Update Cover
+                        </span>
+                      </Button>
                     </label>
                   </div>
                 </div>
               ))}
             </div>
-          )}
-        </div>
+          </TabsContent>
+
+          <TabsContent value="templates" className="space-y-4">
+            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+              <SelectTrigger>
+                <SelectValue placeholder="Filter by category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">All Categories</SelectItem>
+                {categories.map((cat) => (
+                  <SelectItem key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {templates.map((template) => (
+                <div key={template.id} className="gold-border bg-card rounded-xl p-4 space-y-3">
+                  <img
+                    src={template.cover_thumbnail_url}
+                    alt={template.name}
+                    className="w-full h-40 object-cover rounded-lg"
+                  />
+                  <h3 className="font-semibold text-foreground">{template.name}</h3>
+                  {template.description && (
+                    <p className="text-sm text-muted-foreground">{template.description}</p>
+                  )}
+                  {template.ranks && (
+                    <p className="text-xs text-primary">Rank: {template.ranks.name}</p>
+                  )}
+                  <div className="flex gap-2">
+                    <label className="flex-1">
+                      <Input
+                        type="file"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleTemplateCoverChange(template.id, file);
+                        }}
+                        accept="image/*"
+                      />
+                      <Button variant="outline" className="w-full" asChild>
+                        <span className="flex items-center justify-center gap-2">
+                          <Image className="w-4 h-4" />
+                          Update
+                        </span>
+                      </Button>
+                    </label>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
-    </div>
+    </AdminLayout>
   );
 }
