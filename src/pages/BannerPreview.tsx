@@ -100,13 +100,10 @@ export default function BannerPreview() {
 
   // CRITICAL: Always prioritize bannerData.name (what user typed in form) over profile.name
   const displayName: string = bannerData?.name || profile?.name || "";
-  
+
   // Truncate name to 20 characters max with ellipsis
   const MAX_NAME_LENGTH = 20;
-  const truncatedName = displayName.length > MAX_NAME_LENGTH 
-    ? displayName.slice(0, MAX_NAME_LENGTH) + "..."
-    : displayName;
-    
+  const truncatedName = displayName.length > MAX_NAME_LENGTH ? displayName.slice(0, MAX_NAME_LENGTH) + "..." : displayName;
   const displayContact: string = profile?.mobile || profile?.whatsapp || "9876543210";
   const displayRank: string = profile?.rank || "ROYAL AMBASSADOR";
 
@@ -222,7 +219,6 @@ export default function BannerPreview() {
     bgColor: "from-slate-900 via-gray-900 to-slate-800",
     border: "border-slate-500"
   }];
-
   const handleDownload = async () => {
     if (!bannerRef.current) {
       toast.error("Banner not ready for download");
@@ -234,7 +230,6 @@ export default function BannerPreview() {
       // Fixed dimensions for Full HD Square export (1080×1080)
       const TARGET_WIDTH = 1080;
       const TARGET_HEIGHT = 1080;
-      
       const canvas = await html2canvas(bannerRef.current, {
         scale: 1,
         backgroundColor: "#000000",
@@ -304,15 +299,11 @@ export default function BannerPreview() {
         {/* Main Banner Preview Wrapper with aspect ratio */}
         <div className="preview-banner-wrapper relative w-full max-w-[100vw] sm:max-w-[520px] mx-auto">
           <div className="border-4 border-primary rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl">
-          <div 
-            ref={bannerRef} 
-            className={`preview-banner border-4 ${templateColors[selectedTemplate].border} relative w-full bg-gradient-to-br ${templateColors[selectedTemplate].bgColor}`} 
-            style={{
-              aspectRatio: '1 / 1',
-              width: '100%',
-              height: 'auto'
-            }}
-          >
+          <div ref={bannerRef} className={`preview-banner border-4 ${templateColors[selectedTemplate].border} relative w-full bg-gradient-to-br ${templateColors[selectedTemplate].bgColor}`} style={{
+            aspectRatio: '1 / 1',
+            width: '100%',
+            height: 'auto'
+          }}>
               <div className="absolute inset-0">
                 {/* Background Image (if uploaded) or Gradient Background */}
                 {backgroundImage ? <img src={backgroundImage} alt="Template background" className="absolute inset-0 w-full h-full object-cover" /> : null}
@@ -377,17 +368,11 @@ export default function BannerPreview() {
                 width: '50%',
                 maxWidth: '50%'
               }}>
-                  <h2 
-                    title={displayName.toUpperCase()}
-                    className="banner-preview-name text-foreground tracking-wider font-extrabold text-center mx-auto"
-                  >
+                  <h2 title={displayName.toUpperCase()} className="banner-preview-name text-foreground tracking-wider font-extrabold text-center mx-auto">
                     {truncatedName.toUpperCase()}
                   </h2>
                   
-                  {bannerData.teamCity && <p 
-                    title={bannerData.teamCity.toUpperCase()}
-                    className="banner-team text-foreground tracking-widest mt-1 sm:mt-2 font-light font-sans text-center"
-                  >
+                  {bannerData.teamCity && <p title={bannerData.teamCity.toUpperCase()} className="banner-team text-foreground tracking-widest mt-1 sm:mt-2 font-light font-sans text-center">
                       {bannerData.teamCity.toUpperCase()}
                     </p>}
                 </div>
@@ -418,17 +403,13 @@ export default function BannerPreview() {
                 left: '5%',
                 maxWidth: '50%'
               }}>
-                  <p 
-                    title={`+91 ${displayContact}`}
-                    className="text-foreground font-bold tracking-wide" 
-                    style={{
-                      fontSize: 'clamp(10px, 2vw, 20px)',
-                      textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis'
-                    }}
-                  >
+                  <p title={`+91 ${displayContact}`} className="text-foreground font-bold tracking-wide" style={{
+                  fontSize: 'clamp(10px, 2vw, 20px)',
+                  textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis'
+                }}>
                     +91 {displayContact}
                   </p>
                 </div>
@@ -459,66 +440,26 @@ export default function BannerPreview() {
                 maxWidth: '80%',
                 zIndex: 3
               }}>
-                  <p 
-                    title={displayName}
-                    className="banner-profile-name text-foreground font-extrabold tracking-wider mb-1"
-                    style={{
-                      fontSize: '11px',
-                      textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis'
-                    }}
-                  >
+                  <p title={displayName} className="banner-profile-name text-foreground font-extrabold tracking-wider mb-1" style={{
+                  fontSize: '11px',
+                  textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis'
+                }}>
                     {truncatedName.toUpperCase()}
                   </p>
-                  <p 
-                    className="banner-profile-rank text-yellow-500 font-semibold tracking-widest"
-                    style={{
-                      fontSize: '10px',
-                      textShadow: '1px 1px 3px rgba(0,0,0,0.8)',
-                      textTransform: 'uppercase'
-                    }}
-                  >
+                  <p className="banner-profile-rank text-yellow-500 font-semibold tracking-widest" style={{
+                  fontSize: '10px',
+                  textShadow: '1px 1px 3px rgba(0,0,0,0.8)',
+                  textTransform: 'uppercase'
+                }}>
                     {displayRank}
                   </p>
                 </div>
 
                 {/* BOTTOM RIGHT - Mentor Name and Title (Moved to bottom-most position) */}
-                <div className="absolute text-right" style={{
-                bottom: '3%',
-                right: '5%',
-                width: '40%',
-                maxWidth: '40%'
-              }}>
-                  <p
-                    title={mentorName.toUpperCase()}
-                    className="text-white font-bold tracking-wide" 
-                    style={{
-                      fontSize: mentorName.length > 25 ? 'clamp(8px, 1.5vw, 16px)' : mentorName.length > 20 ? 'clamp(9px, 1.75vw, 18px)' : mentorName.length > 15 ? 'clamp(10px, 1.85vw, 19px)' : 'clamp(10px, 2vw, 20px)',
-                      textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      transform: mentorName.length > 25 ? 'scaleX(0.8)' : mentorName.length > 20 ? 'scaleX(0.85)' : mentorName.length > 15 ? 'scaleX(0.9)' : 'none'
-                    }}
-                  >
-                    {mentorName.toUpperCase()}
-                  </p>
-                  <p 
-                    title={displayRank}
-                    className="text-[#FFD700] font-semibold tracking-wider mt-0.5 sm:mt-1" 
-                    style={{
-                      fontSize: 'clamp(8px, 1.5vw, 14px)',
-                      textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis'
-                    }}
-                  >
-                    {displayRank}
-                  </p>
-                </div>
+                
 
               </div>
             </div>
