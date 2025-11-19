@@ -215,6 +215,14 @@ export default function BannerPreview() {
     bgColor: "from-slate-900 via-gray-900 to-slate-800",
     border: "border-slate-500"
   }];
+
+  // Auto-resize font based on name length (shared logic for preview and download)
+  const getNameFontSize = (nameLength: number): number => {
+    if (nameLength > 18) return 26;
+    if (nameLength > 15) return 30;
+    return 36;
+  };
+
   const handleDownload = async () => {
     if (!bannerRef.current) {
       toast.error("Banner not ready for download");
@@ -366,7 +374,7 @@ export default function BannerPreview() {
                 textAlign: 'center'
               }}>
                   <h2 style={{
-                  fontSize: bannerData.name.length > 18 ? '26px' : bannerData.name.length > 15 ? '30px' : '36px',
+                  fontSize: `${getNameFontSize(bannerData.name.length)}px`,
                   textShadow: '3px 3px 6px rgba(0,0,0,0.9)',
                   lineHeight: '1',
                   whiteSpace: 'nowrap'
