@@ -75,9 +75,14 @@ export const useTemplateBackgrounds = (templateId?: string) => {
 export const uploadTemplateBackground = async (
   templateId: string,
   file: File,
-  displayOrder: number = 0
+  displayOrder: number = 1
 ): Promise<{ id: string | null; url: string | null; error: Error | null }> => {
   try {
+    // Validate display_order is between 1-16
+    if (displayOrder < 1 || displayOrder > 16) {
+      throw new Error(`Invalid slot number: ${displayOrder}. Must be between 1-16.`);
+    }
+
     // First check if slot is already occupied
     const { data: existing } = await supabase
       .from('template_backgrounds')
