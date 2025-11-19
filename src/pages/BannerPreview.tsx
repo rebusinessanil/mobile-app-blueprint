@@ -32,7 +32,6 @@ export default function BannerPreview() {
   const location = useLocation();
   const bannerData = location.state as BannerData;
   const [selectedTemplate, setSelectedTemplate] = useState(0);
-  const [selectedBackgroundSlot, setSelectedBackgroundSlot] = useState(1); // Track which of 16 backgrounds is selected
   const [stickers, setStickers] = useState<Sticker[]>([]);
   const [isDownloading, setIsDownloading] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
@@ -76,14 +75,7 @@ export default function BannerPreview() {
 
   const selectedTemplateId = templates?.[selectedTemplate]?.id;
   const { backgrounds } = useTemplateBackgrounds(selectedTemplateId);
-  
-  // Use selected background slot instead of always using first one
-  const backgroundImage = backgrounds.find(bg => bg.display_order === selectedBackgroundSlot)?.background_image_url || null;
-  
-  // Reset to slot 1 when template changes
-  useEffect(() => {
-    setSelectedBackgroundSlot(1);
-  }, [selectedTemplateId]);
+  const backgroundImage = backgrounds[0]?.background_image_url || null;
 
   // Use profile data, fallback to banner data
   const displayName: string = profile?.name || bannerData?.name || "";
@@ -477,48 +469,11 @@ export default function BannerPreview() {
           </Button>
         </div>
 
-        {/* Background Slot Selector (16 slots) */}
-        <div className="space-y-2 px-2">
-          <h3 className="text-white font-semibold text-sm tracking-wide">Select Background (Slot 1-16)</h3>
-          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gold scrollbar-track-gray-800">
-            {Array.from({ length: 16 }, (_, index) => {
-              const slotNumber = index + 1;
-              const bg = backgrounds.find(b => b.display_order === slotNumber);
-              return (
-                <button
-                  key={slotNumber}
-                  onClick={() => setSelectedBackgroundSlot(slotNumber)}
-                  className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden transition-all shadow-lg ${
-                    selectedBackgroundSlot === slotNumber 
-                      ? 'border-4 border-[#FFD700] scale-105' 
-                      : 'border-2 border-gray-600 hover:border-gray-400'
-                  }`}
-                >
-                  {bg?.background_image_url ? (
-                    <img 
-                      src={bg.background_image_url} 
-                      alt={`Background ${slotNumber}`}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gray-800 flex items-center justify-center text-gray-500 text-xs font-bold">
-                      {slotNumber}
-                    </div>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* 4x4 Template Color Grid */}
-        <div className="space-y-2 px-2">
-          <h3 className="text-white font-semibold text-sm tracking-wide">Select Color Theme</h3>
-          <div className="grid grid-cols-4 gap-3">
-            {templateColors.map(template => <button key={template.id} onClick={() => setSelectedTemplate(template.id)} className={`aspect-square rounded-lg overflow-hidden transition-all shadow-lg ${selectedTemplate === template.id ? `border-4 ${template.border} scale-105` : "border-2 border-gray-700 hover:border-gray-500"}`}>
-                <div className={`w-full h-full bg-gradient-to-br ${template.bgColor}`} />
-              </button>)}
-          </div>
+        {/* 4x4 Template Grid */}
+        <div className="grid grid-cols-4 gap-3 px-2">
+          {templateColors.map(template => <button key={template.id} onClick={() => setSelectedTemplate(template.id)} className={`aspect-square rounded-lg overflow-hidden transition-all shadow-lg ${selectedTemplate === template.id ? `border-4 ${template.border} scale-105` : "border-2 border-gray-700 hover:border-gray-500"}`}>
+              <div className={`w-full h-full bg-gradient-to-br ${template.bgColor}`} />
+            </button>)}
         </div>
       </div>
     </div>;
