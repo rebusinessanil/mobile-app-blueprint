@@ -399,7 +399,7 @@ export default function BannerPreview() {
 
                 {/* LOWER THIRD - Contact Info */}
                 <div className="banner-contact absolute" style={{
-                bottom: '3%',
+                bottom: '20%',
                 left: '5%',
                 maxWidth: '50%'
               }}>
@@ -431,13 +431,12 @@ export default function BannerPreview() {
                   </div>}
 
 
-                {/* BOTTOM CENTER - Profile Name & Rank */}
-                <div className="absolute text-center" style={{
-                bottom: '3%',
-                left: '50%',
-                transform: 'translateX(-50%)',
+                {/* BOTTOM RIGHT - Profile Name & Rank */}
+                <div className="absolute text-left" style={{
+                bottom: '20%',
+                right: '20%',
                 width: 'max-content',
-                maxWidth: '80%',
+                maxWidth: '60%',
                 zIndex: 3
               }}>
                   <p title={displayName} className="banner-profile-name text-foreground font-extrabold tracking-wider mb-1" style={{
