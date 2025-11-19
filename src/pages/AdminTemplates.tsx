@@ -11,7 +11,6 @@ import { useTemplateCategories, useTemplates, useAdminTemplates, useRanks } from
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function AdminTemplates() {
-  const navigate = useNavigate();
   const { categories } = useTemplateCategories();
   const { ranks } = useRanks();
   const [selectedCategory, setSelectedCategory] = useState<string>("");
