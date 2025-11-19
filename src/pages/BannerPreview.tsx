@@ -446,7 +446,7 @@ export default function BannerPreview() {
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
-                  marginBottom: '1px'
+                  marginBottom: '2px'
                 }}>
                     {truncatedName.toUpperCase()}
                   </p>
