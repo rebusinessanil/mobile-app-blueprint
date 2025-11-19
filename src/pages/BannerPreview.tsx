@@ -373,7 +373,9 @@ export default function BannerPreview() {
                   fontSize: `${getNameFontSize(bannerData.name.length)}px`,
                   textShadow: '3px 3px 6px rgba(0,0,0,0.9)',
                   lineHeight: '1',
-                  whiteSpace: 'nowrap'
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis'
                 }} className="text-white tracking-wider font-extrabold text-center text-xs mx-0 px-0 my-0 py-0">
                     {bannerData.name.toUpperCase()}
                   </h2>
