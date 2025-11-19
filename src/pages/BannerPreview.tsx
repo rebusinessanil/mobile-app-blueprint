@@ -399,12 +399,12 @@ export default function BannerPreview() {
 
                 {/* LOWER THIRD - Contact Info */}
                 <div className="banner-contact absolute" style={{
-                bottom: '3%',
+                bottom: '2%',
                 left: '2%',
                 maxWidth: '50%'
               }}>
                   <p className="text-foreground font-light tracking-wide" style={{
-                  fontSize: 'clamp(6px, 1.05vw, 8px)',
+                  fontSize: 'clamp(7px, 1.35vw, 11px)',
                   textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
                   marginBottom: '2px',
                   textTransform: 'uppercase'
