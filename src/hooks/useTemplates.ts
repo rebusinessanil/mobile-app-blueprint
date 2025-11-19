@@ -337,26 +337,27 @@ export const useRanks = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
+  const fetchRanks = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('ranks')
+        .select('*')
+        .eq('is_active', true)
+        .order('display_order', { ascending: true });
+
+      if (error) throw error;
+      setRanks(data || []);
+    } catch (err) {
+      setError(err as Error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchRanks = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('ranks')
-          .select('*')
-          .eq('is_active', true)
-          .order('display_order', { ascending: true });
-
-        if (error) throw error;
-        setRanks(data || []);
-      } catch (err) {
-        setError(err as Error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchRanks();
   }, []);
 
-  return { ranks, loading, error };
+  return { ranks, loading, error, refetch: fetchRanks };
 };

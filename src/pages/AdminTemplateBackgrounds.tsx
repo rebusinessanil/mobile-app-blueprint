@@ -29,14 +29,14 @@ export default function AdminTemplateBackgrounds() {
     },
   });
 
-  // Fetch templates for selected category
+  // Fetch templates for selected category with rank info
   const { data: templates, isLoading: templatesLoading } = useQuery({
     queryKey: ['templates', selectedCategory],
     queryFn: async () => {
       if (!selectedCategory) return [];
       const { data, error } = await supabase
         .from('templates')
-        .select('*')
+        .select('*, ranks(id, name, color, icon, gradient)')
         .eq('category_id', selectedCategory)
         .eq('is_active', true)
         .order('display_order', { ascending: true });
@@ -141,31 +141,49 @@ export default function AdminTemplateBackgrounds() {
         </CardContent>
       </Card>
 
-      {/* Template Selection */}
+      {/* Template Selection with Rank Display */}
       {selectedCategory && (
         <Card>
           <CardHeader>
-            <CardTitle>Select Template</CardTitle>
-            <CardDescription>Choose a template to manage its backgrounds</CardDescription>
+            <CardTitle>Select Template ({templates?.length || 0} available)</CardTitle>
+            <CardDescription>Choose a template to manage its 16 backgrounds</CardDescription>
           </CardHeader>
           <CardContent>
             {templatesLoading ? (
-              <Loader2 className="h-6 w-6 animate-spin text-gold" />
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-gold" />
+              </div>
+            ) : !templates || templates.length === 0 ? (
+              <p className="text-muted-foreground text-sm py-4 text-center">No templates found for this category</p>
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {templates?.map((template) => (
+                {templates.map((template: any) => (
                   <Button
                     key={template.id}
                     variant={selectedTemplate === template.id ? 'default' : 'outline'}
                     onClick={() => setSelectedTemplate(template.id)}
-                    className="h-auto py-4 flex flex-col items-center gap-2"
+                    className={`h-auto p-4 flex flex-col items-center gap-2 ${
+                      selectedTemplate === template.id 
+                        ? 'bg-primary text-primary-foreground border-primary' 
+                        : 'bg-card hover:bg-card/80 border-primary/30'
+                    }`}
                   >
-                    <img
-                      src={template.cover_thumbnail_url}
-                      alt={template.name}
-                      className="w-full h-24 object-cover rounded"
-                    />
-                    <span className="text-sm font-medium">{template.name}</span>
+                    <div className="w-full aspect-square bg-secondary rounded-lg overflow-hidden">
+                      <img
+                        src={template.cover_thumbnail_url}
+                        alt={template.name}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div className="w-full space-y-1">
+                      <span className="text-sm font-medium truncate block">{template.name}</span>
+                      {template.ranks && (
+                        <div className="flex items-center gap-1.5 justify-center">
+                          <span className="text-lg">{template.ranks.icon}</span>
+                          <span className="text-xs opacity-75 truncate">{template.ranks.name}</span>
+                        </div>
+                      )}
+                    </div>
                   </Button>
                 ))}
               </div>

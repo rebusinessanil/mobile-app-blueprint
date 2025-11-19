@@ -5,7 +5,7 @@ import { Menu, Bell, Star, Calendar, Zap, Award } from "lucide-react";
 import { useTemplateCategories, useTemplates } from "@/hooks/useTemplates";
 import { useProfile } from "@/hooks/useProfile";
 import { supabase } from "@/integrations/supabase/client";
-import { ranks } from "@/data/ranks";
+import { useRanks } from "@/hooks/useTemplates";
 export default function Dashboard() {
   const {
     categories
@@ -13,6 +13,7 @@ export default function Dashboard() {
   const {
     templates: allTemplates
   } = useTemplates();
+  const { ranks } = useRanks();
   const [userId, setUserId] = useState<string | null>(null);
   const {
     profile
