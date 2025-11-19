@@ -406,7 +406,7 @@ export default function BannerPreview() {
                   <p className="text-foreground font-light tracking-wide" style={{
                   fontSize: 'clamp(5px, 0.84vw, 6px)',
                   textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
-                  marginBottom: '2px',
+                  marginBottom: '0.5px',
                   textTransform: 'uppercase'
                 }}>
                     Mentorship & Growth Call
