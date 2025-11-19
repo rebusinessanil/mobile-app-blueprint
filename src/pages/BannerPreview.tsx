@@ -435,17 +435,18 @@ export default function BannerPreview() {
                 <div className="absolute text-center" style={{
                 bottom: '3%',
                 left: '50%',
-                transform: 'translateX(-50%)',
+                transform: 'translateX(-35%)',
                 width: 'max-content',
                 maxWidth: '80%',
                 zIndex: 3
               }}>
-                  <p title={displayName} className="banner-profile-name text-foreground font-extrabold tracking-wider mb-1" style={{
+                  <p title={displayName} className="banner-profile-name text-foreground font-extrabold tracking-wider" style={{
                   fontSize: '11px',
                   textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
-                  textOverflow: 'ellipsis'
+                  textOverflow: 'ellipsis',
+                  marginBottom: '2px'
                 }}>
                     {truncatedName.toUpperCase()}
                   </p>
