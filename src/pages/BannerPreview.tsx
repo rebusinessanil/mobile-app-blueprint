@@ -222,7 +222,6 @@ export default function BannerPreview() {
     if (nameLength > 15) return 30;
     return 36;
   };
-
   const handleDownload = async () => {
     if (!bannerRef.current) {
       toast.error("Banner not ready for download");
@@ -234,7 +233,6 @@ export default function BannerPreview() {
       // Fixed dimensions for Full HD Square export (1080×1080)
       const TARGET_WIDTH = 1080;
       const TARGET_HEIGHT = 1080;
-      
       const canvas = await html2canvas(bannerRef.current, {
         scale: 1,
         backgroundColor: "#000000",
@@ -255,7 +253,6 @@ export default function BannerPreview() {
       finalCanvas.width = TARGET_WIDTH;
       finalCanvas.height = TARGET_HEIGHT;
       const ctx = finalCanvas.getContext('2d');
-      
       if (ctx) {
         ctx.drawImage(canvas, 0, 0, TARGET_WIDTH, TARGET_HEIGHT);
       }
@@ -284,8 +281,7 @@ export default function BannerPreview() {
       setIsDownloading(false);
     }
   };
-  return (
-    <div className="h-screen overflow-hidden bg-[#0B0E15] flex flex-col">
+  return <div className="h-screen overflow-hidden bg-[#0B0E15] flex flex-col">
       {/* Header - Fixed */}
       <header className="bg-[#0B0E15]/95 backdrop-blur-sm z-40 px-6 py-4 flex-shrink-0">
         <div className="flex items-center justify-between">
@@ -378,7 +374,7 @@ export default function BannerPreview() {
                   textShadow: '3px 3px 6px rgba(0,0,0,0.9)',
                   lineHeight: '1',
                   whiteSpace: 'nowrap'
-                }} className="text-white tracking-wider mx-0 my-0 px-0 py-0 text-xs font-extrabold text-center">
+                }} className="text-white tracking-wider font-extrabold text-center text-xs mx-0 px-0 my-0 py-0">
                     {bannerData.name.toUpperCase()}
                   </h2>
                   
@@ -425,16 +421,13 @@ export default function BannerPreview() {
                 </div>
 
                 {/* BOTTOM RIGHT - Mentor Photo with rounded corners and feather fade (tap to flip) */}
-                {mentorPhoto && <div 
-                  className="absolute overflow-hidden shadow-2xl rounded-xl cursor-pointer transition-transform duration-500 ease-in-out" 
-                  onClick={() => setIsMentorPhotoFlipped(!isMentorPhotoFlipped)}
-                  style={{
-                    bottom: '8%',
-                    right: '5%',
-                    width: '30%',
-                    height: '35%',
-                    transform: isMentorPhotoFlipped ? 'scaleX(-1)' : 'scaleX(1)'
-                  }}>
+                {mentorPhoto && <div className="absolute overflow-hidden shadow-2xl rounded-xl cursor-pointer transition-transform duration-500 ease-in-out" onClick={() => setIsMentorPhotoFlipped(!isMentorPhotoFlipped)} style={{
+                bottom: '8%',
+                right: '5%',
+                width: '30%',
+                height: '35%',
+                transform: isMentorPhotoFlipped ? 'scaleX(-1)' : 'scaleX(1)'
+              }}>
                     <img src={mentorPhoto} alt={mentorName} className="w-full h-full object-cover object-top" />
                     {/* Bottom feather fade overlay */}
                     <div className="absolute bottom-0 left-0 right-0 pointer-events-none" style={{
@@ -475,78 +468,41 @@ export default function BannerPreview() {
         <div className="flex items-center justify-between px-4 mt-4">
           {/* Left: Profile Images Row - Clickable to change main photo */}
           <div className="flex gap-3 overflow-x-auto">
-            {profilePhotos.slice(0, 6).map((photo, idx) => (
-              <button
-                key={photo.id}
-                onClick={() => {
-                  setSelectedMentorPhotoIndex(idx);
-                  setIsMentorPhotoFlipped(!isMentorPhotoFlipped);
-                }}
-                className={`h-10 w-10 rounded-full border-2 object-cover flex-shrink-0 shadow-lg transition-all hover:scale-105 ${
-                  selectedMentorPhotoIndex === idx ? 'border-[#FFD700] ring-2 ring-[#FFD700] ring-offset-2 ring-offset-[#0B0E15]' : 'border-gray-500 hover:border-[#FFD700]'
-                }`}
-              >
-                <img
-                  src={photo.photo_url}
-                  alt="Profile"
-                  className="w-full h-full rounded-full object-cover"
-                />
-              </button>
-            ))}
-            {profilePhotos.length > 6 && (
-              <div className="h-10 w-10 rounded-full border-2 border-[#FFD700] bg-[#111827] flex items-center justify-center text-[#FFD700] text-xs font-bold flex-shrink-0">
+            {profilePhotos.slice(0, 6).map((photo, idx) => <button key={photo.id} onClick={() => {
+            setSelectedMentorPhotoIndex(idx);
+            setIsMentorPhotoFlipped(!isMentorPhotoFlipped);
+          }} className={`h-10 w-10 rounded-full border-2 object-cover flex-shrink-0 shadow-lg transition-all hover:scale-105 ${selectedMentorPhotoIndex === idx ? 'border-[#FFD700] ring-2 ring-[#FFD700] ring-offset-2 ring-offset-[#0B0E15]' : 'border-gray-500 hover:border-[#FFD700]'}`}>
+                <img src={photo.photo_url} alt="Profile" className="w-full h-full rounded-full object-cover" />
+              </button>)}
+            {profilePhotos.length > 6 && <div className="h-10 w-10 rounded-full border-2 border-[#FFD700] bg-[#111827] flex items-center justify-center text-[#FFD700] text-xs font-bold flex-shrink-0">
                 +{profilePhotos.length - 6}
-              </div>
-            )}
+              </div>}
           </div>
 
           {/* Right: Download Button */}
-          <button 
-            onClick={handleDownload} 
-            disabled={isDownloading}
-            className="cursor-pointer transition-transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ml-4 flex-shrink-0"
-          >
-            <img 
-              src={downloadIcon} 
-              alt="Download" 
-              className="h-16 w-auto"
-            />
+          <button onClick={handleDownload} disabled={isDownloading} className="cursor-pointer transition-transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ml-4 flex-shrink-0">
+            <img src={downloadIcon} alt="Download" className="h-16 w-auto" />
           </button>
         </div>
       </div>
 
       {/* Scrollable Slot Selector Box */}
-      {backgrounds.length > 0 && (
-        <div className="flex-1 overflow-hidden px-4 pb-4">
+      {backgrounds.length > 0 && <div className="flex-1 overflow-hidden px-4 pb-4">
           <div className="h-full overflow-y-auto rounded-3xl bg-[#111827]/50 border-2 border-[#FFD700]/20 p-4 shadow-[0_0_30px_rgba(255,215,0,0.1)]">
             <div className="grid grid-cols-4 gap-3">
-              {Array.from({ length: 16 }, (_, i) => i + 1).map(slotNum => {
-                const bg = backgrounds.find(b => b.slot_number === slotNum);
-                const isSelected = selectedTemplate === slotNum - 1;
-                return (
-                  <button 
-                    key={slotNum} 
-                    onClick={() => setSelectedTemplate(slotNum - 1)} 
-                    className={`aspect-square rounded-lg overflow-hidden transition-all ${
-                      isSelected 
-                        ? 'border-4 border-[#FFD700] scale-105 shadow-[0_0_20px_rgba(255,215,0,0.5)]' 
-                        : 'border-2 border-gray-600 hover:border-[#FFD700] hover:scale-105'
-                    }`}
-                  >
-                    {bg?.background_image_url ? (
-                      <img src={bg.background_image_url} alt={`Slot ${slotNum}`} className="w-full h-full object-cover" />
-                    ) : (
-                      <div className={`w-full h-full bg-gradient-to-br ${templateColors[slotNum - 1]?.bgColor || 'from-gray-800 to-gray-900'} flex items-center justify-center`}>
+              {Array.from({
+            length: 16
+          }, (_, i) => i + 1).map(slotNum => {
+            const bg = backgrounds.find(b => b.slot_number === slotNum);
+            const isSelected = selectedTemplate === slotNum - 1;
+            return <button key={slotNum} onClick={() => setSelectedTemplate(slotNum - 1)} className={`aspect-square rounded-lg overflow-hidden transition-all ${isSelected ? 'border-4 border-[#FFD700] scale-105 shadow-[0_0_20px_rgba(255,215,0,0.5)]' : 'border-2 border-gray-600 hover:border-[#FFD700] hover:scale-105'}`}>
+                    {bg?.background_image_url ? <img src={bg.background_image_url} alt={`Slot ${slotNum}`} className="w-full h-full object-cover" /> : <div className={`w-full h-full bg-gradient-to-br ${templateColors[slotNum - 1]?.bgColor || 'from-gray-800 to-gray-900'} flex items-center justify-center`}>
                          <span className="text-white text-xs font-bold">{slotNum}</span>
-                      </div>
-                    )}
-                  </button>
-                );
-              })}
+                      </div>}
+                  </button>;
+          })}
             </div>
           </div>
-        </div>
-      )}
-    </div>
-  );
+        </div>}
+    </div>;
 }
