@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { ArrowLeft, Settings, ChevronDown } from "lucide-react";
+import { ArrowLeft, Settings, ChevronDown, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useProfile } from "@/hooks/useProfile";
@@ -468,13 +468,14 @@ export default function BannerPreview() {
           </div>
         </div>
 
-        {/* Download Button - Centered Below Banner */}
-        <div className="flex justify-center px-4">
+        {/* Download Button - Right-Aligned Below Banner */}
+        <div className="flex justify-end px-4">
           <Button 
             onClick={handleDownload} 
             disabled={isDownloading} 
-            className="w-full max-w-md h-14 bg-gradient-to-br from-[#FFD700] to-[#FFC93C] hover:from-[#FFC93C] hover:to-[#FFD700] disabled:opacity-50 text-black font-bold text-lg tracking-wider rounded-xl shadow-[0_8px_20px_rgba(255,215,0,0.4)] transition-all hover:scale-105 active:scale-95"
+            className="h-14 px-8 bg-gradient-to-br from-[#FFD700] to-[#FFC93C] hover:from-[#FFC93C] hover:to-[#FFD700] disabled:opacity-50 text-black font-bold text-lg tracking-wider rounded-xl shadow-[0_8px_20px_rgba(255,215,0,0.4)] transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
           >
+            <Download className="w-5 h-5" />
             {isDownloading ? "Generating..." : "DOWNLOAD"}
           </Button>
         </div>
