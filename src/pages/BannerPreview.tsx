@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { ArrowLeft, Settings, ChevronDown, Download } from "lucide-react";
+import { ArrowLeft, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import downloadIcon from "@/assets/download-icon.png";
 import { useProfile } from "@/hooks/useProfile";
 import { useProfilePhotos } from "@/hooks/useProfilePhotos";
 import { useBannerSettings } from "@/hooks/useBannerSettings";
@@ -470,10 +471,17 @@ export default function BannerPreview() {
 
         {/* Download Button - Right-Aligned Below Banner */}
         <div className="flex justify-end px-4">
-          <Button onClick={handleDownload} disabled={isDownloading} className="h-14 bg-gradient-to-br from-[#FFD700] to-[#FFC93C] hover:from-[#FFC93C] hover:to-[#FFD700] disabled:opacity-50 text-black tracking-wider shadow-[0_8px_20px_rgba(255,215,0,0.4)] transition-all hover:scale-105 active:scale-95 flex items-center gap-2 py-0 mx-0 px-[9px] font-serif h-14 rounded-lg bg-teal-900 hover:bg-teal-800 font-thin">
-            <Download className="w-5 h-5" />
-            {isDownloading ? "Generating..." : "DOWNLOAD"}
-          </Button>
+          <button 
+            onClick={handleDownload} 
+            disabled={isDownloading}
+            className="cursor-pointer transition-transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <img 
+              src={downloadIcon} 
+              alt="Download" 
+              className="h-16 w-auto"
+            />
+          </button>
         </div>
 
         {/* Background Slot Selector - Vertical Scrollable */}
