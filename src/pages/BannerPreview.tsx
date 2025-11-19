@@ -439,7 +439,7 @@ export default function BannerPreview() {
                   </div>}
 
 
-                {/* BOTTOM CENTER - Rank & Profile Name (Rank on top, Name below) */}
+                {/* BOTTOM CENTER - Profile Name & Rank */}
                 <div className="absolute text-center" style={{
                 bottom: '3%',
                 left: '50%',
@@ -448,22 +448,22 @@ export default function BannerPreview() {
                 maxWidth: '80%',
                 zIndex: 3
               }}>
-                  <p className="banner-profile-rank text-yellow-500 font-semibold tracking-widest" style={{
-                  fontSize: '7px',
-                  textShadow: '1px 1px 3px rgba(0,0,0,0.8)',
-                  textTransform: 'uppercase',
-                  marginBottom: '1px'
-                }}>
-                    {displayRank}
-                  </p>
                   <p title={displayName} className="banner-profile-name text-foreground font-extrabold tracking-wider" style={{
                   fontSize: '11px',
                   textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
-                  textOverflow: 'ellipsis'
+                  textOverflow: 'ellipsis',
+                  marginBottom: '1px'
                 }}>
                     {truncatedName.toUpperCase()}
+                  </p>
+                  <p className="banner-profile-rank text-yellow-500 font-semibold tracking-widest" style={{
+                  fontSize: '7px',
+                  textShadow: '1px 1px 3px rgba(0,0,0,0.8)',
+                  textTransform: 'uppercase'
+                }}>
+                    {displayRank}
                   </p>
                 </div>
 
