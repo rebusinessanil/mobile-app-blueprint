@@ -118,6 +118,7 @@ export const useTemplates = (categoryId?: string) => {
   useEffect(() => {
     const fetchTemplates = async () => {
       try {
+        setLoading(true);
         let query = supabase
           .from('templates')
           .select('*, ranks(name, color, icon)')
@@ -132,8 +133,10 @@ export const useTemplates = (categoryId?: string) => {
 
         if (error) throw error;
         setTemplates(data || []);
+        setError(null);
       } catch (err) {
         setError(err as Error);
+        console.error('Error fetching templates:', err);
       } finally {
         setLoading(false);
       }
@@ -141,15 +144,16 @@ export const useTemplates = (categoryId?: string) => {
 
     fetchTemplates();
 
-    // Real-time subscription for instant updates
+    // Real-time subscription for instant cover updates
     const channel = supabase
-      .channel(`templates-changes-${Math.random()}`)
+      .channel(`templates-changes-${categoryId || 'all'}-${Math.random()}`)
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
           table: 'templates',
+          filter: categoryId ? `category_id=eq.${categoryId}` : undefined,
         },
         (payload) => {
           console.log('📡 Template update received:', payload);
