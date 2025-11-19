@@ -316,30 +316,36 @@ export default function BannerPreview() {
       setIsDownloading(false);
     }
   };
-  return <div className="min-h-screen overflow-auto bg-[#0B0E15] flex flex-col pb-safe">
+  return <div className="min-h-screen overflow-auto bg-background flex flex-col pb-safe">
       {/* Header - Fixed */}
-      <header className="bg-[#0B0E15]/95 backdrop-blur-sm z-40 px-4 sm:px-6 py-3 sm:py-4 flex-shrink-0 sticky top-0">
-        <div className="flex items-center justify-between">
-          <button onClick={() => navigate(-1)} className="w-10 h-10 rounded-xl border-2 border-white flex items-center justify-center hover:bg-white/10 transition-colors">
-            <ArrowLeft className="w-5 h-5 text-white" />
+      <header className="bg-background/95 backdrop-blur-sm z-40 px-4 sm:px-6 py-3 sm:py-4 flex-shrink-0 sticky top-0">
+        <div className="flex items-center justify-between max-w-[600px] mx-auto">
+          <button onClick={() => navigate(-1)} className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl border-2 border-foreground flex items-center justify-center hover:bg-foreground/10 transition-colors touch-target">
+            <ArrowLeft className="w-5 h-5 sm:w-6 sm:h-6 text-foreground" />
           </button>
           
-          <h1 className="text-lg sm:text-2xl font-bold text-white tracking-widest">BANNER PREVIEW</h1>
+          <h1 className="text-base sm:text-xl md:text-2xl font-bold text-foreground tracking-widest">BANNER PREVIEW</h1>
           
-          <button className="w-10 h-10 rounded-xl border-2 border-white flex items-center justify-center hover:bg-white/10 transition-colors">
-            <Settings className="w-5 h-5 text-white" />
+          <button className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl border-2 border-foreground flex items-center justify-center hover:bg-foreground/10 transition-colors touch-target">
+            <Settings className="w-5 h-5 sm:w-6 sm:h-6 text-foreground" />
           </button>
         </div>
       </header>
 
-      {/* Banner Preview and Download - Responsive */}
+      {/* Banner Preview Container - Responsive */}
       <div className="px-3 sm:px-4 py-3 sm:py-4 flex-shrink-0">
-        {/* Main Banner Preview - Gold outer border, responsive */}
-        <div className="relative w-full max-w-[95vw] sm:max-w-[600px] mx-auto">
-          <div className="border-4 border-[#FFD700] rounded-lg overflow-hidden">
-          <div ref={bannerRef} className={`border-4 ${templateColors[selectedTemplate].border} relative w-full bg-gradient-to-br ${templateColors[selectedTemplate].bgColor}`} style={{
-            paddingBottom: '100%'
-          }}>
+        {/* Main Banner Preview Wrapper with aspect ratio */}
+        <div className="preview-banner-wrapper relative w-full max-w-[100vw] sm:max-w-[520px] mx-auto">
+          <div className="border-4 border-primary rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl">
+          <div 
+            ref={bannerRef} 
+            className={`preview-banner border-4 ${templateColors[selectedTemplate].border} relative w-full bg-gradient-to-br ${templateColors[selectedTemplate].bgColor}`} 
+            style={{
+              aspectRatio: '1 / 1',
+              width: '100%',
+              height: 'auto'
+            }}
+          >
               <div className="absolute inset-0">
                 {/* Background Image (if uploaded) or Gradient Background */}
                 {backgroundImage ? <img src={backgroundImage} alt="Template background" className="absolute inset-0 w-full h-full object-cover" /> : null}
@@ -397,18 +403,18 @@ export default function BannerPreview() {
                   
                 </div>
 
-                {/* CENTER-RIGHT - Name with responsive auto font resize */}
-                <div className="absolute px-2" style={{
+                {/* CENTER-RIGHT - Name with responsive typography */}
+                <div className="banner-text-content absolute px-2" style={{
                 top: '25%',
                 right: '5%',
                 width: '50%',
-                maxWidth: '50%',
-                textAlign: 'center'
+                maxWidth: '50%'
               }}>
                   <h2 
                     title={bannerData.name.toUpperCase()}
+                    className="banner-name text-foreground tracking-wider font-extrabold text-center mx-auto"
                     style={{
-                      fontSize: `clamp(14px, ${dynamicNameFontSize}px, 36px)`,
+                      fontSize: 'clamp(14px, 3.2vw, 36px)',
                       textShadow: '3px 3px 6px rgba(0,0,0,0.9)',
                       lineHeight: '1.1',
                       whiteSpace: 'nowrap',
@@ -416,23 +422,22 @@ export default function BannerPreview() {
                       textOverflow: 'ellipsis',
                       maxWidth: '100%',
                       display: 'block'
-                    }} 
-                    className="text-white tracking-wider font-extrabold text-center mx-auto"
+                    }}
                   >
                     {bannerData.name.toUpperCase()}
                   </h2>
                   
                   {bannerData.teamCity && <p 
                     title={bannerData.teamCity.toUpperCase()}
+                    className="banner-team text-foreground tracking-widest mt-1 sm:mt-2 font-light font-sans text-center"
                     style={{
-                      fontSize: 'clamp(10px, 2.5vw, 18px)',
+                      fontSize: 'clamp(10px, 2.2vw, 18px)',
                       textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
                       whiteSpace: 'nowrap',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
                       maxWidth: '100%'
-                    }} 
-                    className="text-white tracking-widest mt-1 sm:mt-2 font-light font-sans text-center"
+                    }}
                   >
                       {bannerData.teamCity.toUpperCase()}
                     </p>}
@@ -458,16 +463,15 @@ export default function BannerPreview() {
                     </p>
                   </div>}
 
-                {/* LOWER THIRD - User Name and Phone */}
-                <div className="absolute" style={{
+                {/* LOWER THIRD - Contact Info */}
+                <div className="banner-contact absolute" style={{
                 bottom: '3%',
                 left: '5%',
                 maxWidth: '50%'
               }}>
-                  
                   <p 
                     title={`+91 ${displayContact}`}
-                    className="text-white font-bold tracking-wide" 
+                    className="text-foreground font-bold tracking-wide" 
                     style={{
                       fontSize: 'clamp(10px, 2vw, 20px)',
                       textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
