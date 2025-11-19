@@ -63,30 +63,35 @@ export default function BannerPreview() {
     settings: bannerSettings
   } = useBannerSettings(userId ?? undefined);
   // Get template ID from bannerData (passed from rank selection) or fetch by rank_id
-  const { data: templateData } = useQuery({
+  const {
+    data: templateData
+  } = useQuery({
     queryKey: ['template-by-rank', bannerData?.rankId],
     queryFn: async () => {
       if (bannerData?.templateId) {
-        return { id: bannerData.templateId };
+        return {
+          id: bannerData.templateId
+        };
       }
       if (bannerData?.rankId) {
-        const { data, error } = await supabase
-          .from('templates')
-          .select('id')
-          .eq('rank_id', bannerData.rankId)
-          .single();
+        const {
+          data,
+          error
+        } = await supabase.from('templates').select('id').eq('rank_id', bannerData.rankId).single();
         if (error) throw error;
         return data;
       }
       return null;
     },
-    enabled: !!(bannerData?.templateId || bannerData?.rankId),
+    enabled: !!(bannerData?.templateId || bannerData?.rankId)
   });
 
   // Fetch backgrounds for the current template - ONLY for this template_id
   const currentTemplateId = bannerData?.templateId || templateData?.id;
-  const { backgrounds } = useTemplateBackgrounds(currentTemplateId);
-  
+  const {
+    backgrounds
+  } = useTemplateBackgrounds(currentTemplateId);
+
   // Map selectedTemplate (0-15) to slot_number (1-16) and fetch correct background
   // CRITICAL: Only show background if it exists for this exact slot - NO fallbacks
   const selectedSlot = selectedTemplate + 1;
@@ -280,31 +285,25 @@ export default function BannerPreview() {
           }}>
               <div className="absolute inset-0">
                 {/* Background Image (if uploaded) or Gradient Background */}
-                {backgroundImage ? (
-                  <img 
-                    src={backgroundImage} 
-                    alt="Template background" 
-                    className="absolute inset-0 w-full h-full object-cover"
-                  />
-                ) : null}
+                {backgroundImage ? <img src={backgroundImage} alt="Template background" className="absolute inset-0 w-full h-full object-cover" /> : null}
 
                 {/* Top-Left Logo */}
                 {bannerSettings?.logo_left && <div className="absolute z-30" style={{
-                  top: '3%',
-                  left: '3%',
-                  width: '15%',
-                  height: '8%'
-                }}>
+                top: '3%',
+                left: '3%',
+                width: '15%',
+                height: '8%'
+              }}>
                     <img src={bannerSettings.logo_left} alt="Left Logo" className="w-full h-full object-contain drop-shadow-lg" />
                   </div>}
 
                 {/* Top-Right Logo */}
                 {bannerSettings?.logo_right && <div className="absolute z-30" style={{
-                  top: '3%',
-                  right: '3%',
-                  width: '15%',
-                  height: '8%'
-                }}>
+                top: '3%',
+                right: '3%',
+                width: '15%',
+                height: '8%'
+              }}>
                     <img src={bannerSettings.logo_right} alt="Right Logo" className="w-full h-full object-contain drop-shadow-lg" />
                   </div>}
 
@@ -470,41 +469,22 @@ export default function BannerPreview() {
         </div>
 
         {/* Background Slot Selector - Vertical Scrollable */}
-        {backgrounds.length > 0 && (
-          <div className="px-2">
+        {backgrounds.length > 0 && <div className="px-2">
             <h3 className="text-white text-sm font-semibold mb-3 tracking-wider">SELECT BACKGROUND</h3>
             <div className="grid grid-cols-4 gap-3 max-h-[400px] overflow-y-auto scrollbar-hide">
-              {Array.from({ length: 16 }, (_, i) => i + 1).map((slotNum) => {
-                const bg = backgrounds.find(b => b.slot_number === slotNum);
-                const isSelected = selectedTemplate === slotNum - 1;
-                
-                return (
-                  <button
-                    key={slotNum}
-                    onClick={() => setSelectedTemplate(slotNum - 1)}
-                    className={`aspect-square rounded-lg overflow-hidden transition-all ${
-                      isSelected 
-                        ? 'border-4 border-[#FFD700] scale-105 shadow-[0_0_20px_rgba(255,215,0,0.5)]' 
-                        : 'border-2 border-gray-600 hover:border-[#FFD700] hover:scale-105'
-                    }`}
-                  >
-                    {bg?.background_image_url ? (
-                      <img 
-                        src={bg.background_image_url} 
-                        alt={`Slot ${slotNum}`} 
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className={`w-full h-full bg-gradient-to-br ${templateColors[slotNum - 1]?.bgColor || 'from-gray-800 to-gray-900'} flex items-center justify-center`}>
+              {Array.from({
+            length: 16
+          }, (_, i) => i + 1).map(slotNum => {
+            const bg = backgrounds.find(b => b.slot_number === slotNum);
+            const isSelected = selectedTemplate === slotNum - 1;
+            return <button key={slotNum} onClick={() => setSelectedTemplate(slotNum - 1)} className={`aspect-square rounded-lg overflow-hidden transition-all ${isSelected ? 'border-4 border-[#FFD700] scale-105 shadow-[0_0_20px_rgba(255,215,0,0.5)]' : 'border-2 border-gray-600 hover:border-[#FFD700] hover:scale-105'}`}>
+                    {bg?.background_image_url ? <img src={bg.background_image_url} alt={`Slot ${slotNum}`} className="w-full h-full object-cover" /> : <div className={`w-full h-full bg-gradient-to-br ${templateColors[slotNum - 1]?.bgColor || 'from-gray-800 to-gray-900'} flex items-center justify-center`}>
                         <span className="text-white text-xs font-bold">{slotNum}</span>
-                      </div>
-                    )}
-                  </button>
-                );
-              })}
+                      </div>}
+                  </button>;
+          })}
             </div>
-          </div>
-        )}
+          </div>}
 
         {/* Thumbnails and Download Button Row */}
         <div className="flex items-center justify-between gap-4 px-2">
@@ -522,11 +502,7 @@ export default function BannerPreview() {
         </div>
 
         {/* 4x4 Template Grid */}
-        <div className="grid grid-cols-4 gap-3 px-2">
-          {templateColors.map(template => <button key={template.id} onClick={() => setSelectedTemplate(template.id)} className={`aspect-square rounded-lg overflow-hidden transition-all shadow-lg ${selectedTemplate === template.id ? `border-4 ${template.border} scale-105` : "border-2 border-gray-700 hover:border-gray-500"}`}>
-              <div className={`w-full h-full bg-gradient-to-br ${template.bgColor}`} />
-            </button>)}
-        </div>
+        
       </div>
     </div>;
 }
