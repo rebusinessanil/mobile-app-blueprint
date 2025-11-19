@@ -20,7 +20,6 @@ import RankSelection from "./pages/RankSelection";
 import RankBannerCreate from "./pages/RankBannerCreate";
 import BannerSettings from "./pages/BannerSettings";
 import BannerPreview from "./pages/BannerPreview";
-import DownloadWindow from "./pages/DownloadWindow";
 import AdminStickers from "./pages/AdminStickers";
 import AdminTemplates from "./pages/AdminTemplates";
 import AdminBannerDefaults from "./pages/AdminBannerDefaults";
@@ -55,7 +54,6 @@ const App = () => (
           <Route path="/rank-banner-create/:rankId" element={<AuthGuard><RankBannerCreate /></AuthGuard>} />
           <Route path="/banner-settings" element={<AuthGuard><BannerSettings /></AuthGuard>} />
           <Route path="/banner-preview" element={<AuthGuard><BannerPreview /></AuthGuard>} />
-          <Route path="/download-window" element={<AuthGuard><DownloadWindow /></AuthGuard>} />
           
           {/* Admin routes - auth required */}
           <Route path="/admin" element={<AuthGuard><AdminDashboard /></AuthGuard>} />

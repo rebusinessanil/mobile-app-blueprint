@@ -219,64 +219,6 @@ export default function BannerPreview() {
     bgColor: "from-slate-900 via-gray-900 to-slate-800",
     border: "border-slate-500"
   }];
-  const handleGenerateBanner = async () => {
-    if (!bannerRef.current) {
-      toast.error("Banner not ready");
-      return;
-    }
-    setIsDownloading(true);
-    const loadingToast = toast.loading("Generating your banner...");
-    try {
-      // Fixed dimensions for Full HD Square export (1080×1080)
-      const TARGET_WIDTH = 1080;
-      const TARGET_HEIGHT = 1080;
-      const canvas = await html2canvas(bannerRef.current, {
-        scale: 1,
-        backgroundColor: "#000000",
-        logging: false,
-        useCORS: true,
-        allowTaint: true,
-        width: TARGET_WIDTH,
-        height: TARGET_HEIGHT,
-        windowWidth: TARGET_WIDTH,
-        windowHeight: TARGET_HEIGHT,
-        x: 0,
-        y: 0,
-        imageTimeout: 0
-      });
-
-      // Ensure canvas matches exact target dimensions
-      const finalCanvas = document.createElement('canvas');
-      finalCanvas.width = TARGET_WIDTH;
-      finalCanvas.height = TARGET_HEIGHT;
-      const ctx = finalCanvas.getContext('2d');
-      if (ctx) {
-        ctx.drawImage(canvas, 0, 0, TARGET_WIDTH, TARGET_HEIGHT);
-      }
-
-      // Convert to base64
-      const base64Image = finalCanvas.toDataURL("image/jpeg", 0.95);
-      
-      toast.dismiss(loadingToast);
-      toast.success("Banner generated!");
-      
-      // Navigate to download window with banner data
-      navigate("/download-window", {
-        state: {
-          bannerRef: base64Image,
-          rankName: bannerData.rankName,
-          bannerData: bannerData
-        }
-      });
-    } catch (error) {
-      console.error("Generation error:", error);
-      toast.dismiss(loadingToast);
-      toast.error("Failed to generate banner. Please try again.");
-    } finally {
-      setIsDownloading(false);
-    }
-  };
-
   const handleDownload = async () => {
     if (!bannerRef.current) {
       toast.error("Banner not ready for download");
@@ -533,7 +475,7 @@ export default function BannerPreview() {
           </div>
         </div>
 
-        {/* Profile Avatars (Left) + Generate/Download Buttons (Right) */}
+        {/* Profile Avatars (Left) + Download Button (Right) */}
         <div className="flex items-center justify-between px-2 sm:px-4 mt-3 sm:mt-4 gap-2">
           {/* Left: Profile Images Row - Clickable to change main photo */}
           <div className="flex gap-2 sm:gap-3 overflow-x-auto scrollbar-hide">
@@ -548,19 +490,10 @@ export default function BannerPreview() {
               </div>}
           </div>
 
-          {/* Right: Generate & Download Buttons */}
-          <div className="flex gap-2 flex-shrink-0">
-            <Button
-              onClick={handleGenerateBanner}
-              disabled={isDownloading}
-              className="h-10 sm:h-12 px-4 sm:px-6 bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600 text-white font-bold text-xs sm:text-sm rounded-xl shadow-lg transition-all active:scale-95"
-            >
-              GENERATE
-            </Button>
-            <button onClick={handleDownload} disabled={isDownloading} className="cursor-pointer transition-transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
-              <img src={downloadIcon} alt="Download" className="h-10 w-auto sm:h-12" />
-            </button>
-          </div>
+          {/* Right: Download Button */}
+          <button onClick={handleDownload} disabled={isDownloading} className="cursor-pointer transition-transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0">
+            <img src={downloadIcon} alt="Download" className="h-12 w-auto sm:h-16" />
+          </button>
         </div>
       </div>
 
