@@ -78,9 +78,17 @@ export const uploadTemplateBackground = async (
   displayOrder: number = 0
 ): Promise<{ id: string | null; url: string | null; error: Error | null }> => {
   try {
+    // First check if slot is already occupied
+    const { data: existing } = await supabase
+      .from('template_backgrounds')
+      .select('id, background_image_url')
+      .eq('template_id', templateId)
+      .eq('display_order', displayOrder)
+      .maybeSingle();
+
     // Upload to storage
     const fileExt = file.name.split('.').pop();
-    const fileName = `template-${templateId}-${Date.now()}.${fileExt}`;
+    const fileName = `template-${templateId}-slot-${displayOrder}-${Date.now()}.${fileExt}`;
     const filePath = `${fileName}`;
 
     const { error: uploadError } = await supabase.storage
@@ -94,19 +102,32 @@ export const uploadTemplateBackground = async (
       .from('template-backgrounds')
       .getPublicUrl(filePath);
 
-    // Insert in database
+    // Upsert: Update if exists, insert if new
     const { data, error: dbError } = await supabase
       .from('template_backgrounds')
-      .insert({
+      .upsert({
+        id: existing?.id, // Keep same ID if updating
         template_id: templateId,
         background_image_url: publicUrl,
         display_order: displayOrder,
         is_active: true,
+      }, {
+        onConflict: 'template_id,display_order'
       })
       .select()
       .single();
 
     if (dbError) throw dbError;
+
+    // Clean up old storage file if we replaced an existing background
+    if (existing?.background_image_url) {
+      const oldPath = existing.background_image_url.split('/').pop();
+      if (oldPath) {
+        await supabase.storage
+          .from('template-backgrounds')
+          .remove([oldPath]);
+      }
+    }
 
     return { id: data.id, url: publicUrl, error: null };
   } catch (err) {
