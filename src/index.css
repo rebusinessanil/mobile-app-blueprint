@@ -150,8 +150,8 @@
   }
 
   .banner-preview-name {
-    font-size: 18px; /* 20% reduction from 22px */
-    font-size: clamp(12px, 2vw, 18px); /* responsive with reduced size */
+    font-size: 20px; /* Desktop base size */
+    font-size: clamp(14px, 2.5vw, 20px); /* Desktop responsive */
     font-weight: 700;
     line-height: 1.2;
     letter-spacing: 0.5px;
@@ -164,7 +164,7 @@
   }
 
   .banner-team {
-    font-size: clamp(9px, 1.8vw, 14px); /* proportionally reduced */
+    font-size: clamp(10px, 2vw, 16px);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -173,7 +173,7 @@
   }
 
   .banner-contact {
-    font-size: clamp(9px, 1.6vw, 16px); /* proportionally reduced */
+    font-size: clamp(9px, 1.8vw, 18px);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -182,17 +182,18 @@
 
   @media (max-width: 480px) {
     .banner-preview-name {
-      font-size: clamp(12px, 4vw, 16px);
+      font-size: 14px; /* 30% reduction: 20px * 0.7 = 14px */
+      font-size: clamp(10px, 3vw, 14px); /* Mobile responsive at -30% */
       max-width: 95%;
     }
     
     .banner-team {
-      font-size: clamp(8px, 2.4vw, 12px);
+      font-size: clamp(8px, 2.2vw, 11px); /* Proportional reduction */
       max-width: 94%;
     }
 
     .banner-contact {
-      font-size: clamp(8px, 2vw, 14px);
+      font-size: clamp(8px, 2.2vw, 13px); /* Proportional reduction */
     }
 
     .preview-banner {
