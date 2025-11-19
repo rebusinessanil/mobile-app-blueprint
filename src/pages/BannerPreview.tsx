@@ -407,12 +407,14 @@ export default function BannerPreview() {
                 maxWidth: '50%'
               }}>
                   <p className="text-foreground font-light tracking-wide" style={{
-                  fontSize: 'clamp(5px, 0.84vw, 6px)',
+                  fontSize: 'clamp(5.6px, 0.94vw, 6.72px)',
                   textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
                   marginBottom: '0.5px',
-                  textTransform: 'uppercase'
+                  textTransform: 'uppercase',
+                  position: 'relative',
+                  top: '10%'
                 }}>
-                    CALL FOR MENTORSHIP                                                                 
+                    CALL FOR MENTORSHIP                                                                 
                   </p>
                   <p title={`+91 ${displayContact}`} className="text-foreground font-bold tracking-wide" style={{
                   fontSize: 'clamp(10px, 2vw, 20px)',
