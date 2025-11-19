@@ -402,8 +402,8 @@ export default function BannerPreview() {
                   </p>
                 </div>
 
-                {/* BOTTOM RIGHT - Mentor Photo with rounded corners, feather fade, and flip interaction */}
-                {mentorPhoto && <div className="absolute overflow-hidden shadow-2xl rounded-xl cursor-pointer transition-transform duration-500 ease-in-out" onClick={() => setIsMentorPhotoFlipped(!isMentorPhotoFlipped)} style={{
+                {/* BOTTOM RIGHT - Mentor Photo with rounded corners and feather fade (non-interactive) */}
+                {mentorPhoto && <div className="absolute overflow-hidden shadow-2xl rounded-xl transition-transform duration-500 ease-in-out" style={{
                 bottom: '8%',
                 right: '5%',
                 width: '30%',
@@ -418,30 +418,6 @@ export default function BannerPreview() {
                 }} />
                   </div>}
 
-                {/* Change Photo Button - Only show if multiple photos exist */}
-                {profilePhotos.length > 1 && <button onClick={() => setShowPhotoSelector(!showPhotoSelector)} className="absolute text-[#FFD700] text-[10px] font-bold tracking-wider bg-black/60 px-2 py-1 rounded hover:bg-black/80 transition-colors" style={{
-                bottom: '43%',
-                right: '5%',
-                fontSize: 'clamp(8px, 1.5vw, 12px)'
-              }}>
-                    CHANGE
-                  </button>}
-
-                {/* Photo Selector Dropdown */}
-                {showPhotoSelector && profilePhotos.length > 1 && <div className="absolute bg-[#111827] border-2 border-[#FFD700] rounded-lg p-2 shadow-2xl z-50" style={{
-                bottom: '48%',
-                right: '5%',
-                width: '32%'
-              }}>
-                    <div className="grid grid-cols-2 gap-2">
-                      {profilePhotos.slice(0, 4).map((photo, idx) => <button key={photo.id} onClick={() => {
-                    setSelectedMentorPhotoIndex(idx);
-                    setShowPhotoSelector(false);
-                  }} className={`aspect-square rounded-lg overflow-hidden border-2 transition-all ${selectedMentorPhotoIndex === idx ? 'border-[#FFD700] scale-105' : 'border-gray-600 hover:border-gray-400'}`}>
-                          <img src={photo.photo_url} alt={`Profile ${idx + 1}`} className="w-full h-full object-cover" />
-                        </button>)}
-                    </div>
-                  </div>}
 
                 {/* BOTTOM RIGHT - Mentor Name and Title (Moved to bottom-most position) */}
                 <div className="absolute text-right" style={{
@@ -472,15 +448,22 @@ export default function BannerPreview() {
 
         {/* Profile Avatars (Left) + Download Button (Right) */}
         <div className="flex items-center justify-between px-4 mt-4">
-          {/* Left: Profile Images Row */}
+          {/* Left: Profile Images Row - Clickable to change main photo */}
           <div className="flex gap-3 overflow-x-auto">
-            {profilePhotos.slice(0, 6).map((photo) => (
-              <img
+            {profilePhotos.slice(0, 6).map((photo, idx) => (
+              <button
                 key={photo.id}
-                src={photo.photo_url}
-                alt="Profile"
-                className="h-10 w-10 rounded-full border-2 border-[#FFD700] object-cover flex-shrink-0 shadow-lg"
-              />
+                onClick={() => setSelectedMentorPhotoIndex(idx)}
+                className={`h-10 w-10 rounded-full border-2 object-cover flex-shrink-0 shadow-lg transition-all hover:scale-105 ${
+                  selectedMentorPhotoIndex === idx ? 'border-[#FFD700] ring-2 ring-[#FFD700] ring-offset-2 ring-offset-[#0B0E15]' : 'border-gray-500 hover:border-[#FFD700]'
+                }`}
+              >
+                <img
+                  src={photo.photo_url}
+                  alt="Profile"
+                  className="w-full h-full rounded-full object-cover"
+                />
+              </button>
             ))}
             {profilePhotos.length > 6 && (
               <div className="h-10 w-10 rounded-full border-2 border-[#FFD700] bg-[#111827] flex items-center justify-center text-[#FFD700] text-xs font-bold flex-shrink-0">
