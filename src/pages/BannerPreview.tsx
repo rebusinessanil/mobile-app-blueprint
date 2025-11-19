@@ -470,12 +470,30 @@ export default function BannerPreview() {
           </div>
         </div>
 
-        {/* Download Button - Right-Aligned Below Banner */}
-        <div className="flex justify-end px-4 mt-4">
+        {/* Profile Avatars (Left) + Download Button (Right) */}
+        <div className="flex items-center justify-between px-4 mt-4">
+          {/* Left: Profile Images Row */}
+          <div className="flex gap-3 overflow-x-auto">
+            {profilePhotos.slice(0, 6).map((photo) => (
+              <img
+                key={photo.id}
+                src={photo.photo_url}
+                alt="Profile"
+                className="h-10 w-10 rounded-full border-2 border-[#FFD700] object-cover flex-shrink-0 shadow-lg"
+              />
+            ))}
+            {profilePhotos.length > 6 && (
+              <div className="h-10 w-10 rounded-full border-2 border-[#FFD700] bg-[#111827] flex items-center justify-center text-[#FFD700] text-xs font-bold flex-shrink-0">
+                +{profilePhotos.length - 6}
+              </div>
+            )}
+          </div>
+
+          {/* Right: Download Button */}
           <button 
             onClick={handleDownload} 
             disabled={isDownloading}
-            className="cursor-pointer transition-transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="cursor-pointer transition-transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ml-4 flex-shrink-0"
           >
             <img 
               src={downloadIcon} 
