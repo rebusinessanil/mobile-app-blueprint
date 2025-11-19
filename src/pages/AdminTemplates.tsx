@@ -13,7 +13,7 @@ import AdminLayout from "@/components/admin/AdminLayout";
 export default function AdminTemplates() {
   const { categories } = useTemplateCategories();
   const { ranks } = useRanks();
-  const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [selectedCategory, setSelectedCategory] = useState<string | undefined>(undefined);
   const { templates } = useTemplates(selectedCategory);
   const { updateCategoryCover, updateTemplateCover, createTemplate } = useAdminTemplates();
 
@@ -215,12 +215,12 @@ export default function AdminTemplates() {
           </TabsContent>
 
           <TabsContent value="templates" className="space-y-4">
-            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+            <Select value={selectedCategory || undefined} onValueChange={(value) => setSelectedCategory(value === "all" ? undefined : value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Filter by category" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Categories</SelectItem>
+                <SelectItem value="all">All Categories</SelectItem>
                 {categories.map((cat) => (
                   <SelectItem key={cat.id} value={cat.id}>
                     {cat.name}

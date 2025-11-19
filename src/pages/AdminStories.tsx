@@ -31,7 +31,7 @@ export default function AdminStories() {
   const [editingStory, setEditingStory] = useState<any>(null);
   const [formData, setFormData] = useState({
     title: "",
-    category_id: "",
+    category_id: undefined as string | undefined,
     type: "image" as "image" | "video",
     is_active: true,
   });
@@ -43,7 +43,7 @@ export default function AdminStories() {
       setEditingStory(story);
       setFormData({
         title: story.title,
-        category_id: story.category_id || "",
+        category_id: story.category_id || undefined,
         type: story.type || "image",
         is_active: story.is_active,
       });
@@ -51,7 +51,7 @@ export default function AdminStories() {
       setEditingStory(null);
       setFormData({
         title: "",
-        category_id: "",
+        category_id: undefined,
         type: "image",
         is_active: true,
       });
@@ -295,7 +295,7 @@ export default function AdminStories() {
               <div>
                 <Label>Category (Optional)</Label>
                 <Select
-                  value={formData.category_id}
+                  value={formData.category_id || undefined}
                   onValueChange={(value) =>
                     setFormData({ ...formData, category_id: value })
                   }
