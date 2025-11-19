@@ -261,9 +261,10 @@ export default function BannerPreview() {
       setIsDownloading(false);
     }
   };
-  return <div className="min-h-screen bg-[#0B0E15] pb-20">
-      {/* Header */}
-      <header className="sticky top-0 bg-[#0B0E15]/95 backdrop-blur-sm z-40 px-6 py-4">
+  return (
+    <div className="h-screen overflow-hidden bg-[#0B0E15] flex flex-col">
+      {/* Header - Fixed */}
+      <header className="bg-[#0B0E15]/95 backdrop-blur-sm z-40 px-6 py-4 flex-shrink-0">
         <div className="flex items-center justify-between">
           <button onClick={() => navigate(-1)} className="w-10 h-10 rounded-xl border-2 border-white flex items-center justify-center hover:bg-white/10 transition-colors">
             <ArrowLeft className="w-5 h-5 text-white" />
@@ -277,7 +278,8 @@ export default function BannerPreview() {
         </div>
       </header>
 
-      <div className="px-4 py-6 space-y-6">
+      {/* Banner Preview and Download - Fixed */}
+      <div className="px-4 py-4 flex-shrink-0">
         {/* Main Banner Preview - Gold outer border, Green inner border */}
         <div className="relative w-full max-w-[600px] mx-auto">
           <div className="border-4 border-[#FFD700] rounded-lg overflow-hidden">
@@ -321,7 +323,6 @@ export default function BannerPreview() {
                 top: '12%',
                 width: '40%',
                 height: '63.75%',
-                // 75% * 85% = 63.75%
                 transform: isPhotoFlipped ? 'scaleX(-1)' : 'scaleX(1)'
               }}>
                     <img src={primaryPhoto} alt={bannerData.name} className="w-full h-full object-cover object-top" />
@@ -376,7 +377,7 @@ export default function BannerPreview() {
                   fontSize: 'clamp(8px, 1.5vw, 14px)',
                   textShadow: '1px 1px 2px rgba(0,0,0,0.8)'
                 }} className="text-white font-light tracking-widest text-left text-xs">
-                      THIS WEEK INCOME 
+                      THIS WEEK INCOME 
                     </p>
                     <p style={{
                   fontSize: 'clamp(32px, 7vw, 72px)',
@@ -470,7 +471,7 @@ export default function BannerPreview() {
         </div>
 
         {/* Download Button - Right-Aligned Below Banner */}
-        <div className="flex justify-end px-4">
+        <div className="flex justify-end px-4 mt-4">
           <button 
             onClick={handleDownload} 
             disabled={isDownloading}
@@ -483,25 +484,40 @@ export default function BannerPreview() {
             />
           </button>
         </div>
-
-        {/* Background Slot Selector - Vertical Scrollable */}
-        {backgrounds.length > 0 && <div className="px-2">
-            
-            <div className="grid grid-cols-4 gap-3 max-h-[400px] overflow-y-auto scrollbar-hide">
-              {Array.from({
-            length: 16
-          }, (_, i) => i + 1).map(slotNum => {
-            const bg = backgrounds.find(b => b.slot_number === slotNum);
-            const isSelected = selectedTemplate === slotNum - 1;
-            return <button key={slotNum} onClick={() => setSelectedTemplate(slotNum - 1)} className={`aspect-square rounded-lg overflow-hidden transition-all ${isSelected ? 'border-4 border-[#FFD700] scale-105 shadow-[0_0_20px_rgba(255,215,0,0.5)]' : 'border-2 border-gray-600 hover:border-[#FFD700] hover:scale-105'}`}>
-                    {bg?.background_image_url ? <img src={bg.background_image_url} alt={`Slot ${slotNum}`} className="w-full h-full object-cover" /> : <div className={`w-full h-full bg-gradient-to-br ${templateColors[slotNum - 1]?.bgColor || 'from-gray-800 to-gray-900'} flex items-center justify-center`}>
-                        <span className="text-white text-xs font-bold">{slotNum}</span>
-                      </div>}
-                  </button>;
-          })}
-            </div>
-          </div>}
-        
       </div>
-    </div>;
+
+      {/* Scrollable Slot Selector Box */}
+      {backgrounds.length > 0 && (
+        <div className="flex-1 overflow-hidden px-4 pb-4">
+          <div className="h-full overflow-y-auto rounded-3xl bg-[#111827]/50 border-2 border-[#FFD700]/20 p-4 shadow-[0_0_30px_rgba(255,215,0,0.1)]">
+            <div className="grid grid-cols-4 gap-3">
+              {Array.from({ length: 16 }, (_, i) => i + 1).map(slotNum => {
+                const bg = backgrounds.find(b => b.slot_number === slotNum);
+                const isSelected = selectedTemplate === slotNum - 1;
+                return (
+                  <button 
+                    key={slotNum} 
+                    onClick={() => setSelectedTemplate(slotNum - 1)} 
+                    className={`aspect-square rounded-lg overflow-hidden transition-all ${
+                      isSelected 
+                        ? 'border-4 border-[#FFD700] scale-105 shadow-[0_0_20px_rgba(255,215,0,0.5)]' 
+                        : 'border-2 border-gray-600 hover:border-[#FFD700] hover:scale-105'
+                    }`}
+                  >
+                    {bg?.background_image_url ? (
+                      <img src={bg.background_image_url} alt={`Slot ${slotNum}`} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className={`w-full h-full bg-gradient-to-br ${templateColors[slotNum - 1]?.bgColor || 'from-gray-800 to-gray-900'} flex items-center justify-center`}>
+                         <span className="text-white text-xs font-bold">{slotNum}</span>
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
