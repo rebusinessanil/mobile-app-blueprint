@@ -468,6 +468,17 @@ export default function BannerPreview() {
           </div>
         </div>
 
+        {/* Download Button - Centered Below Banner */}
+        <div className="flex justify-center px-4">
+          <Button 
+            onClick={handleDownload} 
+            disabled={isDownloading} 
+            className="w-full max-w-md h-14 bg-gradient-to-br from-[#FFD700] to-[#FFC93C] hover:from-[#FFC93C] hover:to-[#FFD700] disabled:opacity-50 text-black font-bold text-lg tracking-wider rounded-xl shadow-[0_8px_20px_rgba(255,215,0,0.4)] transition-all hover:scale-105 active:scale-95"
+          >
+            {isDownloading ? "Generating..." : "DOWNLOAD"}
+          </Button>
+        </div>
+
         {/* Background Slot Selector - Vertical Scrollable */}
         {backgrounds.length > 0 && <div className="px-2">
             <h3 className="text-white text-sm font-semibold mb-3 tracking-wider">SELECT BACKGROUND</h3>
@@ -485,23 +496,6 @@ export default function BannerPreview() {
           })}
             </div>
           </div>}
-
-        {/* Thumbnails and Download Button Row */}
-        <div className="flex items-center justify-between gap-4 px-2">
-          {/* Left - Two thumbnail previews */}
-          <div className="flex gap-3">
-            {profilePhotos.slice(0, 2).map((photo, idx) => <div key={photo.id} className="w-20 h-20 rounded-lg overflow-hidden border-2 border-[#FFD700] shadow-lg">
-                <img src={photo.photo_url} alt={`Preview ${idx + 1}`} className="w-full h-full object-cover" />
-              </div>)}
-          </div>
-
-          {/* Right - Download Button (Small & Minimal) */}
-          <Button onClick={handleDownload} disabled={isDownloading} className="h-10 px-6 bg-gradient-to-br from-[#FFD700] to-[#FFC93C] hover:from-[#FFC93C] hover:to-[#FFD700] disabled:opacity-50 text-black font-bold text-sm tracking-wider rounded-lg shadow-lg transition-all">
-            {isDownloading ? "Loading..." : "Download"}
-          </Button>
-        </div>
-
-        {/* 4x4 Template Grid */}
         
       </div>
     </div>;
