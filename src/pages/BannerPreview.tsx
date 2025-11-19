@@ -106,7 +106,6 @@ export default function BannerPreview() {
   // Bottom profile name - ALWAYS from user profile (never changes)
   const profileName: string = profile?.name || "";
   const truncatedProfileName = profileName.length > MAX_NAME_LENGTH ? profileName.slice(0, MAX_NAME_LENGTH) + "..." : profileName;
-
   const displayContact: string = profile?.mobile || profile?.whatsapp || "9876543210";
   const displayRank: string = (profile?.rank || "ROYAL AMBASSADOR").replace(/[-–—]/g, ' ');
 
@@ -331,7 +330,9 @@ export default function BannerPreview() {
                   </div>}
 
                 {/* Top - Small circular upline avatars (70% scale = smaller) */}
-                <div className="absolute top-[1.8%] left-1/2 -translate-x-1/2 flex gap-1.5 z-20" style={{ transform: 'translateX(-50%) scale(1.1)' }}>
+                <div className="absolute top-[1.8%] left-1/2 -translate-x-1/2 flex gap-1.5 z-20" style={{
+                transform: 'translateX(-50%) scale(1.1)'
+              }}>
                   {bannerData.uplines?.slice(0, 5).map((upline, idx) => <div key={upline.id} className="w-7 h-7 rounded-full border-2 border-white overflow-hidden shadow-lg">
                       <img src={upline.avatar || primaryPhoto || "/placeholder.svg"} alt={upline.name} className="w-full h-full object-cover" />
                     </div>)}
@@ -411,7 +412,7 @@ export default function BannerPreview() {
                   marginBottom: '0.5px',
                   textTransform: 'uppercase'
                 }}>
-                    Mentorship & Growth Call
+                    CALL FORMENTORSHIP          
                   </p>
                   <p title={`+91 ${displayContact}`} className="text-foreground font-bold tracking-wide" style={{
                   fontSize: 'clamp(10px, 2vw, 20px)',
