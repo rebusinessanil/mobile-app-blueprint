@@ -453,7 +453,10 @@ export default function BannerPreview() {
             {profilePhotos.slice(0, 6).map((photo, idx) => (
               <button
                 key={photo.id}
-                onClick={() => setSelectedMentorPhotoIndex(idx)}
+                onClick={() => {
+                  setSelectedMentorPhotoIndex(idx);
+                  setIsMentorPhotoFlipped(!isMentorPhotoFlipped);
+                }}
                 className={`h-10 w-10 rounded-full border-2 object-cover flex-shrink-0 shadow-lg transition-all hover:scale-105 ${
                   selectedMentorPhotoIndex === idx ? 'border-[#FFD700] ring-2 ring-[#FFD700] ring-offset-2 ring-offset-[#0B0E15]' : 'border-gray-500 hover:border-[#FFD700]'
                 }`}
