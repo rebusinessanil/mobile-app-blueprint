@@ -137,8 +137,8 @@ export default function ProfileEdit() {
         const response = await fetch(photo);
         const blob = await response.blob();
         
-        // Upload to storage
-        const fileName = `${userId}_${Date.now()}_${i}.png`;
+        // Upload to storage with user folder structure
+        const fileName = `${userId}/${Date.now()}_${i}.png`;
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('profile-photos')
           .upload(fileName, blob, {
