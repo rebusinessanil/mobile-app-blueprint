@@ -12,14 +12,14 @@ import { useStickers, useStickerCategories, useAdminStickers } from "@/hooks/use
 export default function AdminStickers() {
   const navigate = useNavigate();
   const { categories } = useStickerCategories();
-  const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [selectedCategory, setSelectedCategory] = useState<string | undefined>(undefined);
   const { stickers, loading } = useStickers(selectedCategory);
   const { uploadSticker, deleteSticker } = useAdminStickers();
 
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [uploadForm, setUploadForm] = useState({
     name: "",
-    categoryId: "",
+    categoryId: undefined as string | undefined,
     description: "",
     file: null as File | null,
   });
@@ -50,7 +50,7 @@ export default function AdminStickers() {
 
     toast.success("Sticker uploaded successfully!");
     setIsUploadOpen(false);
-    setUploadForm({ name: "", categoryId: "", description: "", file: null });
+    setUploadForm({ name: "", categoryId: undefined, description: "", file: null });
     window.location.reload();
   };
 
@@ -104,7 +104,7 @@ export default function AdminStickers() {
                 <div className="space-y-2">
                   <Label className="text-foreground">Category *</Label>
                   <Select
-                    value={uploadForm.categoryId}
+                    value={uploadForm.categoryId || undefined}
                     onValueChange={(value) => setUploadForm({ ...uploadForm, categoryId: value })}
                   >
                     <SelectTrigger className="gold-border bg-secondary text-foreground">
@@ -162,12 +162,12 @@ export default function AdminStickers() {
         {/* Category Filter */}
         <div className="space-y-2">
           <Label className="text-foreground">Filter by Category</Label>
-          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+          <Select value={selectedCategory || undefined} onValueChange={(value) => setSelectedCategory(value === "all" ? undefined : value)}>
             <SelectTrigger className="gold-border bg-secondary text-foreground">
               <SelectValue placeholder="All Categories" />
             </SelectTrigger>
             <SelectContent className="bg-card border-primary">
-              <SelectItem value="">All Categories</SelectItem>
+              <SelectItem value="all">All Categories</SelectItem>
               {categories.map((cat) => (
                 <SelectItem key={cat.id} value={cat.id}>
                   {cat.name}
