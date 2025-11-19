@@ -402,14 +402,17 @@ export default function BannerPreview() {
                   </p>
                 </div>
 
-                {/* BOTTOM RIGHT - Mentor Photo with rounded corners and feather fade (non-interactive) */}
-                {mentorPhoto && <div className="absolute overflow-hidden shadow-2xl rounded-xl transition-transform duration-500 ease-in-out" style={{
-                bottom: '8%',
-                right: '5%',
-                width: '30%',
-                height: '35%',
-                transform: isMentorPhotoFlipped ? 'scaleX(-1)' : 'scaleX(1)'
-              }}>
+                {/* BOTTOM RIGHT - Mentor Photo with rounded corners and feather fade (tap to flip) */}
+                {mentorPhoto && <div 
+                  className="absolute overflow-hidden shadow-2xl rounded-xl cursor-pointer transition-transform duration-500 ease-in-out" 
+                  onClick={() => setIsMentorPhotoFlipped(!isMentorPhotoFlipped)}
+                  style={{
+                    bottom: '8%',
+                    right: '5%',
+                    width: '30%',
+                    height: '35%',
+                    transform: isMentorPhotoFlipped ? 'scaleX(-1)' : 'scaleX(1)'
+                  }}>
                     <img src={mentorPhoto} alt={mentorName} className="w-full h-full object-cover object-top" />
                     {/* Bottom feather fade overlay */}
                     <div className="absolute bottom-0 left-0 right-0 pointer-events-none" style={{
