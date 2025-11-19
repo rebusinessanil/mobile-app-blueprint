@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,7 +13,6 @@ export default function AdminTemplateBackgrounds() {
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedTemplate, setSelectedTemplate] = useState<string>('');
   const [uploading, setUploading] = useState(false);
-  const [localBackgrounds, setLocalBackgrounds] = useState<any[]>([]);
 
   // Fetch categories
   const { data: categories, isLoading: categoriesLoading } = useQuery({
@@ -51,39 +50,19 @@ export default function AdminTemplateBackgrounds() {
   // Fetch backgrounds for selected template
   const { backgrounds, loading: backgroundsLoading } = useTemplateBackgrounds(selectedTemplate);
 
-  // Sync fetched backgrounds with local state for instant updates
-  useEffect(() => {
-    setLocalBackgrounds(backgrounds);
-  }, [backgrounds]);
-
   const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file || !selectedTemplate) return;
 
-    if (localBackgrounds.length >= 16) {
+    if (backgrounds.length >= 16) {
       toast.error('Maximum 16 backgrounds per template');
       return;
     }
 
     // Find next available slot (0-15)
-    const usedSlots = localBackgrounds.map(bg => bg.display_order);
-    const nextSlot = Array.from({ length: 16 }, (_, i) => i).find(i => !usedSlots.includes(i)) ?? localBackgrounds.length;
+    const usedSlots = backgrounds.map(bg => bg.display_order);
+    const nextSlot = Array.from({ length: 16 }, (_, i) => i).find(i => !usedSlots.includes(i)) ?? backgrounds.length;
 
-    // Create instant preview using local file URL
-    const previewUrl = URL.createObjectURL(file);
-    const optimisticBackground = {
-      id: `temp-${Date.now()}`,
-      template_id: selectedTemplate,
-      background_image_url: previewUrl,
-      display_order: nextSlot,
-      is_active: true,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-
-    // Show instant preview
-    setLocalBackgrounds(prev => [...prev, optimisticBackground]);
-    
     setUploading(true);
     const { url, error } = await uploadTemplateBackground(
       selectedTemplate,
@@ -91,17 +70,11 @@ export default function AdminTemplateBackgrounds() {
       nextSlot
     );
 
-    // Cleanup preview URL
-    URL.revokeObjectURL(previewUrl);
-    
     if (error) {
-      // Remove optimistic update on error
-      setLocalBackgrounds(prev => prev.filter(bg => bg.id !== optimisticBackground.id));
       toast.error('Failed to upload background');
       console.error(error);
     } else {
       toast.success(`Background uploaded to slot ${nextSlot + 1}`);
-      // Real-time subscription will update with actual data
     }
     setUploading(false);
     event.target.value = '';
@@ -238,14 +211,14 @@ export default function AdminTemplateBackgrounds() {
                   type="file"
                   accept="image/png,image/jpeg,image/jpg"
                   onChange={handleUpload}
-                  disabled={uploading || localBackgrounds.length >= 16}
+                  disabled={uploading || backgrounds.length >= 16}
                   className="flex-1"
                 />
                 {uploading && <Loader2 className="h-5 w-5 animate-spin text-gold" />}
               </div>
               <p className="text-sm text-muted-foreground">
-                {localBackgrounds.length} of 16 slots filled
-                {localBackgrounds.length >= 16 && " (Maximum reached)"}
+                {backgrounds.length} of 16 slots filled
+                {backgrounds.length >= 16 && " (Maximum reached)"}
               </p>
             </div>
 
@@ -255,50 +228,45 @@ export default function AdminTemplateBackgrounds() {
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4">
                 {Array.from({ length: 16 }, (_, index) => {
-                  const bg = localBackgrounds.find(b => b.display_order === index);
-                  const isOptimistic = bg?.id.startsWith('temp-');
+                  const bg = backgrounds.find(b => b.display_order === index);
                   return (
                     <Card key={index} className={bg ? (bg.is_active ? '' : 'opacity-50') : 'border-dashed'}>
-                      <CardContent className="p-3">
-                        <div className="text-xs font-medium mb-2 text-center">Slot {index + 1}</div>
+                      <CardContent className="p-4 space-y-2">
+                        <div className="text-xs font-medium text-muted-foreground mb-1">
+                          Slot {index + 1}
+                        </div>
                         {bg ? (
-                          <div className="space-y-2">
-                            <div className="relative aspect-video rounded overflow-hidden bg-muted">
-                              <img
-                                src={bg.background_image_url}
-                                alt={`Background ${index + 1}`}
-                                className="w-full h-full object-cover"
-                              />
-                              {isOptimistic && (
-                                <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                                  <Loader2 className="h-6 w-6 animate-spin text-gold" />
-                                </div>
-                              )}
-                            </div>
-                            <div className="flex gap-1">
+                          <>
+                            <img
+                              src={bg.background_image_url}
+                              alt={`Background ${index + 1}`}
+                              className="w-full h-32 object-cover rounded"
+                            />
+                            <div className="flex gap-2">
                               <Button
                                 size="sm"
-                                variant={bg.is_active ? "outline" : "secondary"}
+                                variant="outline"
                                 onClick={() => handleToggleActive(bg.id, bg.is_active)}
-                                className="flex-1 text-xs h-7"
-                                disabled={isOptimistic}
+                                className="flex-1"
                               >
-                                {bg.is_active ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+                                {bg.is_active ? (
+                                  <><EyeOff className="h-4 w-4 mr-1" /> Hide</>
+                                ) : (
+                                  <><Eye className="h-4 w-4 mr-1" /> Show</>
+                                )}
                               </Button>
                               <Button
                                 size="sm"
                                 variant="destructive"
                                 onClick={() => handleRemove(bg.id)}
-                                className="h-7 px-2"
-                                disabled={isOptimistic}
                               >
-                                <Trash2 className="h-3 w-3" />
+                                <Trash2 className="h-4 w-4" />
                               </Button>
                             </div>
-                          </div>
+                          </>
                         ) : (
-                          <div className="aspect-video rounded border-2 border-dashed border-muted-foreground/20 flex items-center justify-center bg-muted/5">
-                            <Upload className="h-6 w-6 text-muted-foreground/30" />
+                          <div className="w-full h-32 flex items-center justify-center border-2 border-dashed rounded bg-muted/10">
+                            <Upload className="h-8 w-8 text-muted-foreground/50" />
                           </div>
                         )}
                       </CardContent>

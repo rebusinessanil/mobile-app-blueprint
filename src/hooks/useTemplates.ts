@@ -131,16 +131,7 @@ export const useTemplates = (categoryId?: string) => {
         const { data, error } = await query;
 
         if (error) throw error;
-        
-        // Add cache-busting timestamp to cover URLs for instant updates
-        const templatesWithFreshCovers = (data || []).map(template => ({
-          ...template,
-          cover_thumbnail_url: template.cover_thumbnail_url 
-            ? `${template.cover_thumbnail_url}?t=${Date.now()}`
-            : template.cover_thumbnail_url
-        }));
-        
-        setTemplates(templatesWithFreshCovers);
+        setTemplates(data || []);
       } catch (err) {
         setError(err as Error);
       } finally {
