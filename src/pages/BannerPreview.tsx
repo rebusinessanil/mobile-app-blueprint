@@ -105,7 +105,7 @@ export default function BannerPreview() {
   const MAX_NAME_LENGTH = 20;
   const truncatedName = displayName.length > MAX_NAME_LENGTH ? displayName.slice(0, MAX_NAME_LENGTH) + "..." : displayName;
   const displayContact: string = profile?.mobile || profile?.whatsapp || "9876543210";
-  const displayRank: string = profile?.rank || "ROYAL AMBASSADOR";
+  const displayRank: string = (profile?.rank || "ROYAL AMBASSADOR").replace(/[-–—]/g, ' ');
 
   // Get primary profile photo - prioritize uploaded photo from banner creation for LEFT side
   const primaryPhoto: string | null = bannerData?.photo || profile?.profile_photo || profilePhotos[0]?.photo_url || null;
@@ -450,7 +450,7 @@ export default function BannerPreview() {
                     {truncatedName.toUpperCase()}
                   </p>
                   <p className="banner-profile-rank text-yellow-500 font-semibold tracking-widest" style={{
-                  fontSize: '10px',
+                  fontSize: '5px',
                   textShadow: '1px 1px 3px rgba(0,0,0,0.8)',
                   textTransform: 'uppercase'
                 }}>
