@@ -175,30 +175,30 @@ export const useStories = (categoryId?: string) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
-  useEffect(() => {
-    const fetchStories = async () => {
-      try {
-        let query = supabase
-          .from('stories')
-          .select('*')
-          .eq('is_active', true)
-          .order('display_order', { ascending: true });
+  const fetchStories = async () => {
+    try {
+      let query = supabase
+        .from('stories')
+        .select('*')
+        .eq('is_active', true)
+        .order('display_order', { ascending: true });
 
-        if (categoryId) {
-          query = query.eq('category_id', categoryId);
-        }
-
-        const { data, error } = await query;
-
-        if (error) throw error;
-        setStories(data || []);
-      } catch (err) {
-        setError(err as Error);
-      } finally {
-        setLoading(false);
+      if (categoryId) {
+        query = query.eq('category_id', categoryId);
       }
-    };
 
+      const { data, error } = await query;
+
+      if (error) throw error;
+      setStories(data || []);
+    } catch (err) {
+      setError(err as Error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchStories();
 
     // Real-time subscription
@@ -222,7 +222,7 @@ export const useStories = (categoryId?: string) => {
     };
   }, [categoryId]);
 
-  return { stories, loading, error };
+  return { stories, loading, error, refetch: fetchStories };
 };
 
 export const useAdminTemplates = () => {

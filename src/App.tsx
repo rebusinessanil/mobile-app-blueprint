@@ -57,9 +57,11 @@ const App = () => (
           
           {/* Admin routes - auth required */}
           <Route path="/admin" element={<AuthGuard><AdminDashboard /></AuthGuard>} />
-          <Route path="/admin/stickers" element={<AuthGuard><AdminStickers /></AuthGuard>} />
+          <Route path="/admin/users" element={<AuthGuard><AdminUsers /></AuthGuard>} />
           <Route path="/admin/templates" element={<AuthGuard><AdminTemplates /></AuthGuard>} />
+          <Route path="/admin/stories" element={<AuthGuard><AdminStories /></AuthGuard>} />
           <Route path="/admin/ranks" element={<AuthGuard><AdminRanks /></AuthGuard>} />
+          <Route path="/admin/stickers" element={<AuthGuard><AdminStickers /></AuthGuard>} />
           <Route path="/admin/banner-defaults" element={<AuthGuard><AdminBannerDefaults /></AuthGuard>} />
           <Route path="/admin/template-backgrounds" element={<AuthGuard><AdminTemplateBackgrounds /></AuthGuard>} />
           
