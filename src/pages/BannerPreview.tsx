@@ -470,11 +470,7 @@ export default function BannerPreview() {
 
         {/* Download Button - Right-Aligned Below Banner */}
         <div className="flex justify-end px-4">
-          <Button 
-            onClick={handleDownload} 
-            disabled={isDownloading} 
-            className="h-14 px-8 bg-gradient-to-br from-[#FFD700] to-[#FFC93C] hover:from-[#FFC93C] hover:to-[#FFD700] disabled:opacity-50 text-black font-bold text-lg tracking-wider rounded-xl shadow-[0_8px_20px_rgba(255,215,0,0.4)] transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
-          >
+          <Button onClick={handleDownload} disabled={isDownloading} className="h-14 bg-gradient-to-br from-[#FFD700] to-[#FFC93C] hover:from-[#FFC93C] hover:to-[#FFD700] disabled:opacity-50 text-black font-bold tracking-wider rounded-xl shadow-[0_8px_20px_rgba(255,215,0,0.4)] transition-all hover:scale-105 active:scale-95 flex items-center gap-2 text-sm py-0 mx-0 px-[9px]">
             <Download className="w-5 h-5" />
             {isDownloading ? "Generating..." : "DOWNLOAD"}
           </Button>
@@ -482,7 +478,7 @@ export default function BannerPreview() {
 
         {/* Background Slot Selector - Vertical Scrollable */}
         {backgrounds.length > 0 && <div className="px-2">
-            <h3 className="text-white text-sm font-semibold mb-3 tracking-wider">SELECT BACKGROUND</h3>
+            
             <div className="grid grid-cols-4 gap-3 max-h-[400px] overflow-y-auto scrollbar-hide">
               {Array.from({
             length: 16
