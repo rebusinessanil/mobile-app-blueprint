@@ -392,30 +392,30 @@ export type Database = {
         Row: {
           background_image_url: string
           created_at: string | null
-          display_order: number | null
           id: string
           is_active: boolean | null
           "Rank 2": string | null
+          slot_number: number | null
           template_id: string
           updated_at: string | null
         }
         Insert: {
           background_image_url: string
           created_at?: string | null
-          display_order?: number | null
           id?: string
           is_active?: boolean | null
           "Rank 2"?: string | null
+          slot_number?: number | null
           template_id: string
           updated_at?: string | null
         }
         Update: {
           background_image_url?: string
           created_at?: string | null
-          display_order?: number | null
           id?: string
           is_active?: boolean | null
           "Rank 2"?: string | null
+          slot_number?: number | null
           template_id?: string
           updated_at?: string | null
         }

@@ -60,7 +60,7 @@ export default function AdminTemplateBackgrounds() {
     }
 
     // Find next available slot (1-16)
-    const usedSlots = backgrounds.map(bg => bg.display_order);
+    const usedSlots = backgrounds.map(bg => bg.slot_number);
     const nextSlot = Array.from({ length: 16 }, (_, i) => i + 1).find(i => !usedSlots.includes(i)) ?? (backgrounds.length + 1);
 
     setUploading(true);
@@ -232,7 +232,7 @@ export default function AdminTemplateBackgrounds() {
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4">
                 {Array.from({ length: 16 }, (_, index) => {
                   const slotNumber = index + 1; // Slots are 1-16
-                  const bg = backgrounds.find(b => b.display_order === slotNumber);
+                  const bg = backgrounds.find(b => b.slot_number === slotNumber);
                   return (
                     <Card key={slotNumber} className={bg ? (bg.is_active ? '' : 'opacity-50') : 'border-dashed'}>
                       <CardContent className="p-4 space-y-2">

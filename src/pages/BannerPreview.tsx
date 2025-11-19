@@ -73,9 +73,15 @@ export default function BannerPreview() {
     },
   });
 
-  const selectedTemplateId = templates?.[selectedTemplate]?.id;
-  const { backgrounds } = useTemplateBackgrounds(selectedTemplateId);
-  const backgroundImage = backgrounds[0]?.background_image_url || null;
+  // Fetch backgrounds for the current rank's template
+  // Note: We should get template_id from bannerData, not from templates array
+  // For now, using the first template as fallback - this should be passed from rank selection
+  const currentTemplateId = templates?.[0]?.id; // TODO: Get from bannerData.templateId
+  const { backgrounds } = useTemplateBackgrounds(currentTemplateId);
+  
+  // Map selectedTemplate (0-15) to slot_number (1-16) and fetch correct background
+  const selectedSlot = selectedTemplate + 1;
+  const backgroundImage = backgrounds.find(bg => bg.slot_number === selectedSlot)?.background_image_url || backgrounds[0]?.background_image_url || null;
 
   // Use profile data, fallback to banner data
   const displayName: string = profile?.name || bannerData?.name || "";

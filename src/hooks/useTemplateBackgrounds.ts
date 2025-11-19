@@ -5,7 +5,7 @@ export interface TemplateBackground {
   id: string;
   template_id: string;
   background_image_url: string;
-  display_order: number;
+  slot_number: number;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -24,7 +24,7 @@ export const useTemplateBackgrounds = (templateId?: string) => {
           .from('template_backgrounds')
           .select('*')
           .eq('is_active', true)
-          .order('display_order', { ascending: true });
+          .order('slot_number', { ascending: true });
 
         if (templateId) {
           query = query.eq('template_id', templateId);
@@ -75,12 +75,12 @@ export const useTemplateBackgrounds = (templateId?: string) => {
 export const uploadTemplateBackground = async (
   templateId: string,
   file: File,
-  displayOrder: number = 1
+  slotNumber: number = 1
 ): Promise<{ id: string | null; url: string | null; error: Error | null }> => {
   try {
-    // Validate display_order is between 1-16
-    if (displayOrder < 1 || displayOrder > 16) {
-      throw new Error(`Invalid slot number: ${displayOrder}. Must be between 1-16.`);
+    // Validate slot_number is between 1-16
+    if (slotNumber < 1 || slotNumber > 16) {
+      throw new Error(`Invalid slot number: ${slotNumber}. Must be between 1-16.`);
     }
 
     // First check if slot is already occupied
@@ -88,12 +88,12 @@ export const uploadTemplateBackground = async (
       .from('template_backgrounds')
       .select('id, background_image_url')
       .eq('template_id', templateId)
-      .eq('display_order', displayOrder)
+      .eq('slot_number', slotNumber)
       .maybeSingle();
 
     // Upload to storage
     const fileExt = file.name.split('.').pop();
-    const fileName = `template-${templateId}-slot-${displayOrder}-${Date.now()}.${fileExt}`;
+    const fileName = `template-${templateId}-slot-${slotNumber}-${Date.now()}.${fileExt}`;
     const filePath = `${fileName}`;
 
     const { error: uploadError } = await supabase.storage
@@ -114,10 +114,10 @@ export const uploadTemplateBackground = async (
         id: existing?.id, // Keep same ID if updating
         template_id: templateId,
         background_image_url: publicUrl,
-        display_order: displayOrder,
+        slot_number: slotNumber,
         is_active: true,
       }, {
-        onConflict: 'template_id,display_order'
+        onConflict: 'template_id,slot_number'
       })
       .select()
       .single();
