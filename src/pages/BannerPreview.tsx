@@ -417,7 +417,7 @@ export default function BannerPreview() {
                 {/* BOTTOM RIGHT - Mentor Photo with rounded corners and feather fade (tap to flip) */}
                 {mentorPhoto && <div className="absolute overflow-hidden shadow-2xl rounded-xl cursor-pointer transition-transform duration-500 ease-in-out" onClick={() => setIsMentorPhotoFlipped(!isMentorPhotoFlipped)} style={{
                 bottom: 0,
-                right: '-5%',
+                right: 0,
                 width: '33%',
                 height: '38.5%',
                 transform: isMentorPhotoFlipped ? 'scaleX(-1)' : 'scaleX(1)'
@@ -434,19 +434,18 @@ export default function BannerPreview() {
                 {/* BOTTOM CENTER - Profile Name & Rank */}
                 <div className="absolute text-center" style={{
                 bottom: '3%',
-                left: '55%',
+                left: '50%',
                 transform: 'translateX(-50%)',
                 width: 'max-content',
                 maxWidth: '80%',
                 zIndex: 3
               }}>
-                  <p title={displayName} className="banner-profile-name text-foreground font-extrabold tracking-wider" style={{
+                  <p title={displayName} className="banner-profile-name text-foreground font-extrabold tracking-wider mb-1" style={{
                   fontSize: '11px',
                   textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  marginBottom: '2px'
+                  textOverflow: 'ellipsis'
                 }}>
                     {truncatedName.toUpperCase()}
                   </p>
