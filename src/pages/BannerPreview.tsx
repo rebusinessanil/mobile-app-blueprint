@@ -400,9 +400,17 @@ export default function BannerPreview() {
                 {/* LOWER THIRD - Contact Info */}
                 <div className="banner-contact absolute" style={{
                 bottom: '3%',
-                left: '5%',
+                left: '2%',
                 maxWidth: '50%'
               }}>
+                  <p className="text-foreground font-light tracking-wide" style={{
+                  fontSize: 'clamp(8px, 1.5vw, 12px)',
+                  textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
+                  marginBottom: '2px',
+                  textTransform: 'uppercase'
+                }}>
+                    Mentorship & Growth Call
+                  </p>
                   <p title={`+91 ${displayContact}`} className="text-foreground font-bold tracking-wide" style={{
                   fontSize: 'clamp(10px, 2vw, 20px)',
                   textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
