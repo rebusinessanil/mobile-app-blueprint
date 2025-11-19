@@ -105,7 +105,7 @@ export default function BannerPreview() {
   const MAX_NAME_LENGTH = 20;
   const truncatedName = displayName.length > MAX_NAME_LENGTH ? displayName.slice(0, MAX_NAME_LENGTH) + "..." : displayName;
   const displayContact: string = profile?.mobile || profile?.whatsapp || "9876543210";
-  const displayRank: string = (profile?.rank || "ROYAL AMBASSADOR").replace(/[–-]/g, ' ');
+  const displayRank: string = profile?.rank || "ROYAL AMBASSADOR";
 
   // Get primary profile photo - prioritize uploaded photo from banner creation for LEFT side
   const primaryPhoto: string | null = bannerData?.photo || profile?.profile_photo || profilePhotos[0]?.photo_url || null;
@@ -404,7 +404,7 @@ export default function BannerPreview() {
                 maxWidth: '50%'
               }}>
                   <p title={`+91 ${displayContact}`} className="text-foreground font-bold tracking-wide" style={{
-                  fontSize: 'clamp(7.5px, 1.5vw, 15px)',
+                  fontSize: 'clamp(10px, 2vw, 20px)',
                   textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
@@ -449,19 +449,12 @@ export default function BannerPreview() {
                 }}>
                     {truncatedName.toUpperCase()}
                   </p>
-                  <p className="banner-profile-rank text-yellow-500 font-semibold tracking-widest mb-1" style={{
-                  fontSize: '5px',
+                  <p className="banner-profile-rank text-yellow-500 font-semibold tracking-widest" style={{
+                  fontSize: '10px',
                   textShadow: '1px 1px 3px rgba(0,0,0,0.8)',
                   textTransform: 'uppercase'
                 }}>
                     {displayRank}
-                  </p>
-                  <p className="banner-profile-contact text-foreground font-medium" style={{
-                  fontSize: 'clamp(7.5px, 1.5vw, 15px)',
-                  textShadow: '1px 1px 3px rgba(0,0,0,0.8)',
-                  whiteSpace: 'nowrap'
-                }}>
-                    +91 {displayContact}
                   </p>
                 </div>
 
