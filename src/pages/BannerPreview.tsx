@@ -39,9 +39,7 @@ export default function BannerPreview() {
   const [isDownloading, setIsDownloading] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [isPhotoFlipped, setIsPhotoFlipped] = useState(false);
-  const [isMentorPhotoFlipped, setIsMentorPhotoFlipped] = useState(false);
   const [selectedMentorPhotoIndex, setSelectedMentorPhotoIndex] = useState(0);
-  const [showPhotoSelector, setShowPhotoSelector] = useState(false);
   const bannerRef = useRef<HTMLDivElement>(null);
 
   // Get authenticated user
@@ -343,27 +341,29 @@ export default function BannerPreview() {
                   
                 </div>
 
-                {/* CENTER-RIGHT - Name and Team with auto font scaling */}
-                <div className="absolute px-2" style={{
-                top: '25%',
-                right: '5%',
+                {/* LEFT SIDE - Name and Team vertically centered with photo */}
+                <div className="absolute px-4" style={{
+                left: '46%',
+                top: '40%',
                 width: '50%',
-                textAlign: 'center'
+                textAlign: 'left'
               }}>
                   <h2 style={{
                   fontSize: bannerData.name.length > 30 ? 'clamp(14px, 2.5vw, 28px)' : bannerData.name.length > 25 ? 'clamp(16px, 3vw, 32px)' : bannerData.name.length > 20 ? 'clamp(18px, 3.5vw, 36px)' : bannerData.name.length > 15 ? 'clamp(22px, 4vw, 44px)' : 'clamp(24px, 5vw, 56px)',
                   textShadow: '3px 3px 6px rgba(0,0,0,0.9)',
                   lineHeight: '1',
                   transform: bannerData.name.length > 30 ? 'scaleX(0.75)' : bannerData.name.length > 25 ? 'scaleX(0.85)' : bannerData.name.length > 20 ? 'scaleX(0.9)' : 'none',
-                  whiteSpace: 'nowrap'
-                }} className="text-white tracking-wider mx-0 my-0 px-0 py-0 text-xs font-extrabold text-center">
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis'
+                }} className="text-white tracking-wider mx-0 my-0 px-0 py-0 text-xs font-extrabold">
                     {bannerData.name.toUpperCase()}
                   </h2>
                   
                   {bannerData.teamCity && <p style={{
                   fontSize: 'clamp(12px, 2.5vw, 28px)',
                   textShadow: '2px 2px 4px rgba(0,0,0,0.8)'
-                }} className="text-white tracking-widest mt-2 text-xs font-thin font-sans text-center mx-[15px] my-0">
+                }} className="text-white tracking-widest mt-2 text-xs font-thin font-sans">
                       {bannerData.teamCity.toUpperCase()}
                     </p>}
                 </div>
@@ -402,13 +402,14 @@ export default function BannerPreview() {
                   </p>
                 </div>
 
-                {/* BOTTOM RIGHT - Mentor Photo with rounded corners and feather fade (non-interactive) */}
-                {mentorPhoto && <div className="absolute overflow-hidden shadow-2xl rounded-xl transition-transform duration-500 ease-in-out" style={{
-                bottom: '8%',
-                right: '5%',
-                width: '30%',
-                height: '35%',
-                transform: isMentorPhotoFlipped ? 'scaleX(-1)' : 'scaleX(1)'
+                {/* BOTTOM RIGHT - Mentor Photo with auto-flip, no rounded corners, stick to bottom-right */}
+                {mentorPhoto && <div className="absolute overflow-hidden shadow-2xl" style={{
+                bottom: 0,
+                right: 0,
+                width: '42%',
+                height: 'auto',
+                aspectRatio: '0.55',
+                transform: 'scaleX(-1)'
               }}>
                     <img src={mentorPhoto} alt={mentorName} className="w-full h-full object-cover object-top" />
                     {/* Bottom feather fade overlay */}
