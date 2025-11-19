@@ -397,26 +397,43 @@ export default function BannerPreview() {
                   
                 </div>
 
-                {/* CENTER-RIGHT - Name with auto font resize (max 20 chars) */}
+                {/* CENTER-RIGHT - Name with responsive auto font resize */}
                 <div className="absolute px-2" style={{
                 top: '25%',
                 right: '5%',
                 width: '50%',
+                maxWidth: '50%',
                 textAlign: 'center'
               }}>
-                <h2 style={{
-                  fontSize: `${dynamicNameFontSize}px`,
-                  textShadow: '3px 3px 6px rgba(0,0,0,0.9)',
-                  lineHeight: '1',
-                  whiteSpace: 'nowrap'
-                }} className="text-white tracking-wider font-extrabold text-center text-xs mx-0 px-0 my-0 py-0">
+                  <h2 
+                    title={bannerData.name.toUpperCase()}
+                    style={{
+                      fontSize: `clamp(14px, ${dynamicNameFontSize}px, 36px)`,
+                      textShadow: '3px 3px 6px rgba(0,0,0,0.9)',
+                      lineHeight: '1.1',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      maxWidth: '100%',
+                      display: 'block'
+                    }} 
+                    className="text-white tracking-wider font-extrabold text-center mx-auto"
+                  >
                     {bannerData.name.toUpperCase()}
                   </h2>
                   
-                  {bannerData.teamCity && <p style={{
-                  fontSize: 'clamp(12px, 2.5vw, 28px)',
-                  textShadow: '2px 2px 4px rgba(0,0,0,0.8)'
-                }} className="text-white tracking-widest mt-2 text-xs font-thin font-sans text-center mx-[15px] my-0">
+                  {bannerData.teamCity && <p 
+                    title={bannerData.teamCity.toUpperCase()}
+                    style={{
+                      fontSize: 'clamp(10px, 2.5vw, 18px)',
+                      textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      maxWidth: '100%'
+                    }} 
+                    className="text-white tracking-widest mt-1 sm:mt-2 font-light font-sans text-center"
+                  >
                       {bannerData.teamCity.toUpperCase()}
                     </p>}
                 </div>
@@ -444,13 +461,21 @@ export default function BannerPreview() {
                 {/* LOWER THIRD - User Name and Phone */}
                 <div className="absolute" style={{
                 bottom: '3%',
-                left: '5%'
+                left: '5%',
+                maxWidth: '50%'
               }}>
                   
-                  <p className="text-white font-bold tracking-wide" style={{
-                  fontSize: 'clamp(10px, 2vw, 20px)',
-                  textShadow: '2px 2px 4px rgba(0,0,0,0.8)'
-                }}>
+                  <p 
+                    title={`+91 ${displayContact}`}
+                    className="text-white font-bold tracking-wide" 
+                    style={{
+                      fontSize: 'clamp(10px, 2vw, 20px)',
+                      textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis'
+                    }}
+                  >
                     +91 {displayContact}
                   </p>
                 </div>
@@ -476,20 +501,34 @@ export default function BannerPreview() {
                 <div className="absolute text-right" style={{
                 bottom: '3%',
                 right: '5%',
-                width: '40%'
+                width: '40%',
+                maxWidth: '40%'
               }}>
-                  <p className="text-white font-bold tracking-wide" style={{
-                  fontSize: mentorName.length > 25 ? 'clamp(8px, 1.5vw, 16px)' : mentorName.length > 20 ? 'clamp(9px, 1.75vw, 18px)' : mentorName.length > 15 ? 'clamp(10px, 1.85vw, 19px)' : 'clamp(10px, 2vw, 20px)',
-                  textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
-                  whiteSpace: 'nowrap',
-                  transform: mentorName.length > 25 ? 'scaleX(0.8)' : mentorName.length > 20 ? 'scaleX(0.85)' : mentorName.length > 15 ? 'scaleX(0.9)' : 'none'
-                }}>
+                  <p 
+                    title={mentorName.toUpperCase()}
+                    className="text-white font-bold tracking-wide" 
+                    style={{
+                      fontSize: mentorName.length > 25 ? 'clamp(8px, 1.5vw, 16px)' : mentorName.length > 20 ? 'clamp(9px, 1.75vw, 18px)' : mentorName.length > 15 ? 'clamp(10px, 1.85vw, 19px)' : 'clamp(10px, 2vw, 20px)',
+                      textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      transform: mentorName.length > 25 ? 'scaleX(0.8)' : mentorName.length > 20 ? 'scaleX(0.85)' : mentorName.length > 15 ? 'scaleX(0.9)' : 'none'
+                    }}
+                  >
                     {mentorName.toUpperCase()}
                   </p>
-                  <p className="text-[#FFD700] font-semibold tracking-wider mt-1" style={{
-                  fontSize: 'clamp(8px, 1.5vw, 14px)',
-                  textShadow: '1px 1px 2px rgba(0,0,0,0.8)'
-                }}>
+                  <p 
+                    title={displayRank}
+                    className="text-[#FFD700] font-semibold tracking-wider mt-0.5 sm:mt-1" 
+                    style={{
+                      fontSize: 'clamp(8px, 1.5vw, 14px)',
+                      textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis'
+                    }}
+                  >
                     {displayRank}
                   </p>
                 </div>
