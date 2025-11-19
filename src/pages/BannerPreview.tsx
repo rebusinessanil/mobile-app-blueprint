@@ -26,6 +26,8 @@ interface BannerData {
   photo: string | null;
   uplines: Upline[];
   selectedStickers?: string[];
+  templateId?: string;
+  rankId?: string;
 }
 export default function BannerPreview() {
   const navigate = useNavigate();
@@ -60,28 +62,35 @@ export default function BannerPreview() {
   const {
     settings: bannerSettings
   } = useBannerSettings(userId ?? undefined);
-  // Get template ID from selectedTemplateIndex
-  const { data: templates } = useQuery({
-    queryKey: ['templates'],
+  // Get template ID from bannerData (passed from rank selection) or fetch by rank_id
+  const { data: templateData } = useQuery({
+    queryKey: ['template-by-rank', bannerData?.rankId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('templates')
-        .select('id, display_order')
-        .order('display_order', { ascending: true });
-      if (error) throw error;
-      return data;
+      if (bannerData?.templateId) {
+        return { id: bannerData.templateId };
+      }
+      if (bannerData?.rankId) {
+        const { data, error } = await supabase
+          .from('templates')
+          .select('id')
+          .eq('rank_id', bannerData.rankId)
+          .single();
+        if (error) throw error;
+        return data;
+      }
+      return null;
     },
+    enabled: !!(bannerData?.templateId || bannerData?.rankId),
   });
 
-  // Fetch backgrounds for the current rank's template
-  // Note: We should get template_id from bannerData, not from templates array
-  // For now, using the first template as fallback - this should be passed from rank selection
-  const currentTemplateId = templates?.[0]?.id; // TODO: Get from bannerData.templateId
+  // Fetch backgrounds for the current template - ONLY for this template_id
+  const currentTemplateId = bannerData?.templateId || templateData?.id;
   const { backgrounds } = useTemplateBackgrounds(currentTemplateId);
   
   // Map selectedTemplate (0-15) to slot_number (1-16) and fetch correct background
+  // CRITICAL: Only show background if it exists for this exact slot - NO fallbacks
   const selectedSlot = selectedTemplate + 1;
-  const backgroundImage = backgrounds.find(bg => bg.slot_number === selectedSlot)?.background_image_url || backgrounds[0]?.background_image_url || null;
+  const backgroundImage = backgrounds.find(bg => bg.slot_number === selectedSlot)?.background_image_url || null;
 
   // Use profile data, fallback to banner data
   const displayName: string = profile?.name || bannerData?.name || "";
