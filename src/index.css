@@ -149,14 +149,17 @@
     aspect-ratio: 1 / 1;
   }
 
-  .banner-name {
-    font-size: clamp(14px, 3.2vw, 36px);
-    line-height: 1.1;
+  .banner-preview-name {
+    font-size: clamp(14px, 2.5vw, 22px);
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: 0.5px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 100%;
+    max-width: 90%;
     display: block;
+    text-shadow: 1px 1px 6px rgba(0, 0, 0, 0.7);
   }
 
   .banner-team {
@@ -165,6 +168,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 100%;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
   }
 
   .banner-contact {
@@ -172,12 +176,13 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
   }
 
   @media (max-width: 480px) {
-    .banner-name {
-      font-size: clamp(12px, 4vw, 24px);
-      max-width: 94%;
+    .banner-preview-name {
+      font-size: clamp(13px, 4.2vw, 16px);
+      max-width: 95%;
     }
     
     .banner-team {

@@ -100,6 +100,13 @@ export default function BannerPreview() {
 
   // Use profile data, fallback to banner data
   const displayName: string = profile?.name || bannerData?.name || "";
+  
+  // Truncate name to 20 characters max with ellipsis
+  const MAX_NAME_LENGTH = 20;
+  const truncatedName = displayName.length > MAX_NAME_LENGTH 
+    ? displayName.slice(0, MAX_NAME_LENGTH) + "..."
+    : displayName;
+    
   const displayContact: string = profile?.mobile || profile?.whatsapp || "9876543210";
   const displayRank: string = profile?.rank || "ROYAL AMBASSADOR";
 
@@ -216,30 +223,6 @@ export default function BannerPreview() {
     border: "border-slate-500"
   }];
 
-  // Dynamic font scaling - measures actual text width and fits to container
-  const getDynamicFontSize = (text: string, maxWidth: number, maxFontSize: number = 36, minFontSize: number = 16): number => {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return maxFontSize;
-
-    let fontSize = maxFontSize;
-    ctx.font = `bold ${fontSize}px Poppins, sans-serif`;
-    let textWidth = ctx.measureText(text.toUpperCase()).width;
-
-    // Iteratively reduce font size until text fits
-    while (textWidth > maxWidth && fontSize > minFontSize) {
-      fontSize -= 1;
-      ctx.font = `bold ${fontSize}px Poppins, sans-serif`;
-      textWidth = ctx.measureText(text.toUpperCase()).width;
-    }
-
-    return fontSize;
-  };
-
-  // Calculate responsive font size based on banner width
-  const bannerWidth = bannerRef.current?.offsetWidth || 600;
-  const nameContainerWidth = bannerWidth * 0.45; // 45% of banner width for name
-  const dynamicNameFontSize = getDynamicFontSize(bannerData.name, nameContainerWidth);
   const handleDownload = async () => {
     if (!bannerRef.current) {
       toast.error("Banner not ready for download");
@@ -251,17 +234,6 @@ export default function BannerPreview() {
       // Fixed dimensions for Full HD Square export (1080×1080)
       const TARGET_WIDTH = 1080;
       const TARGET_HEIGHT = 1080;
-      
-      // Calculate precise font size for export at 1080px width
-      const exportNameContainerWidth = TARGET_WIDTH * 0.45;
-      const exportFontSize = getDynamicFontSize(bannerData.name, exportNameContainerWidth);
-      
-      // Temporarily update font size for export
-      const nameElement = bannerRef.current.querySelector('h2');
-      const originalFontSize = nameElement?.style.fontSize;
-      if (nameElement) {
-        nameElement.style.fontSize = `${exportFontSize}px`;
-      }
       
       const canvas = await html2canvas(bannerRef.current, {
         scale: 1,
@@ -277,11 +249,6 @@ export default function BannerPreview() {
         y: 0,
         imageTimeout: 0
       });
-      
-      // Restore original font size
-      if (nameElement && originalFontSize) {
-        nameElement.style.fontSize = originalFontSize;
-      }
 
       // Ensure canvas matches exact target dimensions
       const finalCanvas = document.createElement('canvas');
@@ -306,7 +273,7 @@ export default function BannerPreview() {
         link.href = url;
         link.click();
         URL.revokeObjectURL(url);
-        toast.success("Banner downloaded! (1080×1350 Full HD JPG)");
+        toast.success("Banner downloaded! (1080×1080 Full HD JPG)");
       }, "image/jpeg", 0.95);
     } catch (error) {
       console.error("Download error:", error);
@@ -385,7 +352,7 @@ export default function BannerPreview() {
                 height: '63.75%',
                 transform: isPhotoFlipped ? 'scaleX(-1)' : 'scaleX(1)'
               }}>
-                    <img src={primaryPhoto} alt={bannerData.name} className="w-full h-full object-cover object-top" />
+                    <img src={primaryPhoto} alt={displayName} className="w-full h-full object-cover object-top" />
                     {/* Bottom feather fade overlay */}
                     <div className="absolute bottom-0 left-0 right-0 pointer-events-none" style={{
                   height: '30%',
@@ -411,33 +378,15 @@ export default function BannerPreview() {
                 maxWidth: '50%'
               }}>
                   <h2 
-                    title={bannerData.name.toUpperCase()}
-                    className="banner-name text-foreground tracking-wider font-extrabold text-center mx-auto"
-                    style={{
-                      fontSize: 'clamp(14px, 3.2vw, 36px)',
-                      textShadow: '3px 3px 6px rgba(0,0,0,0.9)',
-                      lineHeight: '1.1',
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      maxWidth: '100%',
-                      display: 'block'
-                    }}
+                    title={displayName.toUpperCase()}
+                    className="banner-preview-name text-foreground tracking-wider font-extrabold text-center mx-auto"
                   >
-                    {bannerData.name.toUpperCase()}
+                    {truncatedName.toUpperCase()}
                   </h2>
                   
                   {bannerData.teamCity && <p 
                     title={bannerData.teamCity.toUpperCase()}
                     className="banner-team text-foreground tracking-widest mt-1 sm:mt-2 font-light font-sans text-center"
-                    style={{
-                      fontSize: 'clamp(10px, 2.2vw, 18px)',
-                      textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      maxWidth: '100%'
-                    }}
                   >
                       {bannerData.teamCity.toUpperCase()}
                     </p>}
