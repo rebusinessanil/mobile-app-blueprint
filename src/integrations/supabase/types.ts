@@ -391,8 +391,8 @@ export type Database = {
       template_backgrounds: {
         Row: {
           background_image_url: string
+          "Bronze 01": number | null
           created_at: string | null
-          display_order: number | null
           id: string
           is_active: boolean | null
           template_id: string
@@ -400,8 +400,8 @@ export type Database = {
         }
         Insert: {
           background_image_url: string
+          "Bronze 01"?: number | null
           created_at?: string | null
-          display_order?: number | null
           id?: string
           is_active?: boolean | null
           template_id: string
@@ -409,8 +409,8 @@ export type Database = {
         }
         Update: {
           background_image_url?: string
+          "Bronze 01"?: number | null
           created_at?: string | null
-          display_order?: number | null
           id?: string
           is_active?: boolean | null
           template_id?: string
