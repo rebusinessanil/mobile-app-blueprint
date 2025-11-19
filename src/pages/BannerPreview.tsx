@@ -331,7 +331,7 @@ export default function BannerPreview() {
                   </div>}
 
                 {/* Top - Small circular upline avatars (70% scale = smaller) */}
-                <div className="absolute top-[3%] left-1/2 -translate-x-1/2 flex gap-1.5 z-20">
+                <div className="absolute top-[1.8%] left-1/2 -translate-x-1/2 flex gap-1.5 z-20" style={{ transform: 'translateX(-50%) scale(1.1)' }}>
                   {bannerData.uplines?.slice(0, 5).map((upline, idx) => <div key={upline.id} className="w-7 h-7 rounded-full border-2 border-white overflow-hidden shadow-lg">
                       <img src={upline.avatar || primaryPhoto || "/placeholder.svg"} alt={upline.name} className="w-full h-full object-cover" />
                     </div>)}
