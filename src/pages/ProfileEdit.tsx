@@ -79,15 +79,20 @@ export default function ProfileEdit() {
     }
   }, [profile]);
 
-  // Load profile photos
+  // Load profile photos - always sync with backend data
   useEffect(() => {
     if (profilePhotos && profilePhotos.length > 0) {
       setPhotos(profilePhotos.map(p => p.photo_url));
+    } else if (profilePhotos && profilePhotos.length === 0) {
+      // Clear photos if backend has none
+      setPhotos([]);
     }
   }, [profilePhotos]);
+  
   const handlePhotosChange = async (newPhotos: string[]) => {
     if (!userId) return;
     
+    // Optimistically update UI
     setPhotos(newPhotos);
     
     try {
