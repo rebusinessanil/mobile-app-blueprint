@@ -26,6 +26,8 @@ import AdminBannerDefaults from "./pages/AdminBannerDefaults";
 import AdminTemplateBackgrounds from "./pages/AdminTemplateBackgrounds";
 import AdminRanks from "./pages/AdminRanks";
 import AdminDashboard from "./pages/AdminDashboard";
+import AdminUsers from "./pages/AdminUsers";
+import AdminStories from "./pages/AdminStories";
 
 const queryClient = new QueryClient();
 
