@@ -231,9 +231,9 @@ export default function BannerPreview() {
     setIsDownloading(true);
     const loadingToast = toast.loading("Generating Full HD banner...");
     try {
-      // Fixed dimensions for Full HD export (1080×1350)
+      // Fixed dimensions for Full HD Square export (1080×1080)
       const TARGET_WIDTH = 1080;
-      const TARGET_HEIGHT = 1350;
+      const TARGET_HEIGHT = 1080;
       
       const canvas = await html2canvas(bannerRef.current, {
         scale: 1,
@@ -306,7 +306,7 @@ export default function BannerPreview() {
         {/* Main Banner Preview - Gold outer border, Green inner border */}
         <div className="relative w-full max-w-[600px] mx-auto">
           <div className="border-4 border-[#FFD700] rounded-lg overflow-hidden">
-            <div ref={bannerRef} className={`border-4 ${templateColors[selectedTemplate].border} relative w-full bg-gradient-to-br ${templateColors[selectedTemplate].bgColor}`} style={{
+          <div ref={bannerRef} className={`border-4 ${templateColors[selectedTemplate].border} relative w-full bg-gradient-to-br ${templateColors[selectedTemplate].bgColor}`} style={{
             paddingBottom: '100%'
           }}>
               <div className="absolute inset-0">
