@@ -98,8 +98,8 @@ export default function BannerPreview() {
   const selectedSlot = selectedTemplate + 1;
   const backgroundImage = backgrounds.find(bg => bg.slot_number === selectedSlot)?.background_image_url || null;
 
-  // CRITICAL: Always prioritize bannerData.name (what user typed in form) over profile.name
-  const displayName: string = bannerData?.name || profile?.name || "";
+  // Bottom profile name auto-syncs with user's profile name
+  const displayName: string = profile?.name || "";
 
   // Truncate name to 20 characters max with ellipsis
   const MAX_NAME_LENGTH = 20;
