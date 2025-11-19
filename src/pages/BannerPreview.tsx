@@ -450,7 +450,7 @@ export default function BannerPreview() {
                     {truncatedName.toUpperCase()}
                   </p>
                   <p className="banner-profile-rank text-yellow-500 font-semibold tracking-widest" style={{
-                  fontSize: '5px',
+                  fontSize: '7px',
                   textShadow: '1px 1px 3px rgba(0,0,0,0.8)',
                   textTransform: 'uppercase'
                 }}>
