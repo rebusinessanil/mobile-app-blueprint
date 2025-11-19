@@ -53,15 +53,7 @@ export default function RankBannerCreate() {
     getUser();
   }, []);
 
-  // Auto-fill name from profile
-  useEffect(() => {
-    if (profile && !formData.name) {
-      setFormData(prev => ({
-        ...prev,
-        name: profile.name
-      }));
-    }
-  }, [profile]);
+  // Name auto-fill disabled for rank banners - users must enter manually
 
   // Load default uplines from banner settings
   useEffect(() => {
@@ -124,8 +116,8 @@ export default function RankBannerCreate() {
     }
   };
   const handleCreate = async () => {
-    if (!formData.name || !formData.teamCity) {
-      toast.error("Please fill in Name and From Team/City");
+    if (!formData.name) {
+      toast.error("Please enter Name");
       return;
     }
     if (mode === "myPhoto" && !photo) {
@@ -159,7 +151,7 @@ export default function RankBannerCreate() {
   };
   const handleReset = () => {
     setFormData({
-      name: profile?.name || "",
+      name: "",
       teamCity: "",
       chequeAmount: ""
     });
@@ -240,16 +232,16 @@ export default function RankBannerCreate() {
               <Input value={formData.name} onChange={e => setFormData({
               ...formData,
               name: e.target.value
-            })} placeholder="Enter your Name" className="bg-transparent border-0 border-b-2 border-muted rounded-none text-foreground h-12 focus-visible:ring-0 focus-visible:border-primary" />
+            })} placeholder="Enter Name" className="bg-transparent border-0 border-b-2 border-muted rounded-none text-foreground h-12 focus-visible:ring-0 focus-visible:border-primary" />
             </div>
 
             {/* From Team/City */}
             <div className="space-y-2">
-              <label className="text-sm text-foreground">From Team/City</label>
+              <label className="text-sm text-foreground">Team Name <span className="text-muted-foreground">(Optional)</span></label>
               <Input value={formData.teamCity} onChange={e => setFormData({
               ...formData,
               teamCity: e.target.value
-            })} placeholder="Enter Team/City" className="bg-transparent border-0 border-b-2 border-muted rounded-none text-foreground h-12 focus-visible:ring-0 focus-visible:border-primary" />
+            })} placeholder="Team Name (Optional)" className="bg-transparent border-0 border-b-2 border-muted rounded-none text-foreground h-12 focus-visible:ring-0 focus-visible:border-primary" />
             </div>
 
             {/* Cheque Amount (Optional) */}
