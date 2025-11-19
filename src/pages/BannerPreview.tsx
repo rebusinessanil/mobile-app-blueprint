@@ -404,7 +404,7 @@ export default function BannerPreview() {
                 maxWidth: '50%'
               }}>
                   <p className="text-foreground font-light tracking-wide" style={{
-                  fontSize: 'clamp(8px, 1.5vw, 12px)',
+                  fontSize: 'clamp(6px, 1.05vw, 8px)',
                   textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
                   marginBottom: '2px',
                   textTransform: 'uppercase'
