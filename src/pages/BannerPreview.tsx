@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { ArrowLeft, Settings } from "lucide-react";
+import { ArrowLeft, Settings, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import RanksStickersPanel from "@/components/RanksStickersPanel";
 import downloadIcon from "@/assets/download-icon.png";
 import { useProfile } from "@/hooks/useProfile";
 import { useProfilePhotos } from "@/hooks/useProfilePhotos";
@@ -42,6 +43,9 @@ export default function BannerPreview() {
   const [isMentorPhotoFlipped, setIsMentorPhotoFlipped] = useState(false);
   const [selectedMentorPhotoIndex, setSelectedMentorPhotoIndex] = useState(0);
   const [showPhotoSelector, setShowPhotoSelector] = useState(false);
+  const [isStickersOpen, setIsStickersOpen] = useState(false);
+  const [selectedStickers, setSelectedStickers] = useState<string[]>([]);
+  const [stickerImages, setStickerImages] = useState<{id: string, url: string}[]>([]);
   const bannerRef = useRef<HTMLDivElement>(null);
 
   // Get authenticated user
@@ -92,6 +96,27 @@ export default function BannerPreview() {
   const {
     backgrounds
   } = useTemplateBackgrounds(currentTemplateId);
+
+  // Fetch sticker images when selectedStickers change
+  useEffect(() => {
+    const fetchStickerImages = async () => {
+      if (selectedStickers.length === 0) {
+        setStickerImages([]);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('stickers')
+        .select('id, image_url')
+        .in('id', selectedStickers);
+
+      if (!error && data) {
+        setStickerImages(data.map(s => ({ id: s.id, url: s.image_url })));
+      }
+    };
+
+    fetchStickerImages();
+  }, [selectedStickers]);
 
   // Map selectedTemplate (0-15) to slot_number (1-16) and fetch correct background
   // CRITICAL: Only show background if it exists for this exact slot - NO fallbacks
@@ -289,8 +314,11 @@ export default function BannerPreview() {
           
           <h1 className="text-base sm:text-xl md:text-2xl font-bold text-foreground tracking-widest">BANNER PREVIEW</h1>
           
-          <button className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl border-2 border-foreground flex items-center justify-center hover:bg-foreground/10 transition-colors touch-target">
-            <Settings className="w-5 h-5 sm:w-6 sm:h-6 text-foreground" />
+          <button 
+            onClick={() => setIsStickersOpen(true)}
+            className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl border-2 border-primary bg-primary/10 flex items-center justify-center hover:bg-primary/20 transition-colors touch-target"
+          >
+            <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
           </button>
         </div>
       </header>
@@ -474,6 +502,37 @@ export default function BannerPreview() {
                   </p>
                 </div>
 
+                {/* Achievement Stickers - Positioned around banner */}
+                {stickerImages.map((sticker, index) => {
+                  const positions = [
+                    { top: '8%', right: '8%', size: '12%' },
+                    { top: '8%', left: '8%', size: '12%' },
+                    { top: '35%', right: '5%', size: '10%' },
+                    { top: '35%', left: '5%', size: '10%' },
+                    { bottom: '42%', right: '8%', size: '11%' },
+                    { bottom: '42%', left: '8%', size: '11%' },
+                  ];
+                  const pos = positions[index] || positions[0];
+                  
+                  return (
+                    <img
+                      key={sticker.id}
+                      src={sticker.url}
+                      alt="Achievement Sticker"
+                      className="absolute pointer-events-none animate-in fade-in zoom-in duration-300"
+                      style={{
+                        ...pos,
+                        width: pos.size,
+                        height: 'auto',
+                        aspectRatio: '1',
+                        objectFit: 'contain',
+                        filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.3))',
+                        zIndex: 10,
+                      }}
+                    />
+                  );
+                })}
+
                 {/* BOTTOM RIGHT - Mentor Name and Title (Moved to bottom-most position) */}
                 
 
@@ -522,5 +581,15 @@ export default function BannerPreview() {
             </div>
           </div>
         </div>}
+
+      {/* Ranks & Stickers Panel */}
+      <RanksStickersPanel
+        isOpen={isStickersOpen}
+        onClose={() => setIsStickersOpen(false)}
+        currentSlot={selectedTemplate + 1}
+        rankName={bannerData?.rankName || ''}
+        selectedStickers={selectedStickers}
+        onStickersChange={setSelectedStickers}
+      />
     </div>;
 }
