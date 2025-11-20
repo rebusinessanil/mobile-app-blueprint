@@ -307,7 +307,11 @@ export type Database = {
           image_url: string
           is_active: boolean | null
           name: string
+          position_x: number | null
+          position_y: number | null
           rank_id: string | null
+          rotation: number | null
+          scale: number | null
           slot_number: number | null
           updated_at: string | null
         }
@@ -320,7 +324,11 @@ export type Database = {
           image_url: string
           is_active?: boolean | null
           name: string
+          position_x?: number | null
+          position_y?: number | null
           rank_id?: string | null
+          rotation?: number | null
+          scale?: number | null
           slot_number?: number | null
           updated_at?: string | null
         }
@@ -333,7 +341,11 @@ export type Database = {
           image_url?: string
           is_active?: boolean | null
           name?: string
+          position_x?: number | null
+          position_y?: number | null
           rank_id?: string | null
+          rotation?: number | null
+          scale?: number | null
           slot_number?: number | null
           updated_at?: string | null
         }
