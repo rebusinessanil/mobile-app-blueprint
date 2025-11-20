@@ -1,8 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Save, RotateCcw } from "lucide-react";
+import { RotateCw, Maximize2, Move } from "lucide-react";
 import { useStickerTransform } from "@/hooks/useStickerTransform";
-import { toast } from "sonner";
 
 interface StickerTransformControlsProps {
   stickerId: string;
@@ -28,20 +27,10 @@ export default function StickerTransformControls({
   initialTransform = {},
   onTransformChange,
 }: StickerTransformControlsProps) {
-  // Store initial saved state
-  const [savedState, setSavedState] = useState({
-    position_x: initialTransform.position_x || 50,
-    position_y: initialTransform.position_y || 50,
-    scale: initialTransform.scale || 1.0,
-    rotation: initialTransform.rotation || 0,
-  });
-
-  // Current editing state (temporary until Save)
-  const [positionX, setPositionX] = useState(savedState.position_x);
-  const [positionY, setPositionY] = useState(savedState.position_y);
-  const [scale, setScale] = useState(savedState.scale);
-  const [rotation, setRotation] = useState(savedState.rotation);
-  
+  const [positionX, setPositionX] = useState(initialTransform.position_x || 50);
+  const [positionY, setPositionY] = useState(initialTransform.position_y || 50);
+  const [scale, setScale] = useState(initialTransform.scale || 1.0);
+  const [rotation, setRotation] = useState(initialTransform.rotation || 0);
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
   const [isRotating, setIsRotating] = useState(false);
@@ -86,8 +75,16 @@ export default function StickerTransformControls({
       }
     };
 
-    const handleMouseUp = () => {
-      // Don't save immediately - just stop dragging/resizing/rotating
+    const handleMouseUp = async () => {
+      if (isDragging || isResizing || isRotating) {
+        await updateTransform({
+          position_x: positionX,
+          position_y: positionY,
+          scale: scale,
+          rotation: rotation,
+        });
+        onTransformChange?.({ position_x: positionX, position_y: positionY, scale, rotation });
+      }
       setIsDragging(false);
       setIsResizing(false);
       setIsRotating(false);
@@ -103,130 +100,58 @@ export default function StickerTransformControls({
     }
   }, [isDragging, isResizing, isRotating, positionX, positionY, scale, rotation, updateTransform, onTransformChange]);
 
-  // Position presets (9-box grid)
-  const positionPresets = [
-    { name: "Top Left", x: 15, y: 15 },
-    { name: "Top Center", x: 50, y: 15 },
-    { name: "Top Right", x: 85, y: 15 },
-    { name: "Middle Left", x: 15, y: 50 },
-    { name: "Center", x: 50, y: 50 },
-    { name: "Middle Right", x: 85, y: 50 },
-    { name: "Bottom Left", x: 15, y: 85 },
-    { name: "Bottom Center", x: 50, y: 85 },
-    { name: "Bottom Right", x: 85, y: 85 },
-  ];
-
-  // Scale presets
-  const scalePresets = [
-    { name: "Small", value: 0.5 },
-    { name: "Medium", value: 1.0 },
-    { name: "Large", value: 1.5 },
-  ];
-
-  const applyPositionPreset = (x: number, y: number) => {
-    setPositionX(x);
-    setPositionY(y);
-  };
-
-  const applyScalePreset = (scaleValue: number) => {
-    setScale(scaleValue);
-  };
-
-  const handleSave = async () => {
-    try {
-      await updateTransform({
-        position_x: positionX,
-        position_y: positionY,
-        scale: scale,
-        rotation: rotation,
-      });
-      
-      // Update saved state
-      const newState = {
-        position_x: positionX,
-        position_y: positionY,
-        scale,
-        rotation,
-      };
-      setSavedState(newState);
-      onTransformChange?.(newState);
-      
-      toast.success("Sticker positioning saved successfully!");
-    } catch (error) {
-      toast.error("Failed to save sticker positioning");
-    }
-  };
-
-  const handleReset = () => {
-    // Revert to last saved state
-    setPositionX(savedState.position_x);
-    setPositionY(savedState.position_y);
-    setScale(savedState.scale);
-    setRotation(savedState.rotation);
-    toast.info("Reset to last saved state");
+  const resetTransform = async () => {
+    setPositionX(50);
+    setPositionY(50);
+    setScale(1.0);
+    setRotation(0);
+    await updateTransform({
+      position_x: 50,
+      position_y: 50,
+      scale: 1.0,
+      rotation: 0,
+    });
+    onTransformChange?.({ position_x: 50, position_y: 50, scale: 1.0, rotation: 0 });
   };
 
   return (
     <div className="space-y-4">
-      {/* Save and Reset Controls */}
-      <div className="flex gap-2 justify-end">
+      <div className="flex gap-2 flex-wrap">
         <Button
           variant="outline"
           size="sm"
-          onClick={handleReset}
-          disabled={isSaving}
           className="gap-2"
+          disabled={isSaving}
         >
-          <RotateCcw className="w-4 h-4" />
-          Reset
+          <Move className="w-4 h-4" />
+          Drag Mode
         </Button>
         <Button
+          variant="outline"
           size="sm"
-          onClick={handleSave}
-          disabled={isSaving}
           className="gap-2"
+          disabled={isSaving}
         >
-          <Save className="w-4 h-4" />
-          {isSaving ? "Saving..." : "Save"}
+          <Maximize2 className="w-4 h-4" />
+          Resize Mode
         </Button>
-      </div>
-
-      {/* Position Presets (9-box grid) */}
-      <div className="space-y-2">
-        <label className="text-sm font-medium text-muted-foreground">Position Presets</label>
-        <div className="grid grid-cols-3 gap-2">
-          {positionPresets.map((preset) => (
-            <Button
-              key={preset.name}
-              variant="outline"
-              size="sm"
-              onClick={() => applyPositionPreset(preset.x, preset.y)}
-              disabled={isSaving}
-              className="text-xs"
-            >
-              {preset.name}
-            </Button>
-          ))}
-        </div>
-      </div>
-
-      {/* Scale Presets */}
-      <div className="space-y-2">
-        <label className="text-sm font-medium text-muted-foreground">Scale Presets</label>
-        <div className="flex gap-2">
-          {scalePresets.map((preset) => (
-            <Button
-              key={preset.name}
-              variant={scale === preset.value ? "default" : "outline"}
-              size="sm"
-              onClick={() => applyScalePreset(preset.value)}
-              disabled={isSaving}
-              className="flex-1"
-            >
-              {preset.name}
-            </Button>
-          ))}
-        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-2"
+          disabled={isSaving}
+        >
+          <RotateCw className="w-4 h-4" />
+          Rotate Mode
+        </Button>
+        <Button
+          variant="destructive"
+          size="sm"
+          onClick={resetTransform}
+          disabled={isSaving}
+        >
+          Reset
+        </Button>
       </div>
 
       <div
