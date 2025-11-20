@@ -24,6 +24,7 @@ import AdminStickers from "./pages/AdminStickers";
 import AdminRankStickers from "./pages/AdminRankStickers";
 import AdminTemplates from "./pages/AdminTemplates";
 import AdminBannerDefaults from "./pages/AdminBannerDefaults";
+import AdminBannerPreviewDefaults from "./pages/AdminBannerPreviewDefaults";
 import AdminTemplateBackgrounds from "./pages/AdminTemplateBackgrounds";
 import AdminRanks from "./pages/AdminRanks";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -67,6 +68,7 @@ const App = () => (
           <Route path="/admin/stickers" element={<AuthGuard><AdminStickers /></AuthGuard>} />
           <Route path="/admin/rank-stickers" element={<AuthGuard><AdminRankStickers /></AuthGuard>} />
           <Route path="/admin/banner-defaults" element={<AuthGuard><AdminBannerDefaults /></AuthGuard>} />
+          <Route path="/admin/banner-preview-defaults" element={<AuthGuard><AdminBannerPreviewDefaults /></AuthGuard>} />
           <Route path="/admin/template-backgrounds" element={<AuthGuard><AdminTemplateBackgrounds /></AuthGuard>} />
           
           {/* Catch-all for undefined routes */}
