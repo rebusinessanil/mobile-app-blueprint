@@ -13,6 +13,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Sticker } from "@/hooks/useStickers";
 import html2canvas from "html2canvas";
+import { useRealtimeStickerSync } from "@/hooks/useRealtimeStickerSync";
 interface Upline {
   id: string;
   name: string;
@@ -98,36 +99,80 @@ export default function BannerPreview() {
     backgrounds
   } = useTemplateBackgrounds(currentTemplateId);
 
+  // Real-time sync for sticker updates from admin panel
+  useRealtimeStickerSync({
+    categoryId: bannerData?.templateId || currentTemplateId,
+    rankId: bannerData?.rankId,
+    onUpdate: () => {
+      // Refetch sticker images when admin updates stickers
+      console.log('Sticker update detected, refetching images...');
+      fetchStickerImages();
+    },
+  });
+
   // Fetch sticker images for each slot independently
-  useEffect(() => {
-    const fetchStickerImages = async () => {
-      const newStickerImages: Record<number, {id: string, url: string, position_x?: number, position_y?: number, scale?: number, rotation?: number}[]> = {};
-      
-      for (const [slotNum, stickerIds] of Object.entries(slotStickers)) {
-        if (stickerIds.length === 0) continue;
+  const fetchStickerImages = async () => {
+    // If no slotStickers or rankId, fetch all stickers for this rank
+    if (bannerData?.rankId && (!slotStickers || Object.keys(slotStickers).length === 0)) {
+      const { data, error } = await supabase
+        .from('stickers')
+        .select('id, image_url, position_x, position_y, scale, rotation, slot_number')
+        .eq('rank_id', bannerData.rankId)
+        .eq('is_active', true);
+
+      if (!error && data) {
+        const newStickerImages: Record<number, {id: string, url: string, position_x?: number, position_y?: number, scale?: number, rotation?: number}[]> = {};
         
-        const { data, error } = await supabase
-          .from('stickers')
-          .select('id, image_url, position_x, position_y, scale, rotation')
-          .in('id', stickerIds);
-
-        if (!error && data) {
-          newStickerImages[parseInt(slotNum)] = data.map(s => ({ 
-            id: s.id, 
-            url: s.image_url,
-            position_x: s.position_x ?? 50,
-            position_y: s.position_y ?? 50,
-            scale: s.scale ?? 1.0,
-            rotation: s.rotation ?? 0,
-          }));
-        }
+        data.forEach(s => {
+          if (s.slot_number) {
+            if (!newStickerImages[s.slot_number]) {
+              newStickerImages[s.slot_number] = [];
+            }
+            newStickerImages[s.slot_number].push({
+              id: s.id,
+              url: s.image_url,
+              position_x: s.position_x ?? 50,
+              position_y: s.position_y ?? 50,
+              scale: s.scale ?? 1.0,
+              rotation: s.rotation ?? 0,
+            });
+          }
+        });
+        
+        setStickerImages(newStickerImages);
+        return;
       }
-      
-      setStickerImages(newStickerImages);
-    };
+    }
 
+    // Otherwise use slotStickers structure
+    const newStickerImages: Record<number, {id: string, url: string, position_x?: number, position_y?: number, scale?: number, rotation?: number}[]> = {};
+    
+    for (const [slotNum, stickerIds] of Object.entries(slotStickers)) {
+      if (stickerIds.length === 0) continue;
+      
+      const { data, error } = await supabase
+        .from('stickers')
+        .select('id, image_url, position_x, position_y, scale, rotation')
+        .in('id', stickerIds);
+
+      if (!error && data) {
+        newStickerImages[parseInt(slotNum)] = data.map(s => ({ 
+          id: s.id, 
+          url: s.image_url,
+          position_x: s.position_x ?? 50,
+          position_y: s.position_y ?? 50,
+          scale: s.scale ?? 1.0,
+          rotation: s.rotation ?? 0,
+        }));
+      }
+    }
+    
+    setStickerImages(newStickerImages);
+  };
+
+  useEffect(() => {
     fetchStickerImages();
-  }, [slotStickers]);
+  }, [slotStickers, bannerData?.rankId]);
 
   // Map selectedTemplate (0-15) to slot_number (1-16) and fetch correct background
   // CRITICAL: Only show background if it exists for this exact slot - NO fallbacks
