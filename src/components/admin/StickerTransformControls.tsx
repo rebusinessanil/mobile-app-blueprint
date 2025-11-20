@@ -156,6 +156,16 @@ export default function StickerTransformControls({
           <p className="text-xs text-muted-foreground mt-1">
             Drag, resize, and rotate the sticker. Click <strong>Save</strong> to apply changes to all user banners.
           </p>
+          <div className="flex items-center gap-3 mt-2">
+            <Badge variant="secondary" className="text-xs">
+              <span className="w-2 h-2 rounded-full bg-primary mr-1" />
+              Editable: Sticker Only
+            </Badge>
+            <Badge variant="outline" className="text-xs">
+              <span className="w-2 h-2 rounded-full bg-muted-foreground mr-1" />
+              Locked: Profile, Logos, Contact
+            </Badge>
+          </div>
         </div>
         <div className="flex gap-2">
           <Button
@@ -194,13 +204,59 @@ export default function StickerTransformControls({
 
       <div
         ref={containerRef}
-        className="relative w-full h-[400px] bg-secondary/20 border-2 border-dashed border-primary/30 rounded-xl overflow-hidden"
+        className="relative w-full h-[500px] bg-gradient-to-br from-secondary/30 to-secondary/10 border-2 border-primary/30 rounded-xl overflow-hidden"
         style={{ cursor: isDragging ? "grabbing" : isResizing ? "nwse-resize" : isRotating ? "grab" : "default" }}
       >
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <span className="text-muted-foreground text-sm">Slot Boundaries</span>
+        {/* Banner Mockup - Non-editable Elements */}
+        <div className="absolute inset-0 pointer-events-none">
+          {/* Background Gradient Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-primary/10" />
+          
+          {/* Top Logos (Locked) */}
+          <div className="absolute top-4 left-4 w-12 h-12 bg-muted/40 rounded-full flex items-center justify-center border border-border/50">
+            <span className="text-xs text-muted-foreground">Logo</span>
+          </div>
+          <div className="absolute top-4 right-4 w-12 h-12 bg-muted/40 rounded-full flex items-center justify-center border border-border/50">
+            <span className="text-xs text-muted-foreground">Logo</span>
+          </div>
+
+          {/* Profile Photo Bottom Right (Locked) */}
+          <div className="absolute bottom-6 right-6 w-24 h-24 bg-muted/40 rounded-lg flex items-center justify-center border border-border/50">
+            <span className="text-xs text-muted-foreground">Profile</span>
+          </div>
+
+          {/* Achiever Photo Left (Locked) */}
+          <div className="absolute top-20 left-6 w-32 h-40 bg-muted/40 rounded-lg flex items-center justify-center border border-border/50">
+            <span className="text-xs text-muted-foreground">Achiever</span>
+          </div>
+
+          {/* Name and Rank Bottom Center (Locked) */}
+          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 text-center">
+            <div className="text-sm font-semibold text-muted-foreground mb-1">John Doe</div>
+            <div className="text-xs text-muted-foreground">GOLD ACHIEVER</div>
+          </div>
+
+          {/* Upline Avatars Top (Locked) */}
+          <div className="absolute top-20 right-6 flex gap-1">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="w-8 h-8 bg-muted/40 rounded-full border border-border/50" />
+            ))}
+          </div>
+
+          {/* Contact Info (Locked) */}
+          <div className="absolute bottom-20 left-6 text-xs text-muted-foreground space-y-1">
+            <div>📞 +91 98765 43210</div>
+            <div>✉️ example@email.com</div>
+          </div>
+
+          {/* Watermark */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center opacity-30 pointer-events-none">
+            <p className="text-sm font-semibold text-muted-foreground mb-1">Sticker Edit Zone</p>
+            <p className="text-xs text-muted-foreground">All other elements locked</p>
+          </div>
         </div>
         
+        {/* Editable Sticker */}
         {imageUrl && (
           <div
             className="absolute cursor-move"
