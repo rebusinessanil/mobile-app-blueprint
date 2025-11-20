@@ -247,7 +247,7 @@ export default function AdminBannerPreviewDefaults() {
           }}
         >
           {/* Top Upline Avatars */}
-          <div className="absolute top-4 left-1/2 -translate-x-1/2 flex gap-3">
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 flex gap-3 z-10">
             <div className="w-14 h-14 rounded-full border-3 border-white overflow-hidden bg-muted">
               <div className="w-full h-full bg-muted-foreground/20" />
             </div>
@@ -257,10 +257,10 @@ export default function AdminBannerPreviewDefaults() {
           </div>
 
           {/* Top Right Logo */}
-          <div className="absolute top-4 right-4 w-12 h-12 rounded-full bg-black/40 border-2 border-primary/60" />
+          <div className="absolute top-4 right-4 w-12 h-12 rounded-full bg-black/40 border-2 border-primary/60 z-10" />
 
           {/* Main Content Area */}
-          <div className="absolute inset-0 flex items-center justify-between px-6 pt-24 pb-20">
+          <div className="absolute inset-0 flex items-center justify-between px-6 pt-24 pb-20 z-10">
             {/* Left: Achiever Photo */}
             <div className="w-[45%] aspect-[3/4] rounded-3xl overflow-hidden shadow-xl bg-muted">
               <div className="w-full h-full bg-muted-foreground/20 flex items-center justify-center">
@@ -288,8 +288,66 @@ export default function AdminBannerPreviewDefaults() {
             </div>
           </div>
 
+          {/* Sticker Overlay - Positioned absolutely on banner */}
+          {selectedAchievementStickers.length > 0 && selectedAchievementStickers.map((stickerId) => {
+            const sticker = allStickers.find(s => s.id === stickerId);
+            if (!sticker) return null;
+            
+            // Get transform data from the sticker or use defaults
+            const posX = sticker.position_x || 50;
+            const posY = sticker.position_y || 50;
+            const scale = sticker.scale || 1;
+            const rotation = sticker.rotation || 0;
+            
+            return (
+              <div
+                key={stickerId}
+                className="absolute z-20 pointer-events-none"
+                style={{
+                  left: `${posX}%`,
+                  top: `${posY}%`,
+                  transform: `translate(-50%, -50%) scale(${scale}) rotate(${rotation}deg)`,
+                  transformOrigin: 'center center',
+                }}
+              >
+                <img
+                  src={sticker.image_url}
+                  alt={sticker.name}
+                  className="w-20 h-20 object-contain drop-shadow-lg"
+                  style={{ 
+                    filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.3))'
+                  }}
+                />
+              </div>
+            );
+          })}
+
+          {/* Active Slot Sticker - Show the sticker from the currently selected slot */}
+          {activeSticker && (
+            <div
+              className="absolute z-30 pointer-events-none"
+              style={{
+                left: `${activeSticker.position_x || 50}%`,
+                top: `${activeSticker.position_y || 50}%`,
+                transform: `translate(-50%, -50%) scale(${activeSticker.scale || 1}) rotate(${activeSticker.rotation || 0}deg)`,
+                transformOrigin: 'center center',
+              }}
+            >
+              <img
+                src={activeSticker.image_url}
+                alt={activeSticker.name}
+                className="w-24 h-24 object-contain drop-shadow-2xl"
+                style={{ 
+                  filter: 'drop-shadow(0 6px 8px rgba(0,0,0,0.4))'
+                }}
+              />
+              {/* Selection indicator */}
+              <div className="absolute inset-0 border-2 border-primary border-dashed rounded-lg animate-pulse" />
+            </div>
+          )}
+
           {/* Bottom Info Bar */}
-          <div className="absolute bottom-0 left-0 right-0 bg-black/50 backdrop-blur-sm p-3 flex items-center justify-between">
+          <div className="absolute bottom-0 left-0 right-0 bg-black/50 backdrop-blur-sm p-3 flex items-center justify-between z-10">
             <div className="text-left">
               <p className="text-[10px] text-white/80">CALL FOR MENTORSHIP</p>
               <p className="text-sm font-bold text-white">+91 7734990035</p>
