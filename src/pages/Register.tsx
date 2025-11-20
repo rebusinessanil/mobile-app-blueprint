@@ -80,9 +80,14 @@ export default function Register() {
     }
     setIsLoading(true);
     try {
+      // Generate a 6-digit OTP
+      const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
+      
       // Generate a temporary password for OTP-only registration
       const tempPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
+      
       if (isEmail) {
+        // Sign up the user
         const {
           data,
           error
@@ -99,15 +104,32 @@ export default function Register() {
           }
         });
         if (error) throw error;
+        
         if (data?.user) {
+          // Send custom formatted OTP email using our edge function
+          const { error: emailError } = await supabase.functions.invoke('send-otp-email', {
+            body: {
+              email: formData.emailOrPhone,
+              otp: generatedOtp,
+              name: formData.fullName
+            }
+          });
+          
+          if (emailError) {
+            console.error("Failed to send OTP email:", emailError);
+            toast.error("Failed to send OTP email. Please try again.");
+            return;
+          }
+          
           setUserCredentials({
             email: formData.emailOrPhone,
             password: tempPassword
           });
           setOtpSent(true);
-          toast.success("A 6-digit OTP has been sent to your email!");
+          toast.success("A 6-digit OTP has been sent to your email! Check your inbox.");
         }
       } else {
+        // Phone signup - Supabase sends SMS OTP automatically
         const {
           data,
           error
@@ -178,8 +200,12 @@ export default function Register() {
     setIsLoading(true);
     try {
       const pinCode = pin.join("");
+      // Generate a 6-digit OTP for email verification
+      const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
+      
       // Transform 4-digit PIN to meet Supabase 6-char minimum while keeping user experience simple
       const password = `PIN${pinCode}XX`;
+      
       if (isEmail) {
         // Email signup
         const {
@@ -198,17 +224,33 @@ export default function Register() {
           }
         });
         if (error) throw error;
+        
         if (data?.user) {
+          // Send custom formatted OTP email using our edge function
+          const { error: emailError } = await supabase.functions.invoke('send-otp-email', {
+            body: {
+              email: formData.emailOrPhone,
+              otp: generatedOtp,
+              name: formData.fullName
+            }
+          });
+          
+          if (emailError) {
+            console.error("Failed to send OTP email:", emailError);
+            toast.error("Failed to send OTP email. Please try again.");
+            return;
+          }
+          
           // Store credentials for OTP verification
           setUserCredentials({
             email: formData.emailOrPhone,
             password: password
           });
           setShowOtpVerification(true);
-          toast.success("A 6-digit OTP has been sent to your email. Please verify to complete registration.");
+          toast.success("A 6-digit OTP has been sent to your email! Check your inbox and enter the code to verify.");
         }
       } else {
-        // Phone signup
+        // Phone signup - Supabase sends SMS OTP automatically
         const {
           data,
           error
