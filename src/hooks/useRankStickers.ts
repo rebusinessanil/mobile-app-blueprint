@@ -165,5 +165,91 @@ export const useRankStickers = (rankId?: string) => {
     }
   };
 
-  return { stickers, loading, error, uploadSticker, deleteSticker };
+  const batchUploadStickers = async (
+    files: File[],
+    startSlot: number = 1
+  ) => {
+    if (!rankId) {
+      toast.error('Please select a rank first');
+      return { success: 0, failed: 0, errors: [] };
+    }
+
+    if (files.length > 16) {
+      toast.error('Maximum 16 stickers allowed');
+      return { success: 0, failed: 0, errors: [] };
+    }
+
+    let successCount = 0;
+    let failedCount = 0;
+    const errors: string[] = [];
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const slotNumber = startSlot + i;
+
+      if (slotNumber > 16) {
+        errors.push(`Slot ${slotNumber} exceeds maximum (16)`);
+        failedCount++;
+        continue;
+      }
+
+      try {
+        // Upload image to storage
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${rankId}-slot-${slotNumber}-${Date.now()}.${fileExt}`;
+        const filePath = `${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('stickers')
+          .upload(filePath, file, { upsert: true });
+
+        if (uploadError) throw uploadError;
+
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('stickers')
+          .getPublicUrl(filePath);
+
+        // Upsert sticker record - ONLY for this specific rank_id and slot_number
+        const { error } = await supabase
+          .from('stickers')
+          .upsert({
+            rank_id: rankId,
+            slot_number: slotNumber,
+            name: `Slot ${slotNumber}`,
+            image_url: publicUrl,
+            is_active: true,
+          }, {
+            onConflict: 'rank_id,slot_number'
+          })
+          .eq('rank_id', rankId)
+          .eq('slot_number', slotNumber);
+
+        if (error) throw error;
+
+        // Update local state - ONLY this specific slot
+        setStickers(prev => prev.map(s => 
+          s.rank_id === rankId && s.slot_number === slotNumber 
+            ? { ...s, image_url: publicUrl, name: `Slot ${slotNumber}`, is_active: true } 
+            : s
+        ));
+
+        successCount++;
+      } catch (err) {
+        errors.push(`Slot ${slotNumber}: ${(err as Error).message}`);
+        failedCount++;
+      }
+    }
+
+    if (successCount > 0) {
+      toast.success(`Uploaded ${successCount} stickers successfully`);
+    }
+    if (failedCount > 0) {
+      toast.error(`Failed to upload ${failedCount} stickers`);
+    }
+
+    return { success: successCount, failed: failedCount, errors };
+  };
+
+  return { stickers, loading, error, uploadSticker, deleteSticker, batchUploadStickers };
 };
