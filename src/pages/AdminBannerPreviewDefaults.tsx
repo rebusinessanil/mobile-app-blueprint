@@ -58,6 +58,10 @@ export default function AdminBannerPreviewDefaults() {
   const [selectedAchievementStickers, setSelectedAchievementStickers] = useState<string[]>([]);
   const [isResizing, setIsResizing] = useState(false);
   const [resizeStartPos, setResizeStartPos] = useState({ x: 0, y: 0, initialScale: 1 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStartPos, setDragStartPos] = useState({ x: 0, y: 0, initialX: 0, initialY: 0 });
+  const [isRotating, setIsRotating] = useState(false);
+  const [rotateStartPos, setRotateStartPos] = useState({ x: 0, y: 0, initialRotation: 0 });
   const bannerRef = useRef<HTMLDivElement>(null);
 
   const { stickers, loading: stickersLoading } = useRankStickers(
@@ -125,6 +129,88 @@ export default function AdminBannerPreviewDefaults() {
     setIsResizing(false);
   };
 
+  const handleDragStart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!activeSticker || !bannerRef.current) return;
+    
+    setIsDragging(true);
+    setDragStartPos({
+      x: e.clientX,
+      y: e.clientY,
+      initialX: activeSticker.position_x || 50,
+      initialY: activeSticker.position_y || 50,
+    });
+  };
+
+  const handleDragMove = async (e: MouseEvent) => {
+    if (!isDragging || !activeSticker || !bannerRef.current) return;
+
+    const bannerRect = bannerRef.current.getBoundingClientRect();
+    const deltaX = ((e.clientX - dragStartPos.x) / bannerRect.width) * 100;
+    const deltaY = ((e.clientY - dragStartPos.y) / bannerRect.height) * 100;
+    const newX = Math.max(5, Math.min(95, dragStartPos.initialX + deltaX));
+    const newY = Math.max(5, Math.min(95, dragStartPos.initialY + deltaY));
+
+    try {
+      const { error } = await supabase
+        .from("stickers")
+        .update({ position_x: newX, position_y: newY })
+        .eq("id", activeSticker.id)
+        .eq("rank_id", selectedRank)
+        .eq("slot_number", selectedSlot);
+
+      if (error) throw error;
+
+      setActiveSticker({ ...activeSticker, position_x: newX, position_y: newY });
+    } catch (error) {
+      console.error("Error updating sticker position:", error);
+    }
+  };
+
+  const handleDragEnd = () => {
+    setIsDragging(false);
+  };
+
+  const handleRotateStart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!activeSticker) return;
+    
+    setIsRotating(true);
+    setRotateStartPos({
+      x: e.clientX,
+      y: e.clientY,
+      initialRotation: activeSticker.rotation || 0,
+    });
+  };
+
+  const handleRotateMove = async (e: MouseEvent) => {
+    if (!isRotating || !activeSticker) return;
+
+    const deltaX = e.clientX - rotateStartPos.x;
+    const newRotation = (rotateStartPos.initialRotation + deltaX) % 360;
+
+    try {
+      const { error } = await supabase
+        .from("stickers")
+        .update({ rotation: newRotation })
+        .eq("id", activeSticker.id)
+        .eq("rank_id", selectedRank)
+        .eq("slot_number", selectedSlot);
+
+      if (error) throw error;
+
+      setActiveSticker({ ...activeSticker, rotation: newRotation });
+    } catch (error) {
+      console.error("Error updating sticker rotation:", error);
+    }
+  };
+
+  const handleRotateEnd = () => {
+    setIsRotating(false);
+  };
+
   useEffect(() => {
     if (isResizing) {
       window.addEventListener("mousemove", handleResizeMove);
@@ -135,6 +221,28 @@ export default function AdminBannerPreviewDefaults() {
       };
     }
   }, [isResizing, activeSticker, resizeStartPos]);
+
+  useEffect(() => {
+    if (isDragging) {
+      window.addEventListener("mousemove", handleDragMove);
+      window.addEventListener("mouseup", handleDragEnd);
+      return () => {
+        window.removeEventListener("mousemove", handleDragMove);
+        window.removeEventListener("mouseup", handleDragEnd);
+      };
+    }
+  }, [isDragging, activeSticker, dragStartPos]);
+
+  useEffect(() => {
+    if (isRotating) {
+      window.addEventListener("mousemove", handleRotateMove);
+      window.addEventListener("mouseup", handleRotateEnd);
+      return () => {
+        window.removeEventListener("mousemove", handleRotateMove);
+        window.removeEventListener("mouseup", handleRotateEnd);
+      };
+    }
+  }, [isRotating, activeSticker, rotateStartPos]);
 
   const checkAdminStatus = async () => {
     const {
@@ -385,7 +493,8 @@ export default function AdminBannerPreviewDefaults() {
           {/* Active Slot Sticker - Show the sticker from the currently selected slot */}
           {activeSticker && (
             <div
-              className="absolute z-30"
+              className="absolute z-30 cursor-move"
+              onMouseDown={handleDragStart}
               style={{
                 left: `${activeSticker.position_x || 50}%`,
                 top: `${activeSticker.position_y || 50}%`,
@@ -404,6 +513,18 @@ export default function AdminBannerPreviewDefaults() {
               
               {/* Selection Border */}
               <div className="absolute inset-0 border-2 border-primary border-dashed rounded-lg animate-pulse pointer-events-none" />
+              
+              {/* Rotation Handle - Top Center */}
+              <div
+                className="absolute -top-8 left-1/2 -translate-x-1/2 w-6 h-6 bg-blue-500 border-2 border-white rounded-full cursor-grab hover:scale-125 transition-transform shadow-lg flex items-center justify-center"
+                onMouseDown={handleRotateStart}
+                style={{ touchAction: 'none' }}
+                title="Drag to rotate"
+              >
+                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </div>
               
               {/* Resize Handles - 4 Corners */}
               <div
