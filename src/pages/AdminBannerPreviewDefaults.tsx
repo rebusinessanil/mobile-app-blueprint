@@ -703,27 +703,6 @@ export default function AdminBannerPreviewDefaults() {
         </div>
       </div>
 
-        {/* Save & Reset Controls */}
-        <div className="flex items-center gap-3 mb-4 px-2">
-          <Button
-            onClick={handleSaveChanges}
-            disabled={isSaving || !activeSticker}
-            className="flex-1 bg-primary hover:bg-primary/90 h-12 rounded-xl font-bold"
-            size="lg"
-          >
-            {isSaving ? "Saving..." : "Save Changes"}
-          </Button>
-          <Button
-            onClick={handleResetChanges}
-            disabled={!activeSticker}
-            variant="outline"
-            className="flex-1 h-12 rounded-xl font-bold border-2"
-            size="lg"
-          >
-            Reset
-          </Button>
-        </div>
-
         {/* Profile Photo Selector Row */}
         <div className="flex items-center gap-3 mb-4 px-2">
           {[1, 2, 3, 4, 5].map((index) => (

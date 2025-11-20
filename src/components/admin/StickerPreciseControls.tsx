@@ -1,8 +1,6 @@
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { RotateCcw, Save } from "lucide-react";
+import { RotateCcw, Save, Plus, Minus, ChevronLeft, ChevronRight, ChevronUp, ChevronDown } from "lucide-react";
 
 interface StickerPreciseControlsProps {
   position: { x: number; y: number };
@@ -27,99 +25,160 @@ export default function StickerPreciseControls({
   onReset,
   isSaving,
 }: StickerPreciseControlsProps) {
+  const POSITION_STEP = 2;
+  const SCALE_STEP = 0.1;
+
+  const handleScaleIncrease = () => {
+    const newScale = Math.min(3.0, scale + SCALE_STEP);
+    onScaleChange(newScale);
+  };
+
+  const handleScaleDecrease = () => {
+    const newScale = Math.max(0.3, scale - SCALE_STEP);
+    onScaleChange(newScale);
+  };
+
+  const handleMoveLeft = () => {
+    const newX = Math.max(0, position.x - POSITION_STEP);
+    onPositionChange(newX, position.y);
+  };
+
+  const handleMoveRight = () => {
+    const newX = Math.min(100, position.x + POSITION_STEP);
+    onPositionChange(newX, position.y);
+  };
+
+  const handleMoveUp = () => {
+    const newY = Math.max(0, position.y - POSITION_STEP);
+    onPositionChange(position.x, newY);
+  };
+
+  const handleMoveDown = () => {
+    const newY = Math.min(100, position.y + POSITION_STEP);
+    onPositionChange(position.x, newY);
+  };
+
   return (
     <Card className="p-6 bg-card border-border">
       <div className="space-y-6">
         <div>
-          <h3 className="text-lg font-semibold text-foreground mb-4">
-            Precise Transform Controls
+          <h3 className="text-lg font-semibold text-foreground mb-2">
+            Sticker Transform Controls
           </h3>
-          <p className="text-sm text-muted-foreground mb-4">
-            Fine-tune sticker position, size, and rotation using exact values
+          <p className="text-sm text-muted-foreground">
+            Fine-tune sticker position and size using quick controls
           </p>
         </div>
 
-        {/* Position Controls */}
+        {/* Scale/Size Control Line */}
         <div className="space-y-3">
-          <Label className="text-sm font-medium text-foreground">Position (X, Y)</Label>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <Label htmlFor="pos-x" className="text-xs text-muted-foreground">
-                X Coordinate
-              </Label>
-              <Input
-                id="pos-x"
-                type="number"
-                value={Math.round(position.x)}
-                onChange={(e) => onPositionChange(Number(e.target.value), position.y)}
-                className="bg-background border-input"
-                step="1"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="pos-y" className="text-xs text-muted-foreground">
-                Y Coordinate
-              </Label>
-              <Input
-                id="pos-y"
-                type="number"
-                value={Math.round(position.y)}
-                onChange={(e) => onPositionChange(position.x, Number(e.target.value))}
-                className="bg-background border-input"
-                step="1"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Scale Control */}
-        <div className="space-y-2">
-          <Label htmlFor="scale" className="text-sm font-medium text-foreground">
-            Size / Scale
-          </Label>
-          <div className="flex items-center gap-3">
-            <Input
-              id="scale"
-              type="number"
-              value={scale.toFixed(2)}
-              onChange={(e) => onScaleChange(Number(e.target.value))}
-              className="bg-background border-input"
-              min="0.3"
-              max="3"
-              step="0.1"
-            />
-            <span className="text-sm text-muted-foreground whitespace-nowrap">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-foreground">Scale / Size</span>
+            <span className="text-sm text-primary font-semibold">
               {Math.round(scale * 100)}%
             </span>
           </div>
-          <p className="text-xs text-muted-foreground">
-            Range: 0.3 (30%) to 3.0 (300%)
+          <div className="flex items-center gap-3">
+            <Button
+              onClick={handleScaleDecrease}
+              variant="outline"
+              size="icon"
+              className="h-12 w-12 border-2 hover:bg-accent hover:scale-110 transition-transform"
+              disabled={scale <= 0.3}
+            >
+              <Minus className="h-5 w-5" />
+            </Button>
+            <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-primary transition-all duration-300"
+                style={{ width: `${((scale - 0.3) / (3.0 - 0.3)) * 100}%` }}
+              />
+            </div>
+            <Button
+              onClick={handleScaleIncrease}
+              variant="outline"
+              size="icon"
+              className="h-12 w-12 border-2 hover:bg-accent hover:scale-110 transition-transform"
+              disabled={scale >= 3.0}
+            >
+              <Plus className="h-5 w-5" />
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground text-center">
+            Range: 30% to 300%
           </p>
         </div>
 
-        {/* Rotation Control */}
-        <div className="space-y-2">
-          <Label htmlFor="rotation" className="text-sm font-medium text-foreground">
-            Rotation
-          </Label>
-          <div className="flex items-center gap-3">
-            <Input
-              id="rotation"
-              type="number"
-              value={Math.round(rotation)}
-              onChange={(e) => onRotationChange(Number(e.target.value))}
-              className="bg-background border-input"
-              min="-180"
-              max="180"
-              step="1"
-            />
-            <span className="text-sm text-muted-foreground whitespace-nowrap">
-              degrees
+        {/* Position Control Left/Right Line */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-foreground">Position Left/Right</span>
+            <span className="text-sm text-primary font-semibold">
+              X: {Math.round(position.x)}
             </span>
           </div>
-          <p className="text-xs text-muted-foreground">
-            Range: -180° to 180°
-          </p>
+          <div className="flex items-center gap-3">
+            <Button
+              onClick={handleMoveLeft}
+              variant="outline"
+              size="icon"
+              className="h-12 w-12 border-2 hover:bg-accent hover:scale-110 transition-transform"
+              disabled={position.x <= 0}
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </Button>
+            <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-primary transition-all duration-300"
+                style={{ width: `${position.x}%` }}
+              />
+            </div>
+            <Button
+              onClick={handleMoveRight}
+              variant="outline"
+              size="icon"
+              className="h-12 w-12 border-2 hover:bg-accent hover:scale-110 transition-transform"
+              disabled={position.x >= 100}
+            >
+              <ChevronRight className="h-5 w-5" />
+            </Button>
+          </div>
+        </div>
+
+        {/* Position Control Top/Bottom Line */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-foreground">Position Top/Bottom</span>
+            <span className="text-sm text-primary font-semibold">
+              Y: {Math.round(position.y)}
+            </span>
+          </div>
+          <div className="flex items-center gap-3">
+            <Button
+              onClick={handleMoveUp}
+              variant="outline"
+              size="icon"
+              className="h-12 w-12 border-2 hover:bg-accent hover:scale-110 transition-transform"
+              disabled={position.y <= 0}
+            >
+              <ChevronUp className="h-5 w-5" />
+            </Button>
+            <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-primary transition-all duration-300"
+                style={{ width: `${position.y}%` }}
+              />
+            </div>
+            <Button
+              onClick={handleMoveDown}
+              variant="outline"
+              size="icon"
+              className="h-12 w-12 border-2 hover:bg-accent hover:scale-110 transition-transform"
+              disabled={position.y >= 100}
+            >
+              <ChevronDown className="h-5 w-5" />
+            </Button>
+          </div>
         </div>
 
         {/* Action Buttons */}
@@ -127,17 +186,26 @@ export default function StickerPreciseControls({
           <Button
             onClick={onSave}
             disabled={isSaving}
-            className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
+            className="flex-1 bg-primary hover:bg-primary/90 h-12 text-base font-semibold"
           >
-            <Save className="h-4 w-4 mr-2" />
-            {isSaving ? "Saving..." : "Save Changes"}
+            {isSaving ? (
+              <span className="flex items-center gap-2">
+                <Save className="w-5 h-5 animate-pulse" />
+                Saving...
+              </span>
+            ) : (
+              <span className="flex items-center gap-2">
+                <Save className="w-5 h-5" />
+                Save Changes
+              </span>
+            )}
           </Button>
           <Button
             onClick={onReset}
             variant="outline"
-            className="border-border text-foreground hover:bg-accent"
+            className="border-2 h-12 px-6"
           >
-            <RotateCcw className="h-4 w-4 mr-2" />
+            <RotateCcw className="w-5 h-5 mr-2" />
             Reset
           </Button>
         </div>
