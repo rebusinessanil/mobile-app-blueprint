@@ -178,7 +178,8 @@ export default function Register() {
     setIsLoading(true);
     try {
       const pinCode = pin.join("");
-      const password = pinCode;
+      // Transform 4-digit PIN to meet Supabase 6-char minimum while keeping user experience simple
+      const password = `PIN${pinCode}XX`;
       if (isEmail) {
         // Email signup
         const {
