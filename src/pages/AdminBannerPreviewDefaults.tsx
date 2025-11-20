@@ -488,54 +488,124 @@ export default function AdminBannerPreviewDefaults() {
         </div>
 
         {/* Main Banner Preview */}
-        <div 
-          ref={bannerRef}
-          className="relative w-full aspect-[3/4] rounded-3xl overflow-hidden border-4 border-primary/80 shadow-2xl mb-4"
-          style={{
-            background: selectedRankData?.gradient || 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
-          }}
-        >
-          {/* Top Upline Avatars */}
-          <div className="absolute top-4 left-1/2 -translate-x-1/2 flex gap-3 z-10">
-            <div className="w-14 h-14 rounded-full border-3 border-white overflow-hidden bg-muted">
-              <div className="w-full h-full bg-muted-foreground/20" />
-            </div>
-            <div className="w-14 h-14 rounded-full border-3 border-white overflow-hidden bg-muted">
-              <div className="w-full h-full bg-muted-foreground/20" />
-            </div>
-          </div>
-
-          {/* Top Right Logo */}
-          <div className="absolute top-4 right-4 w-12 h-12 rounded-full bg-black/40 border-2 border-primary/60 z-10" />
-
-          {/* Main Content Area */}
-          <div className="absolute inset-0 flex items-center justify-between px-6 pt-24 pb-20 z-10">
-            {/* Left: Achiever Photo */}
-            <div className="w-[45%] aspect-[3/4] rounded-3xl overflow-hidden shadow-xl bg-muted">
-              <div className="w-full h-full bg-muted-foreground/20 flex items-center justify-center">
-                <span className="text-xs text-muted-foreground">Achiever Photo</span>
-              </div>
-            </div>
-
-            {/* Right: Info Section */}
-            <div className="w-[48%] flex flex-col justify-between h-full">
-              {/* Name */}
-              <div className="text-center mt-8">
-                <h2 className="text-2xl font-bold text-white tracking-wide">
-                  {selectedRankData?.name || "RANK NAME"}
-                </h2>
+        <div className="border-4 border-primary rounded-3xl overflow-hidden shadow-2xl">
+          <div 
+            ref={bannerRef}
+            className="preview-banner border-4 border-primary relative w-full"
+            style={{
+              aspectRatio: '1 / 1',
+              width: '100%',
+              height: 'auto',
+              background: selectedRankData?.gradient || 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+            }}
+          >
+            <div className="absolute inset-0">
+              {/* Top-Left Logo */}
+              <div className="absolute z-30" style={{ top: '3%', left: '3%', width: '15%', height: '8%' }}>
+                <div className="w-full h-full bg-muted-foreground/20 rounded-lg" />
               </div>
 
-              {/* Profile Photo */}
-              <div className="relative mb-4">
-                <div className="w-32 h-40 rounded-2xl overflow-hidden ml-auto shadow-lg bg-muted-foreground/20 border-2 border-white/30">
-                  <div className="w-full h-full flex items-center justify-center">
-                    <span className="text-[10px] text-white/60">Profile</span>
-                  </div>
+              {/* Top-Right Logo */}
+              <div className="absolute z-30" style={{ top: '3%', right: '3%', width: '15%', height: '8%' }}>
+                <div className="w-full h-full rounded-full bg-black/40 border-2 border-primary/60" />
+              </div>
+
+              {/* Top - Small circular upline avatars */}
+              <div className="absolute top-[1.8%] left-1/2 -translate-x-1/2 flex gap-1.5 z-20" style={{ transform: 'translateX(-50%) scale(1.1)' }}>
+                <div className="w-7 h-7 rounded-full border-2 border-white overflow-hidden shadow-lg bg-muted">
+                  <div className="w-full h-full bg-muted-foreground/20" />
+                </div>
+                <div className="w-7 h-7 rounded-full border-2 border-white overflow-hidden shadow-lg bg-muted">
+                  <div className="w-full h-full bg-muted-foreground/20" />
                 </div>
               </div>
+
+              {/* LEFT - Main Achiever Photo */}
+              <div className="absolute overflow-hidden rounded-2xl" style={{
+                left: '3%',
+                top: '12%',
+                width: '40%',
+                height: '63.75%'
+              }}>
+                <div className="w-full h-full bg-muted-foreground/20 flex items-center justify-center">
+                  <span className="text-xs text-white/60">Achiever</span>
+                </div>
+                {/* Bottom feather fade overlay */}
+                <div className="absolute bottom-0 left-0 right-0 h-1/3 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
+              </div>
+
+              {/* RIGHT TOP - Name Display (moved higher + rightward) */}
+              <div className="absolute z-20" style={{
+                top: '20%',
+                right: '5%',
+                width: '48%'
+              }}>
+                <p className="text-white font-bold tracking-widest text-center" style={{
+                  fontSize: 'clamp(10px, 1.2vw, 14px)',
+                  lineHeight: '1.2',
+                  textShadow: '0 2px 8px rgba(0,0,0,0.5)'
+                }}>
+                  {selectedRankData?.name || "XCVB"}
+                </p>
+              </div>
+
+              {/* RIGHT BOTTOM - Profile Photo (Mentor/User) */}
+              <div className="absolute overflow-hidden rounded-2xl cursor-pointer transition-transform duration-500 ease-in-out" style={{
+                bottom: '24px',
+                right: '24px',
+                width: '28%',
+                height: '36%'
+              }}>
+                <div className="w-full h-full bg-muted-foreground/20 object-cover object-top flex items-center justify-center">
+                  <span className="text-xs text-white/60">Profile</span>
+                </div>
+                {/* Bottom feather fade */}
+                <div className="absolute bottom-0 left-0 right-0 h-1/3 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
+              </div>
+
+              {/* BOTTOM LEFT - Contact Section */}
+              <div className="absolute z-20" style={{
+                bottom: '3.5%',
+                left: '3.5%',
+                width: '45%'
+              }}>
+                <p className="text-[8px] text-white/80 font-medium uppercase tracking-wider mb-0.5">
+                  CALL FOR MENTORSHIP
+                </p>
+                <p className="text-white font-bold" style={{
+                  fontSize: 'clamp(11px, 1.3vw, 16px)',
+                  lineHeight: '1.1',
+                  textShadow: '0 2px 8px rgba(0,0,0,0.6)'
+                }}>
+                  +91 7734990035
+                </p>
+              </div>
+
+              {/* BOTTOM CENTER - User Name & Rank (10% leftward, 15% less gap) */}
+              <div className="absolute bottom-[6%] left-1/2 z-20 text-center" style={{
+                transform: 'translateX(-60%)',
+                width: '45%'
+              }}>
+                <h2 className="text-white font-bold uppercase tracking-wide mb-0.5" style={{
+                  fontSize: 'clamp(10px, 1.2vw, 14px)',
+                  lineHeight: '1.2',
+                  textShadow: '0 2px 8px rgba(0,0,0,0.5)',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis'
+                }}>
+                  DILIP SINGH RATHORE
+                </h2>
+                <p className="text-primary font-bold uppercase tracking-widest" style={{
+                  fontSize: '7px',
+                  lineHeight: '1.2',
+                  textShadow: '0 2px 6px rgba(0,0,0,0.4)',
+                  marginTop: '-2px'
+                }}>
+                  ROYAL AMBASSADOR
+                </p>
+              </div>
             </div>
-          </div>
 
           {/* Sticker Overlay - Positioned absolutely on banner */}
           {selectedAchievementStickers.length > 0 && selectedAchievementStickers.map((stickerId) => {
@@ -630,19 +700,8 @@ export default function AdminBannerPreviewDefaults() {
               />
             </div>
           )}
-
-          {/* Bottom Info Bar */}
-          <div className="absolute bottom-0 left-0 right-0 bg-black/50 backdrop-blur-sm p-3 flex items-center justify-between z-10">
-            <div className="text-left">
-              <p className="text-[10px] text-white/80">CALL FOR MENTORSHIP</p>
-              <p className="text-sm font-bold text-white">+91 7734990035</p>
-            </div>
-            <div className="text-right">
-              <p className="text-sm font-bold text-white">ADMIN PREVIEW</p>
-              <p className="text-xs text-primary font-semibold">{selectedRankData?.name || "RANK"}</p>
-            </div>
-          </div>
         </div>
+      </div>
 
         {/* Profile Photo Selector Row */}
         <div className="flex items-center gap-3 mb-4 px-2">
