@@ -11,13 +11,13 @@ export interface RankSticker {
   is_active: boolean;
 }
 
-export const useRankStickers = (rankId?: string) => {
+export const useRankStickers = (rankId?: string, categoryId?: string) => {
   const [stickers, setStickers] = useState<RankSticker[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    if (!rankId) {
+    if (!rankId || !categoryId) {
       setStickers([]);
       setLoading(false);
       return;
@@ -26,10 +26,12 @@ export const useRankStickers = (rankId?: string) => {
     const fetchStickers = async () => {
       try {
         setLoading(true);
+        // Fetch stickers filtered by rank_id, category_id, AND slot_number
         const { data, error } = await supabase
           .from('stickers')
           .select('*')
           .eq('rank_id', rankId)
+          .eq('category_id', categoryId)
           .order('slot_number', { ascending: true });
 
         if (error) throw error;
@@ -40,7 +42,7 @@ export const useRankStickers = (rankId?: string) => {
           const existingSticker = data?.find(s => s.slot_number === slotNumber);
           
           return existingSticker || {
-            id: `empty-${rankId}-${slotNumber}`,
+            id: `empty-${rankId}-${categoryId}-${slotNumber}`,
             rank_id: rankId,
             slot_number: slotNumber,
             image_url: '',
@@ -59,22 +61,22 @@ export const useRankStickers = (rankId?: string) => {
     };
 
     fetchStickers();
-  }, [rankId]);
+  }, [rankId, categoryId]);
 
   const uploadSticker = async (
     file: File,
     slotNumber: number,
     name: string
   ) => {
-    if (!rankId) {
-      toast.error('Please select a rank first');
-      return { data: null, error: new Error('No rank selected') };
+    if (!rankId || !categoryId) {
+      toast.error('Please select a rank and category first');
+      return { data: null, error: new Error('No rank or category selected') };
     }
 
     try {
-      // Upload image to storage
+      // Upload image to storage with category in filename
       const fileExt = file.name.split('.').pop();
-      const fileName = `${rankId}-slot-${slotNumber}-${Date.now()}.${fileExt}`;
+      const fileName = `${rankId}-${categoryId}-slot-${slotNumber}-${Date.now()}.${fileExt}`;
       const filePath = `${fileName}`;
 
       const { error: uploadError } = await supabase.storage
@@ -88,17 +90,18 @@ export const useRankStickers = (rankId?: string) => {
         .from('stickers')
         .getPublicUrl(filePath);
 
-      // Upsert sticker record
+      // Upsert sticker record with category isolation
       const { data, error } = await supabase
         .from('stickers')
         .upsert({
           rank_id: rankId,
+          category_id: categoryId,
           slot_number: slotNumber,
           name,
           image_url: publicUrl,
           is_active: true,
         }, {
-          onConflict: 'rank_id,slot_number'
+          onConflict: 'rank_id,slot_number,category_id'
         })
         .select()
         .single();
@@ -119,7 +122,9 @@ export const useRankStickers = (rankId?: string) => {
   };
 
   const deleteSticker = async (slotNumber: number, imageUrl: string) => {
-    if (!rankId) return { error: new Error('No rank selected') };
+    if (!rankId || !categoryId) {
+      return { error: new Error('No rank or category selected') };
+    }
 
     try {
       // Delete from storage if URL exists
@@ -130,11 +135,12 @@ export const useRankStickers = (rankId?: string) => {
         }
       }
 
-      // Delete from database
+      // Delete from database with category isolation
       const { error } = await supabase
         .from('stickers')
         .delete()
         .eq('rank_id', rankId)
+        .eq('category_id', categoryId)
         .eq('slot_number', slotNumber);
 
       if (error) throw error;

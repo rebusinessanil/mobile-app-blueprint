@@ -7,7 +7,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
 import { useRankStickers } from '@/hooks/useRankStickers';
+import { useStickerCategories } from '@/hooks/useStickers';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -22,15 +25,17 @@ const AdminRankStickers = () => {
   const navigate = useNavigate();
   const [ranks, setRanks] = useState<Rank[]>([]);
   const [selectedRank, setSelectedRank] = useState<string>();
+  const [selectedCategory, setSelectedCategory] = useState<string>();
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
   const [uploadName, setUploadName] = useState('');
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [previewSticker, setPreviewSticker] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
 
-  const { stickers, loading, uploadSticker, deleteSticker } = useRankStickers(selectedRank);
+  const { categories } = useStickerCategories();
+  const { stickers, loading, uploadSticker, deleteSticker } = useRankStickers(selectedRank, selectedCategory);
 
-  // Load ranks on mount
+  // Load ranks on mount and set first category as default
   useEffect(() => {
     const loadRanks = async () => {
       const { data } = await supabase
@@ -44,8 +49,21 @@ const AdminRankStickers = () => {
     loadRanks();
   }, []);
 
+  // Set first category as default when categories load
+  useEffect(() => {
+    if (categories.length > 0 && !selectedCategory) {
+      setSelectedCategory(categories[0].id);
+    }
+  }, [categories, selectedCategory]);
+
   const handleRankChange = (rankId: string) => {
     setSelectedRank(rankId);
+    setSelectedSlot(null);
+    setPreviewSticker(null);
+  };
+
+  const handleCategoryChange = (categoryId: string) => {
+    setSelectedCategory(categoryId);
     setSelectedSlot(null);
     setPreviewSticker(null);
   };
@@ -64,8 +82,8 @@ const AdminRankStickers = () => {
   };
 
   const handleUpload = async () => {
-    if (!selectedRank || selectedSlot === null || !uploadFile) {
-      toast.error('Please select rank, slot, and upload file');
+    if (!selectedRank || !selectedCategory || selectedSlot === null || !uploadFile) {
+      toast.error('Please select rank, category, slot, and upload file');
       return;
     }
 
@@ -103,29 +121,55 @@ const AdminRankStickers = () => {
         </Button>
         <div>
           <h1 className="text-2xl font-bold text-foreground">Rank Stickers Management</h1>
-          <p className="text-sm text-muted-foreground">Upload and manage 16 stickers for each rank</p>
+          <p className="text-sm text-muted-foreground">Upload and manage 16 stickers per rank per category</p>
+          {selectedRank && selectedCategory && (
+            <Badge variant="outline" className="mt-2 border-primary text-primary">
+              Currently editing: {ranks.find(r => r.id === selectedRank)?.name} - {categories.find(c => c.id === selectedCategory)?.name}
+            </Badge>
+          )}
         </div>
       </div>
 
-      {/* Rank Selector */}
+      {/* Rank & Category Selectors */}
       <Card className="p-6 mb-8">
-        <Label className="text-base font-semibold mb-2 block">Select Rank</Label>
-        <Select value={selectedRank} onValueChange={handleRankChange}>
-          <SelectTrigger className="w-full max-w-md">
-            <SelectValue placeholder="Choose a rank" />
-          </SelectTrigger>
-          <SelectContent>
-            {ranks.map((rank) => (
-              <SelectItem key={rank.id} value={rank.id}>
-                {rank.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="grid gap-6 md:grid-cols-2">
+          <div>
+            <Label className="text-base font-semibold mb-2 block">Select Rank</Label>
+            <Select value={selectedRank} onValueChange={handleRankChange}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Choose a rank" />
+              </SelectTrigger>
+              <SelectContent>
+                {ranks.map((rank) => (
+                  <SelectItem key={rank.id} value={rank.id}>
+                    {rank.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label className="text-base font-semibold mb-2 block">Select Category</Label>
+            <Tabs value={selectedCategory} onValueChange={handleCategoryChange} className="w-full">
+              <TabsList className="grid w-full grid-cols-5 bg-secondary">
+                {categories.map((category) => (
+                  <TabsTrigger
+                    key={category.id}
+                    value={category.id}
+                    className="text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                  >
+                    {category.name}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
+          </div>
+        </div>
       </Card>
 
       {/* Stickers Grid */}
-      {selectedRank && (
+      {selectedRank && selectedCategory && (
         <>
           {/* Upload Section */}
           <Card className="p-6 mb-8">
@@ -210,7 +254,12 @@ const AdminRankStickers = () => {
 
           {/* Stickers Grid */}
           <Card className="p-6">
-            <h2 className="text-lg font-semibold mb-4">All 16 Slots</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold">All 16 Slots - {categories.find(c => c.id === selectedCategory)?.name}</h2>
+              <Badge variant="secondary">
+                {stickers.filter(s => s.is_active).length}/16 Uploaded
+              </Badge>
+            </div>
             
             {loading ? (
               <div className="text-center py-8 text-muted-foreground">Loading stickers...</div>
@@ -298,10 +347,13 @@ const AdminRankStickers = () => {
         </>
       )}
 
-      {!selectedRank && (
+      {(!selectedRank || !selectedCategory) && (
         <Card className="p-12 text-center">
           <p className="text-muted-foreground text-lg">
-            Please select a rank to manage its 16 sticker slots
+            Please select a rank and category to manage sticker slots
+          </p>
+          <p className="text-sm text-muted-foreground mt-2">
+            Each rank-category combination has 16 independent slots
           </p>
         </Card>
       )}
