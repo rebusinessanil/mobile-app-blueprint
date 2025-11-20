@@ -44,16 +44,9 @@ export default function BannerPreview() {
   const [selectedMentorPhotoIndex, setSelectedMentorPhotoIndex] = useState(0);
   const [showPhotoSelector, setShowPhotoSelector] = useState(false);
   const [isStickersOpen, setIsStickersOpen] = useState(false);
-  const [selectedStickers, setSelectedStickers] = useState<string[]>(bannerData?.selectedStickers || []);
+  const [selectedStickers, setSelectedStickers] = useState<string[]>([]);
   const [stickerImages, setStickerImages] = useState<{id: string, url: string}[]>([]);
   const bannerRef = useRef<HTMLDivElement>(null);
-
-  // Initialize selected stickers from bannerData on mount
-  useEffect(() => {
-    if (bannerData?.selectedStickers) {
-      setSelectedStickers(bannerData.selectedStickers);
-    }
-  }, [bannerData?.selectedStickers]);
 
   // Get authenticated user
   useEffect(() => {
@@ -597,7 +590,6 @@ export default function BannerPreview() {
         rankName={bannerData?.rankName || ''}
         selectedStickers={selectedStickers}
         onStickersChange={setSelectedStickers}
-        rankId={bannerData?.rankId}
       />
     </div>;
 }
