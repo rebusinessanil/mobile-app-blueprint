@@ -72,21 +72,25 @@ export default function AdminBannerPreviewDefaults() {
     const numValue = parseFloat(value);
     if (isNaN(numValue)) return;
 
-    try {
-      const { error } = await supabase
-        .from("stickers")
-        .update({ [field]: numValue })
-        .eq("id", activeSticker.id)
-        .eq("rank_id", selectedRank)
-        .eq("category_id", selectedCategory)
-        .eq("slot_number", selectedSlot);
+    // Update local state immediately
+    setActiveSticker({ ...activeSticker, [field]: numValue });
 
-      if (error) throw error;
+    // Only update database if sticker exists (not a placeholder)
+    if (!activeSticker.id.startsWith('empty-')) {
+      try {
+        const { error } = await supabase
+          .from("stickers")
+          .update({ [field]: numValue })
+          .eq("id", activeSticker.id)
+          .eq("rank_id", selectedRank)
+          .eq("category_id", selectedCategory)
+          .eq("slot_number", selectedSlot);
 
-      setActiveSticker({ ...activeSticker, [field]: numValue });
-    } catch (error) {
-      console.error(`Error updating ${field}:`, error);
-      toast.error(`Failed to update ${field}`);
+        if (error) throw error;
+      } catch (error) {
+        console.error(`Error updating ${field}:`, error);
+        toast.error(`Failed to update ${field}`);
+      }
     }
   };
 
@@ -133,21 +137,23 @@ export default function AdminBannerPreviewDefaults() {
     const scaleFactor = delta / 100;
     const newScale = Math.max(0.3, Math.min(3, resizeStartPos.initialScale + scaleFactor));
 
-    // Update sticker scale in database
-    try {
-      const { error } = await supabase
-        .from("stickers")
-        .update({ scale: newScale })
-        .eq("id", activeSticker.id)
-        .eq("rank_id", selectedRank)
-        .eq("slot_number", selectedSlot);
+    // Update local state immediately for real-time feedback
+    setActiveSticker({ ...activeSticker, scale: newScale });
 
-      if (error) throw error;
+    // Only update database if sticker exists (not a placeholder)
+    if (!activeSticker.id.startsWith('empty-')) {
+      try {
+        const { error } = await supabase
+          .from("stickers")
+          .update({ scale: newScale })
+          .eq("id", activeSticker.id)
+          .eq("rank_id", selectedRank)
+          .eq("slot_number", selectedSlot);
 
-      // Update local state
-      setActiveSticker({ ...activeSticker, scale: newScale });
-    } catch (error) {
-      console.error("Error updating sticker scale:", error);
+        if (error) throw error;
+      } catch (error) {
+        console.error("Error updating sticker scale:", error);
+      }
     }
   };
 
@@ -178,19 +184,24 @@ export default function AdminBannerPreviewDefaults() {
     const newX = Math.max(5, Math.min(95, dragStartPos.initialX + deltaX));
     const newY = Math.max(5, Math.min(95, dragStartPos.initialY + deltaY));
 
-    try {
-      const { error } = await supabase
-        .from("stickers")
-        .update({ position_x: newX, position_y: newY })
-        .eq("id", activeSticker.id)
-        .eq("rank_id", selectedRank)
-        .eq("slot_number", selectedSlot);
 
-      if (error) throw error;
+    // Update local state immediately for real-time feedback
+    setActiveSticker({ ...activeSticker, position_x: newX, position_y: newY });
 
-      setActiveSticker({ ...activeSticker, position_x: newX, position_y: newY });
-    } catch (error) {
-      console.error("Error updating sticker position:", error);
+    // Only update database if sticker exists (not a placeholder)
+    if (!activeSticker.id.startsWith('empty-')) {
+      try {
+        const { error } = await supabase
+          .from("stickers")
+          .update({ position_x: newX, position_y: newY })
+          .eq("id", activeSticker.id)
+          .eq("rank_id", selectedRank)
+          .eq("slot_number", selectedSlot);
+
+        if (error) throw error;
+      } catch (error) {
+        console.error("Error updating sticker position:", error);
+      }
     }
   };
 
@@ -217,19 +228,23 @@ export default function AdminBannerPreviewDefaults() {
     const deltaX = e.clientX - rotateStartPos.x;
     const newRotation = (rotateStartPos.initialRotation + deltaX) % 360;
 
-    try {
-      const { error } = await supabase
-        .from("stickers")
-        .update({ rotation: newRotation })
-        .eq("id", activeSticker.id)
-        .eq("rank_id", selectedRank)
-        .eq("slot_number", selectedSlot);
+    // Update local state immediately for real-time feedback
+    setActiveSticker({ ...activeSticker, rotation: newRotation });
 
-      if (error) throw error;
+    // Only update database if sticker exists (not a placeholder)
+    if (!activeSticker.id.startsWith('empty-')) {
+      try {
+        const { error } = await supabase
+          .from("stickers")
+          .update({ rotation: newRotation })
+          .eq("id", activeSticker.id)
+          .eq("rank_id", selectedRank)
+          .eq("slot_number", selectedSlot);
 
-      setActiveSticker({ ...activeSticker, rotation: newRotation });
-    } catch (error) {
-      console.error("Error updating sticker rotation:", error);
+        if (error) throw error;
+      } catch (error) {
+        console.error("Error updating sticker rotation:", error);
+      }
     }
   };
 
