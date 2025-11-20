@@ -17,6 +17,7 @@ import AdminLayout from "@/components/admin/AdminLayout";
 import StickerTransformControls from "@/components/admin/StickerTransformControls";
 import RanksStickersPanel from "@/components/RanksStickersPanel";
 import { useRankStickers } from "@/hooks/useRankStickers";
+import { useStickers } from "@/hooks/useStickers";
 
 interface Category {
   id: string;
@@ -60,6 +61,9 @@ export default function AdminBannerPreviewDefaults() {
     selectedRank || undefined,
     selectedCategory || undefined
   );
+
+  // Fetch all stickers to get details for selected sticker IDs
+  const { stickers: allStickers } = useStickers();
 
   useEffect(() => {
     checkAdminStatus();
@@ -272,8 +276,8 @@ export default function AdminBannerPreviewDefaults() {
 
           {selectedRank && selectedCategory && (
             <div className="pt-4 border-t space-y-4">
-              <div className="bg-muted/50 p-4 rounded-lg flex items-center justify-between">
-                <div>
+              <div className="bg-muted/50 p-4 rounded-lg">
+                <div className="flex items-center justify-between mb-3">
                   <p className="text-sm font-medium">
                     Currently editing:{" "}
                     <span className="text-primary">
@@ -281,15 +285,44 @@ export default function AdminBannerPreviewDefaults() {
                       {selectedCategoryData?.name} - Slot {selectedSlot}
                     </span>
                   </p>
+                  <Button
+                    onClick={() => setIsStickersModalOpen(true)}
+                    className="gap-2"
+                    variant="outline"
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    Select Stickers
+                  </Button>
                 </div>
-                <Button
-                  onClick={() => setIsStickersModalOpen(true)}
-                  className="gap-2"
-                  variant="outline"
-                >
-                  <Sparkles className="w-4 h-4" />
-                  Select Stickers
-                </Button>
+                
+                {/* Selected Stickers Preview */}
+                {selectedAchievementStickers.length > 0 && (
+                  <div className="flex items-center gap-2 pt-3 border-t border-border/40">
+                    <span className="text-xs text-muted-foreground font-medium">
+                      Selected ({selectedAchievementStickers.length}):
+                    </span>
+                    <div className="flex gap-2 flex-wrap">
+                      {selectedAchievementStickers.map((stickerId) => {
+                        const sticker = allStickers.find(s => s.id === stickerId);
+                        if (!sticker) return null;
+                        
+                        return (
+                          <div
+                            key={stickerId}
+                            className="relative w-12 h-12 rounded-lg overflow-hidden border-2 border-primary/50 shadow-sm"
+                            title={sticker.name}
+                          >
+                            <img
+                              src={sticker.image_url}
+                              alt={sticker.name}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {activeSticker ? (
