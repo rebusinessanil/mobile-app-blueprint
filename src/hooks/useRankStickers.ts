@@ -88,7 +88,7 @@ export const useRankStickers = (rankId?: string) => {
         .from('stickers')
         .getPublicUrl(filePath);
 
-      // Upsert sticker record - ONLY for this specific rank_id and slot_number
+      // Upsert sticker record - unique constraint on (rank_id, slot_number) ensures per-slot isolation
       const { data, error } = await supabase
         .from('stickers')
         .upsert({
@@ -98,23 +98,40 @@ export const useRankStickers = (rankId?: string) => {
           image_url: publicUrl,
           is_active: true,
         }, {
-          onConflict: 'rank_id,slot_number'
+          onConflict: 'rank_id,slot_number'  // Database ensures this updates ONLY the matching slot
         })
-        .eq('rank_id', rankId)
-        .eq('slot_number', slotNumber)
         .select()
         .single();
 
       if (error) throw error;
 
-      // Update local state - ONLY the specific slot
-      setStickers(prev => prev.map(s => 
-        s.rank_id === rankId && s.slot_number === slotNumber 
-          ? { ...s, ...data, image_url: publicUrl, name, is_active: true } 
-          : s
-      ));
+      // Refetch all stickers for this rank to ensure accurate state
+      const { data: updatedStickers, error: fetchError } = await supabase
+        .from('stickers')
+        .select('*')
+        .eq('rank_id', rankId)
+        .order('slot_number', { ascending: true });
 
-      toast.success(`Sticker uploaded to Slot ${slotNumber} only`);
+      if (fetchError) throw fetchError;
+
+      // Rebuild the 16-slot array with fresh data
+      const stickerSlots = Array.from({ length: 16 }, (_, i) => {
+        const slotNum = i + 1;
+        const existingSticker = updatedStickers?.find(s => s.slot_number === slotNum);
+        
+        return existingSticker || {
+          id: `empty-${rankId}-${slotNum}`,
+          rank_id: rankId,
+          slot_number: slotNum,
+          image_url: '',
+          name: `Slot ${slotNum}`,
+          is_active: false,
+        };
+      });
+
+      setStickers(stickerSlots);
+
+      toast.success(`Sticker uploaded to ${name} (Slot ${slotNumber}) for this rank only`);
       return { data, error: null };
     } catch (err) {
       toast.error('Failed to upload sticker');
@@ -143,21 +160,33 @@ export const useRankStickers = (rankId?: string) => {
 
       if (error) throw error;
 
-      // Update local state - ONLY the specific slot for this rank
-      setStickers(prev => prev.map(s => 
-        s.rank_id === rankId && s.slot_number === slotNumber 
-          ? {
-              id: `empty-${rankId}-${slotNumber}`,
-              rank_id: rankId,
-              slot_number: slotNumber,
-              image_url: '',
-              name: `Slot ${slotNumber}`,
-              is_active: false,
-            }
-          : s
-      ));
+      // Refetch all stickers for this rank to ensure accurate state
+      const { data: updatedStickers, error: fetchError } = await supabase
+        .from('stickers')
+        .select('*')
+        .eq('rank_id', rankId)
+        .order('slot_number', { ascending: true });
 
-      toast.success(`Sticker removed from Slot ${slotNumber} only`);
+      if (fetchError) throw fetchError;
+
+      // Rebuild the 16-slot array with fresh data
+      const stickerSlots = Array.from({ length: 16 }, (_, i) => {
+        const slotNum = i + 1;
+        const existingSticker = updatedStickers?.find(s => s.slot_number === slotNum);
+        
+        return existingSticker || {
+          id: `empty-${rankId}-${slotNum}`,
+          rank_id: rankId,
+          slot_number: slotNum,
+          image_url: '',
+          name: `Slot ${slotNum}`,
+          is_active: false,
+        };
+      });
+
+      setStickers(stickerSlots);
+
+      toast.success(`Sticker removed from Slot ${slotNumber} for this rank only`);
       return { error: null };
     } catch (err) {
       toast.error('Failed to delete sticker');
