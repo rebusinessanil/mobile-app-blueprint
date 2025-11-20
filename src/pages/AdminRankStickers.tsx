@@ -181,23 +181,17 @@ const AdminRankStickers = () => {
               </div>
             </div>
 
-            {/* Preview - Isolated to Selected Slot Only */}
+            {/* Preview */}
             {previewSticker && selectedRankData && selectedSlot && (
-              <div className="mt-6 border-2 border-primary/50 rounded-xl p-4 bg-primary/5">
-                <div className="flex items-center justify-between mb-3">
-                  <Label className="text-base font-semibold">
-                    Banner Preview: {selectedRankData.name} Rank
-                  </Label>
-                  <div className="px-3 py-1 rounded-full bg-primary text-primary-foreground text-xs font-bold">
-                    SLOT {selectedSlot} ONLY
-                  </div>
-                </div>
-                <p className="text-sm text-muted-foreground mb-4">
-                  ⚠️ This upload will affect <strong>ONLY Slot {selectedSlot}</strong> for <strong>{selectedRankData.name}</strong> rank. 
-                  All other slots (1-16) for this and other ranks remain unchanged.
+              <div className="mt-6">
+                <Label className="block mb-2">
+                  Preview: Slot {selectedSlot} for {selectedRankData.name} Rank
+                </Label>
+                <p className="text-sm text-muted-foreground mb-3">
+                  This preview shows ONLY Slot {selectedSlot}. Other slots will not be affected.
                 </p>
                 <div 
-                  className="relative w-full max-w-2xl mx-auto aspect-[4/5] rounded-xl overflow-hidden border-2 border-border"
+                  className="relative w-full max-w-2xl mx-auto aspect-[4/5] rounded-xl overflow-hidden"
                   style={{ 
                     background: selectedRankData.gradient 
                   }}
@@ -209,19 +203,10 @@ const AdminRankStickers = () => {
                       className="max-h-[60%] max-w-[60%] object-contain"
                     />
                   </div>
-                  <div className="absolute top-4 left-4 right-4">
-                    <div className="bg-black/70 backdrop-blur-sm rounded-lg px-3 py-2 text-center">
-                      <p className="text-white text-xs font-semibold">
-                        Preview: {selectedRankData.name} • Slot {selectedSlot}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="absolute bottom-4 left-4 right-4">
-                    <div className="bg-primary/90 backdrop-blur-sm rounded-lg px-3 py-2 text-center">
-                      <p className="text-primary-foreground text-sm font-bold">
-                        Slot {selectedSlot} Isolated Edit
-                      </p>
-                    </div>
+                  <div className="absolute bottom-4 left-4 right-4 text-center">
+                    <p className="text-white text-sm font-semibold">
+                      {selectedRankData.name} - Slot {selectedSlot} ONLY
+                    </p>
                   </div>
                 </div>
               </div>
@@ -283,15 +268,10 @@ const AdminRankStickers = () => {
                           </DialogTrigger>
                           <DialogContent className="max-w-2xl">
                             <DialogHeader>
-                              <DialogTitle className="flex items-center justify-between">
-                                <span>{selectedRankData?.name} Rank</span>
-                                <div className="px-3 py-1 rounded-full bg-primary text-primary-foreground text-xs font-bold">
-                                  SLOT {sticker.slot_number}
-                                </div>
-                              </DialogTitle>
+                              <DialogTitle>Slot {sticker.slot_number} Preview</DialogTitle>
                             </DialogHeader>
                             <div 
-                              className="relative w-full aspect-[4/5] rounded-xl overflow-hidden border-2 border-border"
+                              className="relative w-full aspect-[4/5] rounded-xl overflow-hidden"
                               style={{ background: selectedRankData?.gradient }}
                             >
                               <div className="absolute inset-0 flex items-center justify-center">
@@ -300,13 +280,6 @@ const AdminRankStickers = () => {
                                   alt={sticker.name}
                                   className="max-h-[60%] max-w-[60%] object-contain"
                                 />
-                              </div>
-                              <div className="absolute bottom-4 left-4 right-4">
-                                <div className="bg-black/70 backdrop-blur-sm rounded-lg px-3 py-2 text-center">
-                                  <p className="text-white text-xs font-semibold">
-                                    {sticker.name} • Slot {sticker.slot_number}
-                                  </p>
-                                </div>
                               </div>
                             </div>
                           </DialogContent>
