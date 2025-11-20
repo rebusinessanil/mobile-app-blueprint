@@ -12,9 +12,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, Trophy, Calendar, Gift, Award } from "lucide-react";
+import { ArrowLeft, Trophy, Calendar, Gift, Award, Sparkles } from "lucide-react";
 import AdminLayout from "@/components/admin/AdminLayout";
 import StickerTransformControls from "@/components/admin/StickerTransformControls";
+import RanksStickersPanel from "@/components/RanksStickersPanel";
 import { useRankStickers } from "@/hooks/useRankStickers";
 
 interface Category {
@@ -52,6 +53,8 @@ export default function AdminBannerPreviewDefaults() {
   const [selectedRank, setSelectedRank] = useState<string | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<number>(1);
   const [activeSticker, setActiveSticker] = useState<Sticker | null>(null);
+  const [isStickersModalOpen, setIsStickersModalOpen] = useState(false);
+  const [selectedAchievementStickers, setSelectedAchievementStickers] = useState<string[]>([]);
 
   const { stickers, loading: stickersLoading } = useRankStickers(
     selectedRank || undefined,
@@ -268,15 +271,25 @@ export default function AdminBannerPreviewDefaults() {
           </div>
 
           {selectedRank && selectedCategory && (
-            <div className="pt-4 border-t">
-              <div className="bg-muted/50 p-4 rounded-lg mb-4">
-                <p className="text-sm font-medium">
-                  Currently editing:{" "}
-                  <span className="text-primary">
-                    {ranks.find((r) => r.id === selectedRank)?.name} -{" "}
-                    {selectedCategoryData?.name} - Slot {selectedSlot}
-                  </span>
-                </p>
+            <div className="pt-4 border-t space-y-4">
+              <div className="bg-muted/50 p-4 rounded-lg flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium">
+                    Currently editing:{" "}
+                    <span className="text-primary">
+                      {ranks.find((r) => r.id === selectedRank)?.name} -{" "}
+                      {selectedCategoryData?.name} - Slot {selectedSlot}
+                    </span>
+                  </p>
+                </div>
+                <Button
+                  onClick={() => setIsStickersModalOpen(true)}
+                  className="gap-2"
+                  variant="outline"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  Select Stickers
+                </Button>
               </div>
 
               {activeSticker ? (
@@ -308,6 +321,18 @@ export default function AdminBannerPreviewDefaults() {
             </div>
           )}
         </Card>
+
+        {/* Rank Stickers Selection Modal */}
+        {selectedRank && (
+          <RanksStickersPanel
+            isOpen={isStickersModalOpen}
+            onClose={() => setIsStickersModalOpen(false)}
+            currentSlot={selectedSlot}
+            rankName={ranks.find((r) => r.id === selectedRank)?.name || ""}
+            selectedStickers={selectedAchievementStickers}
+            onStickersChange={setSelectedAchievementStickers}
+          />
+        )}
       </div>
     </AdminLayout>
   );
