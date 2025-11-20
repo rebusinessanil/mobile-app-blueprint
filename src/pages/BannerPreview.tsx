@@ -27,7 +27,7 @@ interface BannerData {
   chequeAmount?: string;
   photo: string | null;
   uplines: Upline[];
-  selectedStickers?: string[];
+  slotStickers?: Record<number, string[]>;
   templateId?: string;
   rankId?: string;
 }
@@ -44,8 +44,9 @@ export default function BannerPreview() {
   const [selectedMentorPhotoIndex, setSelectedMentorPhotoIndex] = useState(0);
   const [showPhotoSelector, setShowPhotoSelector] = useState(false);
   const [isStickersOpen, setIsStickersOpen] = useState(false);
-  const [selectedStickers, setSelectedStickers] = useState<string[]>([]);
-  const [stickerImages, setStickerImages] = useState<{id: string, url: string}[]>([]);
+  const [currentEditingSlot, setCurrentEditingSlot] = useState(1);
+  const [slotStickers, setSlotStickers] = useState<Record<number, string[]>>(bannerData?.slotStickers || {});
+  const [stickerImages, setStickerImages] = useState<Record<number, {id: string, url: string}[]>>({});
   const bannerRef = useRef<HTMLDivElement>(null);
 
   // Get authenticated user
@@ -97,26 +98,29 @@ export default function BannerPreview() {
     backgrounds
   } = useTemplateBackgrounds(currentTemplateId);
 
-  // Fetch sticker images when selectedStickers change
+  // Fetch sticker images for each slot independently
   useEffect(() => {
     const fetchStickerImages = async () => {
-      if (selectedStickers.length === 0) {
-        setStickerImages([]);
-        return;
-      }
+      const newStickerImages: Record<number, {id: string, url: string}[]> = {};
+      
+      for (const [slotNum, stickerIds] of Object.entries(slotStickers)) {
+        if (stickerIds.length === 0) continue;
+        
+        const { data, error } = await supabase
+          .from('stickers')
+          .select('id, image_url')
+          .in('id', stickerIds);
 
-      const { data, error } = await supabase
-        .from('stickers')
-        .select('id, image_url')
-        .in('id', selectedStickers);
-
-      if (!error && data) {
-        setStickerImages(data.map(s => ({ id: s.id, url: s.image_url })));
+        if (!error && data) {
+          newStickerImages[parseInt(slotNum)] = data.map(s => ({ id: s.id, url: s.image_url }));
+        }
       }
+      
+      setStickerImages(newStickerImages);
     };
 
     fetchStickerImages();
-  }, [selectedStickers]);
+  }, [slotStickers]);
 
   // Map selectedTemplate (0-15) to slot_number (1-16) and fetch correct background
   // CRITICAL: Only show background if it exists for this exact slot - NO fallbacks
@@ -140,22 +144,8 @@ export default function BannerPreview() {
   // Get mentor/upline photo (RIGHT-BOTTOM) - ONLY use profile photos, never uploads
   const mentorPhoto: string | null = profilePhotos[selectedMentorPhotoIndex]?.photo_url || profilePhotos[0]?.photo_url || profile?.profile_photo || null;
 
-  // Fetch selected stickers
-  useEffect(() => {
-    const fetchStickers = async () => {
-      if (!bannerData?.selectedStickers || bannerData.selectedStickers.length === 0) {
-        return;
-      }
-      const {
-        data,
-        error
-      } = await supabase.from('stickers').select('*').in('id', bannerData.selectedStickers);
-      if (!error && data) {
-        setStickers(data);
-      }
-    };
-    fetchStickers();
-  }, [bannerData?.selectedStickers]);
+  // Fetch selected stickers - removed, now using slotStickers structure
+  // Each slot has its own stickers independently
 
   // Early return if no banner data
   if (!bannerData) {
@@ -502,8 +492,8 @@ export default function BannerPreview() {
                   </p>
                 </div>
 
-                {/* Achievement Stickers - Positioned around banner */}
-                {stickerImages.map((sticker, index) => {
+                {/* Achievement Stickers - Only for current slot */}
+                {stickerImages[selectedTemplate + 1]?.map((sticker, index) => {
                   const positions = [
                     { top: '8%', right: '8%', size: '12%' },
                     { top: '8%', left: '8%', size: '12%' },
@@ -588,8 +578,13 @@ export default function BannerPreview() {
         onClose={() => setIsStickersOpen(false)}
         currentSlot={selectedTemplate + 1}
         rankName={bannerData?.rankName || ''}
-        selectedStickers={selectedStickers}
-        onStickersChange={setSelectedStickers}
+        selectedStickers={slotStickers[selectedTemplate + 1] || []}
+        onStickersChange={(stickers) => {
+          setSlotStickers(prev => ({
+            ...prev,
+            [selectedTemplate + 1]: stickers
+          }));
+        }}
       />
     </div>;
 }

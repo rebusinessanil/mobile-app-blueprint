@@ -9,12 +9,14 @@ interface StickerSelectorProps {
   selectedStickers: string[];
   onStickerToggle: (stickerId: string) => void;
   maxStickers?: number;
+  currentSlot?: number; // Explicitly track which slot is being edited
 }
 
 export default function StickerSelector({
   selectedStickers,
   onStickerToggle,
   maxStickers = 3,
+  currentSlot,
 }: StickerSelectorProps) {
   const { categories } = useStickerCategories();
   const [activeCategory, setActiveCategory] = useState<string>("");
@@ -23,6 +25,7 @@ export default function StickerSelector({
   const handleStickerClick = (stickerId: string) => {
     const isSelected = selectedStickers.includes(stickerId);
     
+    // Only toggle stickers for the current slot - never affect other slots
     if (isSelected) {
       onStickerToggle(stickerId);
     } else if (selectedStickers.length < maxStickers) {

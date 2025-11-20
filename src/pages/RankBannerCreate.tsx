@@ -40,7 +40,8 @@ export default function RankBannerCreate() {
   const [showCropper, setShowCropper] = useState(false);
   const [showBgRemover, setShowBgRemover] = useState(false);
   const [processingBg, setProcessingBg] = useState(false);
-  const [selectedStickers, setSelectedStickers] = useState<string[]>([]);
+  // Slot-specific sticker storage: { slotNumber: [stickerId1, stickerId2, ...] }
+  const [slotStickers, setSlotStickers] = useState<Record<number, string[]>>({});
 
   // Get authenticated user and load profile data
   useEffect(() => {
@@ -147,7 +148,7 @@ export default function RankBannerCreate() {
         chequeAmount: formData.chequeAmount,
         photo,
         uplines,
-        selectedStickers,
+        slotStickers,
         templateId: template?.id,
         rankId: rankId
       }
@@ -175,7 +176,7 @@ export default function RankBannerCreate() {
     } else {
       setUplines([]);
     }
-    setSelectedStickers([]);
+    setSlotStickers({});
     toast.success("Form reset to default values");
   };
   return <div className="min-h-screen bg-navy-dark pb-6">
