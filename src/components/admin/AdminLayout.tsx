@@ -30,6 +30,7 @@ const adminRoutes = [
   { path: "/admin/stories", icon: BookOpen, label: "Stories" },
   { path: "/admin/ranks", icon: Award, label: "Ranks" },
   { path: "/admin/stickers", icon: Sticker, label: "Stickers" },
+  { path: "/admin/rank-stickers", icon: Award, label: "Rank Stickers" },
   { path: "/admin/template-backgrounds", icon: Image, label: "Backgrounds" },
   { path: "/admin/banner-defaults", icon: Settings, label: "Banner Defaults" },
 ];
