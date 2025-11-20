@@ -9,6 +9,10 @@ export interface RankSticker {
   image_url: string;
   name: string;
   is_active: boolean;
+  position_x?: number;
+  position_y?: number;
+  scale?: number;
+  rotation?: number;
 }
 
 export const useRankStickers = (rankId?: string, categoryId?: string) => {
@@ -27,11 +31,11 @@ export const useRankStickers = (rankId?: string, categoryId?: string) => {
       try {
         setLoading(true);
         // Fetch stickers filtered by rank_id, category_id, AND slot_number
-        const { data, error } = await supabase
-          .from('stickers')
-          .select('*')
-          .eq('rank_id', rankId)
-          .eq('category_id', categoryId)
+      const { data, error } = await supabase
+        .from('stickers')
+        .select('id, rank_id, category_id, slot_number, image_url, name, is_active, position_x, position_y, scale, rotation')
+        .eq('rank_id', rankId)
+        .eq('category_id', categoryId)
           .order('slot_number', { ascending: true });
 
         if (error) throw error;
@@ -66,7 +70,11 @@ export const useRankStickers = (rankId?: string, categoryId?: string) => {
   const uploadSticker = async (
     file: File,
     slotNumber: number,
-    name: string
+    name: string,
+    position_x: number = 50,
+    position_y: number = 50,
+    scale: number = 1.0,
+    rotation: number = 0
   ) => {
     if (!rankId || !categoryId) {
       toast.error('Please select a rank and category first');
@@ -100,6 +108,10 @@ export const useRankStickers = (rankId?: string, categoryId?: string) => {
           name,
           image_url: publicUrl,
           is_active: true,
+          position_x,
+          position_y,
+          scale,
+          rotation,
         }, {
           onConflict: 'rank_id,slot_number,category_id'
         })

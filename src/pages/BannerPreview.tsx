@@ -46,7 +46,7 @@ export default function BannerPreview() {
   const [isStickersOpen, setIsStickersOpen] = useState(false);
   const [currentEditingSlot, setCurrentEditingSlot] = useState(1);
   const [slotStickers, setSlotStickers] = useState<Record<number, string[]>>(bannerData?.slotStickers || {});
-  const [stickerImages, setStickerImages] = useState<Record<number, {id: string, url: string}[]>>({});
+  const [stickerImages, setStickerImages] = useState<Record<number, {id: string, url: string, position_x?: number, position_y?: number, scale?: number, rotation?: number}[]>>({});
   const bannerRef = useRef<HTMLDivElement>(null);
 
   // Get authenticated user
@@ -101,18 +101,25 @@ export default function BannerPreview() {
   // Fetch sticker images for each slot independently
   useEffect(() => {
     const fetchStickerImages = async () => {
-      const newStickerImages: Record<number, {id: string, url: string}[]> = {};
+      const newStickerImages: Record<number, {id: string, url: string, position_x?: number, position_y?: number, scale?: number, rotation?: number}[]> = {};
       
       for (const [slotNum, stickerIds] of Object.entries(slotStickers)) {
         if (stickerIds.length === 0) continue;
         
         const { data, error } = await supabase
           .from('stickers')
-          .select('id, image_url')
+          .select('id, image_url, position_x, position_y, scale, rotation')
           .in('id', stickerIds);
 
         if (!error && data) {
-          newStickerImages[parseInt(slotNum)] = data.map(s => ({ id: s.id, url: s.image_url }));
+          newStickerImages[parseInt(slotNum)] = data.map(s => ({ 
+            id: s.id, 
+            url: s.image_url,
+            position_x: s.position_x ?? 50,
+            position_y: s.position_y ?? 50,
+            scale: s.scale ?? 1.0,
+            rotation: s.rotation ?? 0,
+          }));
         }
       }
       
@@ -494,16 +501,6 @@ export default function BannerPreview() {
 
                 {/* Achievement Stickers - Only for current slot */}
                 {stickerImages[selectedTemplate + 1]?.map((sticker, index) => {
-                  const positions = [
-                    { top: '8%', right: '8%', size: '12%' },
-                    { top: '8%', left: '8%', size: '12%' },
-                    { top: '35%', right: '5%', size: '10%' },
-                    { top: '35%', left: '5%', size: '10%' },
-                    { bottom: '42%', right: '8%', size: '11%' },
-                    { bottom: '42%', left: '8%', size: '11%' },
-                  ];
-                  const pos = positions[index] || positions[0];
-                  
                   return (
                     <img
                       key={sticker.id}
@@ -511,8 +508,10 @@ export default function BannerPreview() {
                       alt="Achievement Sticker"
                       className="absolute pointer-events-none animate-in fade-in zoom-in duration-300"
                       style={{
-                        ...pos,
-                        width: pos.size,
+                        left: `${sticker.position_x}%`,
+                        top: `${sticker.position_y}%`,
+                        transform: `translate(-50%, -50%) scale(${sticker.scale}) rotate(${sticker.rotation}deg)`,
+                        width: '12%',
                         height: 'auto',
                         aspectRatio: '1',
                         objectFit: 'contain',

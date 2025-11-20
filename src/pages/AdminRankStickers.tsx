@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, Upload, Trash2, Eye } from 'lucide-react';
+import { ArrowLeft, Upload, Trash2, Eye, Settings } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -13,6 +13,7 @@ import { useRankStickers } from '@/hooks/useRankStickers';
 import { useStickerCategories } from '@/hooks/useStickers';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import StickerTransformControls from '@/components/admin/StickerTransformControls';
 
 interface Rank {
   id: string;
@@ -31,6 +32,7 @@ const AdminRankStickers = () => {
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [previewSticker, setPreviewSticker] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [editingSticker, setEditingSticker] = useState<any | null>(null);
 
   const { categories } = useStickerCategories();
   const { stickers, loading, uploadSticker, deleteSticker } = useRankStickers(selectedRank, selectedCategory);
@@ -331,6 +333,16 @@ const AdminRankStickers = () => {
 
                         <Button 
                           size="icon" 
+                          variant="secondary"
+                          className="h-6 w-6"
+                          onClick={() => setEditingSticker(sticker)}
+                          title="Edit Position & Transform"
+                        >
+                          <Settings className="h-3 w-3" />
+                        </Button>
+
+                        <Button 
+                          size="icon" 
                           variant="destructive"
                           className="h-6 w-6"
                           onClick={() => handleDelete(sticker.slot_number, sticker.image_url)}
@@ -357,6 +369,38 @@ const AdminRankStickers = () => {
           </p>
         </Card>
       )}
+
+      {/* Edit Transform Dialog */}
+      <Dialog open={!!editingSticker} onOpenChange={() => setEditingSticker(null)}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          {editingSticker && selectedRank && selectedCategory && (
+            <div className="space-y-4">
+              <DialogHeader>
+                <DialogTitle>{editingSticker.name}</DialogTitle>
+                <p className="text-sm text-muted-foreground">
+                  Rank: {ranks.find(r => r.id === selectedRank)?.name} | Category: {categories.find(c => c.id === selectedCategory)?.name} | Slot: {editingSticker.slot_number}
+                </p>
+              </DialogHeader>
+              <StickerTransformControls
+                stickerId={editingSticker.id}
+                rankId={selectedRank}
+                categoryId={selectedCategory}
+                slotNumber={editingSticker.slot_number}
+                imageUrl={editingSticker.image_url}
+                initialTransform={{
+                  position_x: editingSticker.position_x,
+                  position_y: editingSticker.position_y,
+                  scale: editingSticker.scale,
+                  rotation: editingSticker.rotation,
+                }}
+                onTransformChange={(transform) => {
+                  setEditingSticker({ ...editingSticker, ...transform });
+                }}
+              />
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
