@@ -33,6 +33,7 @@ const adminRoutes = [
   { path: "/admin/rank-stickers", icon: Award, label: "Rank Stickers" },
   { path: "/admin/template-backgrounds", icon: Image, label: "Backgrounds" },
   { path: "/admin/banner-defaults", icon: Settings, label: "Banner Defaults" },
+  { path: "/admin/banner-preview-defaults", icon: Settings, label: "Banner Preview Defaults" },
 ];
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
