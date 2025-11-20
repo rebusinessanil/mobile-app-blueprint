@@ -13,8 +13,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ArrowLeft, Trophy, Calendar, Gift, Award, Sparkles } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import AdminLayout from "@/components/admin/AdminLayout";
 import StickerTransformControls from "@/components/admin/StickerTransformControls";
 import RanksStickersPanel from "@/components/RanksStickersPanel";
@@ -66,34 +64,6 @@ export default function AdminBannerPreviewDefaults() {
   const [rotateStartPos, setRotateStartPos] = useState({ x: 0, y: 0, initialRotation: 0 });
   const bannerRef = useRef<HTMLDivElement>(null);
 
-  const handleManualUpdate = async (field: 'position_x' | 'position_y' | 'scale' | 'rotation', value: string) => {
-    if (!activeSticker) return;
-    
-    const numValue = parseFloat(value);
-    if (isNaN(numValue)) return;
-
-    // Update local state immediately
-    setActiveSticker({ ...activeSticker, [field]: numValue });
-
-    // Only update database if sticker exists (not a placeholder)
-    if (!activeSticker.id.startsWith('empty-')) {
-      try {
-        const { error } = await supabase
-          .from("stickers")
-          .update({ [field]: numValue })
-          .eq("id", activeSticker.id)
-          .eq("rank_id", selectedRank)
-          .eq("category_id", selectedCategory)
-          .eq("slot_number", selectedSlot);
-
-        if (error) throw error;
-      } catch (error) {
-        console.error(`Error updating ${field}:`, error);
-        toast.error(`Failed to update ${field}`);
-      }
-    }
-  };
-
   const { stickers, loading: stickersLoading } = useRankStickers(
     selectedRank || undefined,
     selectedCategory || undefined
@@ -137,23 +107,21 @@ export default function AdminBannerPreviewDefaults() {
     const scaleFactor = delta / 100;
     const newScale = Math.max(0.3, Math.min(3, resizeStartPos.initialScale + scaleFactor));
 
-    // Update local state immediately for real-time feedback
-    setActiveSticker({ ...activeSticker, scale: newScale });
+    // Update sticker scale in database
+    try {
+      const { error } = await supabase
+        .from("stickers")
+        .update({ scale: newScale })
+        .eq("id", activeSticker.id)
+        .eq("rank_id", selectedRank)
+        .eq("slot_number", selectedSlot);
 
-    // Only update database if sticker exists (not a placeholder)
-    if (!activeSticker.id.startsWith('empty-')) {
-      try {
-        const { error } = await supabase
-          .from("stickers")
-          .update({ scale: newScale })
-          .eq("id", activeSticker.id)
-          .eq("rank_id", selectedRank)
-          .eq("slot_number", selectedSlot);
+      if (error) throw error;
 
-        if (error) throw error;
-      } catch (error) {
-        console.error("Error updating sticker scale:", error);
-      }
+      // Update local state
+      setActiveSticker({ ...activeSticker, scale: newScale });
+    } catch (error) {
+      console.error("Error updating sticker scale:", error);
     }
   };
 
@@ -184,24 +152,19 @@ export default function AdminBannerPreviewDefaults() {
     const newX = Math.max(5, Math.min(95, dragStartPos.initialX + deltaX));
     const newY = Math.max(5, Math.min(95, dragStartPos.initialY + deltaY));
 
+    try {
+      const { error } = await supabase
+        .from("stickers")
+        .update({ position_x: newX, position_y: newY })
+        .eq("id", activeSticker.id)
+        .eq("rank_id", selectedRank)
+        .eq("slot_number", selectedSlot);
 
-    // Update local state immediately for real-time feedback
-    setActiveSticker({ ...activeSticker, position_x: newX, position_y: newY });
+      if (error) throw error;
 
-    // Only update database if sticker exists (not a placeholder)
-    if (!activeSticker.id.startsWith('empty-')) {
-      try {
-        const { error } = await supabase
-          .from("stickers")
-          .update({ position_x: newX, position_y: newY })
-          .eq("id", activeSticker.id)
-          .eq("rank_id", selectedRank)
-          .eq("slot_number", selectedSlot);
-
-        if (error) throw error;
-      } catch (error) {
-        console.error("Error updating sticker position:", error);
-      }
+      setActiveSticker({ ...activeSticker, position_x: newX, position_y: newY });
+    } catch (error) {
+      console.error("Error updating sticker position:", error);
     }
   };
 
@@ -228,23 +191,19 @@ export default function AdminBannerPreviewDefaults() {
     const deltaX = e.clientX - rotateStartPos.x;
     const newRotation = (rotateStartPos.initialRotation + deltaX) % 360;
 
-    // Update local state immediately for real-time feedback
-    setActiveSticker({ ...activeSticker, rotation: newRotation });
+    try {
+      const { error } = await supabase
+        .from("stickers")
+        .update({ rotation: newRotation })
+        .eq("id", activeSticker.id)
+        .eq("rank_id", selectedRank)
+        .eq("slot_number", selectedSlot);
 
-    // Only update database if sticker exists (not a placeholder)
-    if (!activeSticker.id.startsWith('empty-')) {
-      try {
-        const { error } = await supabase
-          .from("stickers")
-          .update({ rotation: newRotation })
-          .eq("id", activeSticker.id)
-          .eq("rank_id", selectedRank)
-          .eq("slot_number", selectedSlot);
+      if (error) throw error;
 
-        if (error) throw error;
-      } catch (error) {
-        console.error("Error updating sticker rotation:", error);
-      }
+      setActiveSticker({ ...activeSticker, rotation: newRotation });
+    } catch (error) {
+      console.error("Error updating sticker rotation:", error);
     }
   };
 
@@ -747,71 +706,6 @@ export default function AdminBannerPreviewDefaults() {
             </div>
           )}
         </Card>
-
-        {/* Transform Control Panel */}
-        {activeSticker && (
-          <Card className="mt-4 p-4 bg-card/50 border-border/50">
-            <h3 className="text-sm font-semibold text-foreground mb-4">Transform Controls</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="position-x" className="text-xs text-muted-foreground">
-                  Position X (%)
-                </Label>
-                <Input
-                  id="position-x"
-                  type="number"
-                  step="0.1"
-                  value={activeSticker.position_x?.toFixed(1) || "50.0"}
-                  onChange={(e) => handleManualUpdate('position_x', e.target.value)}
-                  className="h-9 text-sm"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="position-y" className="text-xs text-muted-foreground">
-                  Position Y (%)
-                </Label>
-                <Input
-                  id="position-y"
-                  type="number"
-                  step="0.1"
-                  value={activeSticker.position_y?.toFixed(1) || "50.0"}
-                  onChange={(e) => handleManualUpdate('position_y', e.target.value)}
-                  className="h-9 text-sm"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="scale" className="text-xs text-muted-foreground">
-                  Scale
-                </Label>
-                <Input
-                  id="scale"
-                  type="number"
-                  step="0.01"
-                  min="0.3"
-                  max="3"
-                  value={activeSticker.scale?.toFixed(2) || "1.00"}
-                  onChange={(e) => handleManualUpdate('scale', e.target.value)}
-                  className="h-9 text-sm"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="rotation" className="text-xs text-muted-foreground">
-                  Rotation (°)
-                </Label>
-                <Input
-                  id="rotation"
-                  type="number"
-                  step="1"
-                  min="0"
-                  max="360"
-                  value={Math.round(activeSticker.rotation || 0)}
-                  onChange={(e) => handleManualUpdate('rotation', e.target.value)}
-                  className="h-9 text-sm"
-                />
-              </div>
-            </div>
-          </Card>
-        )}
 
         {/* Rank Stickers Selection Modal */}
         {selectedRank && (
