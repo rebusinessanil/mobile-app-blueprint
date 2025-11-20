@@ -1,7 +1,28 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { RotateCw, Maximize2, Move } from "lucide-react";
+import { RotateCw, Maximize2, Move, Grid3x3, Zap } from "lucide-react";
 import { useStickerTransform } from "@/hooks/useStickerTransform";
+import { Badge } from "@/components/ui/badge";
+
+// Scale presets
+const SCALE_PRESETS = {
+  small: 0.6,
+  medium: 1.0,
+  large: 1.5,
+};
+
+// 9-box grid position presets (percentage-based)
+const POSITION_PRESETS = {
+  topLeft: { x: 15, y: 15 },
+  topCenter: { x: 50, y: 15 },
+  topRight: { x: 85, y: 15 },
+  centerLeft: { x: 15, y: 50 },
+  center: { x: 50, y: 50 },
+  centerRight: { x: 85, y: 50 },
+  bottomLeft: { x: 15, y: 85 },
+  bottomCenter: { x: 50, y: 85 },
+  bottomRight: { x: 85, y: 85 },
+};
 
 interface StickerTransformControlsProps {
   stickerId: string;
@@ -114,8 +135,22 @@ export default function StickerTransformControls({
     onTransformChange?.({ position_x: 50, position_y: 50, scale: 1.0, rotation: 0 });
   };
 
+  const applyScalePreset = async (presetScale: number) => {
+    setScale(presetScale);
+    await updateTransform({ scale: presetScale });
+    onTransformChange?.({ position_x: positionX, position_y: positionY, scale: presetScale, rotation });
+  };
+
+  const applyPositionPreset = async (preset: { x: number; y: number }) => {
+    setPositionX(preset.x);
+    setPositionY(preset.y);
+    await updateTransform({ position_x: preset.x, position_y: preset.y });
+    onTransformChange?.({ position_x: preset.x, position_y: preset.y, scale, rotation });
+  };
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
+      {/* Quick Action Buttons */}
       <div className="flex gap-2 flex-wrap">
         <Button
           variant="outline"
@@ -124,25 +159,7 @@ export default function StickerTransformControls({
           disabled={isSaving}
         >
           <Move className="w-4 h-4" />
-          Drag Mode
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          className="gap-2"
-          disabled={isSaving}
-        >
-          <Maximize2 className="w-4 h-4" />
-          Resize Mode
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          className="gap-2"
-          disabled={isSaving}
-        >
-          <RotateCw className="w-4 h-4" />
-          Rotate Mode
+          Manual Drag
         </Button>
         <Button
           variant="destructive"
@@ -150,18 +167,111 @@ export default function StickerTransformControls({
           onClick={resetTransform}
           disabled={isSaving}
         >
-          Reset
+          Reset All
         </Button>
       </div>
 
-      <div
-        ref={containerRef}
-        className="relative w-full h-[400px] bg-secondary/20 border-2 border-dashed border-primary/30 rounded-xl overflow-hidden"
-        style={{ cursor: isDragging ? "grabbing" : isResizing ? "nwse-resize" : isRotating ? "grab" : "default" }}
-      >
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <span className="text-muted-foreground text-sm">Slot Boundaries</span>
+      {/* Scale Presets */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          <Zap className="w-4 h-4 text-primary" />
+          <h4 className="text-sm font-semibold">One-Click Scale</h4>
         </div>
+        <div className="grid grid-cols-3 gap-2">
+          <Button
+            variant={scale === SCALE_PRESETS.small ? "default" : "outline"}
+            size="sm"
+            onClick={() => applyScalePreset(SCALE_PRESETS.small)}
+            disabled={isSaving}
+            className="relative"
+          >
+            Small
+            {scale === SCALE_PRESETS.small && (
+              <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center">✓</Badge>
+            )}
+          </Button>
+          <Button
+            variant={scale === SCALE_PRESETS.medium ? "default" : "outline"}
+            size="sm"
+            onClick={() => applyScalePreset(SCALE_PRESETS.medium)}
+            disabled={isSaving}
+            className="relative"
+          >
+            Medium
+            {scale === SCALE_PRESETS.medium && (
+              <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center">✓</Badge>
+            )}
+          </Button>
+          <Button
+            variant={scale === SCALE_PRESETS.large ? "default" : "outline"}
+            size="sm"
+            onClick={() => applyScalePreset(SCALE_PRESETS.large)}
+            disabled={isSaving}
+            className="relative"
+          >
+            Large
+            {scale === SCALE_PRESETS.large && (
+              <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center">✓</Badge>
+            )}
+          </Button>
+        </div>
+      </div>
+
+      {/* Position Presets - 9-Box Grid */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          <Grid3x3 className="w-4 h-4 text-primary" />
+          <h4 className="text-sm font-semibold">9-Box Position Grid</h4>
+        </div>
+        <div className="grid grid-cols-3 gap-2">
+          {Object.entries(POSITION_PRESETS).map(([key, pos]) => {
+            const isActive = Math.abs(positionX - pos.x) < 2 && Math.abs(positionY - pos.y) < 2;
+            const labels: Record<string, string> = {
+              topLeft: "↖",
+              topCenter: "↑",
+              topRight: "↗",
+              centerLeft: "←",
+              center: "●",
+              centerRight: "→",
+              bottomLeft: "↙",
+              bottomCenter: "↓",
+              bottomRight: "↘",
+            };
+            
+            return (
+              <Button
+                key={key}
+                variant={isActive ? "default" : "outline"}
+                size="sm"
+                onClick={() => applyPositionPreset(pos)}
+                disabled={isSaving}
+                className="h-12 text-xl relative"
+              >
+                {labels[key]}
+                {isActive && (
+                  <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center">✓</Badge>
+                )}
+              </Button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Live Preview Canvas */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          <Move className="w-4 h-4 text-primary" />
+          <h4 className="text-sm font-semibold">Live Preview (Manual Adjust)</h4>
+          <span className="text-xs text-muted-foreground">Drag, resize, or rotate</span>
+        </div>
+        <div
+          ref={containerRef}
+          className="relative w-full h-[350px] bg-secondary/20 border-2 border-dashed border-primary/30 rounded-xl overflow-hidden"
+          style={{ cursor: isDragging ? "grabbing" : isResizing ? "nwse-resize" : isRotating ? "grab" : "default" }}
+        >
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <span className="text-muted-foreground text-sm">Slot Boundaries</span>
+          </div>
         
         {imageUrl && (
           <div
@@ -196,18 +306,21 @@ export default function StickerTransformControls({
         )}
       </div>
 
-      <div className="grid grid-cols-2 gap-4 text-sm">
+      </div>
+
+      {/* Current Transform Values */}
+      <div className="grid grid-cols-2 gap-4 text-sm bg-muted/30 p-3 rounded-lg">
         <div>
-          <span className="text-muted-foreground">Position:</span> X: {positionX.toFixed(1)}%, Y: {positionY.toFixed(1)}%
+          <span className="text-muted-foreground">Position:</span> <span className="font-mono">X: {positionX.toFixed(1)}%, Y: {positionY.toFixed(1)}%</span>
         </div>
         <div>
-          <span className="text-muted-foreground">Scale:</span> {scale.toFixed(2)}x
+          <span className="text-muted-foreground">Scale:</span> <span className="font-mono">{scale.toFixed(2)}x</span>
         </div>
         <div>
-          <span className="text-muted-foreground">Rotation:</span> {rotation.toFixed(0)}°
+          <span className="text-muted-foreground">Rotation:</span> <span className="font-mono">{rotation.toFixed(0)}°</span>
         </div>
         <div>
-          <span className="text-muted-foreground">Status:</span> {isSaving ? "Saving..." : "Saved"}
+          <span className="text-muted-foreground">Status:</span> <span className={isSaving ? "text-yellow-500" : "text-green-500"}>{isSaving ? "Saving..." : "✓ Saved"}</span>
         </div>
       </div>
     </div>
