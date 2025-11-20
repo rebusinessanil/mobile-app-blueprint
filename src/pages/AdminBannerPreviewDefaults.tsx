@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -56,6 +56,9 @@ export default function AdminBannerPreviewDefaults() {
   const [activeSticker, setActiveSticker] = useState<Sticker | null>(null);
   const [isStickersModalOpen, setIsStickersModalOpen] = useState(false);
   const [selectedAchievementStickers, setSelectedAchievementStickers] = useState<string[]>([]);
+  const [isResizing, setIsResizing] = useState(false);
+  const [resizeStartPos, setResizeStartPos] = useState({ x: 0, y: 0, initialScale: 1 });
+  const bannerRef = useRef<HTMLDivElement>(null);
 
   const { stickers, loading: stickersLoading } = useRankStickers(
     selectedRank || undefined,
@@ -77,6 +80,61 @@ export default function AdminBannerPreviewDefaults() {
       setActiveSticker(sticker || null);
     }
   }, [stickers, selectedSlot]);
+
+  const handleResizeStart = (e: React.MouseEvent, corner: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!activeSticker) return;
+    
+    setIsResizing(true);
+    setResizeStartPos({
+      x: e.clientX,
+      y: e.clientY,
+      initialScale: activeSticker.scale || 1,
+    });
+  };
+
+  const handleResizeMove = async (e: MouseEvent) => {
+    if (!isResizing || !activeSticker || !bannerRef.current) return;
+
+    const deltaX = e.clientX - resizeStartPos.x;
+    const deltaY = e.clientY - resizeStartPos.y;
+    const delta = (deltaX + deltaY) / 2;
+    const scaleFactor = delta / 100;
+    const newScale = Math.max(0.3, Math.min(3, resizeStartPos.initialScale + scaleFactor));
+
+    // Update sticker scale in database
+    try {
+      const { error } = await supabase
+        .from("stickers")
+        .update({ scale: newScale })
+        .eq("id", activeSticker.id)
+        .eq("rank_id", selectedRank)
+        .eq("slot_number", selectedSlot);
+
+      if (error) throw error;
+
+      // Update local state
+      setActiveSticker({ ...activeSticker, scale: newScale });
+    } catch (error) {
+      console.error("Error updating sticker scale:", error);
+    }
+  };
+
+  const handleResizeEnd = () => {
+    setIsResizing(false);
+  };
+
+  useEffect(() => {
+    if (isResizing) {
+      window.addEventListener("mousemove", handleResizeMove);
+      window.addEventListener("mouseup", handleResizeEnd);
+      return () => {
+        window.removeEventListener("mousemove", handleResizeMove);
+        window.removeEventListener("mouseup", handleResizeEnd);
+      };
+    }
+  }, [isResizing, activeSticker, resizeStartPos]);
 
   const checkAdminStatus = async () => {
     const {
@@ -241,7 +299,9 @@ export default function AdminBannerPreviewDefaults() {
         </div>
 
         {/* Main Banner Preview */}
-        <div className="relative w-full aspect-[3/4] rounded-3xl overflow-hidden border-4 border-primary/80 shadow-2xl mb-4"
+        <div 
+          ref={bannerRef}
+          className="relative w-full aspect-[3/4] rounded-3xl overflow-hidden border-4 border-primary/80 shadow-2xl mb-4"
           style={{
             background: selectedRankData?.gradient || 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
           }}
@@ -325,7 +385,7 @@ export default function AdminBannerPreviewDefaults() {
           {/* Active Slot Sticker - Show the sticker from the currently selected slot */}
           {activeSticker && (
             <div
-              className="absolute z-30 pointer-events-none"
+              className="absolute z-30"
               style={{
                 left: `${activeSticker.position_x || 50}%`,
                 top: `${activeSticker.position_y || 50}%`,
@@ -336,13 +396,36 @@ export default function AdminBannerPreviewDefaults() {
               <img
                 src={activeSticker.image_url}
                 alt={activeSticker.name}
-                className="w-24 h-24 object-contain drop-shadow-2xl"
+                className="w-24 h-24 object-contain drop-shadow-2xl pointer-events-none"
                 style={{ 
                   filter: 'drop-shadow(0 6px 8px rgba(0,0,0,0.4))'
                 }}
               />
-              {/* Selection indicator */}
-              <div className="absolute inset-0 border-2 border-primary border-dashed rounded-lg animate-pulse" />
+              
+              {/* Selection Border */}
+              <div className="absolute inset-0 border-2 border-primary border-dashed rounded-lg animate-pulse pointer-events-none" />
+              
+              {/* Resize Handles - 4 Corners */}
+              <div
+                className="absolute -top-2 -left-2 w-4 h-4 bg-primary border-2 border-white rounded-full cursor-nwse-resize hover:scale-125 transition-transform shadow-lg"
+                onMouseDown={(e) => handleResizeStart(e, 'tl')}
+                style={{ touchAction: 'none' }}
+              />
+              <div
+                className="absolute -top-2 -right-2 w-4 h-4 bg-primary border-2 border-white rounded-full cursor-nesw-resize hover:scale-125 transition-transform shadow-lg"
+                onMouseDown={(e) => handleResizeStart(e, 'tr')}
+                style={{ touchAction: 'none' }}
+              />
+              <div
+                className="absolute -bottom-2 -left-2 w-4 h-4 bg-primary border-2 border-white rounded-full cursor-nesw-resize hover:scale-125 transition-transform shadow-lg"
+                onMouseDown={(e) => handleResizeStart(e, 'bl')}
+                style={{ touchAction: 'none' }}
+              />
+              <div
+                className="absolute -bottom-2 -right-2 w-4 h-4 bg-primary border-2 border-white rounded-full cursor-nwse-resize hover:scale-125 transition-transform shadow-lg"
+                onMouseDown={(e) => handleResizeStart(e, 'br')}
+                style={{ touchAction: 'none' }}
+              />
             </div>
           )}
 
