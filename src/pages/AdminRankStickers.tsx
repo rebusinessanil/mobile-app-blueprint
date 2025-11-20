@@ -200,6 +200,106 @@ const AdminRankStickers = () => {
               </Tabs>
             </Card>
 
+            {/* Banner Preview with Stickers */}
+            {selectedCategory && (
+              <Card className="p-6 mb-6">
+                <div className="mb-4">
+                  <h3 className="text-lg font-semibold">Banner Preview</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Live preview showing all uploaded stickers on the banner
+                  </p>
+                </div>
+
+                {/* Banner Preview Container */}
+                <div className="relative w-full max-w-md mx-auto bg-gradient-to-br from-background to-muted/20 rounded-2xl overflow-hidden border-2 border-border shadow-2xl">
+                  <div
+                    className="relative w-full overflow-hidden"
+                    style={{
+                      aspectRatio: '9/16',
+                      background: selectedRankData?.gradient || 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)',
+                    }}
+                  >
+                    <div className="absolute inset-0">
+                      {/* Top-Left Logo Placeholder */}
+                      <div className="absolute z-30" style={{ top: '3%', left: '3%', width: '15%', height: '8%' }}>
+                        <div className="w-full h-full bg-muted-foreground/20 rounded-lg" />
+                      </div>
+
+                      {/* Top-Right Logo Placeholder */}
+                      <div className="absolute z-30" style={{ top: '3%', right: '3%', width: '15%', height: '8%' }}>
+                        <div className="w-full h-full rounded-full bg-black/40 border-2 border-primary/60" />
+                      </div>
+
+                      {/* Achiever Photo Placeholder */}
+                      <div className="absolute overflow-hidden rounded-2xl" style={{
+                        left: '3%',
+                        top: '12%',
+                        width: '40%',
+                        height: '63.75%'
+                      }}>
+                        <div className="w-full h-full bg-muted-foreground/20 flex items-center justify-center">
+                          <span className="text-xs text-white/60">Achiever</span>
+                        </div>
+                      </div>
+
+                      {/* Profile Photo Placeholder */}
+                      <div className="absolute overflow-hidden rounded-2xl" style={{
+                        bottom: '24px',
+                        right: '24px',
+                        width: '28%',
+                        height: '36%'
+                      }}>
+                        <div className="w-full h-full bg-muted-foreground/20 flex items-center justify-center">
+                          <span className="text-xs text-white/60">Profile</span>
+                        </div>
+                      </div>
+
+                      {/* All Stickers Overlay */}
+                      {stickers.filter(s => s.is_active && s.image_url).map((sticker) => {
+                        const posX = sticker.position_x || 50;
+                        const posY = sticker.position_y || 50;
+                        const scale = sticker.scale || 1;
+                        const rotation = sticker.rotation || 0;
+
+                        return (
+                          <div
+                            key={sticker.id}
+                            className="absolute z-20 pointer-events-none"
+                            style={{
+                              left: `${posX}%`,
+                              top: `${posY}%`,
+                              transform: `translate(-50%, -50%) scale(${scale}) rotate(${rotation}deg)`,
+                              transformOrigin: 'center center',
+                            }}
+                          >
+                            <img
+                              src={sticker.image_url}
+                              alt={sticker.name}
+                              className="w-20 h-20 object-contain drop-shadow-lg"
+                              style={{ 
+                                filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.3))'
+                              }}
+                            />
+                            {/* Slot Number Badge */}
+                            <div className="absolute -bottom-1 -right-1 bg-primary text-primary-foreground text-[8px] font-bold rounded-full w-4 h-4 flex items-center justify-center shadow-lg">
+                              {sticker.slot_number}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Sticker Count */}
+                <div className="mt-4 text-center">
+                  <p className="text-sm font-medium">
+                    {stickers.filter(s => s.is_active && s.image_url).length} / 16 Stickers Uploaded
+                  </p>
+                </div>
+              </Card>
+            )}
+
             {/* 16 Slot Grid */}
             {selectedCategory && (
               <Card className="p-6 mb-6">
