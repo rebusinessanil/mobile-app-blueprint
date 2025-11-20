@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import UplineCarousel from "@/components/UplineCarousel";
 import BackgroundRemoverModal from "@/components/BackgroundRemoverModal";
 import ImageCropper from "@/components/ImageCropper";
-import StickerSelector from "@/components/StickerSelector";
+import RankStickerSelector from "@/components/RankStickerSelector";
 import { ranks } from "@/data/ranks";
 import { toast } from "sonner";
 import { removeBackground, loadImage } from "@/lib/backgroundRemover";
@@ -41,6 +41,14 @@ export default function RankBannerCreate() {
   const [showBgRemover, setShowBgRemover] = useState(false);
   const [processingBg, setProcessingBg] = useState(false);
   const [selectedStickers, setSelectedStickers] = useState<string[]>([]);
+
+  const handleStickerToggle = (stickerId: string) => {
+    setSelectedStickers(prev => 
+      prev.includes(stickerId) 
+        ? prev.filter(id => id !== stickerId)
+        : [...prev, stickerId]
+    );
+  };
 
   // Get authenticated user and load profile data
   useEffect(() => {
@@ -292,9 +300,17 @@ export default function RankBannerCreate() {
                 </label>}
             </div>}
 
-        {/* Sticker Selection */}
-        
         </div>
+
+        {/* Sticker Selection */}
+        {rankId && (
+          <RankStickerSelector
+            rankId={rankId}
+            selectedStickers={selectedStickers}
+            onStickerToggle={handleStickerToggle}
+            maxStickers={6}
+          />
+        )}
 
         {/* Action Buttons */}
         <div className="flex gap-3">
