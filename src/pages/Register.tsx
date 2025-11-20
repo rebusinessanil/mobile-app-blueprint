@@ -10,12 +10,9 @@ import { supabase } from "@/integrations/supabase/client";
 export default function Register() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
-  const [signupMethod, setSignupMethod] = useState<"email" | "phone">("email");
   const [formData, setFormData] = useState({
     fullName: "",
-    email: "",
-    mobile: "",
-    password: "",
+    emailOrPhone: "",
     differentWhatsApp: false,
     whatsappNumber: "",
     gender: "male",
@@ -42,32 +39,24 @@ export default function Register() {
       return;
     }
 
-    if (signupMethod === "email") {
-      if (!formData.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-        toast.error("Please enter a valid email address");
-        return;
-      }
+    if (!formData.emailOrPhone.trim()) {
+      toast.error("Please enter your email or phone number");
+      return;
+    }
 
-      const pinCode = pin.join("");
-      if (pinCode.length !== 4) {
-        toast.error("Please enter a 4-digit PIN");
-        return;
-      }
-    } else {
-      if (!formData.mobile.trim() || !/^\d{10}$/.test(formData.mobile)) {
-        toast.error("Please enter a valid 10-digit mobile number");
-        return;
-      }
+    // Auto-detect if input is email or phone
+    const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.emailOrPhone);
+    const isPhone = /^\d{10}$/.test(formData.emailOrPhone);
 
-      if (!formData.password.trim()) {
-        toast.error("Please enter a password");
-        return;
-      }
+    if (!isEmail && !isPhone) {
+      toast.error("Please enter a valid email address or 10-digit phone number");
+      return;
+    }
 
-      if (formData.password.length < 6) {
-        toast.error("Password must be at least 6 characters");
-        return;
-      }
+    const pinCode = pin.join("");
+    if (pinCode.length !== 4) {
+      toast.error("Please enter a 4-digit PIN");
+      return;
     }
 
     if (!formData.agreeToTerms) {
@@ -78,19 +67,20 @@ export default function Register() {
     setIsLoading(true);
 
     try {
-      if (signupMethod === "email") {
-        const pinCode = pin.join("");
-        const password = `ReBiz${pinCode}${Date.now()}`;
+      const pinCode = pin.join("");
+      // Use PIN as password for both email and phone
+      const password = pinCode;
 
+      if (isEmail) {
+        // Email signup
         const { data, error } = await supabase.auth.signUp({
-          email: formData.email,
+          email: formData.emailOrPhone,
           password: password,
           options: {
             emailRedirectTo: `${window.location.origin}/`,
             data: {
               full_name: formData.fullName,
-              mobile: formData.mobile,
-              whatsapp: formData.differentWhatsApp ? formData.whatsappNumber : formData.mobile,
+              whatsapp: formData.differentWhatsApp ? formData.whatsappNumber : formData.emailOrPhone,
               gender: formData.gender,
             },
           },
@@ -102,7 +92,7 @@ export default function Register() {
           toast.success("Registration successful! Check your email for OTP.");
           navigate("/otp-verification", {
             state: {
-              email: formData.email,
+              email: formData.emailOrPhone,
               name: formData.fullName,
               password: password,
             },
@@ -111,13 +101,12 @@ export default function Register() {
       } else {
         // Phone signup
         const { data, error } = await supabase.auth.signUp({
-          phone: formData.mobile,
-          password: formData.password,
+          phone: formData.emailOrPhone,
+          password: password,
           options: {
             data: {
               full_name: formData.fullName,
-              mobile: formData.mobile,
-              whatsapp: formData.differentWhatsApp ? formData.whatsappNumber : formData.mobile,
+              whatsapp: formData.differentWhatsApp ? formData.whatsappNumber : formData.emailOrPhone,
               gender: formData.gender,
             },
           },
@@ -152,30 +141,6 @@ export default function Register() {
           {/* Title */}
           <h1 className="text-3xl font-bold text-center text-foreground">REGISTRATION</h1>
 
-          {/* Signup Method Toggle */}
-          <div className="flex gap-2 p-1 bg-secondary rounded-lg">
-            <button
-              onClick={() => setSignupMethod("email")}
-              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-                signupMethod === "email"
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              Email + PIN
-            </button>
-            <button
-              onClick={() => setSignupMethod("phone")}
-              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-                signupMethod === "phone"
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              Phone + Password
-            </button>
-          </div>
-
           {/* Full Name */}
           <div className="space-y-2">
             <label className="text-sm text-foreground">Full Name *</label>
@@ -188,30 +153,14 @@ export default function Register() {
             />
           </div>
 
-          {/* Email (Email Method) */}
-          {signupMethod === "email" && (
-            <div className="space-y-2">
-              <label className="text-sm text-foreground">Email Address *</label>
-              <Input
-                type="email"
-                placeholder="Enter email address"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="gold-border bg-secondary text-foreground placeholder:text-muted-foreground h-12"
-              />
-            </div>
-          )}
-
-          {/* Mobile Number */}
+          {/* Email or Phone */}
           <div className="space-y-2">
-            <label className="text-sm text-foreground">
-              {signupMethod === "phone" ? "Phone Number *" : "Mobile Number *"}
-            </label>
+            <label className="text-sm text-foreground">Email or Phone Number *</label>
             <Input
-              type="tel"
-              placeholder={signupMethod === "phone" ? "Enter 10-digit phone number" : "Enter 10-digit mobile number"}
-              value={formData.mobile}
-              onChange={(e) => setFormData({ ...formData, mobile: e.target.value })}
+              type="text"
+              placeholder="Enter email or 10-digit phone number"
+              value={formData.emailOrPhone}
+              onChange={(e) => setFormData({ ...formData, emailOrPhone: e.target.value })}
               className="gold-border bg-secondary text-foreground placeholder:text-muted-foreground h-12"
             />
           </div>
@@ -242,36 +191,23 @@ export default function Register() {
             </div>
           )}
 
-          {/* PIN Input (Email) or Password (Phone) */}
-          {signupMethod === "email" ? (
-            <div className="space-y-2">
-              <label className="text-sm text-foreground">Create 4-Digit PIN *</label>
-              <div className="flex gap-3 justify-between">
-                {pin.map((digit, index) => (
-                  <input
-                    key={index}
-                    id={`reg-pin-${index}`}
-                    type="password"
-                    maxLength={1}
-                    value={digit}
-                    onChange={(e) => handlePinChange(index, e.target.value)}
-                    className="pin-input"
-                  />
-                ))}
-              </div>
+          {/* PIN Input */}
+          <div className="space-y-2">
+            <label className="text-sm text-foreground">Create 4-Digit PIN *</label>
+            <div className="flex gap-3 justify-between">
+              {pin.map((digit, index) => (
+                <input
+                  key={index}
+                  id={`reg-pin-${index}`}
+                  type="password"
+                  maxLength={1}
+                  value={digit}
+                  onChange={(e) => handlePinChange(index, e.target.value)}
+                  className="pin-input"
+                />
+              ))}
             </div>
-          ) : (
-            <div className="space-y-2">
-              <label className="text-sm text-foreground">Password *</label>
-              <Input
-                type="password"
-                placeholder="Create password (min 6 characters)"
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                className="gold-border bg-secondary text-foreground placeholder:text-muted-foreground h-12"
-              />
-            </div>
-          )}
+          </div>
 
           {/* Gender Selection */}
           <div className="space-y-2">
@@ -323,7 +259,7 @@ export default function Register() {
             disabled={isLoading}
             className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-base rounded-xl disabled:opacity-50"
           >
-            {isLoading ? "Processing..." : signupMethod === "email" ? "SEND OTP" : "REGISTER"}
+            {isLoading ? "Processing..." : "REGISTER"}
           </Button>
 
           {/* Login Link */}
