@@ -1,16 +1,9 @@
-import { useState } from "react";
 import { X, Sparkles } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import StickerSelector from "@/components/StickerSelector";
+import RankStickerSelector from "@/components/RankStickerSelector";
 import { Badge } from "@/components/ui/badge";
-
-interface RankSlot {
-  slot_number: number;
-  rank_name: string;
-  selectedStickers: string[];
-}
 
 interface RanksStickersPanelProps {
   isOpen: boolean;
@@ -19,6 +12,7 @@ interface RanksStickersPanelProps {
   rankName: string;
   selectedStickers: string[];
   onStickersChange: (stickers: string[]) => void;
+  rankId?: string;
 }
 
 export default function RanksStickersPanel({
@@ -28,6 +22,7 @@ export default function RanksStickersPanel({
   rankName,
   selectedStickers,
   onStickersChange,
+  rankId,
 }: RanksStickersPanelProps) {
   const handleStickerToggle = (stickerId: string) => {
     if (selectedStickers.includes(stickerId)) {
@@ -75,11 +70,18 @@ export default function RanksStickersPanel({
 
         <ScrollArea className="h-[calc(85vh-180px)] mt-4">
           <div className="px-1">
-            <StickerSelector
-              selectedStickers={selectedStickers}
-              onStickerToggle={handleStickerToggle}
-              maxStickers={6}
-            />
+            {rankId ? (
+              <RankStickerSelector
+                rankId={rankId}
+                selectedStickers={selectedStickers}
+                onStickerToggle={handleStickerToggle}
+                maxStickers={6}
+              />
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                No rank selected
+              </div>
+            )}
           </div>
         </ScrollArea>
 
