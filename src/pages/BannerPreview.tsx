@@ -553,12 +553,12 @@ export default function BannerPreview() {
                       alt="Achievement Sticker"
                       className="absolute pointer-events-none animate-in fade-in zoom-in duration-300"
                       style={{
-                        left: `${sticker.position_x}%`,
-                        top: `${sticker.position_y}%`,
-                        transform: `translate(-50%, -50%) scale(${sticker.scale}) rotate(${sticker.rotation}deg)`,
-                        width: '12%',
-                        height: 'auto',
-                        aspectRatio: '1',
+                        left: `${sticker.position_x ?? 50}%`,
+                        top: `${sticker.position_y ?? 50}%`,
+                        transform: `translate(-50%, -50%) scale(${sticker.scale ?? 1}) rotate(${sticker.rotation ?? 0}deg)`,
+                        transformOrigin: 'center center',
+                        width: '120px',
+                        height: '120px',
                         objectFit: 'contain',
                         filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.3))',
                         zIndex: 10,
