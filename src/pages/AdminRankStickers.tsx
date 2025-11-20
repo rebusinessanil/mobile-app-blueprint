@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useRankStickers } from '@/hooks/useRankStickers';
@@ -130,16 +129,7 @@ const AdminRankStickers = () => {
         <>
           {/* Upload Section */}
           <Card className="p-6 mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold">Upload Sticker</h2>
-              {selectedRankData && selectedSlot && (
-                <div className="flex items-center gap-2 px-4 py-2 bg-primary/10 border border-primary/30 rounded-lg">
-                  <span className="text-sm font-medium text-primary">
-                    Currently Editing: Rank {selectedRankData.name}, Slot {selectedSlot}
-                  </span>
-                </div>
-              )}
-            </div>
+            <h2 className="text-lg font-semibold mb-4">Upload Sticker</h2>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
               <div>
                 <Label>Slot Number</Label>
@@ -191,17 +181,12 @@ const AdminRankStickers = () => {
               </div>
             </div>
 
-            {/* Preview - Shows ONLY the selected slot */}
-            {previewSticker && selectedRankData && selectedSlot && (
+            {/* Preview */}
+            {previewSticker && selectedRankData && (
               <div className="mt-6">
-                <div className="flex items-center justify-between mb-2">
-                  <Label className="block">Banner Preview - Slot {selectedSlot} Only</Label>
-                  <Badge variant="outline" className="border-primary text-primary">
-                    Rank: {selectedRankData.name}
-                  </Badge>
-                </div>
+                <Label className="block mb-2">Banner Preview</Label>
                 <div 
-                  className="relative w-full max-w-2xl mx-auto aspect-[4/5] rounded-xl overflow-hidden border-2 border-primary/30"
+                  className="relative w-full max-w-2xl mx-auto aspect-[4/5] rounded-xl overflow-hidden"
                   style={{ 
                     background: selectedRankData.gradient 
                   }}
@@ -209,14 +194,9 @@ const AdminRankStickers = () => {
                   <div className="absolute inset-0 flex items-center justify-center">
                     <img 
                       src={previewSticker} 
-                      alt={`Slot ${selectedSlot} Preview`}
+                      alt="Preview" 
                       className="max-h-[60%] max-w-[60%] object-contain"
                     />
-                  </div>
-                  <div className="absolute top-4 left-4 bg-black/70 px-3 py-1 rounded-full">
-                    <p className="text-white text-xs font-semibold">
-                      Slot {selectedSlot}
-                    </p>
                   </div>
                   <div className="absolute bottom-4 left-4 right-4 text-center">
                     <p className="text-white text-sm font-semibold">
@@ -224,9 +204,6 @@ const AdminRankStickers = () => {
                     </p>
                   </div>
                 </div>
-                <p className="text-xs text-muted-foreground text-center mt-2">
-                  This preview shows ONLY Slot {selectedSlot}. Other slots remain unchanged.
-                </p>
               </div>
             )}
           </Card>

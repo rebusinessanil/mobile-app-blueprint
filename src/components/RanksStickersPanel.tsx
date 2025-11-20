@@ -3,15 +3,20 @@ import { X, Sparkles } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import StickerSelector from "@/components/StickerSelector";
 import { Badge } from "@/components/ui/badge";
-import { useUserRankStickers } from "@/hooks/useUserRankStickers";
+
+interface RankSlot {
+  slot_number: number;
+  rank_name: string;
+  selectedStickers: string[];
+}
 
 interface RanksStickersPanelProps {
   isOpen: boolean;
   onClose: () => void;
   currentSlot: number;
   rankName: string;
-  rankId: string;
   selectedStickers: string[];
   onStickersChange: (stickers: string[]) => void;
 }
@@ -21,20 +26,14 @@ export default function RanksStickersPanel({
   onClose,
   currentSlot,
   rankName,
-  rankId,
   selectedStickers,
   onStickersChange,
 }: RanksStickersPanelProps) {
-  const { stickers, loading } = useUserRankStickers(rankId);
-
   const handleStickerToggle = (stickerId: string) => {
     if (selectedStickers.includes(stickerId)) {
       onStickersChange(selectedStickers.filter((id) => id !== stickerId));
     } else {
-      // Limit to 6 stickers max
-      if (selectedStickers.length < 6) {
-        onStickersChange([...selectedStickers, stickerId]);
-      }
+      onStickersChange([...selectedStickers, stickerId]);
     }
   };
 
@@ -76,70 +75,11 @@ export default function RanksStickersPanel({
 
         <ScrollArea className="h-[calc(85vh-180px)] mt-4">
           <div className="px-1">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-foreground">
-                  Select Rank Stickers for {rankName}
-                </h3>
-                <Badge variant="outline" className="border-primary text-primary">
-                  {selectedStickers.length}/6
-                </Badge>
-              </div>
-
-              {loading ? (
-                <div className="text-center py-8 text-muted-foreground">Loading stickers...</div>
-              ) : stickers.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  No stickers available for this rank yet.
-                </div>
-              ) : (
-                <div className="grid grid-cols-3 gap-3">
-                  {stickers.map((sticker) => {
-                    const isSelected = selectedStickers.includes(sticker.id);
-                    const isDisabled = !isSelected && selectedStickers.length >= 6;
-
-                    return (
-                      <button
-                        key={sticker.id}
-                        onClick={() => handleStickerToggle(sticker.id)}
-                        disabled={isDisabled}
-                        className={`
-                          relative aspect-square rounded-xl overflow-hidden border-2 transition-all
-                          ${isSelected 
-                            ? 'border-primary shadow-lg shadow-primary/20 scale-95' 
-                            : 'border-border hover:border-primary/50'
-                          }
-                          ${isDisabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}
-                        `}
-                      >
-                        <img
-                          src={sticker.image_url}
-                          alt={sticker.name}
-                          className="w-full h-full object-cover"
-                        />
-                        {isSelected && (
-                          <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
-                            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
-                              <span className="text-primary-foreground font-bold">✓</span>
-                            </div>
-                          </div>
-                        )}
-                        <div className="absolute top-1 right-1 bg-black/70 px-2 py-0.5 rounded-full">
-                          <p className="text-[9px] text-white font-medium">
-                            Slot {sticker.slot_number}
-                          </p>
-                        </div>
-                        <div className="absolute bottom-0 left-0 right-0 bg-black/70 p-1">
-                          <p className="text-[10px] text-white text-center font-medium truncate">
-                            {sticker.name}
-                          </p>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+            <StickerSelector
+              selectedStickers={selectedStickers}
+              onStickerToggle={handleStickerToggle}
+              maxStickers={6}
+            />
           </div>
         </ScrollArea>
 

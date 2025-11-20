@@ -588,7 +588,6 @@ export default function BannerPreview() {
         onClose={() => setIsStickersOpen(false)}
         currentSlot={selectedTemplate + 1}
         rankName={bannerData?.rankName || ''}
-        rankId={bannerData?.rankId || ''}
         selectedStickers={selectedStickers}
         onStickersChange={setSelectedStickers}
       />
