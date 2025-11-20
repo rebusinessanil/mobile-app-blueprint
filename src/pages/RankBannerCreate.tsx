@@ -7,7 +7,6 @@ import UplineCarousel from "@/components/UplineCarousel";
 import BackgroundRemoverModal from "@/components/BackgroundRemoverModal";
 import ImageCropper from "@/components/ImageCropper";
 import StickerSelector from "@/components/StickerSelector";
-import RankStickerSelector from "@/components/RankStickerSelector";
 import { ranks } from "@/data/ranks";
 import { toast } from "sonner";
 import { removeBackground, loadImage } from "@/lib/backgroundRemover";
@@ -41,8 +40,7 @@ export default function RankBannerCreate() {
   const [showCropper, setShowCropper] = useState(false);
   const [showBgRemover, setShowBgRemover] = useState(false);
   const [processingBg, setProcessingBg] = useState(false);
-  const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
-  const [selectedStickers, setSelectedStickers] = useState<Record<number, string>>({});
+  const [selectedStickers, setSelectedStickers] = useState<string[]>([]);
 
   // Get authenticated user and load profile data
   useEffect(() => {
@@ -295,25 +293,6 @@ export default function RankBannerCreate() {
             </div>}
 
         {/* Sticker Selection */}
-        <div className="w-full">
-          <RankStickerSelector
-            selectedRankId={rankId || ""}
-            selectedSlot={selectedSlot}
-            onSlotSelect={setSelectedSlot}
-            selectedStickers={selectedStickers}
-            onStickerChange={(slotNumber, stickerId) => {
-              if (stickerId) {
-                setSelectedStickers(prev => ({ ...prev, [slotNumber]: stickerId }));
-              } else {
-                setSelectedStickers(prev => {
-                  const newState = { ...prev };
-                  delete newState[slotNumber];
-                  return newState;
-                });
-              }
-            }}
-          />
-        </div>
         
         </div>
 

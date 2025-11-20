@@ -21,7 +21,6 @@ import RankBannerCreate from "./pages/RankBannerCreate";
 import BannerSettings from "./pages/BannerSettings";
 import BannerPreview from "./pages/BannerPreview";
 import AdminStickers from "./pages/AdminStickers";
-import AdminRankStickers from "./pages/AdminRankStickers";
 import AdminTemplates from "./pages/AdminTemplates";
 import AdminBannerDefaults from "./pages/AdminBannerDefaults";
 import AdminTemplateBackgrounds from "./pages/AdminTemplateBackgrounds";
@@ -65,7 +64,6 @@ const App = () => (
           <Route path="/admin/stories" element={<AuthGuard><AdminStories /></AuthGuard>} />
           <Route path="/admin/ranks" element={<AuthGuard><AdminRanks /></AuthGuard>} />
           <Route path="/admin/stickers" element={<AuthGuard><AdminStickers /></AuthGuard>} />
-          <Route path="/admin/rank-stickers" element={<AuthGuard><AdminRankStickers /></AuthGuard>} />
           <Route path="/admin/banner-defaults" element={<AuthGuard><AdminBannerDefaults /></AuthGuard>} />
           <Route path="/admin/template-backgrounds" element={<AuthGuard><AdminTemplateBackgrounds /></AuthGuard>} />
           
