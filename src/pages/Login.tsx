@@ -57,11 +57,14 @@ export default function Login() {
         return;
       }
 
+      // Transform 4-digit PIN to match registration format (meets Supabase 6-char minimum)
+      const password = `PIN${pinString}XX`;
+
       // Attempt login with appropriate method
       const { data, error } = await supabase.auth.signInWithPassword(
         isEmail
-          ? { email: emailOrPhone, password: pinString }
-          : { phone: emailOrPhone, password: pinString }
+          ? { email: emailOrPhone, password }
+          : { phone: emailOrPhone, password }
       );
 
       if (error) {
