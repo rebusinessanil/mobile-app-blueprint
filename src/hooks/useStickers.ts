@@ -11,6 +11,11 @@ export interface Sticker {
   display_order: number;
   created_at: string;
   updated_at: string;
+  // Transform properties for positioned stickers
+  position_x?: number;
+  position_y?: number;
+  scale?: number;
+  rotation?: number;
 }
 
 export interface StickerCategory {
