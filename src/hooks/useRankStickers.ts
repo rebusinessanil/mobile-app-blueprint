@@ -88,7 +88,7 @@ export const useRankStickers = (rankId?: string) => {
         .from('stickers')
         .getPublicUrl(filePath);
 
-      // Upsert sticker record
+      // Upsert sticker record - ONLY for this specific rank_id and slot_number
       const { data, error } = await supabase
         .from('stickers')
         .upsert({
@@ -100,17 +100,21 @@ export const useRankStickers = (rankId?: string) => {
         }, {
           onConflict: 'rank_id,slot_number'
         })
+        .eq('rank_id', rankId)
+        .eq('slot_number', slotNumber)
         .select()
         .single();
 
       if (error) throw error;
 
-      // Update local state
+      // Update local state - ONLY the specific slot
       setStickers(prev => prev.map(s => 
-        s.slot_number === slotNumber ? { ...data } : s
+        s.rank_id === rankId && s.slot_number === slotNumber 
+          ? { ...s, ...data, image_url: publicUrl, name, is_active: true } 
+          : s
       ));
 
-      toast.success(`Sticker uploaded to Slot ${slotNumber}`);
+      toast.success(`Sticker uploaded to Slot ${slotNumber} only`);
       return { data, error: null };
     } catch (err) {
       toast.error('Failed to upload sticker');
@@ -130,7 +134,7 @@ export const useRankStickers = (rankId?: string) => {
         }
       }
 
-      // Delete from database
+      // Delete from database - ONLY this specific rank and slot
       const { error } = await supabase
         .from('stickers')
         .delete()
@@ -139,9 +143,9 @@ export const useRankStickers = (rankId?: string) => {
 
       if (error) throw error;
 
-      // Update local state
+      // Update local state - ONLY the specific slot for this rank
       setStickers(prev => prev.map(s => 
-        s.slot_number === slotNumber 
+        s.rank_id === rankId && s.slot_number === slotNumber 
           ? {
               id: `empty-${rankId}-${slotNumber}`,
               rank_id: rankId,
@@ -153,7 +157,7 @@ export const useRankStickers = (rankId?: string) => {
           : s
       ));
 
-      toast.success(`Sticker removed from Slot ${slotNumber}`);
+      toast.success(`Sticker removed from Slot ${slotNumber} only`);
       return { error: null };
     } catch (err) {
       toast.error('Failed to delete sticker');

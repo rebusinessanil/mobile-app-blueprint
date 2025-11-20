@@ -182,9 +182,14 @@ const AdminRankStickers = () => {
             </div>
 
             {/* Preview */}
-            {previewSticker && selectedRankData && (
+            {previewSticker && selectedRankData && selectedSlot && (
               <div className="mt-6">
-                <Label className="block mb-2">Banner Preview</Label>
+                <Label className="block mb-2">
+                  Preview: Slot {selectedSlot} for {selectedRankData.name} Rank
+                </Label>
+                <p className="text-sm text-muted-foreground mb-3">
+                  This preview shows ONLY Slot {selectedSlot}. Other slots will not be affected.
+                </p>
                 <div 
                   className="relative w-full max-w-2xl mx-auto aspect-[4/5] rounded-xl overflow-hidden"
                   style={{ 
@@ -194,13 +199,13 @@ const AdminRankStickers = () => {
                   <div className="absolute inset-0 flex items-center justify-center">
                     <img 
                       src={previewSticker} 
-                      alt="Preview" 
+                      alt={`Slot ${selectedSlot} Preview`}
                       className="max-h-[60%] max-w-[60%] object-contain"
                     />
                   </div>
                   <div className="absolute bottom-4 left-4 right-4 text-center">
                     <p className="text-white text-sm font-semibold">
-                      {selectedRankData.name} - Slot {selectedSlot}
+                      {selectedRankData.name} - Slot {selectedSlot} ONLY
                     </p>
                   </div>
                 </div>
