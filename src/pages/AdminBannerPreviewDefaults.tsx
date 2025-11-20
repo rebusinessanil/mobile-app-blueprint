@@ -12,12 +12,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, Trophy, Calendar, Gift, Award, Sparkles } from "lucide-react";
+import { ArrowLeft, Trophy, Calendar, Gift, Award, Sparkles, Maximize2 } from "lucide-react";
 import AdminLayout from "@/components/admin/AdminLayout";
 import StickerTransformControls from "@/components/admin/StickerTransformControls";
 import RanksStickersPanel from "@/components/RanksStickersPanel";
+import BannerLargePreviewModal from "@/components/admin/BannerLargePreviewModal";
+import StickerPreciseControls from "@/components/admin/StickerPreciseControls";
 import { useRankStickers } from "@/hooks/useRankStickers";
 import { useStickers } from "@/hooks/useStickers";
+import { useRealtimeStickerSync } from "@/hooks/useRealtimeStickerSync";
 
 interface Category {
   id: string;
@@ -62,7 +65,22 @@ export default function AdminBannerPreviewDefaults() {
   const [dragStartPos, setDragStartPos] = useState({ x: 0, y: 0, initialX: 0, initialY: 0 });
   const [isRotating, setIsRotating] = useState(false);
   const [rotateStartPos, setRotateStartPos] = useState({ x: 0, y: 0, initialRotation: 0 });
+  const [isLargePreviewOpen, setIsLargePreviewOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const bannerRef = useRef<HTMLDivElement>(null);
+
+  // Real-time sync for sticker updates
+  useRealtimeStickerSync({
+    categoryId: selectedCategory || undefined,
+    rankId: selectedRank || undefined,
+    onUpdate: () => {
+      // Refetch stickers when updates occur
+      if (stickers && selectedSlot) {
+        const sticker = stickers.find((s) => s.slot_number === selectedSlot);
+        setActiveSticker(sticker || null);
+      }
+    },
+  });
 
   const { stickers, loading: stickersLoading } = useRankStickers(
     selectedRank || undefined,
@@ -209,6 +227,59 @@ export default function AdminBannerPreviewDefaults() {
 
   const handleRotateEnd = () => {
     setIsRotating(false);
+  };
+
+  const handleSaveChanges = async () => {
+    if (!activeSticker) return;
+    
+    setIsSaving(true);
+    try {
+      const { error } = await supabase
+        .from("stickers")
+        .update({
+          position_x: activeSticker.position_x,
+          position_y: activeSticker.position_y,
+          scale: activeSticker.scale,
+          rotation: activeSticker.rotation,
+        })
+        .eq("id", activeSticker.id);
+
+      if (error) throw error;
+      
+      toast.success("Changes saved successfully");
+    } catch (error) {
+      console.error("Error saving changes:", error);
+      toast.error("Failed to save changes");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleResetChanges = async () => {
+    if (!activeSticker) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from("stickers")
+        .select("*")
+        .eq("id", activeSticker.id)
+        .single();
+
+      if (error) throw error;
+      
+      setActiveSticker(data as Sticker);
+      toast.success("Changes reset to last saved state");
+    } catch (error) {
+      console.error("Error resetting changes:", error);
+      toast.error("Failed to reset changes");
+    }
+  };
+
+  const handleDownloadBanner = () => {
+    if (!bannerRef.current) return;
+    
+    // Implementation for downloading banner as high-res image
+    toast.info("Download functionality will be implemented");
   };
 
   useEffect(() => {
@@ -403,6 +474,16 @@ export default function AdminBannerPreviewDefaults() {
             className="rounded-2xl border-2 border-primary/60"
           >
             <Sparkles className="h-5 w-5 text-primary" />
+          </Button>
+          
+          <Button
+            onClick={() => setIsLargePreviewOpen(true)}
+            variant="ghost"
+            size="icon"
+            className="rounded-2xl border-2 border-primary/60 ml-2"
+            title="View Large Preview"
+          >
+            <Maximize2 className="h-5 w-5 text-primary" />
           </Button>
         </div>
 
@@ -707,6 +788,62 @@ export default function AdminBannerPreviewDefaults() {
           )}
         </Card>
 
+        {/* Precise Transform Controls */}
+        {activeSticker && (
+          <div className="mt-4">
+            <StickerPreciseControls
+              position={{ x: activeSticker.position_x || 0, y: activeSticker.position_y || 0 }}
+              scale={activeSticker.scale || 1}
+              rotation={activeSticker.rotation || 0}
+              onPositionChange={async (x, y) => {
+                try {
+                  const { error } = await supabase
+                    .from("stickers")
+                    .update({ position_x: x, position_y: y })
+                    .eq("id", activeSticker.id);
+                  
+                  if (error) throw error;
+                  setActiveSticker({ ...activeSticker, position_x: x, position_y: y });
+                } catch (error) {
+                  console.error("Error updating position:", error);
+                  toast.error("Failed to update position");
+                }
+              }}
+              onScaleChange={async (scale) => {
+                try {
+                  const { error } = await supabase
+                    .from("stickers")
+                    .update({ scale })
+                    .eq("id", activeSticker.id);
+                  
+                  if (error) throw error;
+                  setActiveSticker({ ...activeSticker, scale });
+                } catch (error) {
+                  console.error("Error updating scale:", error);
+                  toast.error("Failed to update scale");
+                }
+              }}
+              onRotationChange={async (rotation) => {
+                try {
+                  const { error } = await supabase
+                    .from("stickers")
+                    .update({ rotation })
+                    .eq("id", activeSticker.id);
+                  
+                  if (error) throw error;
+                  setActiveSticker({ ...activeSticker, rotation });
+                } catch (error) {
+                  console.error("Error updating rotation:", error);
+                  toast.error("Failed to update rotation");
+                }
+              }}
+              onSave={handleSaveChanges}
+              onReset={handleResetChanges}
+              isSaving={isSaving}
+            />
+          </div>
+        )}
+
         {/* Rank Stickers Selection Modal */}
         {selectedRank && (
           <RanksStickersPanel
@@ -718,6 +855,71 @@ export default function AdminBannerPreviewDefaults() {
             onStickersChange={setSelectedAchievementStickers}
           />
         )}
+
+        {/* Large Preview Modal */}
+        <BannerLargePreviewModal
+          isOpen={isLargePreviewOpen}
+          onClose={() => setIsLargePreviewOpen(false)}
+          bannerContent={
+            <div 
+              className="relative w-[480px] aspect-[3/4] rounded-3xl overflow-hidden border-4 border-primary/80 shadow-2xl"
+              style={{
+                background: selectedRankData?.gradient || 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+              }}
+            >
+              {/* Duplicate banner preview content for modal */}
+              <div className="absolute top-4 left-1/2 -translate-x-1/2 flex gap-3 z-10">
+                <div className="w-14 h-14 rounded-full border-3 border-white overflow-hidden bg-muted">
+                  <div className="w-full h-full bg-muted-foreground/20" />
+                </div>
+                <div className="w-14 h-14 rounded-full border-3 border-white overflow-hidden bg-muted">
+                  <div className="w-full h-full bg-muted-foreground/20" />
+                </div>
+              </div>
+
+              <div className="absolute top-4 right-4 w-12 h-12 rounded-full bg-black/40 border-2 border-primary/60 z-10" />
+
+              <div className="absolute top-20 left-4 w-32 h-40 rounded-2xl bg-black/40 border-3 border-white/60 overflow-hidden">
+                <div className="w-full h-full bg-muted-foreground/20" />
+              </div>
+
+              <div className="absolute bottom-24 right-4 w-24 h-28 rounded-2xl bg-black/40 border-3 border-white/60 overflow-hidden">
+                <div className="w-full h-full bg-muted-foreground/20" />
+              </div>
+
+              {activeSticker && (
+                <div
+                  className="absolute pointer-events-none"
+                  style={{
+                    left: `${activeSticker.position_x || 50}%`,
+                    top: `${activeSticker.position_y || 50}%`,
+                    transform: `translate(-50%, -50%) scale(${activeSticker.scale || 1}) rotate(${activeSticker.rotation || 0}deg)`,
+                    width: '120px',
+                    height: '120px',
+                  }}
+                >
+                  <img
+                    src={activeSticker.image_url}
+                    alt={activeSticker.name}
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+              )}
+
+              <div className="absolute bottom-0 left-0 right-0 bg-black/50 backdrop-blur-sm p-3 flex items-center justify-between z-10">
+                <div className="text-left">
+                  <p className="text-[10px] text-white/80">CALL FOR MENTORSHIP</p>
+                  <p className="text-sm font-bold text-white">+91 7734990035</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-bold text-white">FULL SIZE PREVIEW</p>
+                  <p className="text-xs text-primary font-semibold">{selectedRankData?.name || "RANK"}</p>
+                </div>
+              </div>
+            </div>
+          }
+          onDownload={handleDownloadBanner}
+        />
       </div>
     </AdminLayout>
   );
