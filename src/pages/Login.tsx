@@ -9,7 +9,9 @@ import { toast } from "sonner";
 
 export default function Login() {
   const navigate = useNavigate();
+  const [loginMethod, setLoginMethod] = useState<"email" | "phone">("email");
   const [emailOrMobile, setEmailOrMobile] = useState("");
+  const [password, setPassword] = useState("");
   const [pin, setPin] = useState(["", "", "", ""]);
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -29,37 +31,71 @@ export default function Login() {
   const handleLogin = async () => {
     // Validation
     if (!emailOrMobile.trim()) {
-      toast.error("Please enter your email");
+      toast.error(loginMethod === "email" ? "Please enter your email" : "Please enter your phone number");
       return;
     }
 
-    const pinString = pin.join("");
-    if (pinString.length !== 4) {
-      toast.error("Please enter your 4-digit PIN");
-      return;
+    if (loginMethod === "email") {
+      const pinString = pin.join("");
+      if (pinString.length !== 4) {
+        toast.error("Please enter your 4-digit PIN");
+        return;
+      }
+    } else {
+      if (!password.trim()) {
+        toast.error("Please enter your password");
+        return;
+      }
+      if (password.length < 6) {
+        toast.error("Password must be at least 6 characters");
+        return;
+      }
     }
 
     setLoading(true);
 
     try {
-      // Sign in with email and PIN as password
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: emailOrMobile,
-        password: pinString,
-      });
+      if (loginMethod === "email") {
+        // Email + PIN login
+        const pinString = pin.join("");
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: emailOrMobile,
+          password: pinString,
+        });
 
-      if (error) {
-        if (error.message.includes("Invalid login credentials")) {
-          toast.error("Invalid email or PIN. Please try again.");
-        } else {
-          toast.error(error.message);
+        if (error) {
+          if (error.message.includes("Invalid login credentials")) {
+            toast.error("Invalid email or PIN. Please try again.");
+          } else {
+            toast.error(error.message);
+          }
+          return;
         }
-        return;
-      }
 
-      if (data.user) {
-        toast.success("Login successful!");
-        navigate("/dashboard");
+        if (data.user) {
+          toast.success("Login successful!");
+          navigate("/dashboard");
+        }
+      } else {
+        // Phone + Password login
+        const { data, error } = await supabase.auth.signInWithPassword({
+          phone: emailOrMobile,
+          password: password,
+        });
+
+        if (error) {
+          if (error.message.includes("Invalid login credentials")) {
+            toast.error("Invalid phone number or password. Please try again.");
+          } else {
+            toast.error(error.message);
+          }
+          return;
+        }
+
+        if (data.user) {
+          toast.success("Login successful!");
+          navigate("/dashboard");
+        }
       }
     } catch (error) {
       console.error("Login error:", error);
@@ -83,35 +119,74 @@ export default function Login() {
           {/* Title */}
           <h1 className="text-3xl font-bold text-center text-foreground">LOGIN</h1>
 
+          {/* Login Method Toggle */}
+          <div className="flex gap-2 p-1 bg-secondary rounded-lg">
+            <button
+              onClick={() => setLoginMethod("email")}
+              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+                loginMethod === "email"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Email + PIN
+            </button>
+            <button
+              onClick={() => setLoginMethod("phone")}
+              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+                loginMethod === "phone"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Phone + Password
+            </button>
+          </div>
+
           {/* Email/Mobile Input */}
           <div className="space-y-2">
-            <label className="text-sm text-foreground">Email / Mobile</label>
+            <label className="text-sm text-foreground">
+              {loginMethod === "email" ? "Email" : "Phone Number"}
+            </label>
             <Input
-              type="text"
-              placeholder="Enter email or mobile number"
+              type={loginMethod === "email" ? "email" : "tel"}
+              placeholder={loginMethod === "email" ? "Enter email address" : "Enter phone number"}
               value={emailOrMobile}
               onChange={(e) => setEmailOrMobile(e.target.value)}
               className="gold-border bg-secondary text-foreground placeholder:text-muted-foreground h-12"
             />
           </div>
 
-          {/* PIN Input */}
-          <div className="space-y-2">
-            <label className="text-sm text-foreground">4-Digit PIN</label>
-            <div className="flex gap-3 justify-between">
-              {pin.map((digit, index) => (
-                <input
-                  key={index}
-                  id={`pin-${index}`}
-                  type="password"
-                  maxLength={1}
-                  value={digit}
-                  onChange={(e) => handlePinChange(index, e.target.value)}
-                  className="pin-input"
-                />
-              ))}
+          {/* PIN Input (Email) or Password Input (Phone) */}
+          {loginMethod === "email" ? (
+            <div className="space-y-2">
+              <label className="text-sm text-foreground">4-Digit PIN</label>
+              <div className="flex gap-3 justify-between">
+                {pin.map((digit, index) => (
+                  <input
+                    key={index}
+                    id={`pin-${index}`}
+                    type="password"
+                    maxLength={1}
+                    value={digit}
+                    onChange={(e) => handlePinChange(index, e.target.value)}
+                    className="pin-input"
+                  />
+                ))}
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="space-y-2">
+              <label className="text-sm text-foreground">Password</label>
+              <Input
+                type="password"
+                placeholder="Enter password (min 6 characters)"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="gold-border bg-secondary text-foreground placeholder:text-muted-foreground h-12"
+              />
+            </div>
+          )}
 
           {/* Remember Me & Forgot Password */}
           <div className="flex items-center justify-between">
