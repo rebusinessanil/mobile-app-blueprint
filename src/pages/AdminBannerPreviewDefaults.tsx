@@ -512,7 +512,7 @@ export default function AdminBannerPreviewDefaults() {
               />
               
               {/* Selection Border */}
-              <div className="absolute inset-0 border-2 border-primary border-dashed rounded-lg animate-pulse pointer-events-none" />
+              <div className="absolute inset-0 border-2 border-primary border-dashed animate-pulse pointer-events-none" />
               
               {/* Rotation Handle - Top Center */}
               <div
