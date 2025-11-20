@@ -30,6 +30,7 @@ export default function RanksStickersPanel({
   onStickersChange,
 }: RanksStickersPanelProps) {
   const handleStickerToggle = (stickerId: string) => {
+    // Strict slot isolation: only modify stickers for current slot
     if (selectedStickers.includes(stickerId)) {
       onStickersChange(selectedStickers.filter((id) => id !== stickerId));
     } else {
@@ -79,6 +80,7 @@ export default function RanksStickersPanel({
               selectedStickers={selectedStickers}
               onStickerToggle={handleStickerToggle}
               maxStickers={6}
+              currentSlot={currentSlot}
             />
           </div>
         </ScrollArea>
