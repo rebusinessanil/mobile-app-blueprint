@@ -13,6 +13,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ArrowLeft, Trophy, Calendar, Gift, Award, Sparkles } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import AdminLayout from "@/components/admin/AdminLayout";
 import StickerTransformControls from "@/components/admin/StickerTransformControls";
 import RanksStickersPanel from "@/components/RanksStickersPanel";
@@ -63,6 +65,30 @@ export default function AdminBannerPreviewDefaults() {
   const [isRotating, setIsRotating] = useState(false);
   const [rotateStartPos, setRotateStartPos] = useState({ x: 0, y: 0, initialRotation: 0 });
   const bannerRef = useRef<HTMLDivElement>(null);
+
+  const handleManualUpdate = async (field: 'position_x' | 'position_y' | 'scale' | 'rotation', value: string) => {
+    if (!activeSticker) return;
+    
+    const numValue = parseFloat(value);
+    if (isNaN(numValue)) return;
+
+    try {
+      const { error } = await supabase
+        .from("stickers")
+        .update({ [field]: numValue })
+        .eq("id", activeSticker.id)
+        .eq("rank_id", selectedRank)
+        .eq("category_id", selectedCategory)
+        .eq("slot_number", selectedSlot);
+
+      if (error) throw error;
+
+      setActiveSticker({ ...activeSticker, [field]: numValue });
+    } catch (error) {
+      console.error(`Error updating ${field}:`, error);
+      toast.error(`Failed to update ${field}`);
+    }
+  };
 
   const { stickers, loading: stickersLoading } = useRankStickers(
     selectedRank || undefined,
@@ -706,6 +732,71 @@ export default function AdminBannerPreviewDefaults() {
             </div>
           )}
         </Card>
+
+        {/* Transform Control Panel */}
+        {activeSticker && (
+          <Card className="mt-4 p-4 bg-card/50 border-border/50">
+            <h3 className="text-sm font-semibold text-foreground mb-4">Transform Controls</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="position-x" className="text-xs text-muted-foreground">
+                  Position X (%)
+                </Label>
+                <Input
+                  id="position-x"
+                  type="number"
+                  step="0.1"
+                  value={activeSticker.position_x?.toFixed(1) || "50.0"}
+                  onChange={(e) => handleManualUpdate('position_x', e.target.value)}
+                  className="h-9 text-sm"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="position-y" className="text-xs text-muted-foreground">
+                  Position Y (%)
+                </Label>
+                <Input
+                  id="position-y"
+                  type="number"
+                  step="0.1"
+                  value={activeSticker.position_y?.toFixed(1) || "50.0"}
+                  onChange={(e) => handleManualUpdate('position_y', e.target.value)}
+                  className="h-9 text-sm"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="scale" className="text-xs text-muted-foreground">
+                  Scale
+                </Label>
+                <Input
+                  id="scale"
+                  type="number"
+                  step="0.01"
+                  min="0.3"
+                  max="3"
+                  value={activeSticker.scale?.toFixed(2) || "1.00"}
+                  onChange={(e) => handleManualUpdate('scale', e.target.value)}
+                  className="h-9 text-sm"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="rotation" className="text-xs text-muted-foreground">
+                  Rotation (°)
+                </Label>
+                <Input
+                  id="rotation"
+                  type="number"
+                  step="1"
+                  min="0"
+                  max="360"
+                  value={Math.round(activeSticker.rotation || 0)}
+                  onChange={(e) => handleManualUpdate('rotation', e.target.value)}
+                  className="h-9 text-sm"
+                />
+              </div>
+            </div>
+          </Card>
+        )}
 
         {/* Rank Stickers Selection Modal */}
         {selectedRank && (
