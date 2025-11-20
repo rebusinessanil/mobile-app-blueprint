@@ -21,7 +21,7 @@ export interface StickerCategory {
   created_at: string;
 }
 
-export const useStickers = (categoryId?: string, rankId?: string, slotNumber?: number) => {
+export const useStickers = (categoryId?: string) => {
   const [stickers, setStickers] = useState<Sticker[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -38,14 +38,6 @@ export const useStickers = (categoryId?: string, rankId?: string, slotNumber?: n
         if (categoryId) {
           query = query.eq('category_id', categoryId);
         }
-        
-        if (rankId) {
-          query = query.eq('rank_id', rankId);
-        }
-        
-        if (slotNumber) {
-          query = query.eq('slot_number', slotNumber);
-        }
 
         const { data, error } = await query;
 
@@ -59,7 +51,7 @@ export const useStickers = (categoryId?: string, rankId?: string, slotNumber?: n
     };
 
     fetchStickers();
-  }, [categoryId, rankId, slotNumber]);
+  }, [categoryId]);
 
   return { stickers, loading, error };
 };
@@ -97,8 +89,6 @@ export const useAdminStickers = () => {
     file: File,
     name: string,
     categoryId: string,
-    rankId: string,
-    slotNumber: number,
     description?: string
   ) => {
     try {
@@ -118,20 +108,15 @@ export const useAdminStickers = () => {
         .from('stickers')
         .getPublicUrl(filePath);
 
-      // Upsert sticker record (insert or update if exists)
+      // Create sticker record
       const { data, error } = await supabase
         .from('stickers')
-        .upsert({
-          category_id: categoryId,
-          rank_id: rankId,
-          slot_number: slotNumber,
+        .insert({
           name,
+          category_id: categoryId,
           description,
           image_url: publicUrl,
           is_active: true,
-        }, {
-          onConflict: 'category_id,rank_id,slot_number',
-          ignoreDuplicates: false
         })
         .select()
         .single();

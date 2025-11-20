@@ -307,8 +307,6 @@ export type Database = {
           image_url: string
           is_active: boolean | null
           name: string
-          rank_id: string | null
-          slot_number: number | null
           updated_at: string | null
         }
         Insert: {
@@ -320,8 +318,6 @@ export type Database = {
           image_url: string
           is_active?: boolean | null
           name: string
-          rank_id?: string | null
-          slot_number?: number | null
           updated_at?: string | null
         }
         Update: {
@@ -333,8 +329,6 @@ export type Database = {
           image_url?: string
           is_active?: boolean | null
           name?: string
-          rank_id?: string | null
-          slot_number?: number | null
           updated_at?: string | null
         }
         Relationships: [
@@ -343,13 +337,6 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "sticker_categories"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "stickers_rank_id_fkey"
-            columns: ["rank_id"]
-            isOneToOne: false
-            referencedRelation: "ranks"
             referencedColumns: ["id"]
           },
         ]
