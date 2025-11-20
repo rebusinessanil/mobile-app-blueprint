@@ -27,8 +27,10 @@ const AdminRankStickers = () => {
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [previewSticker, setPreviewSticker] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [batchFiles, setBatchFiles] = useState<File[]>([]);
+  const [batchUploading, setBatchUploading] = useState(false);
 
-  const { stickers, loading, uploadSticker, deleteSticker } = useRankStickers(selectedRank);
+  const { stickers, loading, uploadSticker, deleteSticker, batchUploadStickers } = useRankStickers(selectedRank);
 
   // Load ranks on mount
   useEffect(() => {
@@ -85,6 +87,32 @@ const AdminRankStickers = () => {
     if (window.confirm(`Delete sticker from Slot ${slotNumber}?`)) {
       await deleteSticker(slotNumber, imageUrl);
     }
+  };
+
+  const handleBatchFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length > 16) {
+      toast.error('Maximum 16 files allowed');
+      setBatchFiles(files.slice(0, 16));
+    } else {
+      setBatchFiles(files);
+    }
+  };
+
+  const handleBatchUpload = async () => {
+    if (!selectedRank || batchFiles.length === 0) {
+      toast.error('Please select rank and files');
+      return;
+    }
+
+    setBatchUploading(true);
+    await batchUploadStickers(batchFiles, 1);
+    setBatchUploading(false);
+    setBatchFiles([]);
+    
+    // Clear file input
+    const fileInput = document.getElementById('batch-file-input') as HTMLInputElement;
+    if (fileInput) fileInput.value = '';
   };
 
   const selectedRankData = ranks.find(r => r.id === selectedRank);
@@ -211,6 +239,43 @@ const AdminRankStickers = () => {
                 </div>
               </div>
             )}
+          </Card>
+
+          {/* Batch Upload Section */}
+          <Card className="p-6 mb-8">
+            <h2 className="text-lg font-semibold mb-4">Batch Upload (Auto-Assign to Slots)</h2>
+            <p className="text-sm text-muted-foreground mb-4">
+              Upload multiple stickers at once. They will be automatically assigned to Slots 1-16 in order.
+            </p>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <Label>Select Multiple Images (Max 16)</Label>
+                <Input
+                  id="batch-file-input"
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleBatchFileChange}
+                  className="cursor-pointer"
+                />
+                {batchFiles.length > 0 && (
+                  <p className="text-sm text-muted-foreground mt-2">
+                    {batchFiles.length} file(s) selected → Will assign to Slots 1-{batchFiles.length}
+                  </p>
+                )}
+              </div>
+
+              <div className="flex items-end">
+                <Button 
+                  onClick={handleBatchUpload} 
+                  disabled={batchFiles.length === 0 || batchUploading}
+                  className="w-full"
+                >
+                  <Upload className="h-4 w-4 mr-2" />
+                  {batchUploading ? `Uploading ${batchFiles.length} stickers...` : 'Batch Upload'}
+                </Button>
+              </div>
+            </div>
           </Card>
 
           {/* Stickers Grid */}
