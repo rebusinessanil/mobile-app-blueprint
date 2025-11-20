@@ -11,6 +11,8 @@ export default function Register() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [showOtpVerification, setShowOtpVerification] = useState(false);
+  const [registrationMode, setRegistrationMode] = useState<"pin" | "otp">("pin");
+  const [otpSent, setOtpSent] = useState(false);
   const [formData, setFormData] = useState({
     fullName: "",
     emailOrPhone: "",
@@ -58,7 +60,89 @@ export default function Register() {
     }
   };
 
-  const handleSendOTP = async () => {
+  const handleSendOTPForRegistration = async () => {
+    // Validation
+    if (!formData.fullName.trim()) {
+      toast.error("Please enter your full name");
+      return;
+    }
+
+    if (!formData.emailOrPhone.trim()) {
+      toast.error("Please enter your email or phone number");
+      return;
+    }
+
+    // Auto-detect if input is email or phone
+    const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.emailOrPhone);
+    const isPhone = /^\d{10}$/.test(formData.emailOrPhone);
+
+    if (!isEmail && !isPhone) {
+      toast.error("Please enter a valid email address or 10-digit phone number");
+      return;
+    }
+
+    if (!formData.agreeToTerms) {
+      toast.error("Please agree to the Terms & Conditions");
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      // Generate a temporary password for OTP-only registration
+      const tempPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
+
+      if (isEmail) {
+        const { data, error } = await supabase.auth.signUp({
+          email: formData.emailOrPhone,
+          password: tempPassword,
+          options: {
+            emailRedirectTo: `${window.location.origin}/`,
+            data: {
+              full_name: formData.fullName,
+              whatsapp: formData.differentWhatsApp ? formData.whatsappNumber : formData.emailOrPhone,
+              gender: formData.gender,
+            },
+          },
+        });
+
+        if (error) throw error;
+
+        if (data?.user) {
+          setUserCredentials({ email: formData.emailOrPhone, password: tempPassword });
+          setOtpSent(true);
+          toast.success("A 6-digit OTP has been sent to your email!");
+        }
+      } else {
+        const { data, error } = await supabase.auth.signUp({
+          phone: formData.emailOrPhone,
+          password: tempPassword,
+          options: {
+            data: {
+              full_name: formData.fullName,
+              whatsapp: formData.differentWhatsApp ? formData.whatsappNumber : formData.emailOrPhone,
+              gender: formData.gender,
+            },
+          },
+        });
+
+        if (error) throw error;
+
+        if (data?.user) {
+          setUserCredentials({ email: formData.emailOrPhone, password: tempPassword });
+          setOtpSent(true);
+          toast.success("A 6-digit OTP has been sent to your phone!");
+        }
+      }
+    } catch (error: any) {
+      console.error("OTP send error:", error);
+      toast.error(error.message || "Failed to send OTP. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRegisterWithPIN = async () => {
     // Validation
     if (!formData.fullName.trim()) {
       toast.error("Please enter your full name");
@@ -105,7 +189,6 @@ export default function Register() {
 
     try {
       const pinCode = pin.join("");
-      // Use PIN as password for both email and phone
       const password = pinCode;
 
       if (isEmail) {
@@ -168,7 +251,7 @@ export default function Register() {
     }
   };
 
-  const handleVerifyOTP = async () => {
+  const handleVerifyOTPForRegistration = async () => {
     const otpCode = otp.join("");
     if (otpCode.length !== 6) {
       toast.error("Please enter the complete 6-digit OTP");
@@ -215,7 +298,7 @@ export default function Register() {
     }
   };
 
-  // OTP Verification Screen
+  // OTP Verification Screen (for PIN-based registration)
   if (showOtpVerification) {
     return (
       <div className="min-h-screen bg-navy-dark flex items-center justify-center p-6">
@@ -256,7 +339,7 @@ export default function Register() {
 
             {/* Verify Button */}
             <Button
-              onClick={handleVerifyOTP}
+              onClick={handleVerifyOTPForRegistration}
               disabled={isLoading}
               className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-base rounded-xl disabled:opacity-50"
             >
@@ -355,42 +438,118 @@ export default function Register() {
             </div>
           )}
 
-          {/* PIN Input */}
-          <div className="space-y-2">
-            <label className="text-sm text-foreground">Create 4-Digit PIN (Password) *</label>
-            <p className="text-xs text-muted-foreground">This will be your password for login</p>
-            <div className="flex gap-3 justify-between">
-              {pin.map((digit, index) => (
-                <input
-                  key={index}
-                  id={`reg-pin-${index}`}
-                  type="password"
-                  maxLength={1}
-                  value={digit}
-                  onChange={(e) => handlePinChange(index, e.target.value, false)}
-                  className="pin-input"
-                />
-              ))}
+          {/* Registration Mode Toggle */}
+          <div className="p-4 bg-secondary/30 border border-primary/20 rounded-lg space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="text-sm text-foreground font-medium">Registration Method</label>
+              <button
+                type="button"
+                onClick={() => {
+                  setRegistrationMode(registrationMode === "pin" ? "otp" : "pin");
+                  setOtpSent(false);
+                  setOtp(["", "", "", "", "", ""]);
+                }}
+                className="text-xs text-primary hover:underline"
+              >
+                Switch to {registrationMode === "pin" ? "OTP" : "PIN"}
+              </button>
+            </div>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setRegistrationMode("pin")}
+                className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
+                  registrationMode === "pin"
+                    ? "bg-primary text-primary-foreground shadow-md"
+                    : "bg-secondary/50 text-muted-foreground hover:bg-secondary"
+                }`}
+              >
+                4-Digit PIN Password
+              </button>
+              <button
+                type="button"
+                onClick={() => setRegistrationMode("otp")}
+                className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
+                  registrationMode === "otp"
+                    ? "bg-primary text-primary-foreground shadow-md"
+                    : "bg-secondary/50 text-muted-foreground hover:bg-secondary"
+                }`}
+              >
+                6-Digit OTP Verification
+              </button>
             </div>
           </div>
 
-          {/* Confirm PIN Input */}
-          <div className="space-y-2">
-            <label className="text-sm text-foreground">Confirm 4-Digit PIN *</label>
-            <div className="flex gap-3 justify-between">
-              {confirmPin.map((digit, index) => (
-                <input
-                  key={index}
-                  id={`reg-confirm-pin-${index}`}
-                  type="password"
-                  maxLength={1}
-                  value={digit}
-                  onChange={(e) => handlePinChange(index, e.target.value, true)}
-                  className="pin-input"
-                />
-              ))}
+          {/* PIN Mode */}
+          {registrationMode === "pin" && (
+            <>
+              <div className="space-y-2">
+                <label className="text-sm text-foreground">Create 4-Digit PIN (Password) *</label>
+                <p className="text-xs text-muted-foreground">This will be your password for login</p>
+                <div className="flex gap-3 justify-between">
+                  {pin.map((digit, index) => (
+                    <input
+                      key={index}
+                      id={`reg-pin-${index}`}
+                      type="password"
+                      maxLength={1}
+                      value={digit}
+                      onChange={(e) => handlePinChange(index, e.target.value, false)}
+                      className="pin-input"
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm text-foreground">Confirm 4-Digit PIN *</label>
+                <div className="flex gap-3 justify-between">
+                  {confirmPin.map((digit, index) => (
+                    <input
+                      key={index}
+                      id={`reg-confirm-pin-${index}`}
+                      type="password"
+                      maxLength={1}
+                      value={digit}
+                      onChange={(e) => handlePinChange(index, e.target.value, true)}
+                      className="pin-input"
+                    />
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* OTP Mode */}
+          {registrationMode === "otp" && !otpSent && (
+            <div className="p-3 bg-primary/10 border border-primary/20 rounded-lg">
+              <p className="text-sm text-foreground text-center">
+                Click "Send OTP" below to receive a 6-digit verification code
+              </p>
             </div>
-          </div>
+          )}
+
+          {registrationMode === "otp" && otpSent && (
+            <div className="space-y-2">
+              <label className="text-sm text-foreground">Enter 6-Digit OTP *</label>
+              <p className="text-xs text-muted-foreground">
+                OTP sent to {formData.emailOrPhone}
+              </p>
+              <div className="flex gap-2 justify-between">
+                {otp.map((digit, index) => (
+                  <input
+                    key={index}
+                    id={`reg-otp-${index}`}
+                    type="text"
+                    maxLength={1}
+                    value={digit}
+                    onChange={(e) => handleOtpChange(index, e.target.value)}
+                    className="pin-input"
+                  />
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Gender Selection */}
           <div className="space-y-2">
@@ -437,20 +596,44 @@ export default function Register() {
           </div>
 
           {/* Info Message */}
-          <div className="p-3 bg-primary/10 border border-primary/20 rounded-lg">
-            <p className="text-xs text-foreground text-center">
-              📧 A 6-digit OTP will be sent to your email or phone for verification after registration.
-            </p>
-          </div>
+          {registrationMode === "pin" && (
+            <div className="p-3 bg-primary/10 border border-primary/20 rounded-lg">
+              <p className="text-xs text-foreground text-center">
+                📧 A 6-digit OTP will be sent for email verification after registration.
+              </p>
+            </div>
+          )}
 
-          {/* Submit Button */}
-          <Button
-            onClick={handleSendOTP}
-            disabled={isLoading}
-            className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-base rounded-xl disabled:opacity-50"
-          >
-            {isLoading ? "Processing..." : "REGISTER"}
-          </Button>
+          {/* Submit Buttons */}
+          {registrationMode === "pin" && (
+            <Button
+              onClick={handleRegisterWithPIN}
+              disabled={isLoading}
+              className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-base rounded-xl disabled:opacity-50"
+            >
+              {isLoading ? "Processing..." : "REGISTER WITH PIN"}
+            </Button>
+          )}
+
+          {registrationMode === "otp" && !otpSent && (
+            <Button
+              onClick={handleSendOTPForRegistration}
+              disabled={isLoading}
+              className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-base rounded-xl disabled:opacity-50"
+            >
+              {isLoading ? "Sending OTP..." : "SEND OTP"}
+            </Button>
+          )}
+
+          {registrationMode === "otp" && otpSent && (
+            <Button
+              onClick={handleVerifyOTPForRegistration}
+              disabled={isLoading}
+              className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-base rounded-xl disabled:opacity-50"
+            >
+              {isLoading ? "Verifying..." : "VERIFY & REGISTER"}
+            </Button>
+          )}
 
           {/* Login Link */}
           <p className="text-center text-sm text-foreground">
