@@ -35,7 +35,12 @@ export default function Login() {
 
     const pinString = pin.join("");
     if (pinString.length !== 4) {
-      toast.error("Please enter your 4-digit PIN");
+      toast.error("PIN must be exactly 4 digits");
+      return;
+    }
+
+    if (!/^\d{4}$/.test(pinString)) {
+      toast.error("PIN must contain only numbers");
       return;
     }
 
@@ -108,7 +113,8 @@ export default function Login() {
 
           {/* PIN Input */}
           <div className="space-y-2">
-            <label className="text-sm text-foreground">4-Digit PIN</label>
+            <label className="text-sm text-foreground">4-Digit PIN (Password)</label>
+            <p className="text-xs text-muted-foreground">Enter your 4-digit PIN</p>
             <div className="flex gap-3 justify-between">
               {pin.map((digit, index) => (
                 <input
