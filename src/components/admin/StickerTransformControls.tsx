@@ -1,7 +1,9 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { RotateCw, Maximize2, Move } from "lucide-react";
 import { useStickerTransform } from "@/hooks/useStickerTransform";
+import { toast } from "sonner";
 
 interface StickerTransformControlsProps {
   stickerId: string;
@@ -34,8 +36,17 @@ export default function StickerTransformControls({
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
   const [isRotating, setIsRotating] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const { updateTransform, isSaving } = useStickerTransform(stickerId, rankId, categoryId, slotNumber);
+
+  // Store saved state for reset
+  const [savedState, setSavedState] = useState({
+    position_x: initialTransform.position_x || 50,
+    position_y: initialTransform.position_y || 50,
+    scale: initialTransform.scale || 1.0,
+    rotation: initialTransform.rotation || 0,
+  });
 
   const handleMouseDown = (e: React.MouseEvent, mode: "drag" | "resize" | "rotate") => {
     e.preventDefault();
@@ -45,6 +56,16 @@ export default function StickerTransformControls({
     if (mode === "resize") setIsResizing(true);
     if (mode === "rotate") setIsRotating(true);
   };
+
+  // Mark as changed when any transform value updates
+  useEffect(() => {
+    const changed = 
+      positionX !== savedState.position_x ||
+      positionY !== savedState.position_y ||
+      scale !== savedState.scale ||
+      rotation !== savedState.rotation;
+    setHasChanges(changed);
+  }, [positionX, positionY, scale, rotation, savedState]);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -75,14 +96,9 @@ export default function StickerTransformControls({
       }
     };
 
-    const handleMouseUp = async () => {
+    const handleMouseUp = () => {
       if (isDragging || isResizing || isRotating) {
-        await updateTransform({
-          position_x: positionX,
-          position_y: positionY,
-          scale: scale,
-          rotation: rotation,
-        });
+        // Just update local state, don't save to DB yet
         onTransformChange?.({ position_x: positionX, position_y: positionY, scale, rotation });
       }
       setIsDragging(false);
@@ -100,58 +116,80 @@ export default function StickerTransformControls({
     }
   }, [isDragging, isResizing, isRotating, positionX, positionY, scale, rotation, updateTransform, onTransformChange]);
 
-  const resetTransform = async () => {
-    setPositionX(50);
-    setPositionY(50);
-    setScale(1.0);
-    setRotation(0);
+  const handleSave = async () => {
     await updateTransform({
-      position_x: 50,
-      position_y: 50,
-      scale: 1.0,
-      rotation: 0,
+      position_x: positionX,
+      position_y: positionY,
+      scale: scale,
+      rotation: rotation,
     });
-    onTransformChange?.({ position_x: 50, position_y: 50, scale: 1.0, rotation: 0 });
+    
+    // Update saved state
+    setSavedState({
+      position_x: positionX,
+      position_y: positionY,
+      scale: scale,
+      rotation: rotation,
+    });
+    
+    setHasChanges(false);
+    toast.success("Sticker position saved! Changes now visible to all users.");
+  };
+
+  const handleReset = () => {
+    // Revert to last saved state
+    setPositionX(savedState.position_x);
+    setPositionY(savedState.position_y);
+    setScale(savedState.scale);
+    setRotation(savedState.rotation);
+    onTransformChange?.(savedState);
+    setHasChanges(false);
   };
 
   return (
     <div className="space-y-4">
+      <div className="flex items-center justify-between mb-4 p-4 bg-secondary/20 rounded-lg border border-border">
+        <div>
+          <p className="text-sm font-semibold text-foreground">
+            Admin Sticker Editor
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Drag, resize, and rotate the sticker. Click <strong>Save</strong> to apply changes to all user banners.
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleReset}
+            disabled={!hasChanges || isSaving}
+          >
+            Reset
+          </Button>
+          <Button
+            size="sm"
+            onClick={handleSave}
+            disabled={!hasChanges || isSaving}
+            className="bg-primary"
+          >
+            {isSaving ? "Saving..." : "Save"}
+          </Button>
+        </div>
+      </div>
+
       <div className="flex gap-2 flex-wrap">
-        <Button
-          variant="outline"
-          size="sm"
-          className="gap-2"
-          disabled={isSaving}
-        >
-          <Move className="w-4 h-4" />
-          Drag Mode
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          className="gap-2"
-          disabled={isSaving}
-        >
-          <Maximize2 className="w-4 h-4" />
-          Resize Mode
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          className="gap-2"
-          disabled={isSaving}
-        >
-          <RotateCw className="w-4 h-4" />
-          Rotate Mode
-        </Button>
-        <Button
-          variant="destructive"
-          size="sm"
-          onClick={resetTransform}
-          disabled={isSaving}
-        >
-          Reset
-        </Button>
+        <Badge variant="outline" className="gap-2">
+          <Move className="w-3 h-3" />
+          Drag to reposition
+        </Badge>
+        <Badge variant="outline" className="gap-2">
+          <Maximize2 className="w-3 h-3" />
+          Drag bottom-right to resize
+        </Badge>
+        <Badge variant="outline" className="gap-2">
+          <RotateCw className="w-3 h-3" />
+          Drag top-right to rotate
+        </Badge>
       </div>
 
       <div
@@ -196,7 +234,7 @@ export default function StickerTransformControls({
         )}
       </div>
 
-      <div className="grid grid-cols-2 gap-4 text-sm">
+      <div className="grid grid-cols-2 gap-4 text-sm p-4 bg-muted/20 rounded-lg border border-border">
         <div>
           <span className="text-muted-foreground">Position:</span> X: {positionX.toFixed(1)}%, Y: {positionY.toFixed(1)}%
         </div>
@@ -207,7 +245,8 @@ export default function StickerTransformControls({
           <span className="text-muted-foreground">Rotation:</span> {rotation.toFixed(0)}°
         </div>
         <div>
-          <span className="text-muted-foreground">Status:</span> {isSaving ? "Saving..." : "Saved"}
+          <span className="text-muted-foreground">Status:</span> 
+          {isSaving ? " Saving..." : hasChanges ? " Unsaved changes" : " Saved"}
         </div>
       </div>
     </div>
