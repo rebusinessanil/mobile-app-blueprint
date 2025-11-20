@@ -855,6 +855,10 @@ export default function AdminBannerPreviewDefaults() {
               scale={activeSticker.scale || 1}
               rotation={activeSticker.rotation || 0}
               onPositionChange={async (x, y) => {
+                if (!activeSticker?.id) {
+                  toast.error("No sticker selected. Please upload a sticker for this slot first.");
+                  return;
+                }
                 try {
                   const { error } = await supabase
                     .from("stickers")
@@ -869,6 +873,10 @@ export default function AdminBannerPreviewDefaults() {
                 }
               }}
               onScaleChange={async (scale) => {
+                if (!activeSticker?.id) {
+                  toast.error("No sticker selected. Please upload a sticker for this slot first.");
+                  return;
+                }
                 try {
                   const { error } = await supabase
                     .from("stickers")
@@ -883,6 +891,10 @@ export default function AdminBannerPreviewDefaults() {
                 }
               }}
               onRotationChange={async (rotation) => {
+                if (!activeSticker?.id) {
+                  toast.error("No sticker selected. Please upload a sticker for this slot first.");
+                  return;
+                }
                 try {
                   const { error } = await supabase
                     .from("stickers")
