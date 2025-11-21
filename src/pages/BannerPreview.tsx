@@ -389,159 +389,149 @@ export default function BannerPreview() {
         </div>
       </header>
 
-      {/* Banner Preview Container - FROZEN FIXED SIZE */}
-      <div className="px-3 sm:px-4 py-3 sm:py-4 flex-shrink-0 bg-background overflow-x-auto">
-        {/* Main Banner Preview Wrapper - FROZEN at 1080x1080px */}
-        <div className="preview-banner-wrapper relative mx-auto" style={{ width: '1080px', height: '1080px', minWidth: '1080px', minHeight: '1080px' }}>
-          <div className="border-4 border-primary rounded-2xl overflow-hidden shadow-2xl" style={{ width: '1080px', height: '1080px' }}>
-          <div ref={bannerRef} className={`preview-banner border-4 ${templateColors[selectedTemplate].border} relative bg-gradient-to-br ${templateColors[selectedTemplate].bgColor}`} style={{
-            width: '1080px',
-            height: '1080px'
+      {/* Banner Preview Container - Fixed at top */}
+      <div className="px-3 sm:px-4 py-3 sm:py-4 flex-shrink-0 bg-background">
+        {/* Main Banner Preview Wrapper with aspect ratio */}
+        <div className="preview-banner-wrapper relative w-full max-w-[100vw] sm:max-w-[520px] mx-auto">
+          <div className="border-4 border-primary rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl">
+          <div ref={bannerRef} className={`preview-banner border-4 ${templateColors[selectedTemplate].border} relative w-full bg-gradient-to-br ${templateColors[selectedTemplate].bgColor}`} style={{
+            aspectRatio: '1 / 1',
+            width: '100%',
+            height: 'auto'
           }}>
               <div className="absolute inset-0">
                 {/* Background Image (if uploaded) or Gradient Background */}
                 {backgroundImage ? <img src={backgroundImage} alt="Template background" className="absolute inset-0 w-full h-full object-cover" /> : null}
 
-                {/* Top-Left Logo - FIXED PIXELS */}
+                {/* Top-Left Logo */}
                 {bannerSettings?.logo_left && <div className="absolute z-30" style={{
-                top: '32px',
-                left: '32px',
-                width: '162px',
-                height: '86px'
+                top: '3%',
+                left: '3%',
+                width: '15%',
+                height: '8%'
               }}>
                     <img src={bannerSettings.logo_left} alt="Left Logo" className="w-full h-full object-contain drop-shadow-lg" />
                   </div>}
 
-                {/* Top-Right Logo - FIXED PIXELS */}
+                {/* Top-Right Logo */}
                 {bannerSettings?.logo_right && <div className="absolute z-30" style={{
-                top: '32px',
-                right: '32px',
-                width: '162px',
-                height: '86px'
+                top: '3%',
+                right: '3%',
+                width: '15%',
+                height: '8%'
               }}>
                     <img src={bannerSettings.logo_right} alt="Right Logo" className="w-full h-full object-contain drop-shadow-lg" />
                   </div>}
 
-                {/* Congratulations Image - Admin controlled, always displayed - FIXED PIXELS */}
+                {/* Congratulations Image - Admin controlled, always displayed */}
                 {bannerDefaults?.congratulations_image && <div className="absolute z-20" style={{
-                top: '130px',
-                left: '783px',
+                top: '12%',
+                left: '72.5%',
                 transform: 'translateX(-50%)',
-                width: '518px',
-                height: '130px'
+                width: '48%',
+                height: '12%'
               }}>
                     <img src={bannerDefaults.congratulations_image} alt="Congratulations" className="w-full h-full drop-shadow-2xl object-cover" />
                   </div>}
 
-                {/* Text Below Congratulations Image - FIXED PIXELS */}
+                {/* Text Below Congratulations Image */}
                 <div className="absolute z-20" style={{
-                top: '189px',
-                left: '783px',
+                top: '17.5%',
+                left: '72.5%',
                 transform: 'translateX(-50%)',
-                width: '518px'
+                width: '48%'
               }}>
                     <p style={{
-                  fontSize: '10px',
+                  fontSize: 'clamp(7px, 0.9vw, 11px)',
                   lineHeight: '1.2',
                   whiteSpace: 'nowrap'
-                }} className="text-white text-center font-semibold drop-shadow-lg mx-[6px] px-0 py-0 pr-0 pb-0 my-[13px]">
+                }} className="text-white text-center font-semibold drop-shadow-lg text-xs mx-[6px] px-0 py-0 pr-0 pb-0 my-[13px]">
                       To Our Brand New Leader
                     </p>
                   </div>
 
-                {/* Top - Small circular upline avatars - FIXED PIXELS */}
-                <div className="absolute flex gap-1.5 z-20" style={{
-                top: '19px',
-                left: '540px',
+                {/* Top - Small circular upline avatars (70% scale = smaller) */}
+                <div className="absolute top-[1.8%] left-1/2 -translate-x-1/2 flex gap-1.5 z-20" style={{
                 transform: 'translateX(-50%) scale(1.1)'
               }}>
-                  {bannerData.uplines?.slice(0, 5).map((upline, idx) => <div key={upline.id} style={{ width: '28px', height: '28px' }} className="rounded-full border-2 border-white overflow-hidden shadow-lg">
+                  {bannerData.uplines?.slice(0, 5).map((upline, idx) => <div key={upline.id} className="w-7 h-7 rounded-full border-2 border-white overflow-hidden shadow-lg">
                       <img src={upline.avatar || primaryPhoto || "/placeholder.svg"} alt={upline.name} className="w-full h-full object-cover" />
                     </div>)}
                 </div>
 
-                {/* LEFT - Main User Photo - FIXED PIXELS */}
+                {/* LEFT - Main User Photo (85% height, rounded, bottom fade, flippable) */}
                 {primaryPhoto && <div className="absolute overflow-hidden rounded-2xl cursor-pointer transition-transform duration-500 ease-in-out" onClick={() => setIsPhotoFlipped(!isPhotoFlipped)} style={{
-                left: '32px',
-                top: '130px',
-                width: '432px',
-                height: '688px',
+                left: '3%',
+                top: '12%',
+                width: '40%',
+                height: '63.75%',
                 transform: isPhotoFlipped ? 'scaleX(-1)' : 'scaleX(1)'
               }}>
                     <img src={primaryPhoto} alt={mainBannerName} className="w-full h-full object-cover object-top" />
                     {/* Bottom feather fade overlay */}
                     <div className="absolute bottom-0 left-0 right-0 pointer-events-none" style={{
-                  height: '206px',
+                  height: '30%',
                   background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%)'
                 }} />
                   </div>}
 
-                {/* Golden Crown below user photo - FIXED PIXELS */}
+                {/* Golden Crown below user photo */}
                 <div className="absolute" style={{
-                left: '140px',
-                bottom: '216px',
-                width: '216px',
-                height: '86px'
+                left: '13%',
+                bottom: '20%',
+                width: '20%',
+                height: '8%'
               }}>
                   
                 </div>
 
-                {/* CENTER-RIGHT - Name - FIXED PIXELS */}
-                <div className="banner-text-content absolute" style={{
-                top: '270px',
-                left: '783px',
+                {/* CENTER-RIGHT - Name with responsive typography */}
+                <div className="banner-text-content absolute px-2" style={{
+                top: '25%',
+                left: '72.5%',
                 transform: 'translateX(-50%)',
-                width: '518px',
-                maxWidth: '518px',
-                paddingLeft: '8px',
-                paddingRight: '8px'
+                width: '48%',
+                maxWidth: '48%'
               }}>
-                  <h2 title={mainBannerName.toUpperCase()} style={{
-                    fontSize: '12px',
-                    lineHeight: '1.3'
-                  }} className="text-foreground tracking-wider font-extrabold text-center mx-auto">
+                  <h2 title={mainBannerName.toUpperCase()} className="banner-preview-name text-foreground tracking-wider font-extrabold text-center mx-auto">
                     {truncatedMainName.toUpperCase()}
                   </h2>
                   
-                  {bannerData.teamCity && <p title={bannerData.teamCity.toUpperCase()} style={{
-                    fontSize: '10px',
-                    marginTop: '8px',
-                    lineHeight: '1.2'
-                  }} className="text-foreground tracking-widest font-light font-sans text-center">
+                  {bannerData.teamCity && <p title={bannerData.teamCity.toUpperCase()} className="banner-team text-foreground tracking-widest mt-1 sm:mt-2 font-light font-sans text-center">
                       {bannerData.teamCity.toUpperCase()}
                     </p>}
                 </div>
-                {/* BOTTOM CENTER - Income - FIXED PIXELS */}
+                {/* BOTTOM CENTER - Income */}
                 {bannerData.chequeAmount && <div className="absolute text-center" style={{
-                bottom: '162px',
-                left: '54px',
-                width: '594px'
+                bottom: '15%',
+                left: '5%',
+                width: '55%'
               }}>
                     <p style={{
-                  fontSize: '12px',
+                  fontSize: 'clamp(8px, 1.5vw, 14px)',
                   textShadow: '1px 1px 2px rgba(0,0,0,0.8)'
-                }} className="text-white font-light tracking-widest text-left">
+                }} className="text-white font-light tracking-widest text-left text-xs">
                       THIS WEEK INCOME 
                     </p>
                     <p style={{
-                  fontSize: '64px',
+                  fontSize: 'clamp(32px, 7vw, 72px)',
                   textShadow: '4px 4px 8px rgba(0,0,0,0.9)',
                   lineHeight: '1'
-                }} className="font-black tracking-tight text-left mx-0 my-0 text-yellow-500 font-serif">
+                }} className="font-black tracking-tight text-left text-2xl mx-0 my-0 text-yellow-500 font-serif">
                       {Number(bannerData.chequeAmount).toLocaleString('en-IN')}
                     </p>
                   </div>}
 
-                {/* LOWER THIRD - Contact Info - FIXED PIXELS */}
+                {/* LOWER THIRD - Contact Info */}
                 <div className="banner-contact absolute" style={{
-                bottom: '32px',
-                left: '22px',
-                maxWidth: '540px'
+                bottom: '3%',
+                left: '2%',
+                maxWidth: '50%'
               }}>
                   <p className="text-foreground font-light tracking-wide" style={{
-                  fontSize: '6px',
+                  fontSize: 'clamp(5.6px, 0.94vw, 6.72px)',
                   textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
-                  marginBottom: '1px',
+                  marginBottom: '0.5px',
                   textTransform: 'uppercase',
                   position: 'relative',
                   top: '10%'
@@ -549,7 +539,7 @@ export default function BannerPreview() {
                     CALL FOR MENTORSHIP                                                                 
                   </p>
                   <p title={`+91 ${displayContact}`} style={{
-                  fontSize: '16px',
+                  fontSize: 'clamp(9px, 1.8vw, 18px)',
                   textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
@@ -559,30 +549,30 @@ export default function BannerPreview() {
                   </p>
                 </div>
 
-                {/* BOTTOM RIGHT - Mentor Photo - FIXED PIXELS */}
+                {/* BOTTOM RIGHT - Mentor Photo with rounded corners and feather fade (tap to flip) */}
                 {mentorPhoto && <div className="absolute overflow-hidden shadow-2xl rounded-xl cursor-pointer transition-transform duration-500 ease-in-out" onClick={() => setIsMentorPhotoFlipped(!isMentorPhotoFlipped)} style={{
                 bottom: 0,
                 right: 0,
-                width: '356px',
-                height: '416px',
+                width: '33%',
+                height: '38.5%',
                 transform: isMentorPhotoFlipped ? 'scaleX(-1)' : 'scaleX(1)'
               }}>
                     <img src={mentorPhoto} alt={profileName} className="w-full h-full object-cover object-top" />
                     {/* Bottom feather fade overlay */}
                     <div className="absolute bottom-0 left-0 right-0 pointer-events-none" style={{
-                  height: '125px',
+                  height: '30%',
                   background: 'linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 100%)'
                 }} />
                   </div>}
 
 
-                {/* BOTTOM CENTER - Profile Name & Rank - FIXED PIXELS */}
+                {/* BOTTOM CENTER - Profile Name & Rank */}
                 <div className="absolute text-center" style={{
-                bottom: '32px',
-                left: '540px',
+                bottom: '3%',
+                left: '50%',
                 transform: 'translateX(-45%)',
                 width: 'max-content',
-                maxWidth: '864px',
+                maxWidth: '80%',
                 zIndex: 3
               }}>
                   <p title={profileName} className="banner-profile-name text-foreground font-extrabold tracking-wider" style={{
