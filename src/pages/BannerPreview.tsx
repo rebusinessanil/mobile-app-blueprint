@@ -59,6 +59,27 @@ export default function BannerPreview() {
   const bannerRef = useRef<HTMLDivElement>(null);
   const [isAdmin, setIsAdmin] = useState(false);
 
+  // Compute scale factor for display
+  useEffect(() => {
+    const updateScale = () => {
+      const container = document.querySelector('.banner-scale-container') as HTMLElement;
+      if (!container) return;
+      
+      const parent = container.parentElement;
+      if (!parent) return;
+      
+      const parentWidth = parent.clientWidth;
+      const scale = parentWidth / 1350;
+      
+      container.style.setProperty('--banner-scale', scale.toString());
+      container.style.transform = `scale(${scale})`;
+    };
+    
+    updateScale();
+    window.addEventListener('resize', updateScale);
+    return () => window.removeEventListener('resize', updateScale);
+  }, []);
+
   // Get authenticated user and check admin status
   useEffect(() => {
     supabase.auth.getSession().then(async ({
@@ -231,86 +252,86 @@ export default function BannerPreview() {
     return null;
   }
 
-  // 16 template variations (4x4 grid)
+  // 16 template variations (4x4 grid) with actual CSS colors
   const templateColors = [{
     id: 0,
     name: "Green Black",
-    bgColor: "from-black via-gray-900 to-black",
+    bgGradient: "linear-gradient(to bottom right, #000000, #111827, #000000)",
     border: "border-green-500"
   }, {
     id: 1,
     name: "Purple Pink",
-    bgColor: "from-purple-900 via-pink-900 to-purple-800",
+    bgGradient: "linear-gradient(to bottom right, #581c87, #831843, #6b21a8)",
     border: "border-pink-500"
   }, {
     id: 2,
     name: "Blue Indigo",
-    bgColor: "from-blue-900 via-indigo-900 to-blue-800",
+    bgGradient: "linear-gradient(to bottom right, #1e3a8a, #312e81, #1e40af)",
     border: "border-blue-500"
   }, {
     id: 3,
     name: "Red Orange",
-    bgColor: "from-red-900 via-orange-900 to-red-800",
+    bgGradient: "linear-gradient(to bottom right, #7f1d1d, #7c2d12, #991b1b)",
     border: "border-orange-500"
   }, {
     id: 4,
     name: "Emerald Teal",
-    bgColor: "from-emerald-900 via-teal-900 to-emerald-800",
+    bgGradient: "linear-gradient(to bottom right, #064e3b, #134e4a, #065f46)",
     border: "border-teal-500"
   }, {
     id: 5,
     name: "Pink Purple",
-    bgColor: "from-pink-900 via-purple-900 to-pink-800",
+    bgGradient: "linear-gradient(to bottom right, #831843, #581c87, #9d174d)",
     border: "border-purple-500"
   }, {
     id: 6,
     name: "Cyan Blue",
-    bgColor: "from-cyan-900 via-blue-900 to-cyan-800",
+    bgGradient: "linear-gradient(to bottom right, #164e63, #1e3a8a, #155e75)",
     border: "border-cyan-500"
   }, {
     id: 7,
     name: "Yellow Orange",
-    bgColor: "from-yellow-900 via-orange-900 to-yellow-800",
+    bgGradient: "linear-gradient(to bottom right, #713f12, #7c2d12, #854d0e)",
     border: "border-yellow-500"
   }, {
     id: 8,
     name: "Indigo Purple",
-    bgColor: "from-indigo-900 via-purple-900 to-indigo-800",
+    bgGradient: "linear-gradient(to bottom right, #312e81, #581c87, #3730a3)",
     border: "border-indigo-500"
   }, {
     id: 9,
     name: "Rose Red",
-    bgColor: "from-rose-900 via-red-900 to-rose-800",
+    bgGradient: "linear-gradient(to bottom right, #881337, #7f1d1d, #9f1239)",
     border: "border-rose-500"
   }, {
     id: 10,
     name: "Violet Purple",
-    bgColor: "from-violet-900 via-purple-900 to-violet-800",
+    bgGradient: "linear-gradient(to bottom right, #4c1d95, #581c87, #5b21b6)",
     border: "border-violet-500"
   }, {
     id: 11,
     name: "Lime Green",
-    bgColor: "from-lime-900 via-green-900 to-lime-800",
+    bgGradient: "linear-gradient(to bottom right, #365314, #14532d, #3f6212)",
     border: "border-lime-500"
   }, {
     id: 12,
     name: "Amber Orange",
-    bgColor: "from-amber-900 via-orange-900 to-amber-800",
+    bgGradient: "linear-gradient(to bottom right, #78350f, #7c2d12, #92400e)",
     border: "border-amber-500"
   }, {
     id: 13,
     name: "Sky Blue",
-    bgColor: "from-sky-900 via-blue-900 to-sky-800",
+    bgGradient: "linear-gradient(to bottom right, #0c4a6e, #1e3a8a, #075985)",
     border: "border-sky-500"
   }, {
     id: 14,
     name: "Fuchsia Pink",
-    bgColor: "from-fuchsia-900 via-pink-900 to-fuchsia-800",
+    bgGradient: "linear-gradient(to bottom right, #701a75, #831843, #86198f)",
     border: "border-fuchsia-500"
   }, {
     id: 15,
     name: "Slate Gray",
-    bgColor: "from-slate-900 via-gray-900 to-slate-800",
+    bgGradient: "linear-gradient(to bottom right, #0f172a, #111827, #1e293b)",
     border: "border-slate-500"
   }];
   const handleDownload = async () => {
@@ -319,66 +340,57 @@ export default function BannerPreview() {
       return;
     }
     setIsDownloading(true);
-    const loadingToast = toast.loading("Generating Full HD banner...");
+    const loadingToast = toast.loading("Generating pixel-perfect banner...");
     try {
-      // Fixed dimensions for Full HD Square export (1080×1080)
-      const TARGET_WIDTH = 1080;
-      const TARGET_HEIGHT = 1080;
-
-      // Create a hidden clone for perfect capture
-      const cloneContainer = document.createElement('div');
-      cloneContainer.style.position = 'fixed';
-      cloneContainer.style.left = '-9999px';
-      cloneContainer.style.top = '0';
-      cloneContainer.style.width = `${TARGET_WIDTH}px`;
-      cloneContainer.style.height = `${TARGET_HEIGHT}px`;
-      cloneContainer.style.overflow = 'hidden';
-      document.body.appendChild(cloneContainer);
-
-      // Clone the banner element
-      const bannerClone = bannerRef.current.cloneNode(true) as HTMLElement;
-      bannerClone.style.width = `${TARGET_WIDTH}px`;
-      bannerClone.style.height = `${TARGET_HEIGHT}px`;
-      bannerClone.style.aspectRatio = '1 / 1';
-      bannerClone.style.position = 'relative';
-      cloneContainer.appendChild(bannerClone);
-
-      // Wait for images to load in clone
-      const images = bannerClone.querySelectorAll('img');
+      // Wait for all images to fully load
+      const images = bannerRef.current.querySelectorAll('img');
       await Promise.all(
         Array.from(images).map(img => {
           if (img.complete) return Promise.resolve();
-          return new Promise((resolve) => {
-            img.onload = () => resolve(null);
-            img.onerror = () => resolve(null);
+          return new Promise((resolve, reject) => {
+            img.onload = resolve;
+            img.onerror = reject;
+            // Set timeout to prevent hanging
+            setTimeout(resolve, 5000);
           });
         })
       );
 
-      // Capture the clone at exact dimensions
-      const canvas = await html2canvas(bannerClone, {
-        scale: 1,
+      // Small delay to ensure rendering is complete
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // Capture the fixed 1350×1350 canvas with pixel-perfect settings
+      const canvas = await html2canvas(bannerRef.current, {
+        width: 1350,
+        height: 1350,
+        scale: 3, // 3x for high quality = 4050×4050 output
         backgroundColor: "#000000",
         logging: false,
         useCORS: true,
         allowTaint: true,
-        width: TARGET_WIDTH,
-        height: TARGET_HEIGHT,
-        windowWidth: TARGET_WIDTH,
-        windowHeight: TARGET_HEIGHT,
-        imageTimeout: 0,
-        onclone: (clonedDoc) => {
-          const clonedElement = clonedDoc.querySelector('[data-banner-clone]');
-          if (clonedElement) {
-            (clonedElement as HTMLElement).style.transform = 'none';
-          }
+        imageTimeout: 15000,
+        removeContainer: true,
+        // Critical settings for pixel-perfect export
+        foreignObjectRendering: false, // Prevents transform issues
+        windowWidth: 1350,
+        windowHeight: 1350,
+        x: 0,
+        y: 0,
+        scrollX: 0,
+        scrollY: 0,
+        // Ensure exact positioning
+        ignoreElements: (element) => {
+          // Skip any scroll containers or wrappers outside the canvas
+          return element.classList?.contains('scrollbar-hide') || false;
         }
       });
 
-      // Remove clone
-      document.body.removeChild(cloneContainer);
+      // Verify canvas dimensions
+      if (canvas.width !== 4050 || canvas.height !== 4050) {
+        console.warn(`Canvas size mismatch: ${canvas.width}×${canvas.height}, expected 4050×4050`);
+      }
 
-      // Convert to JPG blob with quality 0.95
+      // Convert to PNG blob with high quality for pixel-perfect output
       canvas.toBlob(blob => {
         toast.dismiss(loadingToast);
         if (!blob) {
@@ -388,12 +400,13 @@ export default function BannerPreview() {
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
         const timestamp = new Date().getTime();
-        link.download = `ReBusiness-Banner-${bannerData.rankName}-${timestamp}.jpg`;
+        link.download = `ReBusiness-Banner-${bannerData.rankName}-${timestamp}.png`;
         link.href = url;
         link.click();
         URL.revokeObjectURL(url);
-        toast.success("Banner downloaded! (1080×1080 Full HD JPG)");
-      }, "image/jpeg", 0.95);
+        const sizeMB = (blob.size / 1024 / 1024).toFixed(2);
+        toast.success(`Pixel-perfect banner downloaded! (${sizeMB} MB, 4050×4050 PNG)`);
+      }, "image/png", 0.95); // Higher quality for pixel-perfect export
     } catch (error) {
       console.error("Download error:", error);
       toast.dismiss(loadingToast);
@@ -421,222 +434,306 @@ export default function BannerPreview() {
 
       {/* Banner Preview Container - Fixed at top */}
       <div className="px-3 sm:px-4 py-3 sm:py-4 flex-shrink-0 bg-background">
-        {/* Main Banner Preview Wrapper with aspect ratio */}
-        <div className="preview-banner-wrapper relative w-full max-w-[100vw] sm:max-w-[520px] mx-auto">
+        {/* Display wrapper with responsive scaling */}
+        <div className="relative w-full max-w-[100vw] sm:max-w-[520px] mx-auto">
           <div className="border-4 border-primary rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl">
-          <div ref={bannerRef} data-banner-clone className={`preview-banner border-4 ${templateColors[selectedTemplate].border} relative w-full bg-gradient-to-br ${templateColors[selectedTemplate].bgColor}`} style={{
-            aspectRatio: '1 / 1',
-            width: '100%',
-            height: 'auto'
-          }}>
+            {/* Scale wrapper for display - maintains 1350×1350 internal canvas */}
+            <div style={{
+              width: '100%',
+              aspectRatio: '1 / 1',
+              overflow: 'hidden',
+              position: 'relative'
+            }}>
+              <div style={{
+                transform: 'scale(var(--banner-scale))',
+                transformOrigin: 'top left',
+                width: '1350px',
+                height: '1350px'
+              }} className="banner-scale-container">
+                <div 
+                  ref={bannerRef} 
+                  id="banner-canvas"
+                  className={`border-4 ${templateColors[selectedTemplate].border}`}
+                  style={{
+                    position: 'relative',
+                    width: '1350px',
+                    height: '1350px',
+                    background: templateColors[selectedTemplate].bgGradient,
+                    overflow: 'hidden'
+                  }}
+                >
               <div className="absolute inset-0">
                 {/* Background Image (if uploaded) or Gradient Background */}
                 {backgroundImage ? <img src={backgroundImage} alt="Template background" className="absolute inset-0 w-full h-full object-cover" /> : null}
 
                 {/* Top-Left Logo */}
                 {bannerSettings?.logo_left && <div className="absolute z-30" style={{
-                top: '3%',
-                left: '3%',
-                width: '15%',
-                height: '8%'
+                top: '6px',
+                left: '6px',
+                width: '379px',
+                height: '216px'
               }}>
-                    <img src={bannerSettings.logo_left} alt="Left Logo" className="w-full h-full object-contain drop-shadow-lg" />
+                    <img src={bannerSettings.logo_left} alt="Left Logo" style={{ width: '100%', height: '100%', objectFit: 'contain', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.5))' }} />
                   </div>}
 
                 {/* Top-Right Logo */}
                 {bannerSettings?.logo_right && <div className="absolute z-30" style={{
-                top: '3%',
-                right: '3%',
-                width: '15%',
-                height: '8%'
+                top: '6px',
+                right: '6px',
+                width: '379px',
+                height: '216px'
               }}>
-                    <img src={bannerSettings.logo_right} alt="Right Logo" className="w-full h-full object-contain drop-shadow-lg" />
+                    <img src={bannerSettings.logo_right} alt="Right Logo" style={{ width: '100%', height: '100%', objectFit: 'contain', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.5))' }} />
                   </div>}
 
                 {/* Congratulations Image - Admin controlled, always displayed */}
                 {bannerDefaults?.congratulations_image && <div className="absolute z-20" style={{
-                top: '12%',
-                left: '72.5%',
+                top: '162px',
+                left: '978px',
                 transform: 'translateX(-50%)',
-                width: '48%',
-                height: '12%'
+                width: '648px',
+                height: '162px'
               }}>
-                    <img src={bannerDefaults.congratulations_image} alt="Congratulations" className="w-full h-full drop-shadow-2xl object-cover" />
+                    <img src={bannerDefaults.congratulations_image} alt="Congratulations" style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.7))' }} />
                   </div>}
 
                 {/* Text Below Congratulations Image */}
                 <div className="absolute z-20" style={{
-                top: '17.5%',
-                left: '72.5%',
+                top: '236px',
+                left: '978px',
                 transform: 'translateX(-50%)',
-                width: '48%'
+                width: '648px',
+                textAlign: 'center'
               }}>
                     <p style={{
-                  fontSize: 'clamp(7px, 0.9vw, 11px)',
+                  fontSize: '36px',
                   lineHeight: '1.2',
-                  whiteSpace: 'nowrap'
-                }} className="text-white text-center font-semibold drop-shadow-lg text-xs mx-[6px] px-0 py-0 pr-0 pb-0 my-[13px]">
+                  whiteSpace: 'nowrap',
+                  color: '#ffffff',
+                  fontWeight: '600',
+                  textShadow: '2px 2px 6px rgba(0,0,0,0.8)',
+                  margin: '17px 8px'
+                }}>
                       To Our Brand New Leader
                     </p>
                   </div>
 
-                {/* Top - Small circular upline avatars (70% scale = smaller) */}
-                <div className="absolute top-[1.8%] left-1/2 -translate-x-1/2 flex gap-1.5 z-20" style={{
-                transform: 'translateX(-50%) scale(1.1)'
+                {/* Top - Upline avatars - FIXED SIZE AND POSITION */}
+                <div className="absolute z-20" style={{
+                top: '10px',
+                left: '675px',
+                transform: 'translateX(-50%)',
+                display: 'flex',
+                gap: '12px'
               }}>
-                  {bannerData.uplines?.slice(0, 5).map((upline, idx) => <div key={upline.id} className="w-7 h-7 rounded-full border-2 border-white overflow-hidden shadow-lg">
-                      <img src={upline.avatar || primaryPhoto || "/placeholder.svg"} alt={upline.name} className="w-full h-full object-cover" />
+                  {bannerData.uplines?.slice(0, 5).map((upline, idx) => <div key={upline.id} style={{
+                    width: '120px', /* LOCKED */
+                    height: '120px', /* LOCKED */
+                    minWidth: '120px',
+                    minHeight: '120px',
+                    maxWidth: '120px',
+                    maxHeight: '120px',
+                    borderRadius: '60px',
+                    border: '3px solid #ffffff',
+                    overflow: 'hidden',
+                    boxShadow: '0 6px 12px rgba(0,0,0,0.5)',
+                    flexShrink: 0
+                  }}>
+                      <img src={upline.avatar || primaryPhoto || "/placeholder.svg"} alt={upline.name} style={{ width: '120px', height: '120px', objectFit: 'cover' }} />
                     </div>)}
                 </div>
 
-                {/* LEFT - Main User Photo (85% height, rounded, bottom fade, flippable) */}
-                {primaryPhoto && <div className="absolute overflow-hidden rounded-2xl cursor-pointer transition-transform duration-500 ease-in-out" onClick={() => setIsPhotoFlipped(!isPhotoFlipped)} style={{
-                left: '3%',
-                top: '12%',
-                width: '40%',
-                height: '63.75%',
+                {/* LEFT - Main User Photo - FIXED SIZE AND POSITION */}
+                {primaryPhoto && <div className="absolute overflow-hidden cursor-pointer transition-transform duration-500 ease-in-out" onClick={() => setIsPhotoFlipped(!isPhotoFlipped)} style={{
+                left: '40px', /* LOCKED */
+                top: '162px', /* LOCKED */
+                width: '540px', /* LOCKED */
+                height: '860px', /* LOCKED */
+                minWidth: '540px',
+                minHeight: '860px',
+                maxWidth: '540px',
+                maxHeight: '860px',
+                borderRadius: '24px',
                 transform: isPhotoFlipped ? 'scaleX(-1)' : 'scaleX(1)'
               }}>
-                    <img src={primaryPhoto} alt={mainBannerName} className="w-full h-full object-cover object-top" />
+                    <img src={primaryPhoto} alt={mainBannerName} style={{ width: '540px', height: '860px', objectFit: 'cover', objectPosition: 'top' }} />
                     {/* Bottom feather fade overlay */}
                     <div className="absolute bottom-0 left-0 right-0 pointer-events-none" style={{
-                  height: '30%',
+                  height: '258px', /* Fixed 30% of 860px */
                   background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%)'
                 }} />
                   </div>}
 
                 {/* Golden Crown below user photo */}
                 <div className="absolute" style={{
-                left: '13%',
-                bottom: '20%',
-                width: '20%',
-                height: '8%'
+                left: '176px',
+                bottom: '270px',
+                width: '270px',
+                height: '108px'
               }}>
                   
                 </div>
 
-                {/* CENTER-RIGHT - Name with responsive typography */}
-                <div className="banner-text-content absolute px-2" style={{
-                top: '25%',
-                left: '72.5%',
+                {/* CENTER-RIGHT - Name - FIXED SIZE, POSITION, FONTS */}
+                <div className="banner-text-content absolute" style={{
+                top: '337px', /* LOCKED */
+                left: '978px', /* LOCKED */
                 transform: 'translateX(-50%)',
-                width: '48%',
-                maxWidth: '48%'
+                width: '648px', /* LOCKED */
+                minWidth: '648px',
+                maxWidth: '648px',
+                padding: '0 27px'
               }}>
-                  <h2 title={mainBannerName.toUpperCase()} className="banner-preview-name text-foreground tracking-wider font-extrabold text-center mx-auto">
+                  <h2 title={mainBannerName.toUpperCase()} className="banner-preview-name text-center" style={{
+                    color: '#ffffff',
+                    textAlign: 'center',
+                    margin: '0 auto'
+                  }}>
                     {truncatedMainName.toUpperCase()}
                   </h2>
                   
-                  {bannerData.teamCity && <p title={bannerData.teamCity.toUpperCase()} className="banner-team text-foreground tracking-widest mt-1 sm:mt-2 font-light font-sans text-center">
+                  {bannerData.teamCity && <p title={bannerData.teamCity.toUpperCase()} className="banner-team text-center" style={{ 
+                    marginTop: '13px',
+                    color: '#ffffff',
+                    textAlign: 'center'
+                  }}>
                       {bannerData.teamCity.toUpperCase()}
                     </p>}
                 </div>
-                {/* BOTTOM CENTER - Income */}
-                {bannerData.chequeAmount && <div className="absolute text-center" style={{
-                bottom: '15%',
-                left: '5%',
-                width: '55%'
+                {/* BOTTOM CENTER - Income - FIXED FONTS AND POSITION */}
+                {bannerData.chequeAmount && <div className="absolute" style={{
+                bottom: '202px', /* LOCKED */
+                left: '67px', /* LOCKED */
+                width: '743px', /* LOCKED */
+                minWidth: '743px',
+                maxWidth: '743px'
               }}>
                     <p style={{
-                  fontSize: 'clamp(8px, 1.5vw, 14px)',
-                  textShadow: '1px 1px 2px rgba(0,0,0,0.8)'
-                }} className="text-white font-light tracking-widest text-left text-xs">
+                  fontSize: '36px', /* LOCKED */
+                  textShadow: '2px 2px 4px rgba(0,0,0,0.9)',
+                  color: '#ffffff',
+                  fontWeight: '500',
+                  letterSpacing: '1px',
+                  textAlign: 'left',
+                  margin: 0,
+                  marginBottom: '28px'
+                }}>
                       THIS WEEK INCOME 
                     </p>
                     <p style={{
-                  fontSize: 'clamp(32px, 7vw, 72px)',
-                  textShadow: '4px 4px 8px rgba(0,0,0,0.9)',
-                  lineHeight: '1'
-                }} className="font-black tracking-tight text-left text-2xl mx-0 my-0 text-yellow-500 font-serif">
+                  fontSize: '62px', /* LOCKED */
+                  textShadow: '4px 4px 12px rgba(0,0,0,0.95)',
+                  lineHeight: '1',
+                  fontWeight: '800',
+                  letterSpacing: '2px',
+                  textAlign: 'left',
+                  margin: 0,
+                  color: '#FFD600',
+                  fontFamily: 'sans-serif'
+                }}>
                       {Number(bannerData.chequeAmount).toLocaleString('en-IN')}
                     </p>
                   </div>}
 
-                {/* LOWER THIRD - Contact Info */}
-                <div className="banner-contact absolute" style={{
-                bottom: '3%',
-                left: '2%',
-                maxWidth: '50%'
+                {/* LOWER THIRD - Contact Info - FIXED FONTS AND POSITION */}
+                <div className="absolute" style={{
+                bottom: '40px', /* LOCKED */
+                left: '27px', /* LOCKED */
+                width: '675px', /* LOCKED */
+                minWidth: '675px',
+                maxWidth: '675px'
               }}>
-                  <p className="text-foreground font-light tracking-wide" style={{
-                  fontSize: 'clamp(5.6px, 0.94vw, 6.72px)',
-                  textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
-                  marginBottom: '0.5px',
+                  <p style={{
+                  fontSize: '9px !important', /* LOCKED */
+                  textShadow: '2px 2px 4px rgba(0,0,0,0.9)',
+                  marginBottom: '1px',
                   textTransform: 'uppercase',
                   position: 'relative',
-                  top: '10%'
+                  top: '13px',
+                  color: '#ffffff',
+                  fontWeight: '300',
+                  letterSpacing: '2px'
                 }}>
                     CALL FOR MENTORSHIP                                                                 
                   </p>
-                  <p title={`+91 ${displayContact}`} style={{
-                  fontSize: 'clamp(9px, 1.8vw, 18px)',
-                  textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
+                  <p title={`+91 ${displayContact}`} className="banner-contact" style={{
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
-                  textOverflow: 'ellipsis'
-                }} className="text-foreground font-bold tracking-wide font-sans">
+                  textOverflow: 'ellipsis',
+                  color: '#ffffff',
+                  fontFamily: 'sans-serif'
+                }}>
                     +91 {displayContact}
                   </p>
                 </div>
 
-                {/* BOTTOM RIGHT - Mentor Photo with rounded corners and feather fade (tap to flip) */}
-                {mentorPhoto && <div className="absolute overflow-hidden shadow-2xl rounded-xl cursor-pointer transition-transform duration-500 ease-in-out" onClick={() => setIsMentorPhotoFlipped(!isMentorPhotoFlipped)} style={{
-                bottom: 0,
-                right: 0,
-                width: '33%',
-                height: '38.5%',
+                {/* BOTTOM RIGHT - Mentor Photo - FIXED SIZE AND POSITION */}
+                {mentorPhoto && <div className="absolute overflow-hidden shadow-2xl cursor-pointer transition-transform duration-500 ease-in-out" onClick={() => setIsMentorPhotoFlipped(!isMentorPhotoFlipped)} style={{
+                bottom: 0, /* LOCKED */
+                right: 0, /* LOCKED */
+                width: '445px', /* LOCKED */
+                height: '520px', /* LOCKED */
+                minWidth: '445px',
+                minHeight: '520px',
+                maxWidth: '445px',
+                maxHeight: '520px',
+                borderRadius: '16px',
                 transform: isMentorPhotoFlipped ? 'scaleX(-1)' : 'scaleX(1)'
               }}>
-                    <img src={mentorPhoto} alt={profileName} className="w-full h-full object-cover object-top" />
+                    <img src={mentorPhoto} alt={profileName} style={{ width: '445px', height: '520px', objectFit: 'cover', objectPosition: 'top' }} />
                     {/* Bottom feather fade overlay */}
                     <div className="absolute bottom-0 left-0 right-0 pointer-events-none" style={{
-                  height: '30%',
+                  height: '156px', /* Fixed 30% of 520px */
                   background: 'linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 100%)'
                 }} />
                   </div>}
 
 
-                {/* BOTTOM CENTER - Profile Name & Rank */}
+                {/* BOTTOM CENTER - Profile Name & Rank - FIXED FONTS AND POSITION */}
                 <div className="absolute text-center" style={{
-                bottom: '3%',
-                left: '50%',
+                bottom: '40px', /* LOCKED */
+                left: '50%', /* LOCKED */
                 transform: 'translateX(-45%)',
                 width: 'max-content',
-                maxWidth: '80%',
+                maxWidth: '1080px',
                 zIndex: 3
               }}>
-                  <p title={profileName} className="banner-profile-name text-foreground font-extrabold tracking-wider" style={{
-                  fontSize: '9px',
-                  textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
+                  <p title={profileName} className="banner-profile-name" style={{
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   marginBottom: '1px',
                   position: 'relative',
-                  top: '15%'
+                  top: '20px',
+                  color: '#ffffff',
+                  textAlign: 'center'
                 }}>
                     {truncatedProfileName.toUpperCase()}
                   </p>
-                  <p className="banner-profile-rank text-yellow-500 font-semibold tracking-widest" style={{
-                  fontSize: '7px',
-                  textShadow: '1px 1px 3px rgba(0,0,0,0.8)',
-                  textTransform: 'uppercase'
+                  <p className="banner-profile-rank" style={{
+                  textTransform: 'uppercase',
+                  color: '#eab308',
+                  textAlign: 'center'
                 }}>
                     {displayRank}
                   </p>
                 </div>
 
-                {/* Achievement Stickers - Only for current slot */}
+                {/* Achievement Stickers - FIXED SIZE */}
                 {stickerImages[selectedTemplate + 1]?.map((sticker, index) => {
                 return <img key={sticker.id} src={sticker.url} alt="Achievement Sticker" className="absolute pointer-events-none animate-in fade-in zoom-in duration-300" style={{
                   left: `${sticker.position_x ?? 50}%`,
                   top: `${sticker.position_y ?? 50}%`,
                   transform: `translate(-50%, -50%) scale(${sticker.scale ?? 1}) rotate(${sticker.rotation ?? 0}deg)`,
                   transformOrigin: 'center center',
-                  width: '120px',
-                  height: '120px',
+                  width: '162px', /* LOCKED */
+                  height: '162px', /* LOCKED */
+                  minWidth: '162px',
+                  minHeight: '162px',
+                  maxWidth: '162px',
+                  maxHeight: '162px',
                   objectFit: 'contain',
-                  filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.3))',
+                  filter: 'drop-shadow(0 6px 9px rgba(0,0,0,0.4))',
                   zIndex: 10
                 }} />;
               })}
@@ -644,6 +741,8 @@ export default function BannerPreview() {
                 {/* BOTTOM RIGHT - Mentor Name and Title (Moved to bottom-most position) */}
                 
 
+              </div>
+                </div>
               </div>
             </div>
           </div>
@@ -680,8 +779,8 @@ export default function BannerPreview() {
           }, (_, i) => i + 1).map(slotNum => {
             const bg = backgrounds.find(b => b.slot_number === slotNum);
             const isSelected = selectedTemplate === slotNum - 1;
-            return <button key={slotNum} onClick={() => setSelectedTemplate(slotNum - 1)} className={`aspect-square rounded-lg overflow-hidden transition-all ${isSelected ? 'border-4 border-[#FFD700] scale-105 shadow-[0_0_20px_rgba(255,215,0,0.5)]' : 'border-2 border-gray-600 hover:border-[#FFD700] hover:scale-105'}`}>
-                    {bg?.background_image_url ? <img src={bg.background_image_url} alt={`Slot ${slotNum}`} className="w-full h-full object-cover" /> : <div className={`w-full h-full bg-gradient-to-br ${templateColors[slotNum - 1]?.bgColor || 'from-gray-800 to-gray-900'} flex items-center justify-center`}>
+                  return <button key={slotNum} onClick={() => setSelectedTemplate(slotNum - 1)} className={`aspect-square rounded-lg overflow-hidden transition-all ${isSelected ? 'border-4 border-[#FFD700] scale-105 shadow-[0_0_20px_rgba(255,215,0,0.5)]' : 'border-2 border-gray-600 hover:border-[#FFD700] hover:scale-105'}`}>
+                    {bg?.background_image_url ? <img src={bg.background_image_url} alt={`Slot ${slotNum}`} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center" style={{ background: templateColors[slotNum - 1]?.bgGradient || 'linear-gradient(to bottom right, #1f2937, #111827)' }}>
                          <span className="text-white text-xs font-bold">{slotNum}</span>
                       </div>}
                   </button>;
