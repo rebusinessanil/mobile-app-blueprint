@@ -350,7 +350,6 @@ export default function BannerPreview() {
           return new Promise((resolve, reject) => {
             img.onload = resolve;
             img.onerror = reject;
-            // Set timeout to prevent hanging
             setTimeout(resolve, 5000);
           });
         })
@@ -359,45 +358,51 @@ export default function BannerPreview() {
       // Small delay to ensure rendering is complete
       await new Promise(resolve => setTimeout(resolve, 100));
 
-      // Capture the fixed 1350×1350 canvas with pixel-perfect settings
+      // Store original parent styles to restore later
+      const scaleContainer = bannerRef.current.closest('.banner-scale-container') as HTMLElement;
+      const originalTransform = scaleContainer ? scaleContainer.style.transform : '';
+      const originalWidth = scaleContainer ? scaleContainer.style.width : '';
+      const originalHeight = scaleContainer ? scaleContainer.style.height : '';
+
+      // Temporarily remove scale transform for capture
+      if (scaleContainer) {
+        scaleContainer.style.transform = 'none';
+        scaleContainer.style.width = '1350px';
+        scaleContainer.style.height = '1350px';
+      }
+
+      // Capture the banner at full 1350×1350 size
       const canvas = await html2canvas(bannerRef.current, {
         width: 1350,
         height: 1350,
         scale: 3, // 3x for high quality = 4050×4050 output
-        backgroundColor: null, // No background to prevent black padding
+        backgroundColor: null,
         logging: false,
         useCORS: true,
         allowTaint: true,
         imageTimeout: 15000,
-        removeContainer: false,
-        // Critical settings for pixel-perfect export
-        foreignObjectRendering: false, // Prevents transform issues
+        foreignObjectRendering: false,
         windowWidth: 1350,
         windowHeight: 1350,
         x: 0,
         y: 0,
         scrollX: 0,
-        scrollY: 0,
-        onclone: (clonedDoc) => {
-          // Force exact dimensions on the cloned banner element
-          const clonedBanner = clonedDoc.getElementById('banner-canvas');
-          if (clonedBanner) {
-            clonedBanner.style.width = '1350px';
-            clonedBanner.style.height = '1350px';
-            clonedBanner.style.position = 'relative';
-            clonedBanner.style.margin = '0';
-            clonedBanner.style.padding = '0';
-            clonedBanner.style.overflow = 'hidden';
-          }
-        }
+        scrollY: 0
       });
+
+      // Restore original transform immediately after capture
+      if (scaleContainer) {
+        scaleContainer.style.transform = originalTransform;
+        scaleContainer.style.width = originalWidth;
+        scaleContainer.style.height = originalHeight;
+      }
 
       // Verify canvas dimensions
       if (canvas.width !== 4050 || canvas.height !== 4050) {
         console.warn(`Canvas size mismatch: ${canvas.width}×${canvas.height}, expected 4050×4050`);
       }
 
-      // Convert to PNG blob with high quality for pixel-perfect output
+      // Convert to PNG blob with high quality
       canvas.toBlob(blob => {
         toast.dismiss(loadingToast);
         if (!blob) {
@@ -412,8 +417,8 @@ export default function BannerPreview() {
         link.click();
         URL.revokeObjectURL(url);
         const sizeMB = (blob.size / 1024 / 1024).toFixed(2);
-        toast.success(`Pixel-perfect banner downloaded! (${sizeMB} MB, 4050×4050 PNG)`);
-      }, "image/png", 0.95); // Higher quality for pixel-perfect export
+        toast.success(`Full-size banner downloaded! (${sizeMB} MB, 4050×4050 PNG)`);
+      }, "image/png", 0.95);
     } catch (error) {
       console.error("Download error:", error);
       toast.dismiss(loadingToast);
