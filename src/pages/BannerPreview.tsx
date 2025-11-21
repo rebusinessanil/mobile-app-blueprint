@@ -374,30 +374,29 @@ export default function BannerPreview() {
   };
   return <div className="h-screen overflow-hidden bg-background flex flex-col">
       {/* Header - Fixed */}
-      <header className="bg-background/95 backdrop-blur-sm z-40 px-4 sm:px-6 py-3 sm:py-4 flex-shrink-0">
+      <header className="bg-background/95 backdrop-blur-sm z-40 px-4 py-4 flex-shrink-0">
         <div className="flex items-center justify-between max-w-[600px] mx-auto">
-          <button onClick={() => navigate(-1)} className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl border-2 border-foreground flex items-center justify-center hover:bg-foreground/10 transition-colors touch-target">
-            <ArrowLeft className="w-5 h-5 sm:w-6 sm:h-6 text-foreground" />
+          <button onClick={() => navigate(-1)} className="w-12 h-12 rounded-xl border-2 border-foreground flex items-center justify-center hover:bg-foreground/10 transition-colors touch-target">
+            <ArrowLeft className="w-6 h-6 text-foreground" />
           </button>
           
-          <h1 className="text-base sm:text-xl md:text-2xl font-bold text-foreground tracking-widest">BANNER PREVIEW</h1>
+          <h1 className="text-xl font-bold text-foreground tracking-widest">BANNER PREVIEW</h1>
           
-          {isAdmin && <button onClick={() => setIsStickersOpen(true)} className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl border-2 border-primary bg-primary/10 flex items-center justify-center hover:bg-primary/20 transition-colors touch-target">
-              <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
+          {isAdmin && <button onClick={() => setIsStickersOpen(true)} className="w-12 h-12 rounded-xl border-2 border-primary bg-primary/10 flex items-center justify-center hover:bg-primary/20 transition-colors touch-target">
+              <Sparkles className="w-6 h-6 text-primary" />
             </button>}
-          {!isAdmin && <div className="w-10 h-10 sm:w-12 sm:h-12" />}
+          {!isAdmin && <div className="w-12 h-12" />}
         </div>
       </header>
 
       {/* Banner Preview Container - Fixed at top */}
-      <div className="px-3 sm:px-4 py-3 sm:py-4 flex-shrink-0 bg-background">
-        {/* Main Banner Preview Wrapper with aspect ratio */}
-        <div className="preview-banner-wrapper relative w-full max-w-[100vw] sm:max-w-[520px] mx-auto">
-          <div className="border-4 border-primary rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl">
-          <div ref={bannerRef} className={`preview-banner border-4 ${templateColors[selectedTemplate].border} relative w-full bg-gradient-to-br ${templateColors[selectedTemplate].bgColor}`} style={{
-            aspectRatio: '1 / 1',
-            width: '100%',
-            height: 'auto'
+      <div className="px-4 py-4 flex-shrink-0 bg-background">
+        {/* Main Banner Preview Wrapper - Fixed 1080x1080 dimensions */}
+        <div className="preview-banner-wrapper relative mx-auto" style={{ width: '1080px', height: '1080px', maxWidth: '100vw' }}>
+          <div className="border-4 border-primary rounded-3xl overflow-hidden shadow-2xl w-full h-full">
+          <div ref={bannerRef} className={`preview-banner border-4 ${templateColors[selectedTemplate].border} relative bg-gradient-to-br ${templateColors[selectedTemplate].bgColor}`} style={{
+            width: '1080px',
+            height: '1080px'
           }}>
               <div className="absolute inset-0">
                 {/* Background Image (if uploaded) or Gradient Background */}
@@ -442,10 +441,10 @@ export default function BannerPreview() {
                 width: '48%'
               }}>
                     <p style={{
-                  fontSize: 'clamp(7px, 0.9vw, 11px)',
+                  fontSize: '10px',
                   lineHeight: '1.2',
                   whiteSpace: 'nowrap'
-                }} className="text-white text-center font-semibold drop-shadow-lg text-xs mx-[6px] px-0 py-0 pr-0 pb-0 my-[13px]">
+                }} className="text-white text-center font-semibold drop-shadow-lg mx-[6px] px-0 py-0 pr-0 pb-0 my-[13px]">
                       To Our Brand New Leader
                     </p>
                   </div>
@@ -508,16 +507,16 @@ export default function BannerPreview() {
                 width: '55%'
               }}>
                     <p style={{
-                  fontSize: 'clamp(8px, 1.5vw, 14px)',
+                  fontSize: '12px',
                   textShadow: '1px 1px 2px rgba(0,0,0,0.8)'
-                }} className="text-white font-light tracking-widest text-left text-xs">
+                }} className="text-white font-light tracking-widest text-left">
                       THIS WEEK INCOME 
                     </p>
                     <p style={{
-                  fontSize: 'clamp(32px, 7vw, 72px)',
+                  fontSize: '60px',
                   textShadow: '4px 4px 8px rgba(0,0,0,0.9)',
                   lineHeight: '1'
-                }} className="font-black tracking-tight text-left text-2xl mx-0 my-0 text-yellow-500 font-serif">
+                }} className="font-black tracking-tight text-left mx-0 my-0 text-yellow-500 font-serif">
                       {Number(bannerData.chequeAmount).toLocaleString('en-IN')}
                     </p>
                   </div>}
@@ -529,7 +528,7 @@ export default function BannerPreview() {
                 maxWidth: '50%'
               }}>
                   <p className="text-foreground font-light tracking-wide" style={{
-                  fontSize: 'clamp(5.6px, 0.94vw, 6.72px)',
+                  fontSize: '6px',
                   textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
                   marginBottom: '0.5px',
                   textTransform: 'uppercase',
@@ -539,7 +538,7 @@ export default function BannerPreview() {
                     CALL FOR MENTORSHIP                                                                 
                   </p>
                   <p title={`+91 ${displayContact}`} style={{
-                  fontSize: 'clamp(9px, 1.8vw, 18px)',
+                  fontSize: '16px',
                   textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
@@ -620,31 +619,31 @@ export default function BannerPreview() {
         </div>
 
         {/* Profile Avatars (Left) + Download Button (Right) */}
-        <div className="flex items-center justify-between px-2 sm:px-4 mt-3 sm:mt-4 gap-2">
+        <div className="flex items-center justify-between px-4 mt-4 gap-2">
           {/* Left: Profile Images Row - Clickable to change main photo */}
-          <div className="flex gap-2 sm:gap-3 overflow-x-auto scrollbar-hide">
+          <div className="flex gap-3 overflow-x-auto scrollbar-hide">
             {profilePhotos.slice(0, 6).map((photo, idx) => <button key={photo.id} onClick={() => {
             setSelectedMentorPhotoIndex(idx);
             setIsMentorPhotoFlipped(!isMentorPhotoFlipped);
-          }} className={`h-8 w-8 sm:h-10 sm:w-10 rounded-full border-2 object-cover flex-shrink-0 shadow-lg transition-all hover:scale-105 active:scale-95 ${selectedMentorPhotoIndex === idx ? 'border-[#FFD700] ring-2 ring-[#FFD700] ring-offset-2 ring-offset-[#0B0E15]' : 'border-gray-500 hover:border-[#FFD700]'}`}>
+          }} className={`h-10 w-10 rounded-full border-2 object-cover flex-shrink-0 shadow-lg transition-all hover:scale-105 active:scale-95 ${selectedMentorPhotoIndex === idx ? 'border-[#FFD700] ring-2 ring-[#FFD700] ring-offset-2 ring-offset-[#0B0E15]' : 'border-gray-500 hover:border-[#FFD700]'}`}>
                 <img src={photo.photo_url} alt="Profile" className="w-full h-full rounded-full object-cover" />
               </button>)}
-            {profilePhotos.length > 6 && <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full border-2 border-[#FFD700] bg-[#111827] flex items-center justify-center text-[#FFD700] text-[10px] sm:text-xs font-bold flex-shrink-0">
+            {profilePhotos.length > 6 && <div className="h-10 w-10 rounded-full border-2 border-[#FFD700] bg-[#111827] flex items-center justify-center text-[#FFD700] text-xs font-bold flex-shrink-0">
                 +{profilePhotos.length - 6}
               </div>}
           </div>
 
           {/* Right: Download Button */}
           <button onClick={handleDownload} disabled={isDownloading} className="cursor-pointer transition-transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0">
-            <img src={downloadIcon} alt="Download" className="h-12 w-auto sm:h-16" />
+            <img src={downloadIcon} alt="Download" className="h-16 w-auto" />
           </button>
         </div>
       </div>
 
       {/* Scrollable Slot Selector Box - Only this area scrolls */}
-      {backgrounds.length > 0 && <div className="flex-1 min-h-0 px-3 sm:px-4 pb-3 sm:pb-4">
-          <div className="h-full overflow-y-auto rounded-2xl sm:rounded-3xl bg-[#111827]/50 border-2 border-[#FFD700]/20 p-3 sm:p-4 shadow-[0_0_30px_rgba(255,215,0,0.1)] scrollbar-thin scrollbar-thumb-[#FFD700]/30 scrollbar-track-transparent">
-            <div className="grid grid-cols-4 gap-2 sm:gap-3">
+      {backgrounds.length > 0 && <div className="flex-1 min-h-0 px-4 pb-4">
+          <div className="h-full overflow-y-auto rounded-3xl bg-[#111827]/50 border-2 border-[#FFD700]/20 p-4 shadow-[0_0_30px_rgba(255,215,0,0.1)] scrollbar-thin scrollbar-thumb-[#FFD700]/30 scrollbar-track-transparent">
+            <div className="grid grid-cols-4 gap-3">
               {Array.from({
             length: 16
           }, (_, i) => i + 1).map(slotNum => {
