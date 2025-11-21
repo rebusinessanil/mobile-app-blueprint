@@ -230,6 +230,36 @@ export default function BannerPreview() {
     fetchStickerImages();
   }, [slotStickers, bannerData?.rankId]);
 
+  // Auto-select sticker when there's only one in the current slot
+  useEffect(() => {
+    const currentSlot = selectedTemplate + 1;
+    const stickersInSlot = stickerImages[currentSlot] || [];
+    
+    // Auto-select if there's exactly one sticker and none is selected
+    if (stickersInSlot.length === 1 && !selectedStickerId) {
+      const sticker = stickersInSlot[0];
+      setSelectedStickerId(sticker.id);
+      
+      // Initialize scale if not set
+      if (!stickerScale[sticker.id]) {
+        setStickerScale(prev => ({
+          ...prev,
+          [sticker.id]: sticker.scale || 2.5
+        }));
+      }
+      
+      // Store original state for reset functionality
+      setOriginalStickerStates(prev => ({
+        ...prev,
+        [sticker.id]: {
+          position_x: sticker.position_x || 0,
+          position_y: sticker.position_y || 0,
+          scale: sticker.scale || 2.5
+        }
+      }));
+    }
+  }, [stickerImages, selectedTemplate, selectedStickerId, stickerScale]);
+
   // Map selectedTemplate (0-15) to slot_number (1-16) and fetch correct background
   // CRITICAL: Only show background if it exists for this exact slot - NO fallbacks
   const selectedSlot = selectedTemplate + 1;
