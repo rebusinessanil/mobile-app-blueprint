@@ -439,11 +439,11 @@ export default function BannerPreview() {
                 right: '8%',
                 width: '48%'
               }}>
-                    <p className="text-white text-center font-semibold drop-shadow-lg" style={{
-                    fontSize: 'clamp(8px, 1vw, 12px)',
-                    lineHeight: '1.2',
-                    whiteSpace: 'nowrap'
-                  }}>
+                    <p style={{
+                  fontSize: 'clamp(8px, 1vw, 12px)',
+                  lineHeight: '1.2',
+                  whiteSpace: 'nowrap'
+                }} className="text-white text-center font-semibold drop-shadow-lg text-xs mx-[6px] px-0 py-0 pr-0 pb-0 my-[13px]">
                       To Our Brand New Leader
                     </p>
                   </div>
