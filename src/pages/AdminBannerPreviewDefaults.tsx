@@ -447,9 +447,9 @@ export default function AdminBannerPreviewDefaults() {
   // Category detail view with banner preview
   return (
     <AdminLayout>
-      <div className="container mx-auto p-4 max-w-[480px] bg-background min-h-screen">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-4 px-2">
+      <div className="flex flex-col h-screen max-w-[480px] mx-auto bg-background">
+        {/* Fixed Header */}
+        <div className="flex-shrink-0 flex items-center justify-between p-4 px-2">
           <Button
             variant="ghost"
             size="icon"
@@ -487,8 +487,9 @@ export default function AdminBannerPreviewDefaults() {
           </Button>
         </div>
 
-        {/* Main Banner Preview */}
-        <div className="border-4 border-primary rounded-3xl overflow-hidden shadow-2xl">
+        {/* Fixed Banner Preview */}
+        <div className="flex-shrink-0 px-4 mb-4">
+          <div className="border-4 border-primary rounded-3xl overflow-hidden shadow-2xl">
           <div 
             ref={bannerRef}
             className="preview-banner border-4 border-primary relative w-full"
@@ -700,80 +701,70 @@ export default function AdminBannerPreviewDefaults() {
               />
             </div>
           )}
-        </div>
-      </div>
-
-        {/* Profile Photo Selector Row */}
-        <div className="flex items-center gap-3 mb-4 px-2">
-          {[1, 2, 3, 4, 5].map((index) => (
-            <div
-              key={index}
-              className={`w-14 h-14 rounded-full overflow-hidden ${
-                index === 1 
-                  ? 'border-3 border-primary ring-2 ring-primary/30' 
-                  : 'border-2 border-border/40'
-              } bg-muted cursor-pointer hover:border-primary/50 transition-all`}
-            >
-              <div className="w-full h-full bg-muted-foreground/20" />
-            </div>
-          ))}
-          <Button className="ml-auto bg-teal-600 hover:bg-teal-700 h-14 px-6 rounded-xl">
-            <span className="text-xs font-bold flex flex-col items-center gap-0.5">
-              <span>↓</span>
-              <span>DOWNLOAD</span>
-            </span>
-          </Button>
-        </div>
-
-        {/* Template Backgrounds Grid (16 Slots) */}
-        <div className="bg-card/50 rounded-3xl p-4 border border-border/40">
-          <div className="grid grid-cols-4 gap-3">
-            {Array.from({ length: 16 }, (_, i) => i + 1).map((slotNum) => {
-              const isSelected = selectedSlot === slotNum;
-              const bgColors = [
-                'bg-gradient-to-br from-orange-400 to-pink-400',
-                'bg-gradient-to-br from-blue-900 to-blue-700',
-                'bg-gradient-to-br from-blue-600 to-indigo-700',
-                'bg-gradient-to-br from-red-900 to-orange-800',
-                'bg-gradient-to-br from-teal-700 to-teal-900',
-                'bg-gradient-to-br from-purple-600 to-pink-600',
-                'bg-gradient-to-br from-blue-800 to-blue-950',
-                'bg-gradient-to-br from-amber-700 to-orange-900',
-                'bg-gradient-to-br from-purple-800 to-indigo-900',
-                'bg-gradient-to-br from-red-800 to-red-950',
-                'bg-gradient-to-br from-purple-700 to-purple-900',
-                'bg-gradient-to-br from-green-700 to-green-900',
-                'bg-gradient-to-br from-orange-800 to-red-900',
-                'bg-gradient-to-br from-blue-900 to-indigo-950',
-                'bg-gradient-to-br from-pink-700 to-rose-900',
-                'bg-gradient-to-br from-gray-800 to-gray-950',
-              ];
-              
-              return (
-                <button
-                  key={slotNum}
-                  onClick={() => setSelectedSlot(slotNum)}
-                  className={`aspect-square rounded-2xl ${bgColors[slotNum - 1]} flex items-center justify-center text-white text-2xl font-bold transition-all ${
-                    isSelected
-                      ? 'ring-4 ring-primary scale-95 shadow-lg shadow-primary/30'
-                      : 'hover:ring-2 hover:ring-primary/50'
-                  }`}
-                >
-                  {slotNum <= 2 ? (
-                    <div className="w-full h-full rounded-2xl overflow-hidden">
-                      <div className="w-full h-full bg-muted-foreground/40" />
-                    </div>
-                  ) : (
-                    <span>{slotNum}</span>
-                  )}
-                </button>
-              );
-            })}
           </div>
         </div>
+        </div>
 
-        {/* Rank & Slot Selector */}
-        <Card className="mt-4 p-4 space-y-4">
+        {/* Scrollable Slots & Controls Area */}
+        <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-4">
+          {/* Template Backgrounds Grid (16 Slots) */}
+          <div className="bg-card/50 rounded-3xl p-4 border border-border/40">
+            <h3 className="text-sm font-semibold mb-3 text-foreground">Background Slots (1-16)</h3>
+            <div className="grid grid-cols-4 gap-3">
+              {Array.from({ length: 16 }, (_, i) => i + 1).map((slotNum) => {
+                const isSelected = selectedSlot === slotNum;
+                const slotSticker = stickers?.find(s => s.slot_number === slotNum);
+                const bgColors = [
+                  'bg-gradient-to-br from-orange-400 to-pink-400',
+                  'bg-gradient-to-br from-blue-900 to-blue-700',
+                  'bg-gradient-to-br from-blue-600 to-indigo-700',
+                  'bg-gradient-to-br from-red-900 to-orange-800',
+                  'bg-gradient-to-br from-teal-700 to-teal-900',
+                  'bg-gradient-to-br from-purple-600 to-pink-600',
+                  'bg-gradient-to-br from-blue-800 to-blue-950',
+                  'bg-gradient-to-br from-amber-700 to-orange-900',
+                  'bg-gradient-to-br from-purple-800 to-indigo-900',
+                  'bg-gradient-to-br from-red-800 to-red-950',
+                  'bg-gradient-to-br from-purple-700 to-purple-900',
+                  'bg-gradient-to-br from-green-700 to-green-900',
+                  'bg-gradient-to-br from-orange-800 to-red-900',
+                  'bg-gradient-to-br from-blue-900 to-indigo-950',
+                  'bg-gradient-to-br from-pink-700 to-rose-900',
+                  'bg-gradient-to-br from-gray-800 to-gray-950',
+                ];
+                
+                return (
+                  <button
+                    key={slotNum}
+                    onClick={() => setSelectedSlot(slotNum)}
+                    className={`relative aspect-square rounded-2xl ${bgColors[slotNum - 1]} flex items-center justify-center text-white transition-all ${
+                      isSelected
+                        ? 'ring-4 ring-primary scale-95 shadow-lg shadow-primary/30'
+                        : 'hover:ring-2 hover:ring-primary/50'
+                    }`}
+                  >
+                    {slotSticker ? (
+                      <div className="w-full h-full rounded-2xl overflow-hidden p-1">
+                        <img 
+                          src={slotSticker.image_url} 
+                          alt={`Slot ${slotNum}`}
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
+                    ) : (
+                      <span className="text-2xl font-bold">{slotNum}</span>
+                    )}
+                    {isSelected && (
+                      <div className="absolute top-1 right-1 w-3 h-3 bg-primary rounded-full border-2 border-white" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Rank & Slot Selector */}
+          <Card className="p-4 space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-xs font-medium mb-2 block text-muted-foreground">
@@ -847,9 +838,8 @@ export default function AdminBannerPreviewDefaults() {
           )}
         </Card>
 
-        {/* Precise Transform Controls */}
-        {activeSticker && (
-          <div className="mt-4">
+          {/* Precise Transform Controls */}
+          {activeSticker && (
             <StickerPreciseControls
               position={{ x: activeSticker.position_x || 0, y: activeSticker.position_y || 0 }}
               scale={activeSticker.scale || 1}
@@ -912,8 +902,8 @@ export default function AdminBannerPreviewDefaults() {
               onReset={handleResetChanges}
               isSaving={isSaving}
             />
-          </div>
-        )}
+          )}
+        </div>
 
         {/* Rank Stickers Selection Modal */}
         {selectedRank && (
