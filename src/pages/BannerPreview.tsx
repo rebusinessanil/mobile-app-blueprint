@@ -314,36 +314,27 @@ export default function BannerPreview() {
     border: "border-slate-500"
   }];
   const handleDownload = async () => {
-    if (!bannerRef.current) {
+    const bannerCanvas = document.getElementById('banner-canvas');
+    if (!bannerCanvas) {
       toast.error("Banner not ready for download");
       return;
     }
     setIsDownloading(true);
     const loadingToast = toast.loading("Generating Full HD banner...");
     try {
-      const TARGET_SIZE = 1080;
-      
-      // Get current rendered dimensions to maintain exact proportions
-      const currentRect = bannerRef.current.getBoundingClientRect();
-      const currentWidth = currentRect.width;
-      const currentHeight = currentRect.height;
-      
-      // Calculate scale factor to reach 1080x1080 while preserving exact layout
-      const scaleFactor = TARGET_SIZE / Math.max(currentWidth, currentHeight);
-
-      // Capture banner as-is with precise scale - no cloning, no dimension changes
-      const canvas = await html2canvas(bannerRef.current, {
-        scale: scaleFactor,
+      // Capture ONLY the #banner-canvas at exact dimensions
+      const canvas = await html2canvas(bannerCanvas as HTMLElement, {
+        width: 1080,
+        height: 1350,
+        scale: 3,
         backgroundColor: "#000000",
         logging: false,
         useCORS: true,
         allowTaint: true,
-        width: currentWidth,
-        height: currentHeight,
         imageTimeout: 0
       });
 
-      // Convert directly to JPG blob with quality 0.95
+      // Convert to PNG blob
       canvas.toBlob(blob => {
         toast.dismiss(loadingToast);
         if (!blob) {
@@ -353,12 +344,12 @@ export default function BannerPreview() {
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
         const timestamp = new Date().getTime();
-        link.download = `ReBusiness-Banner-${bannerData.rankName}-${timestamp}.jpg`;
+        link.download = `ReBusiness-Banner-${bannerData.rankName}-${timestamp}.png`;
         link.href = url;
         link.click();
         URL.revokeObjectURL(url);
-        toast.success("Banner downloaded! (1080×1080 Full HD JPG)");
-      }, "image/jpeg", 0.95);
+        toast.success("Banner downloaded! (1080×1350 Full HD PNG)");
+      }, "image/png");
     } catch (error) {
       console.error("Download error:", error);
       toast.dismiss(loadingToast);
@@ -367,300 +358,517 @@ export default function BannerPreview() {
       setIsDownloading(false);
     }
   };
-  return <div className="h-screen overflow-hidden bg-background flex flex-col">
+  return <div className="h-screen overflow-y-auto bg-background flex flex-col items-center py-8">
       {/* Header - Fixed */}
-      <header className="bg-background/95 backdrop-blur-sm z-40 px-4 sm:px-6 py-3 sm:py-4 flex-shrink-0">
-        <div className="flex items-center justify-between max-w-[600px] mx-auto">
-          <button onClick={() => navigate(-1)} className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl border-2 border-foreground flex items-center justify-center hover:bg-foreground/10 transition-colors touch-target">
-            <ArrowLeft className="w-5 h-5 sm:w-6 sm:h-6 text-foreground" />
+      <header className="bg-background/95 backdrop-blur-sm z-40 px-6 py-4 w-full flex-shrink-0">
+        <div className="flex items-center justify-between max-w-7xl mx-auto">
+          <button onClick={() => navigate(-1)} className="w-12 h-12 rounded-xl border-2 border-foreground flex items-center justify-center hover:bg-foreground/10 transition-colors">
+            <ArrowLeft className="w-6 h-6 text-foreground" />
           </button>
           
-          <h1 className="text-base sm:text-xl md:text-2xl font-bold text-foreground tracking-widest">BANNER PREVIEW</h1>
+          <h1 className="text-2xl font-bold text-foreground tracking-widest">BANNER PREVIEW</h1>
           
-          {isAdmin && <button onClick={() => setIsStickersOpen(true)} className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl border-2 border-primary bg-primary/10 flex items-center justify-center hover:bg-primary/20 transition-colors touch-target">
-              <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
+          {isAdmin && <button onClick={() => setIsStickersOpen(true)} className="w-12 h-12 rounded-xl border-2 border-primary bg-primary/10 flex items-center justify-center hover:bg-primary/20 transition-colors">
+              <Sparkles className="w-6 h-6 text-primary" />
             </button>}
-          {!isAdmin && <div className="w-10 h-10 sm:w-12 sm:h-12" />}
+          {!isAdmin && <div className="w-12 h-12" />}
         </div>
       </header>
 
-      {/* Banner Preview Container - Fixed at top */}
-      <div className="px-3 sm:px-4 py-3 sm:py-4 flex-shrink-0 bg-background">
-        {/* Main Banner Preview Wrapper with aspect ratio */}
-        <div className="preview-banner-wrapper relative w-full max-w-[100vw] sm:max-w-[520px] mx-auto">
-          <div className="border-4 border-primary rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl">
-          <div ref={bannerRef} data-banner-clone className={`preview-banner border-4 ${templateColors[selectedTemplate].border} relative w-full bg-gradient-to-br ${templateColors[selectedTemplate].bgColor}`} style={{
-            aspectRatio: '1 / 1',
-            width: '100%',
-            height: 'auto'
+      {/* FIXED-SIZE STATIC CANVAS - 1080x1350px */}
+      <div 
+        id="banner-canvas"
+        ref={bannerRef}
+        className={`bg-gradient-to-br ${templateColors[selectedTemplate].bgColor}`}
+        style={{
+          position: 'relative',
+          width: '1080px',
+          height: '1350px',
+          overflow: 'hidden',
+          margin: '20px auto'
+        }}
+      >
+        {/* Background Image */}
+        {backgroundImage && (
+          <img 
+            src={backgroundImage} 
+            alt="Template background" 
+            style={{
+              position: 'absolute',
+              top: '0px',
+              left: '0px',
+              width: '1080px',
+              height: '1350px',
+              objectFit: 'cover'
+            }}
+          />
+        )}
+
+        {/* Top-Left Logo */}
+        {bannerSettings?.logo_left && (
+          <div style={{
+            position: 'absolute',
+            top: '40px',
+            left: '32px',
+            width: '162px',
+            height: '108px',
+            zIndex: 30
           }}>
-              <div className="absolute inset-0">
-                {/* Background Image (if uploaded) or Gradient Background */}
-                {backgroundImage ? <img src={backgroundImage} alt="Template background" className="absolute inset-0 w-full h-full object-cover" /> : null}
+            <img 
+              src={bannerSettings.logo_left} 
+              alt="Left Logo" 
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'contain',
+                filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.5))'
+              }}
+            />
+          </div>
+        )}
 
-                {/* Top-Left Logo */}
-                {bannerSettings?.logo_left && <div className="absolute z-30" style={{
-                top: '3%',
-                left: '3%',
-                width: '15%',
-                height: '8%'
-              }}>
-                    <img src={bannerSettings.logo_left} alt="Left Logo" className="w-full h-full object-contain drop-shadow-lg" />
-                  </div>}
+        {/* Top-Right Logo */}
+        {bannerSettings?.logo_right && (
+          <div style={{
+            position: 'absolute',
+            top: '40px',
+            right: '32px',
+            width: '162px',
+            height: '108px',
+            zIndex: 30
+          }}>
+            <img 
+              src={bannerSettings.logo_right} 
+              alt="Right Logo" 
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'contain',
+                filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.5))'
+              }}
+            />
+          </div>
+        )}
 
-                {/* Top-Right Logo */}
-                {bannerSettings?.logo_right && <div className="absolute z-30" style={{
-                top: '3%',
-                right: '3%',
-                width: '15%',
-                height: '8%'
-              }}>
-                    <img src={bannerSettings.logo_right} alt="Right Logo" className="w-full h-full object-contain drop-shadow-lg" />
-                  </div>}
+        {/* Congratulations Image */}
+        {bannerDefaults?.congratulations_image && (
+          <div style={{
+            position: 'absolute',
+            top: '162px',
+            left: '783px',
+            transform: 'translateX(-50%)',
+            width: '518px',
+            height: '162px',
+            zIndex: 20
+          }}>
+            <img 
+              src={bannerDefaults.congratulations_image} 
+              alt="Congratulations" 
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.6))'
+              }}
+            />
+          </div>
+        )}
 
-                {/* Congratulations Image - Admin controlled, always displayed */}
-                {bannerDefaults?.congratulations_image && <div className="absolute z-20" style={{
-                top: '12%',
-                left: '72.5%',
-                transform: 'translateX(-50%)',
-                width: '48%',
-                height: '12%'
-              }}>
-                    <img src={bannerDefaults.congratulations_image} alt="Congratulations" className="w-full h-full drop-shadow-2xl object-cover" />
-                  </div>}
+        {/* Text Below Congratulations */}
+        <div style={{
+          position: 'absolute',
+          top: '236px',
+          left: '783px',
+          transform: 'translateX(-50%)',
+          width: '518px',
+          zIndex: 20
+        }}>
+          <p style={{
+            fontSize: '12px',
+            lineHeight: '1.2',
+            whiteSpace: 'nowrap',
+            color: 'white',
+            textAlign: 'center',
+            fontWeight: '600',
+            textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
+            margin: '13px 6px'
+          }}>
+            To Our Brand New Leader
+          </p>
+        </div>
 
-                {/* Text Below Congratulations Image */}
-                <div className="absolute z-20" style={{
-                top: '17.5%',
-                left: '72.5%',
-                transform: 'translateX(-50%)',
-                width: '48%'
-              }}>
-                    <p style={{
-                  fontSize: 'clamp(7px, 0.9vw, 11px)',
-                  lineHeight: '1.2',
-                  whiteSpace: 'nowrap'
-                }} className="text-white text-center font-semibold drop-shadow-lg text-xs mx-[6px] px-0 py-0 pr-0 pb-0 my-[13px]">
-                      To Our Brand New Leader
-                    </p>
-                  </div>
-
-                {/* Top - Small circular upline avatars (70% scale = smaller) */}
-                <div className="absolute top-[1.8%] left-1/2 -translate-x-1/2 flex gap-1.5 z-20" style={{
-                transform: 'translateX(-50%) scale(1.1)'
-              }}>
-                  {bannerData.uplines?.slice(0, 5).map((upline, idx) => <div key={upline.id} className="w-7 h-7 rounded-full border-2 border-white overflow-hidden shadow-lg">
-                      <img src={upline.avatar || primaryPhoto || "/placeholder.svg"} alt={upline.name} className="w-full h-full object-cover" />
-                    </div>)}
-                </div>
-
-                {/* LEFT - Main User Photo (85% height, rounded, bottom fade, flippable) */}
-                {primaryPhoto && <div className="absolute overflow-hidden rounded-2xl cursor-pointer transition-transform duration-500 ease-in-out" onClick={() => setIsPhotoFlipped(!isPhotoFlipped)} style={{
-                left: '3%',
-                top: '12%',
-                width: '40%',
-                height: '63.75%',
-                transform: isPhotoFlipped ? 'scaleX(-1)' : 'scaleX(1)'
-              }}>
-                    <img src={primaryPhoto} alt={mainBannerName} className="w-full h-full object-cover object-top" />
-                    {/* Bottom feather fade overlay */}
-                    <div className="absolute bottom-0 left-0 right-0 pointer-events-none" style={{
-                  height: '30%',
-                  background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%)'
-                }} />
-                  </div>}
-
-                {/* Golden Crown below user photo */}
-                <div className="absolute" style={{
-                left: '13%',
-                bottom: '20%',
-                width: '20%',
-                height: '8%'
-              }}>
-                  
-                </div>
-
-                {/* CENTER-RIGHT - Name with responsive typography */}
-                <div className="banner-text-content absolute px-2" style={{
-                top: '25%',
-                left: '72.5%',
-                transform: 'translateX(-50%)',
-                width: '48%',
-                maxWidth: '48%'
-              }}>
-                  <h2 title={mainBannerName.toUpperCase()} className="banner-preview-name text-foreground tracking-wider font-extrabold text-center mx-auto">
-                    {truncatedMainName.toUpperCase()}
-                  </h2>
-                  
-                  {bannerData.teamCity && <p title={bannerData.teamCity.toUpperCase()} className="banner-team text-foreground tracking-widest mt-1 sm:mt-2 font-light font-sans text-center">
-                      {bannerData.teamCity.toUpperCase()}
-                    </p>}
-                </div>
-                {/* BOTTOM CENTER - Income */}
-                {bannerData.chequeAmount && <div className="absolute text-center" style={{
-                bottom: '15%',
-                left: '5%',
-                width: '55%'
-              }}>
-                    <p style={{
-                  fontSize: 'clamp(8px, 1.5vw, 14px)',
-                  textShadow: '1px 1px 2px rgba(0,0,0,0.8)'
-                }} className="text-white font-light tracking-widest text-left text-xs">
-                      THIS WEEK INCOME 
-                    </p>
-                    <p style={{
-                  fontSize: 'clamp(32px, 7vw, 72px)',
-                  textShadow: '4px 4px 8px rgba(0,0,0,0.9)',
-                  lineHeight: '1'
-                }} className="font-black tracking-tight text-left text-2xl mx-0 my-0 text-yellow-500 font-serif">
-                      {Number(bannerData.chequeAmount).toLocaleString('en-IN')}
-                    </p>
-                  </div>}
-
-                {/* LOWER THIRD - Contact Info */}
-                <div className="banner-contact absolute" style={{
-                bottom: '3%',
-                left: '2%',
-                maxWidth: '50%'
-              }}>
-                  <p className="text-foreground font-light tracking-wide" style={{
-                  fontSize: 'clamp(5.6px, 0.94vw, 6.72px)',
-                  textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
-                  marginBottom: '0.5px',
-                  textTransform: 'uppercase',
-                  position: 'relative',
-                  top: '10%'
-                }}>
-                    CALL FOR MENTORSHIP                                                                 
-                  </p>
-                  <p title={`+91 ${displayContact}`} style={{
-                  fontSize: 'clamp(9px, 1.8vw, 18px)',
-                  textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis'
-                }} className="text-foreground font-bold tracking-wide font-sans">
-                    +91 {displayContact}
-                  </p>
-                </div>
-
-                {/* BOTTOM RIGHT - Mentor Photo with rounded corners and feather fade (tap to flip) */}
-                {mentorPhoto && <div className="absolute overflow-hidden shadow-2xl rounded-xl cursor-pointer transition-transform duration-500 ease-in-out" onClick={() => setIsMentorPhotoFlipped(!isMentorPhotoFlipped)} style={{
-                bottom: 0,
-                right: 0,
-                width: '33%',
-                height: '38.5%',
-                transform: isMentorPhotoFlipped ? 'scaleX(-1)' : 'scaleX(1)'
-              }}>
-                    <img src={mentorPhoto} alt={profileName} className="w-full h-full object-cover object-top" />
-                    {/* Bottom feather fade overlay */}
-                    <div className="absolute bottom-0 left-0 right-0 pointer-events-none" style={{
-                  height: '30%',
-                  background: 'linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 100%)'
-                }} />
-                  </div>}
-
-
-                {/* BOTTOM CENTER - Profile Name & Rank */}
-                <div className="absolute text-center" style={{
-                bottom: '3%',
-                left: '50%',
-                transform: 'translateX(-45%)',
-                width: 'max-content',
-                maxWidth: '80%',
-                zIndex: 3
-              }}>
-                  <p title={profileName} className="banner-profile-name text-foreground font-extrabold tracking-wider" style={{
-                  fontSize: '9px',
-                  textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  marginBottom: '1px',
-                  position: 'relative',
-                  top: '15%'
-                }}>
-                    {truncatedProfileName.toUpperCase()}
-                  </p>
-                  <p className="banner-profile-rank text-yellow-500 font-semibold tracking-widest" style={{
-                  fontSize: '7px',
-                  textShadow: '1px 1px 3px rgba(0,0,0,0.8)',
-                  textTransform: 'uppercase'
-                }}>
-                    {displayRank}
-                  </p>
-                </div>
-
-                {/* Achievement Stickers - Only for current slot */}
-                {stickerImages[selectedTemplate + 1]?.map((sticker, index) => {
-                return <img key={sticker.id} src={sticker.url} alt="Achievement Sticker" className="absolute pointer-events-none animate-in fade-in zoom-in duration-300" style={{
-                  left: `${sticker.position_x ?? 50}%`,
-                  top: `${sticker.position_y ?? 50}%`,
-                  transform: `translate(-50%, -50%) scale(${sticker.scale ?? 1}) rotate(${sticker.rotation ?? 0}deg)`,
-                  transformOrigin: 'center center',
-                  width: '120px',
-                  height: '120px',
-                  objectFit: 'contain',
-                  filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.3))',
-                  zIndex: 10
-                }} />;
-              })}
-
-                {/* BOTTOM RIGHT - Mentor Name and Title (Moved to bottom-most position) */}
-                
-
-              </div>
+        {/* Top Upline Avatars */}
+        <div style={{
+          position: 'absolute',
+          top: '24px',
+          left: '50%',
+          transform: 'translateX(-50%) scale(1.1)',
+          display: 'flex',
+          gap: '6px',
+          zIndex: 20
+        }}>
+          {bannerData.uplines?.slice(0, 5).map((upline, idx) => (
+            <div 
+              key={upline.id}
+              style={{
+                width: '28px',
+                height: '28px',
+                borderRadius: '50%',
+                border: '2px solid white',
+                overflow: 'hidden',
+                boxShadow: '0 4px 6px rgba(0,0,0,0.3)'
+              }}
+            >
+              <img 
+                src={upline.avatar || primaryPhoto || "/placeholder.svg"} 
+                alt={upline.name}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover'
+                }}
+              />
             </div>
-          </div>
+          ))}
         </div>
 
-        {/* Profile Avatars (Left) + Download Button (Right) */}
-        <div className="flex items-center justify-between px-2 sm:px-4 mt-3 sm:mt-4 gap-2">
-          {/* Left: Profile Images Row - Clickable to change main photo */}
-          <div className="flex gap-2 sm:gap-3 overflow-x-auto scrollbar-hide">
-            {profilePhotos.slice(0, 6).map((photo, idx) => <button key={photo.id} onClick={() => {
-            setSelectedMentorPhotoIndex(idx);
-            setIsMentorPhotoFlipped(!isMentorPhotoFlipped);
-          }} className={`h-8 w-8 sm:h-10 sm:w-10 rounded-full border-2 object-cover flex-shrink-0 shadow-lg transition-all hover:scale-105 active:scale-95 ${selectedMentorPhotoIndex === idx ? 'border-[#FFD700] ring-2 ring-[#FFD700] ring-offset-2 ring-offset-[#0B0E15]' : 'border-gray-500 hover:border-[#FFD700]'}`}>
-                <img src={photo.photo_url} alt="Profile" className="w-full h-full rounded-full object-cover" />
-              </button>)}
-            {profilePhotos.length > 6 && <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full border-2 border-[#FFD700] bg-[#111827] flex items-center justify-center text-[#FFD700] text-[10px] sm:text-xs font-bold flex-shrink-0">
-                +{profilePhotos.length - 6}
-              </div>}
+        {/* LEFT - Main User Photo */}
+        {primaryPhoto && (
+          <div 
+            onClick={() => setIsPhotoFlipped(!isPhotoFlipped)}
+            style={{
+              position: 'absolute',
+              left: '32px',
+              top: '162px',
+              width: '432px',
+              height: '860px',
+              overflow: 'hidden',
+              borderRadius: '16px',
+              cursor: 'pointer',
+              transition: 'transform 0.5s ease-in-out',
+              transform: isPhotoFlipped ? 'scaleX(-1)' : 'scaleX(1)'
+            }}
+          >
+            <img 
+              src={primaryPhoto} 
+              alt={mainBannerName}
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                objectPosition: 'top'
+              }}
+            />
+            {/* Bottom feather fade */}
+            <div style={{
+              position: 'absolute',
+              bottom: '0px',
+              left: '0px',
+              right: '0px',
+              height: '30%',
+              background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%)',
+              pointerEvents: 'none'
+            }} />
           </div>
+        )}
 
-          {/* Right: Download Button */}
-          <button onClick={handleDownload} disabled={isDownloading} className="cursor-pointer transition-transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0">
-            <img src={downloadIcon} alt="Download" className="h-12 w-auto sm:h-16" />
-          </button>
+        {/* CENTER-RIGHT - Name */}
+        <div style={{
+          position: 'absolute',
+          top: '337px',
+          left: '783px',
+          transform: 'translateX(-50%)',
+          width: '518px',
+          padding: '0 8px'
+        }}>
+          <h2 
+            title={mainBannerName.toUpperCase()}
+            style={{
+              fontSize: '14px',
+              color: 'white',
+              letterSpacing: '0.05em',
+              fontWeight: '800',
+              textAlign: 'center',
+              textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
+              margin: '0 auto'
+            }}
+          >
+            {truncatedMainName.toUpperCase()}
+          </h2>
+          
+          {bannerData.teamCity && (
+            <p 
+              title={bannerData.teamCity.toUpperCase()}
+              style={{
+                fontSize: '12px',
+                color: 'white',
+                letterSpacing: '0.1em',
+                marginTop: '8px',
+                fontWeight: '300',
+                textAlign: 'center',
+                textShadow: '1px 1px 2px rgba(0,0,0,0.8)'
+              }}
+            >
+              {bannerData.teamCity.toUpperCase()}
+            </p>
+          )}
         </div>
+
+        {/* BOTTOM CENTER - Income */}
+        {bannerData.chequeAmount && (
+          <div style={{
+            position: 'absolute',
+            bottom: '202px',
+            left: '54px',
+            width: '594px',
+            textAlign: 'left'
+          }}>
+            <p style={{
+              fontSize: '14px',
+              color: 'white',
+              fontWeight: '300',
+              letterSpacing: '0.1em',
+              textShadow: '1px 1px 2px rgba(0,0,0,0.8)'
+            }}>
+              THIS WEEK INCOME
+            </p>
+            <p style={{
+              fontSize: '72px',
+              color: '#EAB308',
+              fontWeight: '900',
+              letterSpacing: '-0.02em',
+              lineHeight: '1',
+              textShadow: '4px 4px 8px rgba(0,0,0,0.9)',
+              fontFamily: 'serif',
+              margin: '0'
+            }}>
+              {Number(bannerData.chequeAmount).toLocaleString('en-IN')}
+            </p>
+          </div>
+        )}
+
+        {/* LOWER LEFT - Contact Info */}
+        <div style={{
+          position: 'absolute',
+          bottom: '40px',
+          left: '22px',
+          maxWidth: '540px'
+        }}>
+          <p style={{
+            fontSize: '9px',
+            color: 'white',
+            fontWeight: '300',
+            letterSpacing: '0.05em',
+            textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
+            marginBottom: '2px',
+            textTransform: 'uppercase'
+          }}>
+            CALL FOR MENTORSHIP
+          </p>
+          <p 
+            title={`+91 ${displayContact}`}
+            style={{
+              fontSize: '18px',
+              color: 'white',
+              fontWeight: '700',
+              letterSpacing: '0.05em',
+              textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis'
+            }}
+          >
+            +91 {displayContact}
+          </p>
+        </div>
+
+        {/* BOTTOM RIGHT - Mentor Photo */}
+        {mentorPhoto && (
+          <div 
+            onClick={() => setIsMentorPhotoFlipped(!isMentorPhotoFlipped)}
+            style={{
+              position: 'absolute',
+              bottom: '0px',
+              right: '0px',
+              width: '356px',
+              height: '519px',
+              overflow: 'hidden',
+              borderRadius: '12px',
+              cursor: 'pointer',
+              transition: 'transform 0.5s ease-in-out',
+              transform: isMentorPhotoFlipped ? 'scaleX(-1)' : 'scaleX(1)',
+              boxShadow: '0 8px 16px rgba(0,0,0,0.4)'
+            }}
+          >
+            <img 
+              src={mentorPhoto} 
+              alt={profileName}
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                objectPosition: 'top'
+              }}
+            />
+            {/* Bottom feather fade */}
+            <div style={{
+              position: 'absolute',
+              bottom: '0px',
+              left: '0px',
+              right: '0px',
+              height: '30%',
+              background: 'linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 100%)',
+              pointerEvents: 'none'
+            }} />
+          </div>
+        )}
+
+        {/* BOTTOM CENTER - Profile Name & Rank */}
+        <div style={{
+          position: 'absolute',
+          bottom: '40px',
+          left: '50%',
+          transform: 'translateX(-45%)',
+          textAlign: 'center',
+          zIndex: 3
+        }}>
+          <p 
+            title={profileName}
+            style={{
+              fontSize: '12px',
+              color: 'white',
+              fontWeight: '800',
+              letterSpacing: '0.05em',
+              textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              marginBottom: '2px'
+            }}
+          >
+            {truncatedProfileName.toUpperCase()}
+          </p>
+          <p style={{
+            fontSize: '9px',
+            color: '#EAB308',
+            fontWeight: '600',
+            letterSpacing: '0.1em',
+            textShadow: '1px 1px 3px rgba(0,0,0,0.8)',
+            textTransform: 'uppercase'
+          }}>
+            {displayRank}
+          </p>
+        </div>
+
+        {/* Achievement Stickers */}
+        {stickerImages[selectedTemplate + 1]?.map((sticker) => (
+          <img 
+            key={sticker.id}
+            src={sticker.url} 
+            alt="Achievement Sticker"
+            style={{
+              position: 'absolute',
+              left: `${(sticker.position_x ?? 50) * 10.8}px`,
+              top: `${(sticker.position_y ?? 50) * 13.5}px`,
+              transform: `translate(-50%, -50%) scale(${sticker.scale ?? 1}) rotate(${sticker.rotation ?? 0}deg)`,
+              transformOrigin: 'center center',
+              width: '120px',
+              height: '120px',
+              objectFit: 'contain',
+              filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.3))',
+              zIndex: 10,
+              pointerEvents: 'none'
+            }}
+          />
+        ))}
       </div>
 
-      {/* Scrollable Slot Selector Box - Only this area scrolls */}
-      {backgrounds.length > 0 && <div className="flex-1 min-h-0 px-3 sm:px-4 pb-3 sm:pb-4">
-          <div className="h-full overflow-y-auto rounded-2xl sm:rounded-3xl bg-[#111827]/50 border-2 border-[#FFD700]/20 p-3 sm:p-4 shadow-[0_0_30px_rgba(255,215,0,0.1)] scrollbar-thin scrollbar-thumb-[#FFD700]/30 scrollbar-track-transparent">
-            <div className="grid grid-cols-4 gap-2 sm:gap-3">
-              {Array.from({
-            length: 16
-          }, (_, i) => i + 1).map(slotNum => {
-            const bg = backgrounds.find(b => b.slot_number === slotNum);
-            const isSelected = selectedTemplate === slotNum - 1;
-            return <button key={slotNum} onClick={() => setSelectedTemplate(slotNum - 1)} className={`aspect-square rounded-lg overflow-hidden transition-all ${isSelected ? 'border-4 border-[#FFD700] scale-105 shadow-[0_0_20px_rgba(255,215,0,0.5)]' : 'border-2 border-gray-600 hover:border-[#FFD700] hover:scale-105'}`}>
-                    {bg?.background_image_url ? <img src={bg.background_image_url} alt={`Slot ${slotNum}`} className="w-full h-full object-cover" /> : <div className={`w-full h-full bg-gradient-to-br ${templateColors[slotNum - 1]?.bgColor || 'from-gray-800 to-gray-900'} flex items-center justify-center`}>
-                         <span className="text-white text-xs font-bold">{slotNum}</span>
-                      </div>}
-                  </button>;
-          })}
+      {/* Profile Avatars + Download Button - Below Canvas */}
+      <div className="flex items-center justify-between px-6 mt-8 gap-4 w-full max-w-7xl">
+        {/* Left: Profile Images Row */}
+        <div className="flex gap-3 overflow-x-auto">
+          {profilePhotos.slice(0, 6).map((photo, idx) => (
+            <button 
+              key={photo.id}
+              onClick={() => {
+                setSelectedMentorPhotoIndex(idx);
+                setIsMentorPhotoFlipped(!isMentorPhotoFlipped);
+              }}
+              className={`h-10 w-10 rounded-full border-2 object-cover flex-shrink-0 shadow-lg transition-all hover:scale-105 ${
+                selectedMentorPhotoIndex === idx 
+                  ? 'border-[#FFD700] ring-2 ring-[#FFD700] ring-offset-2 ring-offset-[#0B0E15]' 
+                  : 'border-gray-500 hover:border-[#FFD700]'
+              }`}
+            >
+              <img src={photo.photo_url} alt="Profile" className="w-full h-full rounded-full object-cover" />
+            </button>
+          ))}
+          {profilePhotos.length > 6 && (
+            <div className="h-10 w-10 rounded-full border-2 border-[#FFD700] bg-[#111827] flex items-center justify-center text-[#FFD700] text-xs font-bold flex-shrink-0">
+              +{profilePhotos.length - 6}
+            </div>
+          )}
+        </div>
+
+        {/* Right: Download Button */}
+        <button 
+          onClick={handleDownload} 
+          disabled={isDownloading}
+          className="cursor-pointer transition-transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+        >
+          <img src={downloadIcon} alt="Download" className="h-16 w-auto" />
+        </button>
+      </div>
+
+      {/* Slot Selector Grid - Below Controls */}
+      {backgrounds.length > 0 && (
+        <div className="w-full max-w-7xl px-6 py-8">
+          <div className="rounded-3xl bg-[#111827]/50 border-2 border-[#FFD700]/20 p-6 shadow-[0_0_30px_rgba(255,215,0,0.1)]">
+            <div className="grid grid-cols-4 gap-4">
+              {Array.from({ length: 16 }, (_, i) => i + 1).map(slotNum => {
+                const bg = backgrounds.find(b => b.slot_number === slotNum);
+                const isSelected = selectedTemplate === slotNum - 1;
+                return (
+                  <button 
+                    key={slotNum}
+                    onClick={() => setSelectedTemplate(slotNum - 1)}
+                    className={`aspect-square rounded-lg overflow-hidden transition-all ${
+                      isSelected 
+                        ? 'border-4 border-[#FFD700] scale-105 shadow-[0_0_20px_rgba(255,215,0,0.5)]' 
+                        : 'border-2 border-gray-600 hover:border-[#FFD700] hover:scale-105'
+                    }`}
+                  >
+                    {bg?.background_image_url ? (
+                      <img src={bg.background_image_url} alt={`Slot ${slotNum}`} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className={`w-full h-full bg-gradient-to-br ${templateColors[slotNum - 1]?.bgColor || 'from-gray-800 to-gray-900'} flex items-center justify-center`}>
+                        <span className="text-white text-xs font-bold">{slotNum}</span>
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </div>
-        </div>}
+        </div>
+      )}
 
       {/* Ranks & Stickers Panel - Admin Only */}
-      {isAdmin && <RanksStickersPanel isOpen={isStickersOpen} onClose={() => setIsStickersOpen(false)} currentSlot={selectedTemplate + 1} rankName={bannerData?.rankName || ''} selectedStickers={slotStickers[selectedTemplate + 1] || []} onStickersChange={stickers => {
-      setSlotStickers(prev => ({
-        ...prev,
-        [selectedTemplate + 1]: stickers
-      }));
-    }} />}
-    </div>;
+      {isAdmin && (
+        <RanksStickersPanel 
+          isOpen={isStickersOpen} 
+          onClose={() => setIsStickersOpen(false)} 
+          currentSlot={selectedTemplate + 1} 
+          rankName={bannerData?.rankName || ''} 
+          selectedStickers={slotStickers[selectedTemplate + 1] || []} 
+          onStickersChange={stickers => {
+            setSlotStickers(prev => ({
+              ...prev,
+              [selectedTemplate + 1]: stickers
+            }));
+          }} 
+        />
+      )}
+    </div>
+  );
 }
