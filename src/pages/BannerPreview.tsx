@@ -488,22 +488,22 @@ export default function BannerPreview() {
                 left: '675px',
                 transform: 'translateX(-50%)',
                 display: 'flex',
-                gap: '16px'
+                gap: '12px'
               }}>
                   {bannerData.uplines?.slice(0, 5).map((upline, idx) => <div key={upline.id} style={{
-                    width: '160px', /* LOCKED */
-                    height: '160px', /* LOCKED */
-                    minWidth: '160px',
-                    minHeight: '160px',
-                    maxWidth: '160px',
-                    maxHeight: '160px',
-                    borderRadius: '80px',
-                    border: '4px solid #ffffff',
+                    width: '120px', /* LOCKED */
+                    height: '120px', /* LOCKED */
+                    minWidth: '120px',
+                    minHeight: '120px',
+                    maxWidth: '120px',
+                    maxHeight: '120px',
+                    borderRadius: '60px',
+                    border: '3px solid #ffffff',
                     overflow: 'hidden',
-                    boxShadow: '0 8px 16px rgba(0,0,0,0.5)',
+                    boxShadow: '0 6px 12px rgba(0,0,0,0.5)',
                     flexShrink: 0
                   }}>
-                      <img src={upline.avatar || primaryPhoto || "/placeholder.svg"} alt={upline.name} style={{ width: '160px', height: '160px', objectFit: 'cover' }} />
+                      <img src={upline.avatar || primaryPhoto || "/placeholder.svg"} alt={upline.name} style={{ width: '120px', height: '120px', objectFit: 'cover' }} />
                     </div>)}
                 </div>
 
