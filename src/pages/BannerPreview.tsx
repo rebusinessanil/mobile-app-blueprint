@@ -520,7 +520,7 @@ export default function BannerPreview() {
 
                 {/* Top - Upline avatars - FIXED SIZE AND POSITION */}
                 <div className="absolute z-20" style={{
-                top: '40px',
+                top: '10px',
                 left: '675px',
                 transform: 'translateX(-50%)',
                 display: 'flex',
