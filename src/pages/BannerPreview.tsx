@@ -620,14 +620,12 @@ export default function BannerPreview() {
                 width: '648px', /* LOCKED */
                 minWidth: '648px',
                 maxWidth: '648px',
-                padding: '0 27px',
-                overflow: 'visible'
+                padding: '0 27px'
               }}>
                   <h2 title={mainBannerName.toUpperCase()} className="banner-preview-name text-center" style={{
                     color: '#ffffff',
                     textAlign: 'center',
-                    margin: '0 auto',
-                    overflow: 'visible'
+                    margin: '0 auto'
                   }}>
                     {truncatedMainName.toUpperCase()}
                   </h2>
@@ -635,20 +633,18 @@ export default function BannerPreview() {
                   {bannerData.teamCity && <p title={bannerData.teamCity.toUpperCase()} className="banner-team text-center" style={{ 
                     marginTop: '13px',
                     color: '#ffffff',
-                    textAlign: 'center',
-                    overflow: 'visible'
+                    textAlign: 'center'
                   }}>
                       {bannerData.teamCity.toUpperCase()}
                     </p>}
                 </div>
                 {/* BOTTOM CENTER - Income - FIXED FONTS AND POSITION */}
                 {bannerData.chequeAmount && <div className="absolute" style={{
-                bottom: '250px', /* Adjusted up from 202px for better spacing */
+                bottom: '202px', /* LOCKED */
                 left: '67px', /* LOCKED */
                 width: '743px', /* LOCKED */
                 minWidth: '743px',
-                maxWidth: '743px',
-                overflow: 'visible'
+                maxWidth: '743px'
               }}>
                     <p style={{
                   fontSize: '36px', /* LOCKED */
@@ -658,8 +654,7 @@ export default function BannerPreview() {
                   letterSpacing: '1px',
                   textAlign: 'left',
                   margin: 0,
-                  marginBottom: '28px',
-                  overflow: 'visible'
+                  marginBottom: '28px'
                 }}>
                       THIS WEEK INCOME 
                     </p>
@@ -672,8 +667,7 @@ export default function BannerPreview() {
                   textAlign: 'left',
                   margin: 0,
                   color: '#FFD600',
-                  fontFamily: 'sans-serif',
-                  overflow: 'visible'
+                  fontFamily: 'sans-serif'
                 }}>
                       {Number(bannerData.chequeAmount).toLocaleString('en-IN')}
                     </p>
@@ -681,12 +675,11 @@ export default function BannerPreview() {
 
                 {/* LOWER THIRD - Contact Info - FIXED FONTS AND POSITION */}
                 <div className="absolute" style={{
-                bottom: '88px', /* Increased from 40px for export padding */
+                bottom: '40px', /* LOCKED */
                 left: '27px', /* LOCKED */
                 width: '675px', /* LOCKED */
                 minWidth: '675px',
-                maxWidth: '675px',
-                overflow: 'visible'
+                maxWidth: '675px'
               }}>
                   <p style={{
                   fontSize: '9px !important', /* LOCKED */
@@ -697,15 +690,14 @@ export default function BannerPreview() {
                   top: '13px',
                   color: '#ffffff',
                   fontWeight: '300',
-                  letterSpacing: '2px',
-                  overflow: 'visible'
+                  letterSpacing: '2px'
                 }}>
                     CALL FOR MENTORSHIP                                                                 
                   </p>
                   <p title={`+91 ${displayContact}`} className="banner-contact" style={{
                   whiteSpace: 'nowrap',
-                  overflow: 'visible',
-                  textOverflow: 'clip',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
                   color: '#ffffff',
                   fontFamily: 'sans-serif'
                 }}>
@@ -715,7 +707,7 @@ export default function BannerPreview() {
 
                 {/* BOTTOM RIGHT - Mentor Photo - FIXED SIZE AND POSITION */}
                 {mentorPhoto && <div className="absolute overflow-hidden shadow-2xl cursor-pointer transition-transform duration-500 ease-in-out" onClick={() => setIsMentorPhotoFlipped(!isMentorPhotoFlipped)} style={{
-                bottom: '48px', /* Adjusted from 0 to add export padding */
+                bottom: 0, /* LOCKED */
                 right: 0, /* LOCKED */
                 width: '445px', /* LOCKED */
                 height: '520px', /* LOCKED */
@@ -737,18 +729,17 @@ export default function BannerPreview() {
 
                 {/* BOTTOM CENTER - Profile Name & Rank - FIXED FONTS AND POSITION */}
                 <div className="absolute text-center" style={{
-                bottom: '88px', /* Increased from 40px for export padding */
+                bottom: '40px', /* LOCKED */
                 left: '50%', /* LOCKED */
                 transform: 'translateX(-45%)',
                 width: 'max-content',
                 maxWidth: '1080px',
-                zIndex: 3,
-                overflow: 'visible'
+                zIndex: 3
               }}>
                   <p title={profileName} className="banner-profile-name" style={{
                   whiteSpace: 'nowrap',
-                  overflow: 'visible',
-                  textOverflow: 'clip',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
                   marginBottom: '1px',
                   position: 'relative',
                   top: '20px',
@@ -760,8 +751,7 @@ export default function BannerPreview() {
                   <p className="banner-profile-rank" style={{
                   textTransform: 'uppercase',
                   color: '#eab308',
-                  textAlign: 'center',
-                  overflow: 'visible'
+                  textAlign: 'center'
                 }}>
                     {displayRank}
                   </p>
