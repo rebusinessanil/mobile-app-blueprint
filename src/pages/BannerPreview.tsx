@@ -65,6 +65,12 @@ export default function BannerPreview() {
   const [selectedStickerId, setSelectedStickerId] = useState<string | null>(null);
   const [dragStartPos, setDragStartPos] = useState<{ x: number; y: number } | null>(null);
   const [stickerScale, setStickerScale] = useState<Record<string, number>>({});
+  const [isSavingSticker, setIsSavingSticker] = useState(false);
+  const [originalStickerStates, setOriginalStickerStates] = useState<Record<string, {
+    position_x: number;
+    position_y: number;
+    scale: number;
+  }>>({});
 
   // Compute scale factor for display
   useEffect(() => {
@@ -321,6 +327,89 @@ export default function BannerPreview() {
     } else {
       setStickerScale(prev => ({ ...prev, [selectedStickerId]: scale }));
     }
+  };
+
+  const handleSaveSticker = async () => {
+    if (!selectedStickerId) {
+      toast.error("Please select a sticker first");
+      return;
+    }
+
+    const currentSlot = selectedTemplate + 1;
+    const stickers = stickerImages[currentSlot] || [];
+    const selectedSticker = stickers.find(s => s.id === selectedStickerId);
+    
+    if (!selectedSticker) {
+      toast.error("Sticker not found");
+      return;
+    }
+
+    setIsSavingSticker(true);
+    try {
+      const { error } = await supabase
+        .from("stickers")
+        .update({
+          position_x: selectedSticker.position_x || 0,
+          position_y: selectedSticker.position_y || 0,
+          scale: stickerScale[selectedStickerId] || 2.5,
+        })
+        .eq("id", selectedStickerId);
+
+      if (error) throw error;
+
+      // Store current state as original after successful save
+      setOriginalStickerStates(prev => ({
+        ...prev,
+        [selectedStickerId]: {
+          position_x: selectedSticker.position_x || 0,
+          position_y: selectedSticker.position_y || 0,
+          scale: stickerScale[selectedStickerId] || 2.5,
+        }
+      }));
+
+      toast.success("Sticker settings saved successfully!");
+    } catch (error) {
+      console.error("Error saving sticker:", error);
+      toast.error("Failed to save sticker settings");
+    } finally {
+      setIsSavingSticker(false);
+    }
+  };
+
+  const handleResetSticker = () => {
+    if (!selectedStickerId) {
+      toast.error("Please select a sticker first");
+      return;
+    }
+
+    const originalState = originalStickerStates[selectedStickerId];
+    if (!originalState) {
+      toast.info("No saved state to reset to");
+      return;
+    }
+
+    // Reset to original saved state
+    setStickerScale(prev => ({
+      ...prev,
+      [selectedStickerId]: originalState.scale
+    }));
+    
+    const currentSlot = selectedTemplate + 1;
+    setStickerImages(prev => ({
+      ...prev,
+      [currentSlot]: (prev[currentSlot] || []).map(sticker => {
+        if (sticker.id === selectedStickerId) {
+          return {
+            ...sticker,
+            position_x: originalState.position_x,
+            position_y: originalState.position_y,
+          };
+        }
+        return sticker;
+      })
+    }));
+    
+    toast.success("Sticker reset to saved position");
   };
 
   const getCurrentScale = () => {
@@ -963,8 +1052,11 @@ export default function BannerPreview() {
           onAddSticker={handleAddSticker}
           onResizeSticker={handleResizeSticker}
           onToggleDragMode={setIsDragMode}
+          onSave={handleSaveSticker}
+          onReset={handleResetSticker}
           currentScale={getCurrentScale()}
           isDragMode={isDragMode}
+          isSaving={isSavingSticker}
         />
       )}
 
