@@ -15,6 +15,8 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Sticker } from "@/hooks/useStickers";
 import html2canvas from "html2canvas";
 import { useRealtimeStickerSync } from "@/hooks/useRealtimeStickerSync";
+import CongratulationsPositionControls from "@/components/admin/CongratulationsPositionControls";
+
 interface Upline {
   id: string;
   name: string;
@@ -58,6 +60,13 @@ export default function BannerPreview() {
   }[]>>({});
   const bannerRef = useRef<HTMLDivElement>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [congratsPosition, setCongratsPosition] = useState({
+    top: 12,
+    right: 8,
+    width: 44,
+    height: 11
+  });
+  const [showCongratsControls, setShowCongratsControls] = useState(false);
 
   // Get authenticated user and check admin status
   useEffect(() => {
@@ -382,12 +391,30 @@ export default function BannerPreview() {
           
           <h1 className="text-base sm:text-xl md:text-2xl font-bold text-foreground tracking-widest">BANNER PREVIEW</h1>
           
-          {isAdmin && <button onClick={() => setIsStickersOpen(true)} className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl border-2 border-primary bg-primary/10 flex items-center justify-center hover:bg-primary/20 transition-colors touch-target">
-              <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
-            </button>}
+          {isAdmin && (
+            <div className="flex gap-2">
+              <button onClick={() => setShowCongratsControls(!showCongratsControls)} className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl border-2 border-secondary bg-secondary/10 flex items-center justify-center hover:bg-secondary/20 transition-colors touch-target">
+                <Settings className="w-5 h-5 sm:w-6 sm:h-6 text-secondary" />
+              </button>
+              <button onClick={() => setIsStickersOpen(true)} className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl border-2 border-primary bg-primary/10 flex items-center justify-center hover:bg-primary/20 transition-colors touch-target">
+                <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
+              </button>
+            </div>
+          )}
           {!isAdmin && <div className="w-10 h-10 sm:w-12 sm:h-12" />}
         </div>
       </header>
+
+      {/* Admin Controls for Congratulations Position */}
+      {isAdmin && showCongratsControls && (
+        <div className="px-3 sm:px-4 py-2 bg-background border-b border-border">
+          <CongratulationsPositionControls
+            position={congratsPosition}
+            onPositionChange={setCongratsPosition}
+            onReset={() => setCongratsPosition({ top: 12, right: 8, width: 44, height: 11 })}
+          />
+        </div>
+      )}
 
       {/* Banner Preview Container - Fixed at top */}
       <div className="px-3 sm:px-4 py-3 sm:py-4 flex-shrink-0 bg-background">
@@ -425,10 +452,10 @@ export default function BannerPreview() {
 
                 {/* Congratulations Image - Admin controlled, always displayed */}
                 {bannerDefaults?.congratulations_image && <div className="absolute z-20" style={{
-                top: '12%',
-                right: '8%',
-                width: '44%',
-                height: '11%'
+                top: `${congratsPosition.top}%`,
+                right: `${congratsPosition.right}%`,
+                width: `${congratsPosition.width}%`,
+                height: `${congratsPosition.height}%`
               }}>
                     <img src={bannerDefaults.congratulations_image} alt="Congratulations" className="w-full h-full drop-shadow-2xl object-cover" />
                   </div>}
