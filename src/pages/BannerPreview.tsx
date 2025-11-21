@@ -558,33 +558,33 @@ export default function BannerPreview() {
                     </div>)}
                 </div>
 
-                {/* LEFT - Main User Photo - FIXED SIZE AND POSITION */}
+                {/* LEFT - Main User Photo - FIXED SIZE AND POSITION - 3:4 RATIO */}
                 {primaryPhoto && <div className="absolute overflow-hidden cursor-pointer transition-transform duration-500 ease-in-out" onClick={() => setIsPhotoFlipped(!isPhotoFlipped)} style={{
                     left: '40px',
                     /* LOCKED */
                     top: '162px',
                     /* LOCKED */
-                    width: '540px',
-                    /* LOCKED */
-                    height: '860px',
-                    /* LOCKED */
-                    minWidth: '540px',
-                    minHeight: '860px',
-                    maxWidth: '540px',
-                    maxHeight: '860px',
+                    width: '675px',
+                    /* LOCKED - 3:4 ratio */
+                    height: '900px',
+                    /* LOCKED - 3:4 ratio */
+                    minWidth: '675px',
+                    minHeight: '900px',
+                    maxWidth: '675px',
+                    maxHeight: '900px',
                     borderRadius: '24px',
                     transform: isPhotoFlipped ? 'scaleX(-1)' : 'scaleX(1)'
                   }}>
                     <img src={primaryPhoto} alt={mainBannerName} style={{
-                      width: '100%',
-                      height: '100%',
+                      width: '675px',
+                      height: '900px',
                       objectFit: 'cover',
                       objectPosition: 'center'
                     }} />
                     {/* Bottom feather fade overlay */}
                     <div className="absolute bottom-0 left-0 right-0 pointer-events-none" style={{
-                      height: '258px',
-                      /* Fixed 30% of 860px */
+                      height: '270px',
+                      /* Fixed 30% of 900px */
                       background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%)'
                     }} />
                   </div>}
@@ -592,7 +592,7 @@ export default function BannerPreview() {
                 {/* Golden Crown below user photo */}
                 <div className="absolute" style={{
                     left: '176px',
-                    bottom: '270px',
+                    bottom: '230px',
                     width: '270px',
                     height: '108px'
                   }}>
@@ -704,33 +704,33 @@ export default function BannerPreview() {
                   </p>
                 </div>
 
-                {/* BOTTOM RIGHT - Mentor Photo - FIXED SIZE AND POSITION */}
+                {/* BOTTOM RIGHT - Mentor Photo - FIXED SIZE AND POSITION - SQUARE 1:1 RATIO */}
                 {mentorPhoto && <div className="absolute overflow-hidden shadow-2xl cursor-pointer transition-transform duration-500 ease-in-out" onClick={() => setIsMentorPhotoFlipped(!isMentorPhotoFlipped)} style={{
                     bottom: 0,
                     /* LOCKED */
                     right: 0,
                     /* LOCKED */
-                    width: '445px',
-                    /* LOCKED */
-                    height: '520px',
-                    /* LOCKED */
-                    minWidth: '445px',
-                    minHeight: '520px',
-                    maxWidth: '445px',
-                    maxHeight: '520px',
+                    width: '540px',
+                    /* LOCKED - Square 1:1 */
+                    height: '540px',
+                    /* LOCKED - Square 1:1 */
+                    minWidth: '540px',
+                    minHeight: '540px',
+                    maxWidth: '540px',
+                    maxHeight: '540px',
                     borderRadius: '16px',
                     transform: isMentorPhotoFlipped ? 'scaleX(-1)' : 'scaleX(1)'
                   }}>
                     <img src={mentorPhoto} alt={profileName} style={{
-                      width: '100%',
-                      height: '100%',
+                      width: '540px',
+                      height: '540px',
                       objectFit: 'cover',
                       objectPosition: 'center'
                     }} />
                     {/* Bottom feather fade overlay */}
                     <div className="absolute bottom-0 left-0 right-0 pointer-events-none" style={{
-                      height: '156px',
-                      /* Fixed 30% of 520px */
+                      height: '162px',
+                      /* Fixed 30% of 540px */
                       background: 'linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 100%)'
                     }} />
                   </div>}
