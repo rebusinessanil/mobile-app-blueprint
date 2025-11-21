@@ -322,90 +322,29 @@ export default function BannerPreview() {
     const loadingToast = toast.loading("Generating Full HD banner...");
     try {
       const TARGET_SIZE = 1080;
-      const PADDING = 100; // Extra capture padding to prevent edge clipping
-      const CAPTURE_SIZE = TARGET_SIZE + (PADDING * 2);
       
-      // Save ALL original styles
-      const originalStyles = {
-        width: bannerRef.current.style.width,
-        height: bannerRef.current.style.height,
-        maxWidth: bannerRef.current.style.maxWidth,
-        maxHeight: bannerRef.current.style.maxHeight,
-        minWidth: bannerRef.current.style.minWidth,
-        minHeight: bannerRef.current.style.minHeight,
-        aspectRatio: bannerRef.current.style.aspectRatio,
-        overflow: bannerRef.current.style.overflow,
-        padding: bannerRef.current.style.padding,
-        margin: bannerRef.current.style.margin
-      };
+      // Get current rendered dimensions to maintain exact proportions
+      const currentRect = bannerRef.current.getBoundingClientRect();
+      const currentWidth = currentRect.width;
+      const currentHeight = currentRect.height;
       
-      // Force exact dimensions with padding space for overflow elements
-      bannerRef.current.style.width = `${TARGET_SIZE}px`;
-      bannerRef.current.style.height = `${TARGET_SIZE}px`;
-      bannerRef.current.style.maxWidth = `${TARGET_SIZE}px`;
-      bannerRef.current.style.maxHeight = `${TARGET_SIZE}px`;
-      bannerRef.current.style.minWidth = `${TARGET_SIZE}px`;
-      bannerRef.current.style.minHeight = `${TARGET_SIZE}px`;
-      bannerRef.current.style.aspectRatio = 'unset';
-      bannerRef.current.style.overflow = 'visible';
-      bannerRef.current.style.padding = '0';
-      bannerRef.current.style.margin = '0';
-      
-      // Wait for reflow
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Calculate scale factor to reach 1080x1080 while preserving exact layout
+      const scaleFactor = TARGET_SIZE / Math.max(currentWidth, currentHeight);
 
-      // Capture at higher resolution with extra space around edges
+      // Capture banner as-is with precise scale - no cloning, no dimension changes
       const canvas = await html2canvas(bannerRef.current, {
-        scale: 3,
+        scale: scaleFactor,
         backgroundColor: "#000000",
         logging: false,
         useCORS: true,
         allowTaint: true,
-        width: CAPTURE_SIZE,
-        height: CAPTURE_SIZE,
-        windowWidth: CAPTURE_SIZE,
-        windowHeight: CAPTURE_SIZE,
-        x: -PADDING,
-        y: -PADDING,
-        scrollX: 0,
-        scrollY: 0,
-        imageTimeout: 0,
-        removeContainer: false
+        width: currentWidth,
+        height: currentHeight,
+        imageTimeout: 0
       });
 
-      // Create final 1080x1080 canvas and crop from center of captured image
-      const finalCanvas = document.createElement('canvas');
-      finalCanvas.width = TARGET_SIZE;
-      finalCanvas.height = TARGET_SIZE;
-      const ctx = finalCanvas.getContext('2d');
-      
-      if (ctx) {
-        // Calculate crop coordinates to center the 1080x1080 area
-        const sourceX = PADDING * 3; // Account for scale: 3
-        const sourceY = PADDING * 3;
-        const sourceSize = TARGET_SIZE * 3;
-        
-        // Draw cropped and scaled portion
-        ctx.drawImage(
-          canvas,
-          sourceX,
-          sourceY,
-          sourceSize,
-          sourceSize,
-          0,
-          0,
-          TARGET_SIZE,
-          TARGET_SIZE
-        );
-      }
-
-      // Restore ALL original styles
-      Object.entries(originalStyles).forEach(([key, value]) => {
-        bannerRef.current!.style[key as any] = value;
-      });
-
-      // Convert to JPG
-      finalCanvas.toBlob(blob => {
+      // Convert directly to JPG blob with quality 0.95
+      canvas.toBlob(blob => {
         toast.dismiss(loadingToast);
         if (!blob) {
           toast.error("Failed to generate image");
