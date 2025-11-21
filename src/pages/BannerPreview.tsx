@@ -59,6 +59,27 @@ export default function BannerPreview() {
   const bannerRef = useRef<HTMLDivElement>(null);
   const [isAdmin, setIsAdmin] = useState(false);
 
+  // Compute scale factor for display
+  useEffect(() => {
+    const updateScale = () => {
+      const container = document.querySelector('.banner-scale-container') as HTMLElement;
+      if (!container) return;
+      
+      const parent = container.parentElement;
+      if (!parent) return;
+      
+      const parentWidth = parent.clientWidth;
+      const scale = parentWidth / 1350;
+      
+      container.style.setProperty('--banner-scale', scale.toString());
+      container.style.transform = `scale(${scale})`;
+    };
+    
+    updateScale();
+    window.addEventListener('resize', updateScale);
+    return () => window.removeEventListener('resize', updateScale);
+  }, []);
+
   // Get authenticated user and check admin status
   useEffect(() => {
     supabase.auth.getSession().then(async ({
@@ -231,86 +252,86 @@ export default function BannerPreview() {
     return null;
   }
 
-  // 16 template variations (4x4 grid)
+  // 16 template variations (4x4 grid) with actual CSS colors
   const templateColors = [{
     id: 0,
     name: "Green Black",
-    bgColor: "from-black via-gray-900 to-black",
+    bgGradient: "linear-gradient(to bottom right, #000000, #111827, #000000)",
     border: "border-green-500"
   }, {
     id: 1,
     name: "Purple Pink",
-    bgColor: "from-purple-900 via-pink-900 to-purple-800",
+    bgGradient: "linear-gradient(to bottom right, #581c87, #831843, #6b21a8)",
     border: "border-pink-500"
   }, {
     id: 2,
     name: "Blue Indigo",
-    bgColor: "from-blue-900 via-indigo-900 to-blue-800",
+    bgGradient: "linear-gradient(to bottom right, #1e3a8a, #312e81, #1e40af)",
     border: "border-blue-500"
   }, {
     id: 3,
     name: "Red Orange",
-    bgColor: "from-red-900 via-orange-900 to-red-800",
+    bgGradient: "linear-gradient(to bottom right, #7f1d1d, #7c2d12, #991b1b)",
     border: "border-orange-500"
   }, {
     id: 4,
     name: "Emerald Teal",
-    bgColor: "from-emerald-900 via-teal-900 to-emerald-800",
+    bgGradient: "linear-gradient(to bottom right, #064e3b, #134e4a, #065f46)",
     border: "border-teal-500"
   }, {
     id: 5,
     name: "Pink Purple",
-    bgColor: "from-pink-900 via-purple-900 to-pink-800",
+    bgGradient: "linear-gradient(to bottom right, #831843, #581c87, #9d174d)",
     border: "border-purple-500"
   }, {
     id: 6,
     name: "Cyan Blue",
-    bgColor: "from-cyan-900 via-blue-900 to-cyan-800",
+    bgGradient: "linear-gradient(to bottom right, #164e63, #1e3a8a, #155e75)",
     border: "border-cyan-500"
   }, {
     id: 7,
     name: "Yellow Orange",
-    bgColor: "from-yellow-900 via-orange-900 to-yellow-800",
+    bgGradient: "linear-gradient(to bottom right, #713f12, #7c2d12, #854d0e)",
     border: "border-yellow-500"
   }, {
     id: 8,
     name: "Indigo Purple",
-    bgColor: "from-indigo-900 via-purple-900 to-indigo-800",
+    bgGradient: "linear-gradient(to bottom right, #312e81, #581c87, #3730a3)",
     border: "border-indigo-500"
   }, {
     id: 9,
     name: "Rose Red",
-    bgColor: "from-rose-900 via-red-900 to-rose-800",
+    bgGradient: "linear-gradient(to bottom right, #881337, #7f1d1d, #9f1239)",
     border: "border-rose-500"
   }, {
     id: 10,
     name: "Violet Purple",
-    bgColor: "from-violet-900 via-purple-900 to-violet-800",
+    bgGradient: "linear-gradient(to bottom right, #4c1d95, #581c87, #5b21b6)",
     border: "border-violet-500"
   }, {
     id: 11,
     name: "Lime Green",
-    bgColor: "from-lime-900 via-green-900 to-lime-800",
+    bgGradient: "linear-gradient(to bottom right, #365314, #14532d, #3f6212)",
     border: "border-lime-500"
   }, {
     id: 12,
     name: "Amber Orange",
-    bgColor: "from-amber-900 via-orange-900 to-amber-800",
+    bgGradient: "linear-gradient(to bottom right, #78350f, #7c2d12, #92400e)",
     border: "border-amber-500"
   }, {
     id: 13,
     name: "Sky Blue",
-    bgColor: "from-sky-900 via-blue-900 to-sky-800",
+    bgGradient: "linear-gradient(to bottom right, #0c4a6e, #1e3a8a, #075985)",
     border: "border-sky-500"
   }, {
     id: 14,
     name: "Fuchsia Pink",
-    bgColor: "from-fuchsia-900 via-pink-900 to-fuchsia-800",
+    bgGradient: "linear-gradient(to bottom right, #701a75, #831843, #86198f)",
     border: "border-fuchsia-500"
   }, {
     id: 15,
     name: "Slate Gray",
-    bgColor: "from-slate-900 via-gray-900 to-slate-800",
+    bgGradient: "linear-gradient(to bottom right, #0f172a, #111827, #1e293b)",
     border: "border-slate-500"
   }];
   const handleDownload = async () => {
@@ -319,31 +340,21 @@ export default function BannerPreview() {
       return;
     }
     setIsDownloading(true);
-    const loadingToast = toast.loading("Generating Full HD banner...");
+    const loadingToast = toast.loading("Generating high-quality banner (2-3 MB)...");
     try {
-      const TARGET_SIZE = 1080;
-      
-      // Get current rendered dimensions to maintain exact proportions
-      const currentRect = bannerRef.current.getBoundingClientRect();
-      const currentWidth = currentRect.width;
-      const currentHeight = currentRect.height;
-      
-      // Calculate scale factor to reach 1080x1080 while preserving exact layout
-      const scaleFactor = TARGET_SIZE / Math.max(currentWidth, currentHeight);
-
-      // Capture banner as-is with precise scale - no cloning, no dimension changes
+      // Capture the fixed 1350×1350 canvas at scale: 3 for high quality
       const canvas = await html2canvas(bannerRef.current, {
-        scale: scaleFactor,
+        width: 1350,
+        height: 1350,
+        scale: 3,
         backgroundColor: "#000000",
         logging: false,
         useCORS: true,
         allowTaint: true,
-        width: currentWidth,
-        height: currentHeight,
         imageTimeout: 0
       });
 
-      // Convert directly to JPG blob with quality 0.95
+      // Convert to PNG blob with compression for 2-3 MB target
       canvas.toBlob(blob => {
         toast.dismiss(loadingToast);
         if (!blob) {
@@ -353,12 +364,13 @@ export default function BannerPreview() {
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
         const timestamp = new Date().getTime();
-        link.download = `ReBusiness-Banner-${bannerData.rankName}-${timestamp}.jpg`;
+        link.download = `ReBusiness-Banner-${bannerData.rankName}-${timestamp}.png`;
         link.href = url;
         link.click();
         URL.revokeObjectURL(url);
-        toast.success("Banner downloaded! (1080×1080 Full HD JPG)");
-      }, "image/jpeg", 0.95);
+        const sizeMB = (blob.size / 1024 / 1024).toFixed(2);
+        toast.success(`Banner downloaded! (${sizeMB} MB, 4050×4050 PNG)`);
+      }, "image/png", 0.92);
     } catch (error) {
       console.error("Download error:", error);
       toast.dismiss(loadingToast);
@@ -386,83 +398,119 @@ export default function BannerPreview() {
 
       {/* Banner Preview Container - Fixed at top */}
       <div className="px-3 sm:px-4 py-3 sm:py-4 flex-shrink-0 bg-background">
-        {/* Main Banner Preview Wrapper with aspect ratio */}
-        <div className="preview-banner-wrapper relative w-full max-w-[100vw] sm:max-w-[520px] mx-auto">
+        {/* Display wrapper with responsive scaling */}
+        <div className="relative w-full max-w-[100vw] sm:max-w-[520px] mx-auto">
           <div className="border-4 border-primary rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl">
-          <div ref={bannerRef} data-banner-clone className={`preview-banner border-4 ${templateColors[selectedTemplate].border} relative w-full bg-gradient-to-br ${templateColors[selectedTemplate].bgColor}`} style={{
-            aspectRatio: '1 / 1',
-            width: '100%',
-            height: 'auto'
-          }}>
+            {/* Scale wrapper for display - maintains 1350×1350 internal canvas */}
+            <div style={{
+              width: '100%',
+              aspectRatio: '1 / 1',
+              overflow: 'hidden',
+              position: 'relative'
+            }}>
+              <div style={{
+                transform: 'scale(var(--banner-scale))',
+                transformOrigin: 'top left',
+                width: '1350px',
+                height: '1350px'
+              }} className="banner-scale-container">
+                <div 
+                  ref={bannerRef} 
+                  id="banner-canvas"
+                  className={`border-4 ${templateColors[selectedTemplate].border}`}
+                  style={{
+                    position: 'relative',
+                    width: '1350px',
+                    height: '1350px',
+                    background: templateColors[selectedTemplate].bgGradient,
+                    overflow: 'hidden'
+                  }}
+                >
               <div className="absolute inset-0">
                 {/* Background Image (if uploaded) or Gradient Background */}
                 {backgroundImage ? <img src={backgroundImage} alt="Template background" className="absolute inset-0 w-full h-full object-cover" /> : null}
 
                 {/* Top-Left Logo */}
                 {bannerSettings?.logo_left && <div className="absolute z-30" style={{
-                top: '3%',
-                left: '3%',
-                width: '15%',
-                height: '8%'
+                top: '40px',
+                left: '40px',
+                width: '202px',
+                height: '108px'
               }}>
-                    <img src={bannerSettings.logo_left} alt="Left Logo" className="w-full h-full object-contain drop-shadow-lg" />
+                    <img src={bannerSettings.logo_left} alt="Left Logo" style={{ width: '100%', height: '100%', objectFit: 'contain', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.5))' }} />
                   </div>}
 
                 {/* Top-Right Logo */}
                 {bannerSettings?.logo_right && <div className="absolute z-30" style={{
-                top: '3%',
-                right: '3%',
-                width: '15%',
-                height: '8%'
+                top: '40px',
+                right: '40px',
+                width: '202px',
+                height: '108px'
               }}>
-                    <img src={bannerSettings.logo_right} alt="Right Logo" className="w-full h-full object-contain drop-shadow-lg" />
+                    <img src={bannerSettings.logo_right} alt="Right Logo" style={{ width: '100%', height: '100%', objectFit: 'contain', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.5))' }} />
                   </div>}
 
                 {/* Congratulations Image - Admin controlled, always displayed */}
                 {bannerDefaults?.congratulations_image && <div className="absolute z-20" style={{
-                top: '12%',
-                left: '72.5%',
+                top: '162px',
+                left: '978px',
                 transform: 'translateX(-50%)',
-                width: '48%',
-                height: '12%'
+                width: '648px',
+                height: '162px'
               }}>
-                    <img src={bannerDefaults.congratulations_image} alt="Congratulations" className="w-full h-full drop-shadow-2xl object-cover" />
+                    <img src={bannerDefaults.congratulations_image} alt="Congratulations" style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.7))' }} />
                   </div>}
 
                 {/* Text Below Congratulations Image */}
                 <div className="absolute z-20" style={{
-                top: '17.5%',
-                left: '72.5%',
+                top: '236px',
+                left: '978px',
                 transform: 'translateX(-50%)',
-                width: '48%'
+                width: '648px',
+                textAlign: 'center'
               }}>
                     <p style={{
-                  fontSize: 'clamp(7px, 0.9vw, 11px)',
+                  fontSize: '12px',
                   lineHeight: '1.2',
-                  whiteSpace: 'nowrap'
-                }} className="text-white text-center font-semibold drop-shadow-lg text-xs mx-[6px] px-0 py-0 pr-0 pb-0 my-[13px]">
+                  whiteSpace: 'nowrap',
+                  color: '#ffffff',
+                  fontWeight: '600',
+                  textShadow: '2px 2px 6px rgba(0,0,0,0.8)',
+                  margin: '17px 8px'
+                }}>
                       To Our Brand New Leader
                     </p>
                   </div>
 
-                {/* Top - Small circular upline avatars (70% scale = smaller) */}
-                <div className="absolute top-[1.8%] left-1/2 -translate-x-1/2 flex gap-1.5 z-20" style={{
-                transform: 'translateX(-50%) scale(1.1)'
+                {/* Top - Small circular upline avatars */}
+                <div className="absolute z-20" style={{
+                top: '24px',
+                left: '675px',
+                transform: 'translateX(-50%) scale(1.1)',
+                display: 'flex',
+                gap: '6px'
               }}>
-                  {bannerData.uplines?.slice(0, 5).map((upline, idx) => <div key={upline.id} className="w-7 h-7 rounded-full border-2 border-white overflow-hidden shadow-lg">
-                      <img src={upline.avatar || primaryPhoto || "/placeholder.svg"} alt={upline.name} className="w-full h-full object-cover" />
+                  {bannerData.uplines?.slice(0, 5).map((upline, idx) => <div key={upline.id} style={{
+                    width: '38px',
+                    height: '38px',
+                    borderRadius: '50%',
+                    border: '2px solid #ffffff',
+                    overflow: 'hidden',
+                    boxShadow: '0 4px 8px rgba(0,0,0,0.5)'
+                  }}>
+                      <img src={upline.avatar || primaryPhoto || "/placeholder.svg"} alt={upline.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     </div>)}
                 </div>
 
-                {/* LEFT - Main User Photo (85% height, rounded, bottom fade, flippable) */}
+                {/* LEFT - Main User Photo (rounded, bottom fade, flippable) */}
                 {primaryPhoto && <div className="absolute overflow-hidden rounded-2xl cursor-pointer transition-transform duration-500 ease-in-out" onClick={() => setIsPhotoFlipped(!isPhotoFlipped)} style={{
-                left: '3%',
-                top: '12%',
-                width: '40%',
-                height: '63.75%',
+                left: '40px',
+                top: '162px',
+                width: '540px',
+                height: '860px',
                 transform: isPhotoFlipped ? 'scaleX(-1)' : 'scaleX(1)'
               }}>
-                    <img src={primaryPhoto} alt={mainBannerName} className="w-full h-full object-cover object-top" />
+                    <img src={primaryPhoto} alt={mainBannerName} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
                     {/* Bottom feather fade overlay */}
                     <div className="absolute bottom-0 left-0 right-0 pointer-events-none" style={{
                   height: '30%',
@@ -472,74 +520,89 @@ export default function BannerPreview() {
 
                 {/* Golden Crown below user photo */}
                 <div className="absolute" style={{
-                left: '13%',
-                bottom: '20%',
-                width: '20%',
-                height: '8%'
+                left: '176px',
+                bottom: '270px',
+                width: '270px',
+                height: '108px'
               }}>
                   
                 </div>
 
-                {/* CENTER-RIGHT - Name with responsive typography */}
-                <div className="banner-text-content absolute px-2" style={{
-                top: '25%',
-                left: '72.5%',
+                {/* CENTER-RIGHT - Name with fixed typography */}
+                <div className="banner-text-content absolute" style={{
+                top: '337px',
+                left: '978px',
                 transform: 'translateX(-50%)',
-                width: '48%',
-                maxWidth: '48%'
+                width: '648px',
+                maxWidth: '648px',
+                padding: '0 27px'
               }}>
                   <h2 title={mainBannerName.toUpperCase()} className="banner-preview-name text-foreground tracking-wider font-extrabold text-center mx-auto">
                     {truncatedMainName.toUpperCase()}
                   </h2>
                   
-                  {bannerData.teamCity && <p title={bannerData.teamCity.toUpperCase()} className="banner-team text-foreground tracking-widest mt-1 sm:mt-2 font-light font-sans text-center">
+                  {bannerData.teamCity && <p title={bannerData.teamCity.toUpperCase()} className="banner-team text-foreground tracking-widest font-light font-sans text-center" style={{ marginTop: '13px' }}>
                       {bannerData.teamCity.toUpperCase()}
                     </p>}
                 </div>
                 {/* BOTTOM CENTER - Income */}
                 {bannerData.chequeAmount && <div className="absolute text-center" style={{
-                bottom: '15%',
-                left: '5%',
-                width: '55%'
+                bottom: '202px',
+                left: '67px',
+                width: '743px'
               }}>
                     <p style={{
-                  fontSize: 'clamp(8px, 1.5vw, 14px)',
-                  textShadow: '1px 1px 2px rgba(0,0,0,0.8)'
-                }} className="text-white font-light tracking-widest text-left text-xs">
+                  fontSize: '18px',
+                  textShadow: '2px 2px 4px rgba(0,0,0,0.9)',
+                  color: '#ffffff',
+                  fontWeight: '300',
+                  letterSpacing: '3px',
+                  textAlign: 'left'
+                }}>
                       THIS WEEK INCOME 
                     </p>
                     <p style={{
-                  fontSize: 'clamp(32px, 7vw, 72px)',
-                  textShadow: '4px 4px 8px rgba(0,0,0,0.9)',
-                  lineHeight: '1'
-                }} className="font-black tracking-tight text-left text-2xl mx-0 my-0 text-yellow-500 font-serif">
+                  fontSize: '97px',
+                  textShadow: '6px 6px 12px rgba(0,0,0,0.95)',
+                  lineHeight: '1',
+                  fontWeight: '900',
+                  letterSpacing: '-2px',
+                  textAlign: 'left',
+                  margin: 0,
+                  color: '#eab308',
+                  fontFamily: 'serif'
+                }}>
                       {Number(bannerData.chequeAmount).toLocaleString('en-IN')}
                     </p>
                   </div>}
 
                 {/* LOWER THIRD - Contact Info */}
                 <div className="banner-contact absolute" style={{
-                bottom: '3%',
-                left: '2%',
-                maxWidth: '50%'
+                bottom: '40px',
+                left: '27px',
+                maxWidth: '675px'
               }}>
                   <p className="text-foreground font-light tracking-wide" style={{
-                  fontSize: 'clamp(5.6px, 0.94vw, 6.72px)',
-                  textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
-                  marginBottom: '0.5px',
+                  fontSize: '9px',
+                  textShadow: '2px 2px 4px rgba(0,0,0,0.9)',
+                  marginBottom: '1px',
                   textTransform: 'uppercase',
                   position: 'relative',
-                  top: '10%'
+                  top: '13px'
                 }}>
                     CALL FOR MENTORSHIP                                                                 
                   </p>
                   <p title={`+91 ${displayContact}`} style={{
-                  fontSize: 'clamp(9px, 1.8vw, 18px)',
-                  textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
+                  fontSize: '24px',
+                  textShadow: '3px 3px 6px rgba(0,0,0,0.9)',
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
-                  textOverflow: 'ellipsis'
-                }} className="text-foreground font-bold tracking-wide font-sans">
+                  textOverflow: 'ellipsis',
+                  color: '#ffffff',
+                  fontWeight: '700',
+                  letterSpacing: '1px',
+                  fontFamily: 'sans-serif'
+                }}>
                     +91 {displayContact}
                   </p>
                 </div>
@@ -548,11 +611,11 @@ export default function BannerPreview() {
                 {mentorPhoto && <div className="absolute overflow-hidden shadow-2xl rounded-xl cursor-pointer transition-transform duration-500 ease-in-out" onClick={() => setIsMentorPhotoFlipped(!isMentorPhotoFlipped)} style={{
                 bottom: 0,
                 right: 0,
-                width: '33%',
-                height: '38.5%',
+                width: '445px',
+                height: '520px',
                 transform: isMentorPhotoFlipped ? 'scaleX(-1)' : 'scaleX(1)'
               }}>
-                    <img src={mentorPhoto} alt={profileName} className="w-full h-full object-cover object-top" />
+                    <img src={mentorPhoto} alt={profileName} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
                     {/* Bottom feather fade overlay */}
                     <div className="absolute bottom-0 left-0 right-0 pointer-events-none" style={{
                   height: '30%',
@@ -563,7 +626,7 @@ export default function BannerPreview() {
 
                 {/* BOTTOM CENTER - Profile Name & Rank */}
                 <div className="absolute text-center" style={{
-                bottom: '3%',
+                bottom: '40px',
                 left: '50%',
                 transform: 'translateX(-45%)',
                 width: 'max-content',
@@ -571,20 +634,20 @@ export default function BannerPreview() {
                 zIndex: 3
               }}>
                   <p title={profileName} className="banner-profile-name text-foreground font-extrabold tracking-wider" style={{
-                  fontSize: '9px',
-                  textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
+                  fontSize: '12px',
+                  textShadow: '3px 3px 6px rgba(0,0,0,0.9)',
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   marginBottom: '1px',
                   position: 'relative',
-                  top: '15%'
+                  top: '20px'
                 }}>
                     {truncatedProfileName.toUpperCase()}
                   </p>
                   <p className="banner-profile-rank text-yellow-500 font-semibold tracking-widest" style={{
-                  fontSize: '7px',
-                  textShadow: '1px 1px 3px rgba(0,0,0,0.8)',
+                  fontSize: '9px',
+                  textShadow: '2px 2px 4px rgba(0,0,0,0.9)',
                   textTransform: 'uppercase'
                 }}>
                     {displayRank}
@@ -598,10 +661,10 @@ export default function BannerPreview() {
                   top: `${sticker.position_y ?? 50}%`,
                   transform: `translate(-50%, -50%) scale(${sticker.scale ?? 1}) rotate(${sticker.rotation ?? 0}deg)`,
                   transformOrigin: 'center center',
-                  width: '120px',
-                  height: '120px',
+                  width: '162px',
+                  height: '162px',
                   objectFit: 'contain',
-                  filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.3))',
+                  filter: 'drop-shadow(0 6px 9px rgba(0,0,0,0.4))',
                   zIndex: 10
                 }} />;
               })}
@@ -609,6 +672,8 @@ export default function BannerPreview() {
                 {/* BOTTOM RIGHT - Mentor Name and Title (Moved to bottom-most position) */}
                 
 
+              </div>
+                </div>
               </div>
             </div>
           </div>
@@ -645,8 +710,8 @@ export default function BannerPreview() {
           }, (_, i) => i + 1).map(slotNum => {
             const bg = backgrounds.find(b => b.slot_number === slotNum);
             const isSelected = selectedTemplate === slotNum - 1;
-            return <button key={slotNum} onClick={() => setSelectedTemplate(slotNum - 1)} className={`aspect-square rounded-lg overflow-hidden transition-all ${isSelected ? 'border-4 border-[#FFD700] scale-105 shadow-[0_0_20px_rgba(255,215,0,0.5)]' : 'border-2 border-gray-600 hover:border-[#FFD700] hover:scale-105'}`}>
-                    {bg?.background_image_url ? <img src={bg.background_image_url} alt={`Slot ${slotNum}`} className="w-full h-full object-cover" /> : <div className={`w-full h-full bg-gradient-to-br ${templateColors[slotNum - 1]?.bgColor || 'from-gray-800 to-gray-900'} flex items-center justify-center`}>
+                  return <button key={slotNum} onClick={() => setSelectedTemplate(slotNum - 1)} className={`aspect-square rounded-lg overflow-hidden transition-all ${isSelected ? 'border-4 border-[#FFD700] scale-105 shadow-[0_0_20px_rgba(255,215,0,0.5)]' : 'border-2 border-gray-600 hover:border-[#FFD700] hover:scale-105'}`}>
+                    {bg?.background_image_url ? <img src={bg.background_image_url} alt={`Slot ${slotNum}`} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center" style={{ background: templateColors[slotNum - 1]?.bgGradient || 'linear-gradient(to bottom right, #1f2937, #111827)' }}>
                          <span className="text-white text-xs font-bold">{slotNum}</span>
                       </div>}
                   </button>;
