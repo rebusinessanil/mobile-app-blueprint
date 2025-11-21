@@ -240,7 +240,7 @@ export default function BannerPreview() {
       const sticker = stickersInSlot[0];
       setSelectedStickerId(sticker.id);
       
-      // Initialize scale if not set
+      // Initialize scale from database defaults (admin-defined)
       if (!stickerScale[sticker.id]) {
         setStickerScale(prev => ({
           ...prev,
@@ -248,17 +248,19 @@ export default function BannerPreview() {
         }));
       }
       
-      // Store original state for reset functionality
-      setOriginalStickerStates(prev => ({
-        ...prev,
-        [sticker.id]: {
-          position_x: sticker.position_x || 0,
-          position_y: sticker.position_y || 0,
-          scale: sticker.scale || 2.5
-        }
-      }));
+      // Store original state for admin reset functionality
+      if (isAdmin) {
+        setOriginalStickerStates(prev => ({
+          ...prev,
+          [sticker.id]: {
+            position_x: sticker.position_x || 0,
+            position_y: sticker.position_y || 0,
+            scale: sticker.scale || 2.5
+          }
+        }));
+      }
     }
-  }, [stickerImages, selectedTemplate, selectedStickerId, stickerScale]);
+  }, [stickerImages, selectedTemplate, selectedStickerId, stickerScale, isAdmin]);
 
   // Map selectedTemplate (0-15) to slot_number (1-16) and fetch correct background
   // CRITICAL: Only show background if it exists for this exact slot - NO fallbacks
@@ -1082,11 +1084,9 @@ export default function BannerPreview() {
           onAddSticker={handleAddSticker}
           onResizeSticker={handleResizeSticker}
           onToggleDragMode={setIsDragMode}
-          onSave={handleSaveSticker}
-          onReset={handleResetSticker}
           currentScale={getCurrentScale()}
           isDragMode={isDragMode}
-          isSaving={isSavingSticker}
+          isAdmin={false}
         />
       )}
 

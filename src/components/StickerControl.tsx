@@ -7,11 +7,12 @@ interface StickerControlProps {
   onAddSticker: () => void;
   onResizeSticker: (scale: number) => void;
   onToggleDragMode: (enabled: boolean) => void;
-  onSave: () => void;
-  onReset: () => void;
+  onSave?: () => void;
+  onReset?: () => void;
   currentScale: number;
   isDragMode: boolean;
   isSaving?: boolean;
+  isAdmin?: boolean;
 }
 
 export default function StickerControl({
@@ -23,6 +24,7 @@ export default function StickerControl({
   currentScale,
   isDragMode,
   isSaving = false,
+  isAdmin = false,
 }: StickerControlProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -118,31 +120,38 @@ export default function StickerControl({
               </Button>
             </div>
 
-            {/* Save & Reset Buttons */}
-            <div className="flex gap-2">
-              <Button
-                onClick={onSave}
-                disabled={isSaving}
-                className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl h-10 font-semibold"
-              >
-                <Save className="w-4 h-4 mr-2" />
-                {isSaving ? "Saving..." : "Save"}
-              </Button>
-              <Button
-                onClick={onReset}
-                variant="outline"
-                className="flex-1 border-primary/40 text-foreground hover:bg-primary/10 rounded-xl h-10 font-semibold"
-              >
-                <RotateCcw className="w-4 h-4 mr-2" />
-                Reset
-              </Button>
-            </div>
+            {/* Save & Reset Buttons - Admin Only */}
+            {isAdmin && onSave && onReset && (
+              <div className="flex gap-2">
+                <Button
+                  onClick={onSave}
+                  disabled={isSaving}
+                  className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl h-10 font-semibold"
+                >
+                  <Save className="w-4 h-4 mr-2" />
+                  {isSaving ? "Saving..." : "Save"}
+                </Button>
+                <Button
+                  onClick={onReset}
+                  variant="outline"
+                  className="flex-1 border-primary/40 text-foreground hover:bg-primary/10 rounded-xl h-10 font-semibold"
+                >
+                  <RotateCcw className="w-4 h-4 mr-2" />
+                  Reset
+                </Button>
+              </div>
+            )}
 
             {/* Info Text */}
             {isDragMode && (
               <div className="text-xs text-muted-foreground bg-primary/5 rounded-lg p-3 border border-primary/20">
                 <span className="text-primary font-semibold">Tip:</span> Click and
                 drag the sticker to reposition it within the banner.
+                {!isAdmin && (
+                  <span className="block mt-1 text-xs opacity-75">
+                    Changes are temporary and will reset on page reload.
+                  </span>
+                )}
               </div>
             )}
           </div>
