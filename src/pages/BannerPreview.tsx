@@ -425,9 +425,8 @@ export default function BannerPreview() {
 
                 {/* Congratulations Image - Admin controlled, always displayed */}
                 {bannerDefaults?.congratulations_image && <div className="absolute z-20" style={{
-                top: '50%',
-                left: '70%',
-                transform: 'translate(-50%, -50%)',
+                top: '12%',
+                right: '8%',
                 width: '48%',
                 height: '12%'
               }}>
@@ -436,9 +435,8 @@ export default function BannerPreview() {
 
                 {/* Text Below Congratulations Image */}
                 <div className="absolute z-20" style={{
-                top: '57%',
-                left: '70%',
-                transform: 'translateX(-50%)',
+                top: '17.5%',
+                right: '8%',
                 width: '48%'
               }}>
                     <p style={{
