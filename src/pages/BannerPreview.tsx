@@ -556,7 +556,7 @@ export default function BannerPreview() {
                       fontWeight: '600',
                       textShadow: '2px 2px 6px rgba(0,0,0,0.8)',
                       margin: '17px 8px'
-                    }}>
+                    }} className="px-0 text-2xl my-[70px]">
                       To Our Brand New Leader
                     </p>
                   </div>
