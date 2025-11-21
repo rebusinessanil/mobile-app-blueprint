@@ -488,9 +488,10 @@ export default function BannerPreview() {
                 {/* CENTER-RIGHT - Name with responsive typography */}
                 <div className="banner-text-content absolute px-2" style={{
                 top: '25%',
-                right: '5%',
-                width: '50%',
-                maxWidth: '50%'
+                left: '72.5%',
+                transform: 'translateX(-50%)',
+                width: '48%',
+                maxWidth: '48%'
               }}>
                   <h2 title={mainBannerName.toUpperCase()} className="banner-preview-name text-foreground tracking-wider font-extrabold text-center mx-auto">
                     {truncatedMainName.toUpperCase()}
