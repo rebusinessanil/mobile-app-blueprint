@@ -423,21 +423,6 @@ export default function BannerPreview() {
                     <img src={bannerSettings.logo_right} alt="Right Logo" className="w-full h-full object-contain drop-shadow-lg" />
                   </div>}
 
-                {/* Text above congratulations image */}
-                <div
-                  className="absolute pointer-events-none text-white font-semibold whitespace-nowrap z-20"
-                  style={{
-                    top: '10%',
-                    right: '8%',
-                    width: '48%',
-                    textAlign: 'center',
-                    fontSize: 'clamp(8px, 0.9vw, 11px)',
-                    textShadow: '0 2px 4px rgba(0,0,0,0.3)',
-                  }}
-                >
-                  To Our Brand New Leader
-                </div>
-
                 {/* Congratulations Image - Admin controlled, always displayed */}
                 {bannerDefaults?.congratulations_image && <div className="absolute z-20" style={{
                 top: '12%',
