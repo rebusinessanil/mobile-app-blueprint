@@ -577,7 +577,7 @@ export default function AdminBannerPreviewDefaults() {
               top: `${activeSticker.position_y || 50}%`,
               transform: `translate(-50%, -50%) scale(${activeSticker.scale || 1}) rotate(${activeSticker.rotation || 0}deg)`,
               transformOrigin: 'center center'
-            }} className="absolute z-30 cursor-move px-0 py-0 mx-[157px] my-[71px]">
+            }} className="absolute z-30 cursor-move px-0 py-0 my-[71px] mx-[157px] shadow">
               <img src={activeSticker.image_url} alt={activeSticker.name} className="w-24 h-24 object-contain drop-shadow-2xl pointer-events-none" style={{
                 filter: 'drop-shadow(0 6px 8px rgba(0,0,0,0.4))'
               }} />
