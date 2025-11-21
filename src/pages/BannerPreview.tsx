@@ -87,7 +87,9 @@ export default function BannerPreview() {
   const {
     settings: bannerSettings
   } = useBannerSettings(userId ?? undefined);
-  const { defaults: bannerDefaults } = useBannerDefaults();
+  const {
+    defaults: bannerDefaults
+  } = useBannerDefaults();
   // Get template ID from bannerData (passed from rank selection) or fetch by rank_id
   const {
     data: templateData
@@ -428,7 +430,7 @@ export default function BannerPreview() {
                 width: '40%',
                 height: '10%'
               }}>
-                    <img src={bannerDefaults.congratulations_image} alt="Congratulations" className="w-full h-full object-contain drop-shadow-2xl" />
+                    <img src={bannerDefaults.congratulations_image} alt="Congratulations" className="w-full h-full drop-shadow-2xl object-cover" />
                   </div>}
 
                 {/* Top - Small circular upline avatars (70% scale = smaller) */}
