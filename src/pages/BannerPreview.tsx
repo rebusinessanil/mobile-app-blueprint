@@ -9,6 +9,7 @@ import { useProfile } from "@/hooks/useProfile";
 import { useProfilePhotos } from "@/hooks/useProfilePhotos";
 import { useBannerSettings } from "@/hooks/useBannerSettings";
 import { useTemplateBackgrounds } from "@/hooks/useTemplateBackgrounds";
+import { useBannerDefaults } from "@/hooks/useBannerDefaults";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Sticker } from "@/hooks/useStickers";
@@ -86,6 +87,7 @@ export default function BannerPreview() {
   const {
     settings: bannerSettings
   } = useBannerSettings(userId ?? undefined);
+  const { defaults: bannerDefaults } = useBannerDefaults();
   // Get template ID from bannerData (passed from rank selection) or fetch by rank_id
   const {
     data: templateData
@@ -417,6 +419,17 @@ export default function BannerPreview() {
                 height: '8%'
               }}>
                     <img src={bannerSettings.logo_right} alt="Right Logo" className="w-full h-full object-contain drop-shadow-lg" />
+                  </div>}
+
+                {/* Congratulations Image - Admin controlled, always displayed */}
+                {bannerDefaults?.congratulations_image && <div className="absolute z-20" style={{
+                top: '11%',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                width: '50%',
+                height: '10%'
+              }}>
+                    <img src={bannerDefaults.congratulations_image} alt="Congratulations" className="w-full h-full object-contain drop-shadow-2xl" />
                   </div>}
 
                 {/* Top - Small circular upline avatars (70% scale = smaller) */}

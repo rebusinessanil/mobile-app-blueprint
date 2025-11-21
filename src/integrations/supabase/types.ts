@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       banner_defaults: {
         Row: {
+          congratulations_image: string | null
           created_at: string | null
           id: string
           logo_left: string | null
@@ -24,6 +25,7 @@ export type Database = {
           upline_avatars: Json | null
         }
         Insert: {
+          congratulations_image?: string | null
           created_at?: string | null
           id?: string
           logo_left?: string | null
@@ -32,6 +34,7 @@ export type Database = {
           upline_avatars?: Json | null
         }
         Update: {
+          congratulations_image?: string | null
           created_at?: string | null
           id?: string
           logo_left?: string | null

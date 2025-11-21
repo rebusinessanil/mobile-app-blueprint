@@ -14,10 +14,13 @@ export default function AdminBannerDefaults() {
   const [logoLeft, setLogoLeft] = useState<string | null>(null);
   const [logoRight, setLogoRight] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [congratulationsImage, setCongratulationsImage] = useState<string | null>(null);
   const [uploadingLeft, setUploadingLeft] = useState(false);
   const [uploadingRight, setUploadingRight] = useState(false);
+  const [uploadingCongrats, setUploadingCongrats] = useState(false);
   const leftFileInputRef = useRef<HTMLInputElement>(null);
   const rightFileInputRef = useRef<HTMLInputElement>(null);
+  const congratsFileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const checkAdmin = async () => {
@@ -65,11 +68,12 @@ export default function AdminBannerDefaults() {
       setUplineAvatars(defaults.upline_avatars);
       setLogoLeft(defaults.logo_left);
       setLogoRight(defaults.logo_right);
+      setCongratulationsImage(defaults.congratulations_image);
     }
   }, [defaults]);
 
-  const handleLogoUpload = async (file: File, position: 'left' | 'right') => {
-    const setUploading = position === 'left' ? setUploadingLeft : setUploadingRight;
+  const handleLogoUpload = async (file: File, position: 'left' | 'right' | 'congrats') => {
+    const setUploading = position === 'congrats' ? setUploadingCongrats : (position === 'left' ? setUploadingLeft : setUploadingRight);
     setUploading(true);
 
     try {
@@ -103,11 +107,13 @@ export default function AdminBannerDefaults() {
 
       if (position === 'left') {
         setLogoLeft(publicUrl);
-      } else {
+      } else if (position === 'right') {
         setLogoRight(publicUrl);
+      } else {
+        setCongratulationsImage(publicUrl);
       }
 
-      toast.success(`${position === 'left' ? 'Left' : 'Right'} logo uploaded successfully!`);
+      toast.success(`${position === 'congrats' ? 'Congratulations' : position === 'left' ? 'Left' : 'Right'} ${position === 'congrats' ? 'image' : 'logo'} uploaded successfully!`);
     } catch (error) {
       console.error('Upload error:', error);
       toast.error("Failed to upload logo");
@@ -116,13 +122,15 @@ export default function AdminBannerDefaults() {
     }
   };
 
-  const handleRemoveLogo = async (position: 'left' | 'right') => {
+  const handleRemoveLogo = async (position: 'left' | 'right' | 'congrats') => {
     if (position === 'left') {
       setLogoLeft(null);
-    } else {
+    } else if (position === 'right') {
       setLogoRight(null);
+    } else {
+      setCongratulationsImage(null);
     }
-    toast.success(`${position === 'left' ? 'Left' : 'Right'} logo removed`);
+    toast.success(`${position === 'congrats' ? 'Congratulations image' : position === 'left' ? 'Left' : 'Right' + ' logo'} removed`);
   };
 
   const handleSave = async () => {
@@ -133,7 +141,8 @@ export default function AdminBannerDefaults() {
       .update({ 
         upline_avatars: uplineAvatars,
         logo_left: logoLeft,
-        logo_right: logoRight
+        logo_right: logoRight,
+        congratulations_image: congratulationsImage
       })
       .eq('id', defaults.id);
 
@@ -315,7 +324,63 @@ export default function AdminBannerDefaults() {
           </p>
         </div>
 
-        <Button 
+        {/* Congratulations Image Section */}
+        <div className="space-y-3">
+          <div>
+            <h2 className="text-xl font-bold text-foreground mb-1">Default Congratulations Image</h2>
+            <p className="text-sm text-muted-foreground">
+              This image will appear on all user banners automatically. Only admins can modify this.
+            </p>
+          </div>
+
+          <div className="gold-border bg-card rounded-2xl p-4 space-y-3">
+            <h3 className="text-sm font-semibold text-foreground">Congratulations Banner Image</h3>
+            
+            {congratulationsImage ? (
+              <div className="relative aspect-video rounded-xl overflow-hidden bg-muted">
+                <img 
+                  src={congratulationsImage} 
+                  alt="Congratulations" 
+                  className="w-full h-full object-contain"
+                />
+                <button
+                  onClick={() => handleRemoveLogo('congrats')}
+                  className="absolute top-2 right-2 w-8 h-8 rounded-full bg-destructive/90 hover:bg-destructive flex items-center justify-center transition-colors"
+                >
+                  <X className="w-4 h-4 text-destructive-foreground" />
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => congratsFileInputRef.current?.click()}
+                disabled={uploadingCongrats}
+                className="w-full aspect-video rounded-xl border-2 border-dashed border-primary/30 hover:border-primary/60 bg-card hover:bg-muted/50 flex flex-col items-center justify-center gap-2 transition-colors disabled:opacity-50"
+              >
+                <Upload className="w-8 h-8 text-primary" />
+                <span className="text-sm text-muted-foreground">
+                  {uploadingCongrats ? 'Uploading...' : 'Upload Congratulations Image'}
+                </span>
+              </button>
+            )}
+            
+            <input
+              ref={congratsFileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handleLogoUpload(file, 'congrats');
+              }}
+            />
+          </div>
+
+          <p className="text-xs text-muted-foreground text-center">
+            This image will display on all user banners automatically and cannot be changed by users.
+          </p>
+        </div>
+
+        <Button
           onClick={handleSave} 
           className="w-full h-14 bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-lg rounded-2xl"
         >
