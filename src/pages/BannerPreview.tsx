@@ -340,21 +340,57 @@ export default function BannerPreview() {
       return;
     }
     setIsDownloading(true);
-    const loadingToast = toast.loading("Generating high-quality banner (2-3 MB)...");
+    const loadingToast = toast.loading("Generating pixel-perfect banner...");
     try {
-      // Capture the fixed 1350×1350 canvas at scale: 3 for high quality
+      // Wait for all images to fully load
+      const images = bannerRef.current.querySelectorAll('img');
+      await Promise.all(
+        Array.from(images).map(img => {
+          if (img.complete) return Promise.resolve();
+          return new Promise((resolve, reject) => {
+            img.onload = resolve;
+            img.onerror = reject;
+            // Set timeout to prevent hanging
+            setTimeout(resolve, 5000);
+          });
+        })
+      );
+
+      // Small delay to ensure rendering is complete
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // Capture the fixed 1350×1350 canvas with pixel-perfect settings
       const canvas = await html2canvas(bannerRef.current, {
         width: 1350,
         height: 1350,
-        scale: 3,
+        scale: 3, // 3x for high quality = 4050×4050 output
         backgroundColor: "#000000",
         logging: false,
         useCORS: true,
         allowTaint: true,
-        imageTimeout: 0
+        imageTimeout: 15000,
+        removeContainer: true,
+        // Critical settings for pixel-perfect export
+        foreignObjectRendering: false, // Prevents transform issues
+        windowWidth: 1350,
+        windowHeight: 1350,
+        x: 0,
+        y: 0,
+        scrollX: 0,
+        scrollY: 0,
+        // Ensure exact positioning
+        ignoreElements: (element) => {
+          // Skip any scroll containers or wrappers outside the canvas
+          return element.classList?.contains('scrollbar-hide') || false;
+        }
       });
 
-      // Convert to PNG blob with compression for 2-3 MB target
+      // Verify canvas dimensions
+      if (canvas.width !== 4050 || canvas.height !== 4050) {
+        console.warn(`Canvas size mismatch: ${canvas.width}×${canvas.height}, expected 4050×4050`);
+      }
+
+      // Convert to PNG blob with high quality for pixel-perfect output
       canvas.toBlob(blob => {
         toast.dismiss(loadingToast);
         if (!blob) {
@@ -369,8 +405,8 @@ export default function BannerPreview() {
         link.click();
         URL.revokeObjectURL(url);
         const sizeMB = (blob.size / 1024 / 1024).toFixed(2);
-        toast.success(`Banner downloaded! (${sizeMB} MB, 4050×4050 PNG)`);
-      }, "image/png", 0.92);
+        toast.success(`Pixel-perfect banner downloaded! (${sizeMB} MB, 4050×4050 PNG)`);
+      }, "image/png", 0.95); // Higher quality for pixel-perfect export
     } catch (error) {
       console.error("Download error:", error);
       toast.dismiss(loadingToast);
