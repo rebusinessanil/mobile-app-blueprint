@@ -371,7 +371,7 @@ export default function BannerPreview() {
         scaleContainer.style.height = '1350px';
       }
 
-      // Capture the banner at full 1350×1350 size with text overflow handling
+      // Capture the banner at full 1350×1350 size
       const canvas = await html2canvas(bannerRef.current, {
         width: 1350,
         height: 1350,
@@ -387,33 +387,7 @@ export default function BannerPreview() {
         x: 0,
         y: 0,
         scrollX: 0,
-        scrollY: 0,
-        onclone: (clonedDoc) => {
-          // Ensure text elements are fully visible and not cropped
-          const clonedBanner = clonedDoc.getElementById('banner-canvas');
-          if (clonedBanner) {
-            // Allow overflow to show all text content
-            clonedBanner.style.overflow = 'visible';
-            
-            // Find all text containers and ensure they don't clip
-            const textElements = clonedBanner.querySelectorAll('.banner-text-content, .banner-preview-name, .banner-team, .banner-contact, .banner-profile-name, .banner-profile-rank');
-            textElements.forEach((el) => {
-              const element = el as HTMLElement;
-              element.style.overflow = 'visible';
-              element.style.whiteSpace = 'nowrap';
-              element.style.textOverflow = 'clip'; // Don't truncate with ellipsis
-            });
-            
-            // Ensure parent containers allow overflow
-            const absoluteContainers = clonedBanner.querySelectorAll('[class*="absolute"]');
-            absoluteContainers.forEach((el) => {
-              const element = el as HTMLElement;
-              if (element.querySelector('.banner-preview-name, .banner-team, .banner-contact, .banner-profile-name, .banner-profile-rank')) {
-                element.style.overflow = 'visible';
-              }
-            });
-          }
-        }
+        scrollY: 0
       });
 
       // Restore original transform immediately after capture
