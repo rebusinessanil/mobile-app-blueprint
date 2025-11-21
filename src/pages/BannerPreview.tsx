@@ -634,10 +634,21 @@ export default function BannerPreview() {
               </div>}
           </div>
 
-          {/* Right: Download Button */}
+          {/* Right: Download Button - Enhanced with icon */}
           <button onClick={handleDownload} disabled={isDownloading} className="cursor-pointer transition-transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0">
-            <img src={downloadIcon} alt="Download" className="h-12 w-auto sm:h-16" />
+            <img src={downloadIcon} alt="Download Banner" className="h-12 w-auto sm:h-16" />
           </button>
+        </div>
+
+        {/* Large Download Button Below */}
+        <div className="px-2 sm:px-4 mt-3">
+          <Button
+            onClick={handleDownload}
+            disabled={isDownloading}
+            className="w-full bg-[#FFD700] hover:bg-[#FFC93C] text-[#0B0E15] font-bold text-base sm:text-lg py-6 rounded-xl shadow-lg transition-all hover:shadow-[0_0_30px_rgba(255,215,0,0.5)] disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isDownloading ? "Downloading..." : "Download Banner (1080×1080)"}
+          </Button>
         </div>
       </div>
 
