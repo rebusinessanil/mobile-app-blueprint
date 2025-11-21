@@ -358,7 +358,9 @@ export default function BannerPreview() {
       setIsDownloading(false);
     }
   };
-  return <div className="h-screen overflow-y-auto bg-background flex flex-col items-center py-8">
+  
+  return (
+    <div className="h-screen overflow-y-auto bg-background flex flex-col items-center py-8">
       {/* Header - Fixed */}
       <header className="bg-background/95 backdrop-blur-sm z-40 px-6 py-4 w-full flex-shrink-0">
         <div className="flex items-center justify-between max-w-7xl mx-auto">
