@@ -609,26 +609,27 @@ export default function BannerPreview() {
                 maxWidth: '743px'
               }}>
                     <p style={{
-                  fontSize: '18px !important', /* LOCKED */
+                  fontSize: '36px', /* LOCKED */
                   textShadow: '2px 2px 4px rgba(0,0,0,0.9)',
                   color: '#ffffff',
-                  fontWeight: '300',
-                  letterSpacing: '3px',
+                  fontWeight: '500',
+                  letterSpacing: '1px',
                   textAlign: 'left',
-                  margin: 0
+                  margin: 0,
+                  marginBottom: '28px'
                 }}>
                       THIS WEEK INCOME 
                     </p>
                     <p style={{
-                  fontSize: '97px !important', /* LOCKED */
-                  textShadow: '6px 6px 12px rgba(0,0,0,0.95)',
+                  fontSize: '62px', /* LOCKED */
+                  textShadow: '4px 4px 12px rgba(0,0,0,0.95)',
                   lineHeight: '1',
-                  fontWeight: '900',
-                  letterSpacing: '-2px',
+                  fontWeight: '800',
+                  letterSpacing: '2px',
                   textAlign: 'left',
                   margin: 0,
-                  color: '#eab308',
-                  fontFamily: 'serif'
+                  color: '#FFD600',
+                  fontFamily: 'sans-serif'
                 }}>
                       {Number(bannerData.chequeAmount).toLocaleString('en-IN')}
                     </p>
