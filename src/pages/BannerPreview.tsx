@@ -341,62 +341,108 @@ export default function BannerPreview() {
     }
     setIsDownloading(true);
     const loadingToast = toast.loading("Generating pixel-perfect banner...");
+    
     try {
+      // Get the scale container wrapper that might be interfering
+      const scaleContainer = document.querySelector('.banner-scale-container') as HTMLElement;
+      const originalTransform = scaleContainer?.style.transform || '';
+      
+      // Temporarily remove display scaling to capture raw canvas
+      if (scaleContainer) {
+        scaleContainer.style.transform = 'none';
+        scaleContainer.style.transformOrigin = 'top left';
+      }
+      
       // Wait for all images to fully load
       const images = bannerRef.current.querySelectorAll('img');
       await Promise.all(
         Array.from(images).map(img => {
           if (img.complete) return Promise.resolve();
-          return new Promise((resolve, reject) => {
+          return new Promise((resolve) => {
             img.onload = resolve;
-            img.onerror = reject;
-            // Set timeout to prevent hanging
-            setTimeout(resolve, 5000);
+            img.onerror = resolve; // Continue even if image fails
+            setTimeout(resolve, 5000); // Timeout fallback
           });
         })
       );
 
-      // Small delay to ensure rendering is complete
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // Force browser to complete any pending renders
+      await new Promise(resolve => setTimeout(resolve, 200));
 
-      // Capture the fixed 1350×1350 canvas with pixel-perfect settings
+      // Capture the exact 1350×1350 canvas with all transforms preserved
       const canvas = await html2canvas(bannerRef.current, {
         width: 1350,
         height: 1350,
-        scale: 3, // 3x for high quality = 4050×4050 output
+        scale: 3, // 3x scale = 4050×4050 output for high quality
         backgroundColor: "#000000",
         logging: false,
         useCORS: true,
         allowTaint: true,
         imageTimeout: 15000,
-        removeContainer: true,
-        // Critical settings for pixel-perfect export
-        foreignObjectRendering: false, // Prevents transform issues
+        // CRITICAL: Keep foreignObjectRendering true to preserve CSS transforms
+        foreignObjectRendering: true,
         windowWidth: 1350,
         windowHeight: 1350,
         x: 0,
         y: 0,
         scrollX: 0,
         scrollY: 0,
-        // Ensure exact positioning
-        ignoreElements: (element) => {
-          // Skip any scroll containers or wrappers outside the canvas
-          return element.classList?.contains('scrollbar-hide') || false;
+        onclone: (clonedDoc) => {
+          // Ensure all transforms are preserved in the clone
+          const clonedCanvas = clonedDoc.getElementById('banner-canvas');
+          if (clonedCanvas) {
+            // Force exact dimensions
+            clonedCanvas.style.width = '1350px';
+            clonedCanvas.style.height = '1350px';
+            clonedCanvas.style.transform = 'none';
+            
+            // Ensure all images maintain exact dimensions
+            const imgs = clonedCanvas.querySelectorAll('img');
+            imgs.forEach(img => {
+              const htmlImg = img as HTMLElement;
+              if (htmlImg.style.width) {
+                htmlImg.style.minWidth = htmlImg.style.width;
+                htmlImg.style.maxWidth = htmlImg.style.width;
+              }
+              if (htmlImg.style.height) {
+                htmlImg.style.minHeight = htmlImg.style.height;
+                htmlImg.style.maxHeight = htmlImg.style.height;
+              }
+            });
+            
+            // Preserve all sticker transforms exactly as shown
+            const stickers = clonedCanvas.querySelectorAll('.absolute.pointer-events-none');
+            stickers.forEach(sticker => {
+              const htmlSticker = sticker as HTMLElement;
+              // Lock transform to prevent any changes
+              if (htmlSticker.style.transform) {
+                const computedStyle = window.getComputedStyle(sticker);
+                htmlSticker.style.transform = computedStyle.transform;
+              }
+            });
+          }
         }
       });
 
-      // Verify canvas dimensions
-      if (canvas.width !== 4050 || canvas.height !== 4050) {
-        console.warn(`Canvas size mismatch: ${canvas.width}×${canvas.height}, expected 4050×4050`);
+      // Restore original display transform
+      if (scaleContainer) {
+        scaleContainer.style.transform = originalTransform;
       }
 
-      // Convert to PNG blob with high quality for pixel-perfect output
-      canvas.toBlob(blob => {
+      // Verify exact output dimensions
+      if (canvas.width !== 4050 || canvas.height !== 4050) {
+        console.warn(`Canvas size: ${canvas.width}×${canvas.height}, expected 4050×4050`);
+      }
+
+      // Convert to high-quality PNG
+      canvas.toBlob((blob) => {
         toast.dismiss(loadingToast);
         if (!blob) {
           toast.error("Failed to generate image");
+          setIsDownloading(false);
           return;
         }
+        
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
         const timestamp = new Date().getTime();
@@ -404,14 +450,16 @@ export default function BannerPreview() {
         link.href = url;
         link.click();
         URL.revokeObjectURL(url);
+        
         const sizeMB = (blob.size / 1024 / 1024).toFixed(2);
         toast.success(`Pixel-perfect banner downloaded! (${sizeMB} MB, 4050×4050 PNG)`);
-      }, "image/png", 0.95); // Higher quality for pixel-perfect export
+        setIsDownloading(false);
+      }, "image/png", 0.95);
+      
     } catch (error) {
       console.error("Download error:", error);
       toast.dismiss(loadingToast);
       toast.error("Failed to download banner. Please try again.");
-    } finally {
       setIsDownloading(false);
     }
   };
