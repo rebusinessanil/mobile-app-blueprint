@@ -423,10 +423,9 @@ export default function BannerPreview() {
 
                 {/* Congratulations Image - Admin controlled, always displayed */}
                 {bannerDefaults?.congratulations_image && <div className="absolute z-20" style={{
-                top: '11%',
-                left: '50%',
-                transform: 'translateX(-50%)',
-                width: '50%',
+                top: '35%',
+                right: '8%',
+                width: '40%',
                 height: '10%'
               }}>
                     <img src={bannerDefaults.congratulations_image} alt="Congratulations" className="w-full h-full object-contain drop-shadow-2xl" />
