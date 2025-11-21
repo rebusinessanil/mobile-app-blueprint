@@ -323,27 +323,42 @@ export default function BannerPreview() {
     try {
       const TARGET_SIZE = 1080;
       
-      // Get current rendered dimensions to maintain exact proportions
-      const currentRect = bannerRef.current.getBoundingClientRect();
-      const currentWidth = currentRect.width;
-      const currentHeight = currentRect.height;
+      // Save original styles
+      const originalWidth = bannerRef.current.style.width;
+      const originalHeight = bannerRef.current.style.height;
+      const originalMaxWidth = bannerRef.current.style.maxWidth;
+      const originalMaxHeight = bannerRef.current.style.maxHeight;
       
-      // Calculate scale factor to reach 1080x1080 while preserving exact layout
-      const scaleFactor = TARGET_SIZE / Math.max(currentWidth, currentHeight);
+      // Temporarily set exact 1080x1080 dimensions for pixel-perfect capture
+      bannerRef.current.style.width = `${TARGET_SIZE}px`;
+      bannerRef.current.style.height = `${TARGET_SIZE}px`;
+      bannerRef.current.style.maxWidth = `${TARGET_SIZE}px`;
+      bannerRef.current.style.maxHeight = `${TARGET_SIZE}px`;
+      
+      // Small delay to ensure styles are applied
+      await new Promise(resolve => setTimeout(resolve, 100));
 
-      // Capture banner as-is with precise scale - no cloning, no dimension changes
+      // Capture at scale 1 - perfect 1:1 capture of 1080x1080 rendered state
       const canvas = await html2canvas(bannerRef.current, {
-        scale: scaleFactor,
+        scale: 1,
         backgroundColor: "#000000",
         logging: false,
         useCORS: true,
         allowTaint: true,
-        width: currentWidth,
-        height: currentHeight,
+        width: TARGET_SIZE,
+        height: TARGET_SIZE,
+        windowWidth: TARGET_SIZE,
+        windowHeight: TARGET_SIZE,
         imageTimeout: 0
       });
 
-      // Convert directly to JPG blob with quality 0.95
+      // Restore original styles immediately
+      bannerRef.current.style.width = originalWidth;
+      bannerRef.current.style.height = originalHeight;
+      bannerRef.current.style.maxWidth = originalMaxWidth;
+      bannerRef.current.style.maxHeight = originalMaxHeight;
+
+      // Convert to JPG blob with quality 0.95
       canvas.toBlob(blob => {
         toast.dismiss(loadingToast);
         if (!blob) {
