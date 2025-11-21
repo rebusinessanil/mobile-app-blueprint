@@ -364,12 +364,12 @@ export default function BannerPreview() {
         width: 1350,
         height: 1350,
         scale: 3, // 3x for high quality = 4050×4050 output
-        backgroundColor: "#000000",
+        backgroundColor: null, // No background to prevent black padding
         logging: false,
         useCORS: true,
         allowTaint: true,
         imageTimeout: 15000,
-        removeContainer: true,
+        removeContainer: false,
         // Critical settings for pixel-perfect export
         foreignObjectRendering: false, // Prevents transform issues
         windowWidth: 1350,
@@ -378,10 +378,17 @@ export default function BannerPreview() {
         y: 0,
         scrollX: 0,
         scrollY: 0,
-        // Ensure exact positioning
-        ignoreElements: (element) => {
-          // Skip any scroll containers or wrappers outside the canvas
-          return element.classList?.contains('scrollbar-hide') || false;
+        onclone: (clonedDoc) => {
+          // Force exact dimensions on the cloned banner element
+          const clonedBanner = clonedDoc.getElementById('banner-canvas');
+          if (clonedBanner) {
+            clonedBanner.style.width = '1350px';
+            clonedBanner.style.height = '1350px';
+            clonedBanner.style.position = 'relative';
+            clonedBanner.style.margin = '0';
+            clonedBanner.style.padding = '0';
+            clonedBanner.style.overflow = 'hidden';
+          }
         }
       });
 
