@@ -480,7 +480,7 @@ export default function BannerPreview() {
 
                 {/* Top-Left Logo */}
                 {bannerSettings?.logo_left && <div className="absolute z-30" style={{
-                top: '24px',
+                top: '10px',
                 left: '24px',
                 width: '271px',
                 height: '154px'
@@ -490,7 +490,7 @@ export default function BannerPreview() {
 
                 {/* Top-Right Logo */}
                 {bannerSettings?.logo_right && <div className="absolute z-30" style={{
-                top: '24px',
+                top: '10px',
                 right: '24px',
                 width: '271px',
                 height: '154px'
