@@ -324,6 +324,20 @@ export default function BannerPreview() {
       // Fixed dimensions for Full HD Square export (1080×1080)
       const TARGET_WIDTH = 1080;
       const TARGET_HEIGHT = 1080;
+
+      // Store original styles
+      const originalWidth = bannerRef.current.style.width;
+      const originalHeight = bannerRef.current.style.height;
+      const originalAspectRatio = bannerRef.current.style.aspectRatio;
+      
+      // Temporarily set exact dimensions for capture
+      bannerRef.current.style.width = `${TARGET_WIDTH}px`;
+      bannerRef.current.style.height = `${TARGET_HEIGHT}px`;
+      bannerRef.current.style.aspectRatio = 'auto';
+
+      // Wait for layout to update
+      await new Promise(resolve => setTimeout(resolve, 100));
+
       const canvas = await html2canvas(bannerRef.current, {
         scale: 1,
         backgroundColor: "#000000",
@@ -334,22 +348,16 @@ export default function BannerPreview() {
         height: TARGET_HEIGHT,
         windowWidth: TARGET_WIDTH,
         windowHeight: TARGET_HEIGHT,
-        x: 0,
-        y: 0,
         imageTimeout: 0
       });
 
-      // Ensure canvas matches exact target dimensions
-      const finalCanvas = document.createElement('canvas');
-      finalCanvas.width = TARGET_WIDTH;
-      finalCanvas.height = TARGET_HEIGHT;
-      const ctx = finalCanvas.getContext('2d');
-      if (ctx) {
-        ctx.drawImage(canvas, 0, 0, TARGET_WIDTH, TARGET_HEIGHT);
-      }
+      // Restore original styles immediately after capture
+      bannerRef.current.style.width = originalWidth;
+      bannerRef.current.style.height = originalHeight;
+      bannerRef.current.style.aspectRatio = originalAspectRatio;
 
-      // Convert to JPG blob with quality 0.95
-      finalCanvas.toBlob(blob => {
+      // Convert directly to JPG blob with quality 0.95
+      canvas.toBlob(blob => {
         toast.dismiss(loadingToast);
         if (!blob) {
           toast.error("Failed to generate image");
