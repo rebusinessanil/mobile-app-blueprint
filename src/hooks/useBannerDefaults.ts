@@ -6,6 +6,7 @@ export interface BannerDefaults {
   upline_avatars: Array<{ name: string; avatar_url: string }>;
   logo_left: string | null;
   logo_right: string | null;
+  congratulations_image: string | null;
 }
 
 export const useBannerDefaults = () => {
