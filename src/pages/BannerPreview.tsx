@@ -524,17 +524,7 @@ export default function BannerPreview() {
                     width: '648px',
                     textAlign: 'center'
                   }}>
-                    <p style={{
-                      fontSize: '36px',
-                      lineHeight: '1.2',
-                      whiteSpace: 'nowrap',
-                      color: '#ffffff',
-                      fontWeight: '600',
-                      textShadow: '2px 2px 6px rgba(0,0,0,0.8)',
-                      margin: '17px 8px'
-                    }}>
-                      To Our Brand New Leader
-                    </p>
+                    
                   </div>
 
                 {/* Top - Upline avatars - FIXED SIZE AND POSITION */}
