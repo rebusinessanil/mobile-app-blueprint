@@ -293,9 +293,9 @@ export default function BannerPreview() {
     return null;
   }
 
-  // Handle sticker dragging
+  // Handle sticker dragging - Admin only
   const handleStickerMouseDown = (e: React.MouseEvent, stickerId: string) => {
-    if (!isDragMode) return;
+    if (!isAdmin || !isDragMode) return;
     e.preventDefault();
     e.stopPropagation();
     setSelectedStickerId(stickerId);
@@ -303,7 +303,7 @@ export default function BannerPreview() {
   };
 
   const handleStickerMouseMove = (e: React.MouseEvent) => {
-    if (!isDragMode || !selectedStickerId || !dragStartPos || !bannerRef.current) return;
+    if (!isAdmin || !isDragMode || !selectedStickerId || !dragStartPos || !bannerRef.current) return;
     
     const banner = bannerRef.current;
     const rect = banner.getBoundingClientRect();
@@ -666,16 +666,16 @@ export default function BannerPreview() {
                 <div 
                   ref={bannerRef} 
                   id="banner-canvas"
-                  onMouseMove={handleStickerMouseMove}
-                  onMouseUp={handleStickerMouseUp}
-                  onMouseLeave={handleStickerMouseUp}
+                  onMouseMove={isAdmin ? handleStickerMouseMove : undefined}
+                  onMouseUp={isAdmin ? handleStickerMouseUp : undefined}
+                  onMouseLeave={isAdmin ? handleStickerMouseUp : undefined}
                   style={{
                     position: 'relative',
                     width: '1350px',
                     height: '1350px',
                     background: templateColors[selectedTemplate].bgGradient,
                     overflow: 'hidden',
-                    cursor: isDragMode ? 'crosshair' : 'default',
+                    cursor: isAdmin && isDragMode ? 'crosshair' : 'default',
                   }}
                 >
               <div className="absolute inset-0">
@@ -990,14 +990,14 @@ export default function BannerPreview() {
                       key={sticker.id} 
                       src={sticker.url} 
                       alt="Achievement Sticker" 
-                      className={`absolute animate-in fade-in zoom-in duration-300 transition-all ${isDragMode ? 'cursor-move' : 'pointer-events-none'} ${isSelected ? 'ring-4 ring-primary ring-offset-2 ring-offset-background' : ''}`}
-                      onMouseDown={(e) => handleStickerMouseDown(e, sticker.id)}
-                      onClick={(e) => {
+                      className={`absolute animate-in fade-in zoom-in duration-300 transition-all ${isAdmin && isDragMode ? 'cursor-move' : 'pointer-events-none'} ${isAdmin && isSelected ? 'ring-4 ring-primary ring-offset-2 ring-offset-background' : ''}`}
+                      onMouseDown={isAdmin ? (e) => handleStickerMouseDown(e, sticker.id) : undefined}
+                      onClick={isAdmin ? (e) => {
                         if (isDragMode) {
                           e.stopPropagation();
                           setSelectedStickerId(sticker.id);
                         }
-                      }}
+                      } : undefined}
                       style={{
                         left: `${sticker.position_x ?? 77}%`,
                         top: `${sticker.position_y ?? 62}%`,
@@ -1078,15 +1078,18 @@ export default function BannerPreview() {
       }));
     }} />}
 
-      {/* Sticker Control Panel - User Facing */}
-      {!isAdmin && stickerImages[selectedTemplate + 1]?.length > 0 && (
+      {/* Sticker Control Panel - Admin Only */}
+      {isAdmin && stickerImages[selectedTemplate + 1]?.length > 0 && (
         <StickerControl
           onAddSticker={handleAddSticker}
           onResizeSticker={handleResizeSticker}
           onToggleDragMode={setIsDragMode}
+          onSave={handleSaveSticker}
+          onReset={handleResetSticker}
           currentScale={getCurrentScale()}
           isDragMode={isDragMode}
-          isAdmin={false}
+          isSaving={isSavingSticker}
+          isAdmin={true}
         />
       )}
 
