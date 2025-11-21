@@ -435,7 +435,7 @@ export default function BannerPreview() {
 
                 {/* Text Below Congratulations Image */}
                 <div className="absolute z-20" style={{
-                top: '17.5%',
+                top: '25%',
                 right: '8%',
                 width: '48%'
               }}>
