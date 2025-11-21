@@ -564,14 +564,14 @@ export default function BannerPreview() {
                     /* LOCKED */
                     top: '162px',
                     /* LOCKED */
-                    width: '620px',
+                    width: '540px',
                     /* LOCKED */
-                    height: '900px',
+                    height: '860px',
                     /* LOCKED */
-                    minWidth: '620px',
-                    minHeight: '900px',
-                    maxWidth: '620px',
-                    maxHeight: '900px',
+                    minWidth: '540px',
+                    minHeight: '860px',
+                    maxWidth: '540px',
+                    maxHeight: '860px',
                     borderRadius: '24px',
                     transform: isPhotoFlipped ? 'scaleX(-1)' : 'scaleX(1)'
                   }}>
@@ -583,8 +583,8 @@ export default function BannerPreview() {
                     }} />
                     {/* Bottom feather fade overlay */}
                     <div className="absolute bottom-0 left-0 right-0 pointer-events-none" style={{
-                      height: '270px',
-                      /* Fixed 30% of 900px */
+                      height: '258px',
+                      /* Fixed 30% of 860px */
                       background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%)'
                     }} />
                   </div>}
@@ -710,14 +710,14 @@ export default function BannerPreview() {
                     /* LOCKED */
                     right: 0,
                     /* LOCKED */
-                    width: '450px',
+                    width: '445px',
                     /* LOCKED */
-                    height: '600px',
+                    height: '520px',
                     /* LOCKED */
-                    minWidth: '450px',
-                    minHeight: '600px',
-                    maxWidth: '450px',
-                    maxHeight: '600px',
+                    minWidth: '445px',
+                    minHeight: '520px',
+                    maxWidth: '445px',
+                    maxHeight: '520px',
                     borderRadius: '16px',
                     transform: isMentorPhotoFlipped ? 'scaleX(-1)' : 'scaleX(1)'
                   }}>
@@ -729,8 +729,8 @@ export default function BannerPreview() {
                     }} />
                     {/* Bottom feather fade overlay */}
                     <div className="absolute bottom-0 left-0 right-0 pointer-events-none" style={{
-                      height: '180px',
-                      /* Fixed 30% of 600px */
+                      height: '156px',
+                      /* Fixed 30% of 520px */
                       background: 'linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 100%)'
                     }} />
                   </div>}
