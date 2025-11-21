@@ -323,24 +323,30 @@ export default function BannerPreview() {
     try {
       const TARGET_SIZE = 1080;
       
-      // Save original styles
+      // Save ALL original styles including aspect ratio
       const originalWidth = bannerRef.current.style.width;
       const originalHeight = bannerRef.current.style.height;
       const originalMaxWidth = bannerRef.current.style.maxWidth;
       const originalMaxHeight = bannerRef.current.style.maxHeight;
+      const originalAspectRatio = bannerRef.current.style.aspectRatio;
+      const originalOverflow = bannerRef.current.style.overflow;
       
-      // Temporarily set exact 1080x1080 dimensions for pixel-perfect capture
+      // Force exact 1080x1080 with no conflicting properties
       bannerRef.current.style.width = `${TARGET_SIZE}px`;
       bannerRef.current.style.height = `${TARGET_SIZE}px`;
       bannerRef.current.style.maxWidth = `${TARGET_SIZE}px`;
       bannerRef.current.style.maxHeight = `${TARGET_SIZE}px`;
+      bannerRef.current.style.minWidth = `${TARGET_SIZE}px`;
+      bannerRef.current.style.minHeight = `${TARGET_SIZE}px`;
+      bannerRef.current.style.aspectRatio = 'unset';
+      bannerRef.current.style.overflow = 'visible';
       
-      // Small delay to ensure styles are applied
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // Longer delay to ensure complete rendering with all elements
+      await new Promise(resolve => setTimeout(resolve, 300));
 
-      // Capture at scale 1 - perfect 1:1 capture of 1080x1080 rendered state
+      // Capture at scale 2 for crisp quality, then resize canvas to exactly 1080x1080
       const canvas = await html2canvas(bannerRef.current, {
-        scale: 1,
+        scale: 2,
         backgroundColor: "#000000",
         logging: false,
         useCORS: true,
@@ -349,17 +355,32 @@ export default function BannerPreview() {
         height: TARGET_SIZE,
         windowWidth: TARGET_SIZE,
         windowHeight: TARGET_SIZE,
-        imageTimeout: 0
+        imageTimeout: 0,
+        x: 0,
+        y: 0
       });
 
-      // Restore original styles immediately
+      // Create final 1080x1080 canvas
+      const finalCanvas = document.createElement('canvas');
+      finalCanvas.width = TARGET_SIZE;
+      finalCanvas.height = TARGET_SIZE;
+      const ctx = finalCanvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(canvas, 0, 0, TARGET_SIZE, TARGET_SIZE);
+      }
+
+      // Restore ALL original styles immediately
       bannerRef.current.style.width = originalWidth;
       bannerRef.current.style.height = originalHeight;
       bannerRef.current.style.maxWidth = originalMaxWidth;
       bannerRef.current.style.maxHeight = originalMaxHeight;
+      bannerRef.current.style.minWidth = '';
+      bannerRef.current.style.minHeight = '';
+      bannerRef.current.style.aspectRatio = originalAspectRatio;
+      bannerRef.current.style.overflow = originalOverflow;
 
-      // Convert to JPG blob with quality 0.95
-      canvas.toBlob(blob => {
+      // Convert final canvas to JPG blob with quality 0.95
+      finalCanvas.toBlob(blob => {
         toast.dismiss(loadingToast);
         if (!blob) {
           toast.error("Failed to generate image");
