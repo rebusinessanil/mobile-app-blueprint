@@ -470,8 +470,8 @@ export default function BannerPreview() {
                 {bannerSettings?.logo_left && <div className="absolute z-30" style={{
                 top: '24px',
                 left: '24px',
-                width: '379px',
-                height: '216px'
+                width: '271px',
+                height: '154px'
               }}>
                     <img src={bannerSettings.logo_left} alt="Left Logo" style={{ width: '100%', height: '100%', objectFit: 'contain', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.5))' }} />
                   </div>}
@@ -480,8 +480,8 @@ export default function BannerPreview() {
                 {bannerSettings?.logo_right && <div className="absolute z-30" style={{
                 top: '24px',
                 right: '24px',
-                width: '379px',
-                height: '216px'
+                width: '271px',
+                height: '154px'
               }}>
                     <img src={bannerSettings.logo_right} alt="Right Logo" style={{ width: '100%', height: '100%', objectFit: 'contain', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.5))' }} />
                   </div>}
