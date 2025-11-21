@@ -558,33 +558,33 @@ export default function BannerPreview() {
                     </div>)}
                 </div>
 
-                {/* LEFT - Main User Photo - FIXED SIZE AND POSITION - 3:4 RATIO */}
+                {/* LEFT - Main User Photo - FIXED SIZE AND POSITION - 3:4 RATIO - REDUCED BY 12% */}
                 {primaryPhoto && <div className="absolute overflow-hidden cursor-pointer transition-transform duration-500 ease-in-out" onClick={() => setIsPhotoFlipped(!isPhotoFlipped)} style={{
                     left: '40px',
                     /* LOCKED */
                     top: '162px',
                     /* LOCKED */
-                    width: '675px',
-                    /* LOCKED - 3:4 ratio */
-                    height: '900px',
-                    /* LOCKED - 3:4 ratio */
-                    minWidth: '675px',
-                    minHeight: '900px',
-                    maxWidth: '675px',
-                    maxHeight: '900px',
+                    width: '594px',
+                    /* LOCKED - 3:4 ratio, 12% reduction */
+                    height: '792px',
+                    /* LOCKED - 3:4 ratio, 12% reduction */
+                    minWidth: '594px',
+                    minHeight: '792px',
+                    maxWidth: '594px',
+                    maxHeight: '792px',
                     borderRadius: '24px',
                     transform: isPhotoFlipped ? 'scaleX(-1)' : 'scaleX(1)'
                   }}>
                     <img src={primaryPhoto} alt={mainBannerName} style={{
-                      width: '675px',
-                      height: '900px',
+                      width: '594px',
+                      height: '792px',
                       objectFit: 'cover',
                       objectPosition: 'center'
                     }} />
                     {/* Bottom feather fade overlay */}
                     <div className="absolute bottom-0 left-0 right-0 pointer-events-none" style={{
-                      height: '270px',
-                      /* Fixed 30% of 900px */
+                      height: '238px',
+                      /* Fixed 30% of 792px */
                       background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%)'
                     }} />
                   </div>}
