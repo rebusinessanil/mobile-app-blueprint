@@ -755,7 +755,7 @@ export default function BannerPreview() {
                     maxWidth: '1080px',
                     zIndex: 3
                   }}>
-                  <p title={profileName} className="banner-profile-name" style={{
+                  <p title={profileName} style={{
                       whiteSpace: 'nowrap',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
@@ -764,7 +764,7 @@ export default function BannerPreview() {
                       top: '20px',
                       color: '#ffffff',
                       textAlign: 'center'
-                    }}>
+                    }} className="banner-profile-name px-[4px] py-0 my-0">
                     {truncatedProfileName.toUpperCase()}
                   </p>
                   <p className="banner-profile-rank" style={{
