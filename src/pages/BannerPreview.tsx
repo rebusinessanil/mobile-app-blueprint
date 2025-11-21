@@ -322,28 +322,43 @@ export default function BannerPreview() {
     const loadingToast = toast.loading("Generating Full HD banner...");
     try {
       const TARGET_SIZE = 1080;
+      const originalElement = bannerRef.current;
       
-      // Get current rendered dimensions to maintain exact proportions
-      const currentRect = bannerRef.current.getBoundingClientRect();
-      const currentWidth = currentRect.width;
-      const currentHeight = currentRect.height;
+      // Clone the banner element to avoid disrupting the live preview
+      const clone = originalElement.cloneNode(true) as HTMLDivElement;
       
-      // Calculate scale factor to reach 1080x1080 while preserving exact layout
-      const scaleFactor = TARGET_SIZE / Math.max(currentWidth, currentHeight);
+      // Set clone to exact 1080x1080 dimensions with all styles
+      clone.style.position = 'absolute';
+      clone.style.left = '-9999px';
+      clone.style.top = '0';
+      clone.style.width = `${TARGET_SIZE}px`;
+      clone.style.height = `${TARGET_SIZE}px`;
+      clone.style.aspectRatio = '1 / 1';
+      clone.style.transform = 'none';
+      clone.style.zIndex = '-1';
+      
+      // Append clone to body for rendering
+      document.body.appendChild(clone);
+      
+      // Wait for images to load in clone
+      await new Promise(resolve => setTimeout(resolve, 100));
 
-      // Capture banner as-is with precise scale - no cloning, no dimension changes
-      const canvas = await html2canvas(bannerRef.current, {
-        scale: scaleFactor,
+      // Capture clone at exact 1080x1080 with scale: 1 for pixel-perfect output
+      const canvas = await html2canvas(clone, {
+        scale: 1,
+        width: TARGET_SIZE,
+        height: TARGET_SIZE,
         backgroundColor: "#000000",
         logging: false,
         useCORS: true,
         allowTaint: true,
-        width: currentWidth,
-        height: currentHeight,
         imageTimeout: 0
       });
 
-      // Convert directly to JPG blob with quality 0.95
+      // Remove clone from DOM
+      document.body.removeChild(clone);
+
+      // Convert to JPG blob with quality 0.95
       canvas.toBlob(blob => {
         toast.dismiss(loadingToast);
         if (!blob) {
