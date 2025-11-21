@@ -558,33 +558,33 @@ export default function BannerPreview() {
                     </div>)}
                 </div>
 
-                {/* LEFT - Main User Photo - FIXED SIZE AND POSITION - 3:4 RATIO - 88% SCALE */}
+                {/* LEFT - Main User Photo - FIXED SIZE AND POSITION - 3:4 RATIO */}
                 {primaryPhoto && <div className="absolute overflow-hidden cursor-pointer transition-transform duration-500 ease-in-out" onClick={() => setIsPhotoFlipped(!isPhotoFlipped)} style={{
                     left: '40px',
                     /* LOCKED */
                     top: '162px',
                     /* LOCKED */
-                    width: '594px',
-                    /* LOCKED - 88% of 675px */
-                    height: '792px',
-                    /* LOCKED - 88% of 900px */
-                    minWidth: '594px',
-                    minHeight: '792px',
-                    maxWidth: '594px',
-                    maxHeight: '792px',
+                    width: '675px',
+                    /* LOCKED - 3:4 ratio */
+                    height: '900px',
+                    /* LOCKED - 3:4 ratio */
+                    minWidth: '675px',
+                    minHeight: '900px',
+                    maxWidth: '675px',
+                    maxHeight: '900px',
                     borderRadius: '24px',
                     transform: isPhotoFlipped ? 'scaleX(-1)' : 'scaleX(1)'
                   }}>
                     <img src={primaryPhoto} alt={mainBannerName} style={{
-                      width: '594px',
-                      height: '792px',
+                      width: '675px',
+                      height: '900px',
                       objectFit: 'cover',
                       objectPosition: 'center'
                     }} />
                     {/* Bottom feather fade overlay */}
                     <div className="absolute bottom-0 left-0 right-0 pointer-events-none" style={{
-                      height: '238px',
-                      /* Fixed 30% of 792px */
+                      height: '270px',
+                      /* Fixed 30% of 900px */
                       background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%)'
                     }} />
                   </div>}
@@ -704,12 +704,12 @@ export default function BannerPreview() {
                   </p>
                 </div>
 
-                {/* BOTTOM RIGHT - Mentor Photo - FIXED SIZE AND POSITION - SQUARE 1:1 RATIO - SHIFTED +10% RIGHT */}
+                {/* BOTTOM RIGHT - Mentor Photo - FIXED SIZE AND POSITION - SQUARE 1:1 RATIO */}
                 {mentorPhoto && <div className="absolute overflow-hidden shadow-2xl cursor-pointer transition-transform duration-500 ease-in-out" onClick={() => setIsMentorPhotoFlipped(!isMentorPhotoFlipped)} style={{
                     bottom: 0,
                     /* LOCKED */
-                    right: '-135px',
-                    /* LOCKED - Shifted +10% of 1350px canvas width */
+                    right: 0,
+                    /* LOCKED */
                     width: '540px',
                     /* LOCKED - Square 1:1 */
                     height: '540px',
