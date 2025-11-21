@@ -47,9 +47,15 @@ export default function BannerPreview() {
   const [isStickersOpen, setIsStickersOpen] = useState(false);
   const [currentEditingSlot, setCurrentEditingSlot] = useState(1);
   const [slotStickers, setSlotStickers] = useState<Record<number, string[]>>(bannerData?.slotStickers || {});
-  const [stickerImages, setStickerImages] = useState<Record<number, {id: string, url: string, position_x?: number, position_y?: number, scale?: number, rotation?: number}[]>>({});
+  const [stickerImages, setStickerImages] = useState<Record<number, {
+    id: string;
+    url: string;
+    position_x?: number;
+    position_y?: number;
+    scale?: number;
+    rotation?: number;
+  }[]>>({});
   const bannerRef = useRef<HTMLDivElement>(null);
-
   const [isAdmin, setIsAdmin] = useState(false);
 
   // Get authenticated user and check admin status
@@ -61,9 +67,12 @@ export default function BannerPreview() {
     }) => {
       const uid = session?.user?.id ?? null;
       setUserId(uid);
-      
       if (uid) {
-        const { data: adminCheck } = await supabase.rpc('is_admin', { user_id: uid });
+        const {
+          data: adminCheck
+        } = await supabase.rpc('is_admin', {
+          user_id: uid
+        });
         setIsAdmin(adminCheck ?? false);
       }
     });
@@ -115,22 +124,26 @@ export default function BannerPreview() {
       // Refetch sticker images when admin updates stickers
       console.log('Sticker update detected, refetching images...');
       fetchStickerImages();
-    },
+    }
   });
 
   // Fetch sticker images for each slot independently
   const fetchStickerImages = async () => {
     // If no slotStickers or rankId, fetch all stickers for this rank
     if (bannerData?.rankId && (!slotStickers || Object.keys(slotStickers).length === 0)) {
-      const { data, error } = await supabase
-        .from('stickers')
-        .select('id, image_url, position_x, position_y, scale, rotation, slot_number')
-        .eq('rank_id', bannerData.rankId)
-        .eq('is_active', true);
-
+      const {
+        data,
+        error
+      } = await supabase.from('stickers').select('id, image_url, position_x, position_y, scale, rotation, slot_number').eq('rank_id', bannerData.rankId).eq('is_active', true);
       if (!error && data) {
-        const newStickerImages: Record<number, {id: string, url: string, position_x?: number, position_y?: number, scale?: number, rotation?: number}[]> = {};
-        
+        const newStickerImages: Record<number, {
+          id: string;
+          url: string;
+          position_x?: number;
+          position_y?: number;
+          scale?: number;
+          rotation?: number;
+        }[]> = {};
         data.forEach(s => {
           if (s.slot_number) {
             if (!newStickerImages[s.slot_number]) {
@@ -142,42 +155,43 @@ export default function BannerPreview() {
               position_x: s.position_x ?? 50,
               position_y: s.position_y ?? 50,
               scale: s.scale ?? 1.0,
-              rotation: s.rotation ?? 0,
+              rotation: s.rotation ?? 0
             });
           }
         });
-        
         setStickerImages(newStickerImages);
         return;
       }
     }
 
     // Otherwise use slotStickers structure
-    const newStickerImages: Record<number, {id: string, url: string, position_x?: number, position_y?: number, scale?: number, rotation?: number}[]> = {};
-    
+    const newStickerImages: Record<number, {
+      id: string;
+      url: string;
+      position_x?: number;
+      position_y?: number;
+      scale?: number;
+      rotation?: number;
+    }[]> = {};
     for (const [slotNum, stickerIds] of Object.entries(slotStickers)) {
       if (stickerIds.length === 0) continue;
-      
-      const { data, error } = await supabase
-        .from('stickers')
-        .select('id, image_url, position_x, position_y, scale, rotation')
-        .in('id', stickerIds);
-
+      const {
+        data,
+        error
+      } = await supabase.from('stickers').select('id, image_url, position_x, position_y, scale, rotation').in('id', stickerIds);
       if (!error && data) {
-        newStickerImages[parseInt(slotNum)] = data.map(s => ({ 
-          id: s.id, 
+        newStickerImages[parseInt(slotNum)] = data.map(s => ({
+          id: s.id,
           url: s.image_url,
           position_x: s.position_x ?? 50,
           position_y: s.position_y ?? 50,
           scale: s.scale ?? 1.0,
-          rotation: s.rotation ?? 0,
+          rotation: s.rotation ?? 0
         }));
       }
     }
-    
     setStickerImages(newStickerImages);
   };
-
   useEffect(() => {
     fetchStickerImages();
   }, [slotStickers, bannerData?.rankId]);
@@ -364,14 +378,9 @@ export default function BannerPreview() {
           
           <h1 className="text-base sm:text-xl md:text-2xl font-bold text-foreground tracking-widest">BANNER PREVIEW</h1>
           
-          {isAdmin && (
-            <button 
-              onClick={() => setIsStickersOpen(true)}
-              className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl border-2 border-primary bg-primary/10 flex items-center justify-center hover:bg-primary/20 transition-colors touch-target"
-            >
+          {isAdmin && <button onClick={() => setIsStickersOpen(true)} className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl border-2 border-primary bg-primary/10 flex items-center justify-center hover:bg-primary/20 transition-colors touch-target">
               <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
-            </button>
-          )}
+            </button>}
           {!isAdmin && <div className="w-10 h-10 sm:w-12 sm:h-12" />}
         </div>
       </header>
@@ -497,13 +506,13 @@ export default function BannerPreview() {
                 }}>
                     CALL FOR MENTORSHIP                                                                 
                   </p>
-                  <p title={`+91 ${displayContact}`} className="text-foreground font-bold tracking-wide" style={{
+                  <p title={`+91 ${displayContact}`} style={{
                   fontSize: 'clamp(11.2px, 2.24vw, 22.4px)',
                   textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis'
-                }}>
+                }} className="text-foreground font-bold tracking-wide font-sans">
                     +91 {displayContact}
                   </p>
                 </div>
@@ -557,26 +566,18 @@ export default function BannerPreview() {
 
                 {/* Achievement Stickers - Only for current slot */}
                 {stickerImages[selectedTemplate + 1]?.map((sticker, index) => {
-                  return (
-                    <img
-                      key={sticker.id}
-                      src={sticker.url}
-                      alt="Achievement Sticker"
-                      className="absolute pointer-events-none animate-in fade-in zoom-in duration-300"
-                      style={{
-                        left: `${sticker.position_x ?? 50}%`,
-                        top: `${sticker.position_y ?? 50}%`,
-                        transform: `translate(-50%, -50%) scale(${sticker.scale ?? 1}) rotate(${sticker.rotation ?? 0}deg)`,
-                        transformOrigin: 'center center',
-                        width: '120px',
-                        height: '120px',
-                        objectFit: 'contain',
-                        filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.3))',
-                        zIndex: 10,
-                      }}
-                    />
-                  );
-                })}
+                return <img key={sticker.id} src={sticker.url} alt="Achievement Sticker" className="absolute pointer-events-none animate-in fade-in zoom-in duration-300" style={{
+                  left: `${sticker.position_x ?? 50}%`,
+                  top: `${sticker.position_y ?? 50}%`,
+                  transform: `translate(-50%, -50%) scale(${sticker.scale ?? 1}) rotate(${sticker.rotation ?? 0}deg)`,
+                  transformOrigin: 'center center',
+                  width: '120px',
+                  height: '120px',
+                  objectFit: 'contain',
+                  filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.3))',
+                  zIndex: 10
+                }} />;
+              })}
 
                 {/* BOTTOM RIGHT - Mentor Name and Title (Moved to bottom-most position) */}
                 
@@ -628,20 +629,11 @@ export default function BannerPreview() {
         </div>}
 
       {/* Ranks & Stickers Panel - Admin Only */}
-      {isAdmin && (
-        <RanksStickersPanel
-          isOpen={isStickersOpen}
-          onClose={() => setIsStickersOpen(false)}
-          currentSlot={selectedTemplate + 1}
-          rankName={bannerData?.rankName || ''}
-          selectedStickers={slotStickers[selectedTemplate + 1] || []}
-          onStickersChange={(stickers) => {
-            setSlotStickers(prev => ({
-              ...prev,
-              [selectedTemplate + 1]: stickers
-            }));
-          }}
-        />
-      )}
+      {isAdmin && <RanksStickersPanel isOpen={isStickersOpen} onClose={() => setIsStickersOpen(false)} currentSlot={selectedTemplate + 1} rankName={bannerData?.rankName || ''} selectedStickers={slotStickers[selectedTemplate + 1] || []} onStickersChange={stickers => {
+      setSlotStickers(prev => ({
+        ...prev,
+        [selectedTemplate + 1]: stickers
+      }));
+    }} />}
     </div>;
 }
