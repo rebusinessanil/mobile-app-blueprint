@@ -82,8 +82,8 @@ export default function StickerControl({
                 <Slider
                   value={[currentScale]}
                   onValueChange={(values) => onResizeSticker(values[0])}
-                  min={0.3}
-                  max={2}
+                  min={2}
+                  max={3.5}
                   step={0.1}
                   className="flex-1"
                 />
