@@ -389,18 +389,15 @@ export default function BannerPreview() {
         </div>
       </header>
 
-      {/* Banner Preview Container - Fixed at top - FIXED DIMENSIONS */}
+      {/* Banner Preview Container - Fixed at top */}
       <div className="px-3 sm:px-4 py-3 sm:py-4 flex-shrink-0 bg-background">
-        {/* Main Banner Preview Wrapper - Fixed 1080x1080 scaled to fit screen */}
-        <div className="relative mx-auto" style={{ width: '100%', maxWidth: '540px' }}>
-          <div className="border-4 border-primary rounded-2xl overflow-hidden shadow-2xl">
-          <div ref={bannerRef} className={`border-4 ${templateColors[selectedTemplate].border} relative bg-gradient-to-br ${templateColors[selectedTemplate].bgColor}`} style={{
-            width: '1080px',
-            height: '1080px',
-            transform: 'scale(0.5)',
-            transformOrigin: 'top left',
-            margin: '-270px 0 0 -270px',
-            position: 'relative'
+        {/* Main Banner Preview Wrapper with aspect ratio */}
+        <div className="preview-banner-wrapper relative w-full max-w-[100vw] sm:max-w-[520px] mx-auto">
+          <div className="border-4 border-primary rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl">
+          <div ref={bannerRef} className={`preview-banner border-4 ${templateColors[selectedTemplate].border} relative w-full bg-gradient-to-br ${templateColors[selectedTemplate].bgColor}`} style={{
+            aspectRatio: '1 / 1',
+            width: '100%',
+            height: 'auto'
           }}>
               <div className="absolute inset-0">
                 {/* Background Image (if uploaded) or Gradient Background */}
@@ -437,7 +434,7 @@ export default function BannerPreview() {
                     <img src={bannerDefaults.congratulations_image} alt="Congratulations" className="w-full h-full drop-shadow-2xl object-cover" />
                   </div>}
 
-                {/* Text Below Congratulations Image - FIXED FONT SIZE */}
+                {/* Text Below Congratulations Image */}
                 <div className="absolute z-20" style={{
                 top: '17.5%',
                 left: '72.5%',
@@ -445,10 +442,10 @@ export default function BannerPreview() {
                 width: '48%'
               }}>
                     <p style={{
-                  fontSize: '20px',
+                  fontSize: 'clamp(7px, 0.9vw, 11px)',
                   lineHeight: '1.2',
                   whiteSpace: 'nowrap'
-                }} className="text-white text-center font-semibold drop-shadow-lg mx-[6px] px-0 py-0 pr-0 pb-0 my-[13px]">
+                }} className="text-white text-center font-semibold drop-shadow-lg text-xs mx-[6px] px-0 py-0 pr-0 pb-0 my-[13px]">
                       To Our Brand New Leader
                     </p>
                   </div>
@@ -488,7 +485,7 @@ export default function BannerPreview() {
                   
                 </div>
 
-                {/* CENTER-RIGHT - Name with FIXED typography */}
+                {/* CENTER-RIGHT - Name with responsive typography */}
                 <div className="banner-text-content absolute px-2" style={{
                 top: '25%',
                 left: '72.5%',
@@ -496,63 +493,43 @@ export default function BannerPreview() {
                 width: '48%',
                 maxWidth: '48%'
               }}>
-                  <h2 title={mainBannerName.toUpperCase()} style={{
-                    fontSize: '22px',
-                    lineHeight: '1.2',
-                    letterSpacing: '0.5px',
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    maxWidth: '90%',
-                    display: 'block',
-                    textShadow: '1px 1px 6px rgba(0, 0, 0, 0.7)',
-                    fontWeight: '800',
-                    margin: '0 auto'
-                  }} className="text-foreground tracking-wider text-center">
+                  <h2 title={mainBannerName.toUpperCase()} className="banner-preview-name text-foreground tracking-wider font-extrabold text-center mx-auto">
                     {truncatedMainName.toUpperCase()}
                   </h2>
                   
-                  {bannerData.teamCity && <p title={bannerData.teamCity.toUpperCase()} style={{
-                    fontSize: '20px',
-                    textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8)',
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    maxWidth: '100%',
-                    marginTop: '8px'
-                  }} className="text-foreground tracking-widest font-light font-sans text-center">
+                  {bannerData.teamCity && <p title={bannerData.teamCity.toUpperCase()} className="banner-team text-foreground tracking-widest mt-1 sm:mt-2 font-light font-sans text-center">
                       {bannerData.teamCity.toUpperCase()}
                     </p>}
                 </div>
-                {/* BOTTOM CENTER - Income - FIXED FONT SIZES */}
+                {/* BOTTOM CENTER - Income */}
                 {bannerData.chequeAmount && <div className="absolute text-center" style={{
                 bottom: '15%',
                 left: '5%',
                 width: '55%'
               }}>
                     <p style={{
-                  fontSize: '24px',
+                  fontSize: 'clamp(8px, 1.5vw, 14px)',
                   textShadow: '1px 1px 2px rgba(0,0,0,0.8)'
-                }} className="text-white font-light tracking-widest text-left">
+                }} className="text-white font-light tracking-widest text-left text-xs">
                       THIS WEEK INCOME 
                     </p>
                     <p style={{
-                  fontSize: '120px',
+                  fontSize: 'clamp(32px, 7vw, 72px)',
                   textShadow: '4px 4px 8px rgba(0,0,0,0.9)',
                   lineHeight: '1'
-                }} className="font-black tracking-tight text-left mx-0 my-0 text-yellow-500 font-serif">
+                }} className="font-black tracking-tight text-left text-2xl mx-0 my-0 text-yellow-500 font-serif">
                       {Number(bannerData.chequeAmount).toLocaleString('en-IN')}
                     </p>
                   </div>}
 
-                {/* LOWER THIRD - Contact Info - FIXED FONT SIZES */}
+                {/* LOWER THIRD - Contact Info */}
                 <div className="banner-contact absolute" style={{
                 bottom: '3%',
                 left: '2%',
                 maxWidth: '50%'
               }}>
                   <p className="text-foreground font-light tracking-wide" style={{
-                  fontSize: '14px',
+                  fontSize: 'clamp(5.6px, 0.94vw, 6.72px)',
                   textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
                   marginBottom: '0.5px',
                   textTransform: 'uppercase',
@@ -562,7 +539,7 @@ export default function BannerPreview() {
                     CALL FOR MENTORSHIP                                                                 
                   </p>
                   <p title={`+91 ${displayContact}`} style={{
-                  fontSize: '32px',
+                  fontSize: 'clamp(9px, 1.8vw, 18px)',
                   textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
@@ -589,7 +566,7 @@ export default function BannerPreview() {
                   </div>}
 
 
-                {/* BOTTOM CENTER - Profile Name & Rank - FIXED FONT SIZES */}
+                {/* BOTTOM CENTER - Profile Name & Rank */}
                 <div className="absolute text-center" style={{
                 bottom: '3%',
                 left: '50%',
@@ -598,20 +575,20 @@ export default function BannerPreview() {
                 maxWidth: '80%',
                 zIndex: 3
               }}>
-                  <p title={profileName} className="text-foreground font-extrabold tracking-wider" style={{
-                  fontSize: '18px',
+                  <p title={profileName} className="banner-profile-name text-foreground font-extrabold tracking-wider" style={{
+                  fontSize: '9px',
                   textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
-                  marginBottom: '2px',
+                  marginBottom: '1px',
                   position: 'relative',
                   top: '15%'
                 }}>
                     {truncatedProfileName.toUpperCase()}
                   </p>
-                  <p className="text-yellow-500 font-semibold tracking-widest" style={{
-                  fontSize: '14px',
+                  <p className="banner-profile-rank text-yellow-500 font-semibold tracking-widest" style={{
+                  fontSize: '7px',
                   textShadow: '1px 1px 3px rgba(0,0,0,0.8)',
                   textTransform: 'uppercase'
                 }}>
@@ -619,15 +596,15 @@ export default function BannerPreview() {
                   </p>
                 </div>
 
-                {/* Achievement Stickers - Only for current slot - FIXED SIZE */}
+                {/* Achievement Stickers - Only for current slot */}
                 {stickerImages[selectedTemplate + 1]?.map((sticker, index) => {
                 return <img key={sticker.id} src={sticker.url} alt="Achievement Sticker" className="absolute pointer-events-none animate-in fade-in zoom-in duration-300" style={{
                   left: `${sticker.position_x ?? 50}%`,
                   top: `${sticker.position_y ?? 50}%`,
                   transform: `translate(-50%, -50%) scale(${sticker.scale ?? 1}) rotate(${sticker.rotation ?? 0}deg)`,
                   transformOrigin: 'center center',
-                  width: '240px',
-                  height: '240px',
+                  width: '120px',
+                  height: '120px',
                   objectFit: 'contain',
                   filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.3))',
                   zIndex: 10
