@@ -365,12 +365,12 @@ export default function BannerPreview() {
         scaleContainer.style.height = '1350px';
       }
 
-      // Capture the banner at full 1350×1350 size
+      // Capture the banner at fixed 1350×1350 size (no scaling)
       const canvas = await html2canvas(bannerRef.current, {
         width: 1350,
         height: 1350,
-        scale: 3,
-        // 3x for high quality = 4050×4050 output
+        scale: 1,
+        // DPI 150, fixed dimensions
         backgroundColor: null,
         logging: false,
         useCORS: true,
@@ -393,8 +393,8 @@ export default function BannerPreview() {
       }
 
       // Verify canvas dimensions
-      if (canvas.width !== 4050 || canvas.height !== 4050) {
-        console.warn(`Canvas size mismatch: ${canvas.width}×${canvas.height}, expected 4050×4050`);
+      if (canvas.width !== 1350 || canvas.height !== 1350) {
+        console.warn(`Canvas size mismatch: ${canvas.width}×${canvas.height}, expected 1350×1350`);
       }
 
       // Convert to PNG blob with high quality
@@ -412,7 +412,7 @@ export default function BannerPreview() {
         link.click();
         URL.revokeObjectURL(url);
         const sizeMB = (blob.size / 1024 / 1024).toFixed(2);
-        toast.success(`Full-size banner downloaded! (${sizeMB} MB, 4050×4050 PNG)`);
+        toast.success(`Banner downloaded! (${sizeMB} MB, 1350×1350 PNG)`);
       }, "image/png", 0.95);
     } catch (error) {
       console.error("Download error:", error);
@@ -587,7 +587,7 @@ export default function BannerPreview() {
                       width: '540px',
                       height: '860px',
                       objectFit: 'cover',
-                      objectPosition: 'top'
+                      objectPosition: 'center'
                     }} />
                     {/* Bottom feather fade overlay */}
                     <div className="absolute bottom-0 left-0 right-0 pointer-events-none" style={{
@@ -733,7 +733,7 @@ export default function BannerPreview() {
                       width: '445px',
                       height: '520px',
                       objectFit: 'cover',
-                      objectPosition: 'top'
+                      objectPosition: 'center'
                     }} />
                     {/* Bottom feather fade overlay */}
                     <div className="absolute bottom-0 left-0 right-0 pointer-events-none" style={{
