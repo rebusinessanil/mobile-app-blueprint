@@ -11,7 +11,8 @@ import {
   Settings,
   LogOut,
   Menu,
-  X
+  X,
+  Library
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -29,6 +30,7 @@ const adminRoutes = [
   { path: "/admin/templates", icon: FileImage, label: "Templates" },
   { path: "/admin/stories", icon: BookOpen, label: "Stories" },
   { path: "/admin/ranks", icon: Award, label: "Ranks" },
+  { path: "/admin/sticker-library", icon: Library, label: "Sticker Library" },
   { path: "/admin/stickers", icon: Sticker, label: "Stickers" },
   { path: "/admin/rank-stickers", icon: Award, label: "Rank Stickers" },
   { path: "/admin/template-backgrounds", icon: Image, label: "Backgrounds" },

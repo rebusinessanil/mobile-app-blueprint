@@ -30,6 +30,7 @@ import AdminRanks from "./pages/AdminRanks";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminUsers from "./pages/AdminUsers";
 import AdminStories from "./pages/AdminStories";
+import AdminStickerLibrary from "./pages/AdminStickerLibrary";
 
 const queryClient = new QueryClient();
 
@@ -70,6 +71,7 @@ const App = () => (
           <Route path="/admin/banner-defaults" element={<AuthGuard><AdminBannerDefaults /></AuthGuard>} />
           <Route path="/admin/banner-preview-defaults" element={<AuthGuard><AdminBannerPreviewDefaults /></AuthGuard>} />
           <Route path="/admin/template-backgrounds" element={<AuthGuard><AdminTemplateBackgrounds /></AuthGuard>} />
+          <Route path="/admin/sticker-library" element={<AuthGuard><AdminStickerLibrary /></AuthGuard>} />
           
           {/* Catch-all for undefined routes */}
           <Route path="*" element={<AuthGuard><ComingSoon /></AuthGuard>} />
