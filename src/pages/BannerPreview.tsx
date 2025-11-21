@@ -539,7 +539,7 @@ export default function BannerPreview() {
                     CALL FOR MENTORSHIP                                                                 
                   </p>
                   <p title={`+91 ${displayContact}`} style={{
-                  fontSize: 'clamp(11.2px, 2.24vw, 22.4px)',
+                  fontSize: 'clamp(9px, 1.8vw, 18px)',
                   textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
