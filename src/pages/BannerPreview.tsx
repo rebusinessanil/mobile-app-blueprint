@@ -442,15 +442,14 @@ export default function BannerPreview() {
       {/* Banner Preview Container - Fixed at top */}
       <div className="px-3 sm:px-4 py-3 sm:py-4 flex-shrink-0 bg-background">
         {/* Display wrapper with responsive scaling */}
-        <div className="relative w-full max-w-[95vw] sm:max-w-[520px] mx-auto">
-          <div className="rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl">
+        <div className="relative w-full max-w-[100vw] sm:max-w-[520px] mx-auto">
+          <div className="border-4 border-primary rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl">
             {/* Scale wrapper for display - maintains 1350×1350 internal canvas */}
             <div style={{
             width: '100%',
             aspectRatio: '1 / 1',
             overflow: 'hidden',
-            position: 'relative',
-            backgroundColor: '#000'
+            position: 'relative'
           }}>
               <div style={{
               transform: 'scale(var(--banner-scale))',
