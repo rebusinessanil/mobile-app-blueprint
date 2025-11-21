@@ -620,11 +620,11 @@ export default function BannerPreview() {
                     maxWidth: '648px',
                     padding: '0 27px'
                   }}>
-                  <h2 title={mainBannerName.toUpperCase()} className="banner-preview-name text-center" style={{
+                  <h2 title={mainBannerName.toUpperCase()} style={{
                       color: '#ffffff',
                       textAlign: 'center',
                       margin: '0 auto'
-                    }}>
+                    }} className="banner-preview-name text-center px-0 py-[2px] mx-[26px]">
                     {truncatedMainName.toUpperCase()}
                   </h2>
                   
