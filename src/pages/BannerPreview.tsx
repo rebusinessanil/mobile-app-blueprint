@@ -322,16 +322,24 @@ export default function BannerPreview() {
     const loadingToast = toast.loading("Generating Full HD banner...");
     try {
       const TARGET_SIZE = 1080;
+      const PADDING = 100; // Extra capture padding to prevent edge clipping
+      const CAPTURE_SIZE = TARGET_SIZE + (PADDING * 2);
       
-      // Save ALL original styles including aspect ratio
-      const originalWidth = bannerRef.current.style.width;
-      const originalHeight = bannerRef.current.style.height;
-      const originalMaxWidth = bannerRef.current.style.maxWidth;
-      const originalMaxHeight = bannerRef.current.style.maxHeight;
-      const originalAspectRatio = bannerRef.current.style.aspectRatio;
-      const originalOverflow = bannerRef.current.style.overflow;
+      // Save ALL original styles
+      const originalStyles = {
+        width: bannerRef.current.style.width,
+        height: bannerRef.current.style.height,
+        maxWidth: bannerRef.current.style.maxWidth,
+        maxHeight: bannerRef.current.style.maxHeight,
+        minWidth: bannerRef.current.style.minWidth,
+        minHeight: bannerRef.current.style.minHeight,
+        aspectRatio: bannerRef.current.style.aspectRatio,
+        overflow: bannerRef.current.style.overflow,
+        padding: bannerRef.current.style.padding,
+        margin: bannerRef.current.style.margin
+      };
       
-      // Force exact 1080x1080 with no conflicting properties
+      // Force exact dimensions with padding space for overflow elements
       bannerRef.current.style.width = `${TARGET_SIZE}px`;
       bannerRef.current.style.height = `${TARGET_SIZE}px`;
       bannerRef.current.style.maxWidth = `${TARGET_SIZE}px`;
@@ -340,46 +348,63 @@ export default function BannerPreview() {
       bannerRef.current.style.minHeight = `${TARGET_SIZE}px`;
       bannerRef.current.style.aspectRatio = 'unset';
       bannerRef.current.style.overflow = 'visible';
+      bannerRef.current.style.padding = '0';
+      bannerRef.current.style.margin = '0';
       
-      // Longer delay to ensure complete rendering with all elements
-      await new Promise(resolve => setTimeout(resolve, 300));
+      // Wait for reflow
+      await new Promise(resolve => setTimeout(resolve, 500));
 
-      // Capture at scale 2 for crisp quality, then resize canvas to exactly 1080x1080
+      // Capture at higher resolution with extra space around edges
       const canvas = await html2canvas(bannerRef.current, {
-        scale: 2,
+        scale: 3,
         backgroundColor: "#000000",
         logging: false,
         useCORS: true,
         allowTaint: true,
-        width: TARGET_SIZE,
-        height: TARGET_SIZE,
-        windowWidth: TARGET_SIZE,
-        windowHeight: TARGET_SIZE,
+        width: CAPTURE_SIZE,
+        height: CAPTURE_SIZE,
+        windowWidth: CAPTURE_SIZE,
+        windowHeight: CAPTURE_SIZE,
+        x: -PADDING,
+        y: -PADDING,
+        scrollX: 0,
+        scrollY: 0,
         imageTimeout: 0,
-        x: 0,
-        y: 0
+        removeContainer: false
       });
 
-      // Create final 1080x1080 canvas
+      // Create final 1080x1080 canvas and crop from center of captured image
       const finalCanvas = document.createElement('canvas');
       finalCanvas.width = TARGET_SIZE;
       finalCanvas.height = TARGET_SIZE;
       const ctx = finalCanvas.getContext('2d');
+      
       if (ctx) {
-        ctx.drawImage(canvas, 0, 0, TARGET_SIZE, TARGET_SIZE);
+        // Calculate crop coordinates to center the 1080x1080 area
+        const sourceX = PADDING * 3; // Account for scale: 3
+        const sourceY = PADDING * 3;
+        const sourceSize = TARGET_SIZE * 3;
+        
+        // Draw cropped and scaled portion
+        ctx.drawImage(
+          canvas,
+          sourceX,
+          sourceY,
+          sourceSize,
+          sourceSize,
+          0,
+          0,
+          TARGET_SIZE,
+          TARGET_SIZE
+        );
       }
 
-      // Restore ALL original styles immediately
-      bannerRef.current.style.width = originalWidth;
-      bannerRef.current.style.height = originalHeight;
-      bannerRef.current.style.maxWidth = originalMaxWidth;
-      bannerRef.current.style.maxHeight = originalMaxHeight;
-      bannerRef.current.style.minWidth = '';
-      bannerRef.current.style.minHeight = '';
-      bannerRef.current.style.aspectRatio = originalAspectRatio;
-      bannerRef.current.style.overflow = originalOverflow;
+      // Restore ALL original styles
+      Object.entries(originalStyles).forEach(([key, value]) => {
+        bannerRef.current!.style[key as any] = value;
+      });
 
-      // Convert final canvas to JPG blob with quality 0.95
+      // Convert to JPG
       finalCanvas.toBlob(blob => {
         toast.dismiss(loadingToast);
         if (!blob) {
