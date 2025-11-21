@@ -360,20 +360,79 @@ export default function BannerPreview() {
   };
   
   return (
-    <div className="h-screen overflow-y-auto bg-background flex flex-col items-center py-8">
+    <div style={{
+      width: '100vw',
+      height: '100vh',
+      overflow: 'auto',
+      backgroundColor: '#0B0E15',
+      position: 'relative'
+    }}>
       {/* Header - Fixed */}
-      <header className="bg-background/95 backdrop-blur-sm z-40 px-6 py-4 w-full flex-shrink-0">
-        <div className="flex items-center justify-between max-w-7xl mx-auto">
-          <button onClick={() => navigate(-1)} className="w-12 h-12 rounded-xl border-2 border-foreground flex items-center justify-center hover:bg-foreground/10 transition-colors">
-            <ArrowLeft className="w-6 h-6 text-foreground" />
+      <header style={{
+        position: 'sticky',
+        top: '0px',
+        left: '0px',
+        width: '100%',
+        backgroundColor: 'rgba(11, 14, 21, 0.95)',
+        backdropFilter: 'blur(8px)',
+        zIndex: 40,
+        padding: '16px 24px'
+      }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          maxWidth: '1400px',
+          margin: '0 auto'
+        }}>
+          <button 
+            onClick={() => navigate(-1)} 
+            style={{
+              width: '48px',
+              height: '48px',
+              borderRadius: '12px',
+              border: '2px solid white',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: 'transparent',
+              cursor: 'pointer',
+              transition: 'background-color 0.2s'
+            }}
+          >
+            <ArrowLeft style={{ width: '24px', height: '24px', color: 'white' }} />
           </button>
           
-          <h1 className="text-2xl font-bold text-foreground tracking-widest">BANNER PREVIEW</h1>
+          <h1 style={{
+            fontSize: '24px',
+            fontWeight: 'bold',
+            color: 'white',
+            letterSpacing: '0.1em',
+            margin: 0
+          }}>
+            BANNER PREVIEW
+          </h1>
           
-          {isAdmin && <button onClick={() => setIsStickersOpen(true)} className="w-12 h-12 rounded-xl border-2 border-primary bg-primary/10 flex items-center justify-center hover:bg-primary/20 transition-colors">
-              <Sparkles className="w-6 h-6 text-primary" />
-            </button>}
-          {!isAdmin && <div className="w-12 h-12" />}
+          {isAdmin && (
+            <button 
+              onClick={() => setIsStickersOpen(true)} 
+              style={{
+                width: '48px',
+                height: '48px',
+                borderRadius: '12px',
+                border: '2px solid #FFD700',
+                backgroundColor: 'rgba(255, 215, 0, 0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                transition: 'background-color 0.2s'
+              }}
+            >
+              <Sparkles style={{ width: '24px', height: '24px', color: '#FFD700' }} />
+            </button>
+          )}
+          {!isAdmin && <div style={{ width: '48px', height: '48px' }} />}
         </div>
       </header>
 
@@ -786,9 +845,23 @@ export default function BannerPreview() {
       </div>
 
       {/* Profile Avatars + Download Button - Below Canvas */}
-      <div className="flex items-center justify-between px-6 mt-8 gap-4 w-full max-w-7xl">
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '0 24px',
+        marginTop: '32px',
+        gap: '16px',
+        width: '100%',
+        maxWidth: '1400px',
+        margin: '32px auto 0'
+      }}>
         {/* Left: Profile Images Row */}
-        <div className="flex gap-3 overflow-x-auto">
+        <div style={{
+          display: 'flex',
+          gap: '12px',
+          overflowX: 'auto'
+        }}>
           {profilePhotos.slice(0, 6).map((photo, idx) => (
             <button 
               key={photo.id}
@@ -796,17 +869,48 @@ export default function BannerPreview() {
                 setSelectedMentorPhotoIndex(idx);
                 setIsMentorPhotoFlipped(!isMentorPhotoFlipped);
               }}
-              className={`h-10 w-10 rounded-full border-2 object-cover flex-shrink-0 shadow-lg transition-all hover:scale-105 ${
-                selectedMentorPhotoIndex === idx 
-                  ? 'border-[#FFD700] ring-2 ring-[#FFD700] ring-offset-2 ring-offset-[#0B0E15]' 
-                  : 'border-gray-500 hover:border-[#FFD700]'
-              }`}
+              style={{
+                height: '40px',
+                width: '40px',
+                minWidth: '40px',
+                borderRadius: '50%',
+                border: selectedMentorPhotoIndex === idx ? '2px solid #FFD700' : '2px solid #6B7280',
+                overflow: 'hidden',
+                cursor: 'pointer',
+                boxShadow: selectedMentorPhotoIndex === idx 
+                  ? '0 0 0 2px #0B0E15, 0 0 0 4px #FFD700' 
+                  : 'none',
+                transition: 'transform 0.2s',
+                padding: 0,
+                backgroundColor: 'transparent'
+              }}
             >
-              <img src={photo.photo_url} alt="Profile" className="w-full h-full rounded-full object-cover" />
+              <img 
+                src={photo.photo_url} 
+                alt="Profile" 
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover'
+                }}
+              />
             </button>
           ))}
           {profilePhotos.length > 6 && (
-            <div className="h-10 w-10 rounded-full border-2 border-[#FFD700] bg-[#111827] flex items-center justify-center text-[#FFD700] text-xs font-bold flex-shrink-0">
+            <div style={{
+              height: '40px',
+              width: '40px',
+              minWidth: '40px',
+              borderRadius: '50%',
+              border: '2px solid #FFD700',
+              backgroundColor: '#111827',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#FFD700',
+              fontSize: '12px',
+              fontWeight: 'bold'
+            }}>
               +{profilePhotos.length - 6}
             </div>
           )}
@@ -816,17 +920,46 @@ export default function BannerPreview() {
         <button 
           onClick={handleDownload} 
           disabled={isDownloading}
-          className="cursor-pointer transition-transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+          style={{
+            cursor: isDownloading ? 'not-allowed' : 'pointer',
+            opacity: isDownloading ? 0.5 : 1,
+            transition: 'transform 0.2s',
+            border: 'none',
+            background: 'transparent',
+            padding: 0
+          }}
         >
-          <img src={downloadIcon} alt="Download" className="h-16 w-auto" />
+          <img 
+            src={downloadIcon} 
+            alt="Download" 
+            style={{
+              height: '64px',
+              width: 'auto'
+            }}
+          />
         </button>
       </div>
 
       {/* Slot Selector Grid - Below Controls */}
       {backgrounds.length > 0 && (
-        <div className="w-full max-w-7xl px-6 py-8">
-          <div className="rounded-3xl bg-[#111827]/50 border-2 border-[#FFD700]/20 p-6 shadow-[0_0_30px_rgba(255,215,0,0.1)]">
-            <div className="grid grid-cols-4 gap-4">
+        <div style={{
+          width: '100%',
+          maxWidth: '1400px',
+          padding: '32px 24px',
+          margin: '0 auto'
+        }}>
+          <div style={{
+            borderRadius: '24px',
+            backgroundColor: 'rgba(17, 24, 39, 0.5)',
+            border: '2px solid rgba(255, 215, 0, 0.2)',
+            padding: '24px',
+            boxShadow: '0 0 30px rgba(255, 215, 0, 0.1)'
+          }}>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(4, 1fr)',
+              gap: '16px'
+            }}>
               {Array.from({ length: 16 }, (_, i) => i + 1).map(slotNum => {
                 const bg = backgrounds.find(b => b.slot_number === slotNum);
                 const isSelected = selectedTemplate === slotNum - 1;
@@ -834,17 +967,45 @@ export default function BannerPreview() {
                   <button 
                     key={slotNum}
                     onClick={() => setSelectedTemplate(slotNum - 1)}
-                    className={`aspect-square rounded-lg overflow-hidden transition-all ${
-                      isSelected 
-                        ? 'border-4 border-[#FFD700] scale-105 shadow-[0_0_20px_rgba(255,215,0,0.5)]' 
-                        : 'border-2 border-gray-600 hover:border-[#FFD700] hover:scale-105'
-                    }`}
+                    style={{
+                      aspectRatio: '1',
+                      borderRadius: '8px',
+                      overflow: 'hidden',
+                      border: isSelected ? '4px solid #FFD700' : '2px solid #4B5563',
+                      transform: isSelected ? 'scale(1.05)' : 'scale(1)',
+                      boxShadow: isSelected ? '0 0 20px rgba(255, 215, 0, 0.5)' : 'none',
+                      transition: 'all 0.2s',
+                      cursor: 'pointer',
+                      padding: 0,
+                      backgroundColor: 'transparent'
+                    }}
                   >
                     {bg?.background_image_url ? (
-                      <img src={bg.background_image_url} alt={`Slot ${slotNum}`} className="w-full h-full object-cover" />
+                      <img 
+                        src={bg.background_image_url} 
+                        alt={`Slot ${slotNum}`} 
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover'
+                        }}
+                      />
                     ) : (
-                      <div className={`w-full h-full bg-gradient-to-br ${templateColors[slotNum - 1]?.bgColor || 'from-gray-800 to-gray-900'} flex items-center justify-center`}>
-                        <span className="text-white text-xs font-bold">{slotNum}</span>
+                      <div style={{
+                        width: '100%',
+                        height: '100%',
+                        background: 'linear-gradient(to bottom right, #1F2937, #111827)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}>
+                        <span style={{
+                          color: 'white',
+                          fontSize: '12px',
+                          fontWeight: 'bold'
+                        }}>
+                          {slotNum}
+                        </span>
                       </div>
                     )}
                   </button>
