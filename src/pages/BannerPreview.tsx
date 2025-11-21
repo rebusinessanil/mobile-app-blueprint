@@ -325,20 +325,38 @@ export default function BannerPreview() {
       const TARGET_WIDTH = 1080;
       const TARGET_HEIGHT = 1080;
 
-      // Store original styles
-      const originalWidth = bannerRef.current.style.width;
-      const originalHeight = bannerRef.current.style.height;
-      const originalAspectRatio = bannerRef.current.style.aspectRatio;
-      
-      // Temporarily set exact dimensions for capture
-      bannerRef.current.style.width = `${TARGET_WIDTH}px`;
-      bannerRef.current.style.height = `${TARGET_HEIGHT}px`;
-      bannerRef.current.style.aspectRatio = 'auto';
+      // Create a hidden clone for perfect capture
+      const cloneContainer = document.createElement('div');
+      cloneContainer.style.position = 'fixed';
+      cloneContainer.style.left = '-9999px';
+      cloneContainer.style.top = '0';
+      cloneContainer.style.width = `${TARGET_WIDTH}px`;
+      cloneContainer.style.height = `${TARGET_HEIGHT}px`;
+      cloneContainer.style.overflow = 'hidden';
+      document.body.appendChild(cloneContainer);
 
-      // Wait for layout to update
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // Clone the banner element
+      const bannerClone = bannerRef.current.cloneNode(true) as HTMLElement;
+      bannerClone.style.width = `${TARGET_WIDTH}px`;
+      bannerClone.style.height = `${TARGET_HEIGHT}px`;
+      bannerClone.style.aspectRatio = '1 / 1';
+      bannerClone.style.position = 'relative';
+      cloneContainer.appendChild(bannerClone);
 
-      const canvas = await html2canvas(bannerRef.current, {
+      // Wait for images to load in clone
+      const images = bannerClone.querySelectorAll('img');
+      await Promise.all(
+        Array.from(images).map(img => {
+          if (img.complete) return Promise.resolve();
+          return new Promise((resolve) => {
+            img.onload = () => resolve(null);
+            img.onerror = () => resolve(null);
+          });
+        })
+      );
+
+      // Capture the clone at exact dimensions
+      const canvas = await html2canvas(bannerClone, {
         scale: 1,
         backgroundColor: "#000000",
         logging: false,
@@ -348,15 +366,19 @@ export default function BannerPreview() {
         height: TARGET_HEIGHT,
         windowWidth: TARGET_WIDTH,
         windowHeight: TARGET_HEIGHT,
-        imageTimeout: 0
+        imageTimeout: 0,
+        onclone: (clonedDoc) => {
+          const clonedElement = clonedDoc.querySelector('[data-banner-clone]');
+          if (clonedElement) {
+            (clonedElement as HTMLElement).style.transform = 'none';
+          }
+        }
       });
 
-      // Restore original styles immediately after capture
-      bannerRef.current.style.width = originalWidth;
-      bannerRef.current.style.height = originalHeight;
-      bannerRef.current.style.aspectRatio = originalAspectRatio;
+      // Remove clone
+      document.body.removeChild(cloneContainer);
 
-      // Convert directly to JPG blob with quality 0.95
+      // Convert to JPG blob with quality 0.95
       canvas.toBlob(blob => {
         toast.dismiss(loadingToast);
         if (!blob) {
@@ -402,7 +424,7 @@ export default function BannerPreview() {
         {/* Main Banner Preview Wrapper with aspect ratio */}
         <div className="preview-banner-wrapper relative w-full max-w-[100vw] sm:max-w-[520px] mx-auto">
           <div className="border-4 border-primary rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl">
-          <div ref={bannerRef} className={`preview-banner border-4 ${templateColors[selectedTemplate].border} relative w-full bg-gradient-to-br ${templateColors[selectedTemplate].bgColor}`} style={{
+          <div ref={bannerRef} data-banner-clone className={`preview-banner border-4 ${templateColors[selectedTemplate].border} relative w-full bg-gradient-to-br ${templateColors[selectedTemplate].bgColor}`} style={{
             aspectRatio: '1 / 1',
             width: '100%',
             height: 'auto'
