@@ -768,11 +768,11 @@ export default function BannerPreview() {
                   </p>
                 </div>
 
-                {/* Achievement Stickers - Positioned between Team Name and Bottom Name */}
+                {/* Achievement Stickers - Centered in middle empty area */}
                 {stickerImages[selectedTemplate + 1]?.map((sticker, index) => {
                     return <img key={sticker.id} src={sticker.url} alt="Achievement Sticker" className="absolute pointer-events-none animate-in fade-in zoom-in duration-300" style={{
-                      left: `${sticker.position_x ?? 73.5}%`,
-                      top: `${sticker.position_y ?? 64}%`,
+                      left: `${sticker.position_x ?? 72}%`,
+                      top: `${sticker.position_y ?? 58}%`,
                       transform: `translate(-50%, -50%) scale(${sticker.scale ?? 0.9}) rotate(${sticker.rotation ?? 0}deg)`,
                       transformOrigin: 'center center',
                       width: '145px',
