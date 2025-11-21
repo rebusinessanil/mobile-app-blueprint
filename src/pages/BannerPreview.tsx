@@ -701,13 +701,13 @@ export default function BannerPreview() {
                     }}>
                     CALL FOR MENTORSHIP                                                                 
                   </p>
-                  <p title={`+91 ${displayContact}`} className="banner-contact" style={{
+                  <p title={`+91 ${displayContact}`} style={{
                       whiteSpace: 'nowrap',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
                       color: '#ffffff',
                       fontFamily: 'sans-serif'
-                    }}>
+                    }} className="banner-contact px-0 py-[3px]">
                     +91 {displayContact}
                   </p>
                 </div>
