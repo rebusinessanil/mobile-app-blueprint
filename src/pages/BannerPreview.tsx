@@ -425,7 +425,7 @@ export default function BannerPreview() {
 
                 {/* Congratulations Image - Admin controlled, always displayed */}
                 {bannerDefaults?.congratulations_image && <div className="absolute z-20" style={{
-                top: '22%',
+                top: '12%',
                 right: '8%',
                 width: '44%',
                 height: '11%'
