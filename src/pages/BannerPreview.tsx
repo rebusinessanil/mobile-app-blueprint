@@ -433,6 +433,21 @@ export default function BannerPreview() {
                     <img src={bannerDefaults.congratulations_image} alt="Congratulations" className="w-full h-full drop-shadow-2xl object-cover" />
                   </div>}
 
+                {/* Text Below Congratulations Image */}
+                <div className="absolute z-20" style={{
+                top: '25%',
+                right: '8%',
+                width: '48%'
+              }}>
+                    <p className="text-white text-center font-semibold drop-shadow-lg" style={{
+                    fontSize: 'clamp(8px, 1vw, 12px)',
+                    lineHeight: '1.2',
+                    whiteSpace: 'nowrap'
+                  }}>
+                      To Our Brand New Leader
+                    </p>
+                  </div>
+
                 {/* Top - Small circular upline avatars (70% scale = smaller) */}
                 <div className="absolute top-[1.8%] left-1/2 -translate-x-1/2 flex gap-1.5 z-20" style={{
                 transform: 'translateX(-50%) scale(1.1)'
