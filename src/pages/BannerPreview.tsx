@@ -849,5 +849,32 @@ export default function BannerPreview() {
         [selectedTemplate + 1]: stickers
       }));
     }} />}
+
+      {/* Loading Overlay - Shows during banner export */}
+      {isDownloading && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="w-[86%] max-w-[420px] bg-[#0f1720] rounded-xl p-5 shadow-2xl border border-primary/20">
+            <div className="flex items-center gap-3 mb-3">
+              {/* Logo placeholder - replace with actual ReBusiness logo */}
+              <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center flex-shrink-0">
+                <span className="text-background font-bold text-sm">RB</span>
+              </div>
+              <div className="flex-1">
+                <div className="text-foreground font-bold text-base leading-tight">
+                  ReBusiness • Creating your success banner…
+                </div>
+                <div className="text-muted-foreground text-sm mt-1">
+                  Just a moment!
+                </div>
+              </div>
+              {/* Spinner */}
+              <div className="w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin flex-shrink-0"></div>
+            </div>
+            <p className="text-muted-foreground text-xs text-center mt-3 pt-3 border-t border-border">
+              Preparing your banner — this may take a few seconds.
+            </p>
+          </div>
+        </div>
+      )}
     </div>;
 }
