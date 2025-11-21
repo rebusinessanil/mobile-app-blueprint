@@ -50,14 +50,22 @@ export default function BannerPreview() {
   const [stickerImages, setStickerImages] = useState<Record<number, {id: string, url: string, position_x?: number, position_y?: number, scale?: number, rotation?: number}[]>>({});
   const bannerRef = useRef<HTMLDivElement>(null);
 
-  // Get authenticated user
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  // Get authenticated user and check admin status
   useEffect(() => {
-    supabase.auth.getSession().then(({
+    supabase.auth.getSession().then(async ({
       data: {
         session
       }
     }) => {
-      setUserId(session?.user?.id ?? null);
+      const uid = session?.user?.id ?? null;
+      setUserId(uid);
+      
+      if (uid) {
+        const { data: adminCheck } = await supabase.rpc('is_admin', { user_id: uid });
+        setIsAdmin(adminCheck ?? false);
+      }
     });
   }, []);
   const {
@@ -356,12 +364,15 @@ export default function BannerPreview() {
           
           <h1 className="text-base sm:text-xl md:text-2xl font-bold text-foreground tracking-widest">BANNER PREVIEW</h1>
           
-          <button 
-            onClick={() => setIsStickersOpen(true)}
-            className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl border-2 border-primary bg-primary/10 flex items-center justify-center hover:bg-primary/20 transition-colors touch-target"
-          >
-            <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
-          </button>
+          {isAdmin && (
+            <button 
+              onClick={() => setIsStickersOpen(true)}
+              className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl border-2 border-primary bg-primary/10 flex items-center justify-center hover:bg-primary/20 transition-colors touch-target"
+            >
+              <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
+            </button>
+          )}
+          {!isAdmin && <div className="w-10 h-10 sm:w-12 sm:h-12" />}
         </div>
       </header>
 
@@ -616,19 +627,21 @@ export default function BannerPreview() {
           </div>
         </div>}
 
-      {/* Ranks & Stickers Panel */}
-      <RanksStickersPanel
-        isOpen={isStickersOpen}
-        onClose={() => setIsStickersOpen(false)}
-        currentSlot={selectedTemplate + 1}
-        rankName={bannerData?.rankName || ''}
-        selectedStickers={slotStickers[selectedTemplate + 1] || []}
-        onStickersChange={(stickers) => {
-          setSlotStickers(prev => ({
-            ...prev,
-            [selectedTemplate + 1]: stickers
-          }));
-        }}
-      />
+      {/* Ranks & Stickers Panel - Admin Only */}
+      {isAdmin && (
+        <RanksStickersPanel
+          isOpen={isStickersOpen}
+          onClose={() => setIsStickersOpen(false)}
+          currentSlot={selectedTemplate + 1}
+          rankName={bannerData?.rankName || ''}
+          selectedStickers={slotStickers[selectedTemplate + 1] || []}
+          onStickersChange={(stickers) => {
+            setSlotStickers(prev => ({
+              ...prev,
+              [selectedTemplate + 1]: stickers
+            }));
+          }}
+        />
+      )}
     </div>;
 }
