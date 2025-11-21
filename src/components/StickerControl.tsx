@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Move, Maximize2 } from "lucide-react";
+import { Plus, Move, Maximize2, Save, RotateCcw } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
 
@@ -7,16 +7,22 @@ interface StickerControlProps {
   onAddSticker: () => void;
   onResizeSticker: (scale: number) => void;
   onToggleDragMode: (enabled: boolean) => void;
+  onSave: () => void;
+  onReset: () => void;
   currentScale: number;
   isDragMode: boolean;
+  isSaving?: boolean;
 }
 
 export default function StickerControl({
   onAddSticker,
   onResizeSticker,
   onToggleDragMode,
+  onSave,
+  onReset,
   currentScale,
   isDragMode,
+  isSaving = false,
 }: StickerControlProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -109,6 +115,26 @@ export default function StickerControl({
               >
                 <Move className="w-5 h-5 mr-2" />
                 {isDragMode ? "Drag Mode Active" : "Enable Drag Mode"}
+              </Button>
+            </div>
+
+            {/* Save & Reset Buttons */}
+            <div className="flex gap-2">
+              <Button
+                onClick={onSave}
+                disabled={isSaving}
+                className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl h-10 font-semibold"
+              >
+                <Save className="w-4 h-4 mr-2" />
+                {isSaving ? "Saving..." : "Save"}
+              </Button>
+              <Button
+                onClick={onReset}
+                variant="outline"
+                className="flex-1 border-primary/40 text-foreground hover:bg-primary/10 rounded-xl h-10 font-semibold"
+              >
+                <RotateCcw className="w-4 h-4 mr-2" />
+                Reset
               </Button>
             </div>
 
