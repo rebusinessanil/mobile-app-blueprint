@@ -159,7 +159,7 @@
 
   /* Fixed Typography - No Responsive Scaling */
   .banner-preview-name {
-    font-size: 30px !important; /* LOCKED - Never change */
+    font-size: 42px !important; /* LOCKED - Never change */
     font-weight: 700 !important;
     line-height: 1.2 !important;
     letter-spacing: 1.5px !important;
@@ -172,7 +172,7 @@
   }
 
   .banner-team {
-    font-size: 25px !important; /* LOCKED - Never change */
+    font-size: 30px !important; /* LOCKED - Never change */
     font-weight: 300 !important;
     white-space: nowrap !important;
     overflow: hidden !important;
@@ -183,8 +183,8 @@
   }
 
   .banner-contact {
-    font-size: 24px !important; /* LOCKED - Never change */
-    font-weight: 700 !important;
+    font-size: 26px !important; /* LOCKED - Never change */
+    font-weight: 600 !important;
     white-space: nowrap !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
@@ -193,14 +193,14 @@
   }
 
   .banner-profile-name {
-    font-size: 12px !important; /* LOCKED - Never change */
+    font-size: 42px !important; /* LOCKED - Never change */
     font-weight: 800 !important;
     letter-spacing: 1.5px !important;
     text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.9) !important;
   }
 
   .banner-profile-rank {
-    font-size: 9px !important; /* LOCKED - Never change */
+    font-size: 30px !important; /* LOCKED - Never change */
     font-weight: 600 !important;
     letter-spacing: 2px !important;
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.9) !important;

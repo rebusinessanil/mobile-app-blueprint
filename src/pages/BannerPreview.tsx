@@ -484,26 +484,26 @@ export default function BannerPreview() {
 
                 {/* Top - Upline avatars - FIXED SIZE AND POSITION */}
                 <div className="absolute z-20" style={{
-                top: '24px',
+                top: '40px',
                 left: '675px',
-                transform: 'translateX(-50%) scale(1.1)',
+                transform: 'translateX(-50%)',
                 display: 'flex',
-                gap: '6px'
+                gap: '16px'
               }}>
                   {bannerData.uplines?.slice(0, 5).map((upline, idx) => <div key={upline.id} style={{
-                    width: '38px', /* LOCKED */
-                    height: '38px', /* LOCKED */
-                    minWidth: '38px',
-                    minHeight: '38px',
-                    maxWidth: '38px',
-                    maxHeight: '38px',
-                    borderRadius: '50%',
-                    border: '2px solid #ffffff',
+                    width: '160px', /* LOCKED */
+                    height: '160px', /* LOCKED */
+                    minWidth: '160px',
+                    minHeight: '160px',
+                    maxWidth: '160px',
+                    maxHeight: '160px',
+                    borderRadius: '80px',
+                    border: '4px solid #ffffff',
                     overflow: 'hidden',
-                    boxShadow: '0 4px 8px rgba(0,0,0,0.5)',
+                    boxShadow: '0 8px 16px rgba(0,0,0,0.5)',
                     flexShrink: 0
                   }}>
-                      <img src={upline.avatar || primaryPhoto || "/placeholder.svg"} alt={upline.name} style={{ width: '38px', height: '38px', objectFit: 'cover' }} />
+                      <img src={upline.avatar || primaryPhoto || "/placeholder.svg"} alt={upline.name} style={{ width: '160px', height: '160px', objectFit: 'cover' }} />
                     </div>)}
                 </div>
 
