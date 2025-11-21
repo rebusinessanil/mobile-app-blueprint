@@ -4,6 +4,7 @@ import { ArrowLeft, Settings, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import RanksStickersPanel from "@/components/RanksStickersPanel";
+import StickerControl from "@/components/StickerControl";
 import downloadIcon from "@/assets/download-icon.png";
 import { useProfile } from "@/hooks/useProfile";
 import { useProfilePhotos } from "@/hooks/useProfilePhotos";
@@ -58,6 +59,12 @@ export default function BannerPreview() {
   }[]>>({});
   const bannerRef = useRef<HTMLDivElement>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  
+  // Sticker control states
+  const [isDragMode, setIsDragMode] = useState(false);
+  const [selectedStickerId, setSelectedStickerId] = useState<string | null>(null);
+  const [dragStartPos, setDragStartPos] = useState<{ x: number; y: number } | null>(null);
+  const [stickerScale, setStickerScale] = useState<Record<string, number>>({});
 
   // Compute scale factor for display
   useEffect(() => {
@@ -247,6 +254,84 @@ export default function BannerPreview() {
     navigate("/rank-selection");
     return null;
   }
+
+  // Handle sticker dragging
+  const handleStickerMouseDown = (e: React.MouseEvent, stickerId: string) => {
+    if (!isDragMode) return;
+    e.preventDefault();
+    e.stopPropagation();
+    setSelectedStickerId(stickerId);
+    setDragStartPos({ x: e.clientX, y: e.clientY });
+  };
+
+  const handleStickerMouseMove = (e: React.MouseEvent) => {
+    if (!isDragMode || !selectedStickerId || !dragStartPos || !bannerRef.current) return;
+    
+    const banner = bannerRef.current;
+    const rect = banner.getBoundingClientRect();
+    const scale = rect.width / 1350; // Account for display scaling
+    
+    // Calculate new position relative to banner
+    const deltaX = (e.clientX - dragStartPos.x) / scale;
+    const deltaY = (e.clientY - dragStartPos.y) / scale;
+    
+    // Update sticker position
+    setStickerImages(prev => {
+      const newImages = { ...prev };
+      Object.keys(newImages).forEach(slot => {
+        newImages[parseInt(slot)] = newImages[parseInt(slot)].map(sticker => {
+          if (sticker.id === selectedStickerId) {
+            const currentX = (sticker.position_x ?? 77) / 100 * 1350;
+            const currentY = (sticker.position_y ?? 62) / 100 * 1350;
+            const newX = Math.max(0, Math.min(1350, currentX + deltaX));
+            const newY = Math.max(0, Math.min(1350, currentY + deltaY));
+            
+            return {
+              ...sticker,
+              position_x: (newX / 1350) * 100,
+              position_y: (newY / 1350) * 100,
+            };
+          }
+          return sticker;
+        });
+      });
+      return newImages;
+    });
+    
+    setDragStartPos({ x: e.clientX, y: e.clientY });
+  };
+
+  const handleStickerMouseUp = () => {
+    setSelectedStickerId(null);
+    setDragStartPos(null);
+  };
+
+  const handleAddSticker = () => {
+    toast.info("Add sticker functionality coming soon!");
+  };
+
+  const handleResizeSticker = (scale: number) => {
+    if (!selectedStickerId) {
+      // Apply to all stickers in current slot
+      const currentSlot = selectedTemplate + 1;
+      const stickers = stickerImages[currentSlot] || [];
+      stickers.forEach(sticker => {
+        setStickerScale(prev => ({ ...prev, [sticker.id]: scale }));
+      });
+    } else {
+      setStickerScale(prev => ({ ...prev, [selectedStickerId]: scale }));
+    }
+  };
+
+  const getCurrentScale = () => {
+    const currentSlot = selectedTemplate + 1;
+    const stickers = stickerImages[currentSlot] || [];
+    if (stickers.length > 0) {
+      const firstSticker = stickers[0];
+      return stickerScale[firstSticker.id] ?? firstSticker.scale ?? 0.5;
+    }
+    return 0.5;
+  };
 
   // 16 template variations (4x4 grid) with actual CSS colors
   const templateColors = [{
@@ -457,13 +542,21 @@ export default function BannerPreview() {
               width: '1350px',
               height: '1350px'
             }} className="banner-scale-container">
-                <div ref={bannerRef} id="banner-canvas" style={{
-                position: 'relative',
-                width: '1350px',
-                height: '1350px',
-                background: templateColors[selectedTemplate].bgGradient,
-                overflow: 'hidden'
-              }}>
+                <div 
+                  ref={bannerRef} 
+                  id="banner-canvas"
+                  onMouseMove={handleStickerMouseMove}
+                  onMouseUp={handleStickerMouseUp}
+                  onMouseLeave={handleStickerMouseUp}
+                  style={{
+                    position: 'relative',
+                    width: '1350px',
+                    height: '1350px',
+                    background: templateColors[selectedTemplate].bgGradient,
+                    overflow: 'hidden',
+                    cursor: isDragMode ? 'crosshair' : 'default',
+                  }}
+                >
               <div className="absolute inset-0">
                 {/* Background Image (if uploaded) or Gradient Background */}
                 {backgroundImage ? <img src={backgroundImage} alt="Template background" className="absolute inset-0 w-full h-full object-cover" /> : null}
@@ -770,23 +863,37 @@ export default function BannerPreview() {
 
                 {/* Achievement Stickers - Right side of achiever photo, near right edge */}
                 {stickerImages[selectedTemplate + 1]?.map((sticker, index) => {
-                    return <img key={sticker.id} src={sticker.url} alt="Achievement Sticker" className="absolute pointer-events-none animate-in fade-in zoom-in duration-300" style={{
-                      left: `${sticker.position_x ?? 77}%`,
-                      top: `${sticker.position_y ?? 62}%`,
-                      transform: `translate(-50%, -50%) scale(${sticker.scale ?? 0.5}) rotate(${sticker.rotation ?? 0}deg)`,
-                      transformOrigin: 'center center',
-                      width: '145px',
-                      /* LOCKED */
-                      height: '145px',
-                      /* LOCKED */
-                      minWidth: '145px',
-                      minHeight: '145px',
-                      maxWidth: '145px',
-                      maxHeight: '145px',
-                      objectFit: 'contain',
-                      filter: 'drop-shadow(0 6px 9px rgba(0,0,0,0.4))',
-                      zIndex: 10
-                    }} />;
+                    const finalScale = stickerScale[sticker.id] ?? sticker.scale ?? 0.5;
+                    const isSelected = selectedStickerId === sticker.id;
+                    return <img 
+                      key={sticker.id} 
+                      src={sticker.url} 
+                      alt="Achievement Sticker" 
+                      className={`absolute animate-in fade-in zoom-in duration-300 transition-all ${isDragMode ? 'cursor-move' : 'pointer-events-none'} ${isSelected ? 'ring-4 ring-primary ring-offset-2 ring-offset-background' : ''}`}
+                      onMouseDown={(e) => handleStickerMouseDown(e, sticker.id)}
+                      onClick={(e) => {
+                        if (isDragMode) {
+                          e.stopPropagation();
+                          setSelectedStickerId(sticker.id);
+                        }
+                      }}
+                      style={{
+                        left: `${sticker.position_x ?? 77}%`,
+                        top: `${sticker.position_y ?? 62}%`,
+                        transform: `translate(-50%, -50%) scale(${finalScale}) rotate(${sticker.rotation ?? 0}deg)`,
+                        transformOrigin: 'center center',
+                        width: '145px',
+                        height: '145px',
+                        minWidth: '145px',
+                        minHeight: '145px',
+                        maxWidth: '145px',
+                        maxHeight: '145px',
+                        objectFit: 'contain',
+                        filter: 'drop-shadow(0 6px 9px rgba(0,0,0,0.4))',
+                        zIndex: isSelected ? 20 : 10,
+                        userSelect: 'none',
+                      }} 
+                    />;
                   })}
 
                 {/* BOTTOM RIGHT - Mentor Name and Title (Moved to bottom-most position) */}
@@ -849,6 +956,17 @@ export default function BannerPreview() {
         [selectedTemplate + 1]: stickers
       }));
     }} />}
+
+      {/* Sticker Control Panel - User Facing */}
+      {!isAdmin && stickerImages[selectedTemplate + 1]?.length > 0 && (
+        <StickerControl
+          onAddSticker={handleAddSticker}
+          onResizeSticker={handleResizeSticker}
+          onToggleDragMode={setIsDragMode}
+          currentScale={getCurrentScale()}
+          isDragMode={isDragMode}
+        />
+      )}
 
       {/* Loading Overlay - Shows during banner export */}
       {isDownloading && (
