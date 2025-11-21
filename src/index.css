@@ -132,67 +132,8 @@
     display: none;
   }
 
-  /* Banner Preview Responsive System */
-  .preview-banner-wrapper {
-    @apply relative w-full mx-auto;
-    max-width: 100vw;
-  }
-
-  @media (min-width: 640px) {
-    .preview-banner-wrapper {
-      max-width: 520px;
-    }
-  }
-
-  .preview-banner {
-    @apply relative w-full overflow-hidden;
-    aspect-ratio: 1 / 1;
-  }
-
-  .banner-preview-name {
-    font-size: 11px; /* 45% reduction: 20px * 0.55 = 11px */
-    font-size: clamp(10px, 1.2vw, 14px); /* Small but readable, responsive for all devices */
-    font-weight: 700;
-    line-height: 1.2;
-    letter-spacing: 0.5px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 90%;
-    display: block;
-    text-shadow: 1px 1px 6px rgba(0, 0, 0, 0.7);
-  }
-
-  .banner-team {
-    font-size: clamp(9px, 1.5vw, 13px);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 100%;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
-  }
-
-  .banner-contact {
-    font-size: clamp(8px, 1.4vw, 15px);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
-  }
-
-  @media (max-width: 480px) {
-    .banner-preview-name {
-      max-width: 95%;
-    }
-    
-    .banner-team {
-      max-width: 94%;
-    }
-
-    .preview-banner {
-      border-radius: 13px;
-    }
-  }
+  /* Banner Preview Fixed System - NO RESPONSIVE SCALING */
+  /* All banner previews render at fixed 1080x1080 dimensions, scaled uniformly on all devices */
 }
 
 @layer utilities {
