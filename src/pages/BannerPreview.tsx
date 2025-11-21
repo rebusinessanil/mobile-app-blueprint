@@ -346,9 +346,9 @@ export default function BannerPreview() {
       setIsDownloading(false);
     }
   };
-  return <div className="min-h-screen overflow-auto bg-background flex flex-col pb-safe">
+  return <div className="h-screen overflow-hidden bg-background flex flex-col">
       {/* Header - Fixed */}
-      <header className="bg-background/95 backdrop-blur-sm z-40 px-4 sm:px-6 py-3 sm:py-4 flex-shrink-0 sticky top-0">
+      <header className="bg-background/95 backdrop-blur-sm z-40 px-4 sm:px-6 py-3 sm:py-4 flex-shrink-0">
         <div className="flex items-center justify-between max-w-[600px] mx-auto">
           <button onClick={() => navigate(-1)} className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl border-2 border-foreground flex items-center justify-center hover:bg-foreground/10 transition-colors touch-target">
             <ArrowLeft className="w-5 h-5 sm:w-6 sm:h-6 text-foreground" />
@@ -365,8 +365,8 @@ export default function BannerPreview() {
         </div>
       </header>
 
-      {/* Banner Preview Container - Responsive */}
-      <div className="px-3 sm:px-4 py-3 sm:py-4 flex-shrink-0">
+      {/* Banner Preview Container - Fixed at top */}
+      <div className="px-3 sm:px-4 py-3 sm:py-4 flex-shrink-0 bg-background">
         {/* Main Banner Preview Wrapper with aspect ratio */}
         <div className="preview-banner-wrapper relative w-full max-w-[100vw] sm:max-w-[520px] mx-auto">
           <div className="border-4 border-primary rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl">
@@ -597,9 +597,9 @@ export default function BannerPreview() {
         </div>
       </div>
 
-      {/* Scrollable Slot Selector Box */}
-      {backgrounds.length > 0 && <div className="flex-1 overflow-hidden px-3 sm:px-4 pb-3 sm:pb-4 mb-16 sm:mb-0">
-          <div className="h-full overflow-y-auto rounded-2xl sm:rounded-3xl bg-[#111827]/50 border-2 border-[#FFD700]/20 p-3 sm:p-4 shadow-[0_0_30px_rgba(255,215,0,0.1)]">
+      {/* Scrollable Slot Selector Box - Only this area scrolls */}
+      {backgrounds.length > 0 && <div className="flex-1 min-h-0 px-3 sm:px-4 pb-3 sm:pb-4">
+          <div className="h-full overflow-y-auto rounded-2xl sm:rounded-3xl bg-[#111827]/50 border-2 border-[#FFD700]/20 p-3 sm:p-4 shadow-[0_0_30px_rgba(255,215,0,0.1)] scrollbar-thin scrollbar-thumb-[#FFD700]/30 scrollbar-track-transparent">
             <div className="grid grid-cols-4 gap-2 sm:gap-3">
               {Array.from({
             length: 16
