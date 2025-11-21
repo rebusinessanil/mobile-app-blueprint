@@ -628,11 +628,11 @@ export default function BannerPreview() {
                     {truncatedMainName.toUpperCase()}
                   </h2>
                   
-                  {bannerData.teamCity && <p title={bannerData.teamCity.toUpperCase()} className="banner-team text-center" style={{
+                  {bannerData.teamCity && <p title={bannerData.teamCity.toUpperCase()} style={{
                       marginTop: '13px',
                       color: '#ffffff',
                       textAlign: 'center'
-                    }}>
+                    }} className="banner-team text-center px-[5px] py-[6px]">
                       {bannerData.teamCity.toUpperCase()}
                     </p>}
                 </div>
