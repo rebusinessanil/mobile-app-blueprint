@@ -436,34 +436,45 @@ export default function BannerPreview() {
         </div>
       </header>
 
-      {/* FIXED-SIZE STATIC CANVAS - 1080x1350px */}
-      <div 
-        id="banner-canvas"
-        ref={bannerRef}
-        className={`bg-gradient-to-br ${templateColors[selectedTemplate].bgColor}`}
-        style={{
-          position: 'relative',
-          width: '1080px',
-          height: '1350px',
-          overflow: 'hidden',
-          margin: '20px auto'
-        }}
-      >
-        {/* Background Image */}
-        {backgroundImage && (
-          <img 
-            src={backgroundImage} 
-            alt="Template background" 
-            style={{
-              position: 'absolute',
-              top: '0px',
-              left: '0px',
-              width: '1080px',
-              height: '1350px',
-              objectFit: 'cover'
-            }}
-          />
-        )}
+      {/* FIXED-SIZE STATIC CANVAS - 1080x1350px with Premium Border */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: '40px 20px',
+        margin: '0 auto'
+      }}>
+        <div 
+          id="banner-canvas"
+          ref={bannerRef}
+          className={`bg-gradient-to-br ${templateColors[selectedTemplate].bgColor}`}
+          style={{
+            position: 'relative',
+            width: '1080px',
+            height: '1350px',
+            overflow: 'hidden',
+            border: '10px solid #FFD700',
+            borderRadius: '24px',
+            boxShadow: '0 0 40px rgba(255, 215, 0, 0.4), 0 20px 60px rgba(0, 0, 0, 0.5)',
+            background: backgroundImage ? 'none' : undefined
+          }}
+        >
+          {/* Background Image */}
+          {backgroundImage && (
+            <img 
+              src={backgroundImage} 
+              alt="Template background" 
+              style={{
+                position: 'absolute',
+                top: '0px',
+                left: '0px',
+                width: '1080px',
+                height: '1350px',
+                objectFit: 'cover',
+                borderRadius: '14px'
+              }}
+            />
+          )}
 
         {/* Top-Left Logo */}
         {bannerSettings?.logo_left && (
@@ -842,6 +853,7 @@ export default function BannerPreview() {
             }}
           />
         ))}
+        </div>
       </div>
 
       {/* Profile Avatars + Download Button - Below Canvas */}
