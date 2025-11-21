@@ -321,64 +321,29 @@ export default function BannerPreview() {
     setIsDownloading(true);
     const loadingToast = toast.loading("Generating Full HD banner...");
     try {
-      // Fixed dimensions for Full HD Square export (1080×1080)
-      const TARGET_WIDTH = 1080;
-      const TARGET_HEIGHT = 1080;
+      const TARGET_SIZE = 1080;
+      
+      // Get current rendered dimensions to maintain exact proportions
+      const currentRect = bannerRef.current.getBoundingClientRect();
+      const currentWidth = currentRect.width;
+      const currentHeight = currentRect.height;
+      
+      // Calculate scale factor to reach 1080x1080 while preserving exact layout
+      const scaleFactor = TARGET_SIZE / Math.max(currentWidth, currentHeight);
 
-      // Create a hidden clone for perfect capture
-      const cloneContainer = document.createElement('div');
-      cloneContainer.style.position = 'fixed';
-      cloneContainer.style.left = '-9999px';
-      cloneContainer.style.top = '0';
-      cloneContainer.style.width = `${TARGET_WIDTH}px`;
-      cloneContainer.style.height = `${TARGET_HEIGHT}px`;
-      cloneContainer.style.overflow = 'hidden';
-      document.body.appendChild(cloneContainer);
-
-      // Clone the banner element
-      const bannerClone = bannerRef.current.cloneNode(true) as HTMLElement;
-      bannerClone.style.width = `${TARGET_WIDTH}px`;
-      bannerClone.style.height = `${TARGET_HEIGHT}px`;
-      bannerClone.style.aspectRatio = '1 / 1';
-      bannerClone.style.position = 'relative';
-      cloneContainer.appendChild(bannerClone);
-
-      // Wait for images to load in clone
-      const images = bannerClone.querySelectorAll('img');
-      await Promise.all(
-        Array.from(images).map(img => {
-          if (img.complete) return Promise.resolve();
-          return new Promise((resolve) => {
-            img.onload = () => resolve(null);
-            img.onerror = () => resolve(null);
-          });
-        })
-      );
-
-      // Capture the clone at exact dimensions
-      const canvas = await html2canvas(bannerClone, {
-        scale: 1,
+      // Capture banner as-is with precise scale - no cloning, no dimension changes
+      const canvas = await html2canvas(bannerRef.current, {
+        scale: scaleFactor,
         backgroundColor: "#000000",
         logging: false,
         useCORS: true,
         allowTaint: true,
-        width: TARGET_WIDTH,
-        height: TARGET_HEIGHT,
-        windowWidth: TARGET_WIDTH,
-        windowHeight: TARGET_HEIGHT,
-        imageTimeout: 0,
-        onclone: (clonedDoc) => {
-          const clonedElement = clonedDoc.querySelector('[data-banner-clone]');
-          if (clonedElement) {
-            (clonedElement as HTMLElement).style.transform = 'none';
-          }
-        }
+        width: currentWidth,
+        height: currentHeight,
+        imageTimeout: 0
       });
 
-      // Remove clone
-      document.body.removeChild(cloneContainer);
-
-      // Convert to JPG blob with quality 0.95
+      // Convert directly to JPG blob with quality 0.95
       canvas.toBlob(blob => {
         toast.dismiss(loadingToast);
         if (!blob) {
