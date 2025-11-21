@@ -365,12 +365,12 @@ export default function BannerPreview() {
         scaleContainer.style.height = '1350px';
       }
 
-      // Capture the banner at full 1350×1350 size
+      // Capture the banner at exact 1350×1350 size with no scaling
       const canvas = await html2canvas(bannerRef.current, {
         width: 1350,
         height: 1350,
-        scale: 3,
-        // 3x for high quality = 4050×4050 output
+        scale: 1,
+        // scale: 1 for exact 1350×1350 output
         backgroundColor: null,
         logging: false,
         useCORS: true,
@@ -393,11 +393,11 @@ export default function BannerPreview() {
       }
 
       // Verify canvas dimensions
-      if (canvas.width !== 4050 || canvas.height !== 4050) {
-        console.warn(`Canvas size mismatch: ${canvas.width}×${canvas.height}, expected 4050×4050`);
+      if (canvas.width !== 1350 || canvas.height !== 1350) {
+        console.warn(`Canvas size mismatch: ${canvas.width}×${canvas.height}, expected 1350×1350`);
       }
 
-      // Convert to PNG blob with high quality
+      // Convert to PNG blob with maximum quality
       canvas.toBlob(blob => {
         toast.dismiss(loadingToast);
         if (!blob) {
@@ -412,8 +412,8 @@ export default function BannerPreview() {
         link.click();
         URL.revokeObjectURL(url);
         const sizeMB = (blob.size / 1024 / 1024).toFixed(2);
-        toast.success(`Full-size banner downloaded! (${sizeMB} MB, 4050×4050 PNG)`);
-      }, "image/png", 0.95);
+        toast.success(`Pixel-perfect banner downloaded! (${sizeMB} MB, 1350×1350 PNG)`);
+      }, "image/png", 1.0);
     } catch (error) {
       console.error("Download error:", error);
       toast.dismiss(loadingToast);
@@ -472,30 +472,32 @@ export default function BannerPreview() {
                 {bannerSettings?.logo_left && <div className="absolute z-30" style={{
                     top: '10px',
                     left: '24px',
-                    width: '271px',
-                    height: '154px'
+                    width: '250px',
+                    height: 'auto'
                   }}>
                     <img src={bannerSettings.logo_left} alt="Left Logo" style={{
-                      width: '100%',
-                      height: '100%',
+                      width: '250px',
+                      height: 'auto',
                       objectFit: 'contain',
+                      objectPosition: 'center',
                       filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.5))'
-                    }} className="object-cover" />
+                    }} />
                   </div>}
 
                 {/* Top-Right Logo */}
                 {bannerSettings?.logo_right && <div className="absolute z-30" style={{
                     top: '10px',
                     right: '24px',
-                    width: '271px',
-                    height: '154px'
+                    width: '250px',
+                    height: 'auto'
                   }}>
                     <img src={bannerSettings.logo_right} alt="Right Logo" style={{
-                      width: '100%',
-                      height: '100%',
+                      width: '250px',
+                      height: 'auto',
                       objectFit: 'contain',
+                      objectPosition: 'center',
                       filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.5))'
-                    }} className="object-cover" />
+                    }} />
                   </div>}
 
                 {/* Congratulations Image - Admin controlled, always displayed */}
@@ -584,10 +586,10 @@ export default function BannerPreview() {
                     transform: isPhotoFlipped ? 'scaleX(-1)' : 'scaleX(1)'
                   }}>
                     <img src={primaryPhoto} alt={mainBannerName} style={{
-                      width: '540px',
-                      height: '860px',
+                      width: '100%',
+                      height: '100%',
                       objectFit: 'cover',
-                      objectPosition: 'top'
+                      objectPosition: 'center'
                     }} />
                     {/* Bottom feather fade overlay */}
                     <div className="absolute bottom-0 left-0 right-0 pointer-events-none" style={{
@@ -730,10 +732,10 @@ export default function BannerPreview() {
                     transform: isMentorPhotoFlipped ? 'scaleX(-1)' : 'scaleX(1)'
                   }}>
                     <img src={mentorPhoto} alt={profileName} style={{
-                      width: '445px',
-                      height: '520px',
+                      width: '100%',
+                      height: '100%',
                       objectFit: 'cover',
-                      objectPosition: 'top'
+                      objectPosition: 'center'
                     }} />
                     {/* Bottom feather fade overlay */}
                     <div className="absolute bottom-0 left-0 right-0 pointer-events-none" style={{
