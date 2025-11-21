@@ -597,43 +597,24 @@ export default function BannerPreview() {
         </div>
       </div>
 
-      {/* Vertical Scrollable Slot Selector */}
-      <div className="absolute right-2 sm:right-4 top-20 bottom-20 w-16 sm:w-20 z-10">
-        <div className="h-full overflow-y-auto rounded-2xl bg-[#111827]/80 border-2 border-[#FFD700]/30 p-2 shadow-[0_0_30px_rgba(255,215,0,0.15)] backdrop-blur-sm scrollbar-thin scrollbar-thumb-[#FFD700] scrollbar-track-gray-800">
-          <div className="flex flex-col gap-2">
-            {Array.from({ length: 16 }, (_, i) => i + 1).map(slotNum => {
-              const bg = backgrounds.find(b => b.slot_number === slotNum);
-              const isSelected = selectedTemplate === slotNum - 1;
-              return (
-                <button
-                  key={slotNum}
-                  onClick={() => setSelectedTemplate(slotNum - 1)}
-                  className={`aspect-square rounded-lg overflow-hidden transition-all relative ${
-                    isSelected 
-                      ? 'border-4 border-[#FFD700] scale-105 shadow-[0_0_20px_rgba(255,215,0,0.6)]' 
-                      : 'border-2 border-gray-600 hover:border-[#FFD700] hover:scale-105'
-                  }`}
-                >
-                  {bg?.background_image_url ? (
-                    <img 
-                      src={bg.background_image_url} 
-                      alt={`Slot ${slotNum}`} 
-                      className="w-full h-full object-cover" 
-                    />
-                  ) : (
-                    <div className={`w-full h-full bg-gradient-to-br ${templateColors[slotNum - 1]?.bgColor || 'from-gray-800 to-gray-900'} flex items-center justify-center`}>
-                      <span className="text-white text-[10px] font-bold">{slotNum}</span>
-                    </div>
-                  )}
-                  {isSelected && (
-                    <div className="absolute inset-0 bg-[#FFD700]/20 pointer-events-none" />
-                  )}
-                </button>
-              );
-            })}
+      {/* Scrollable Slot Selector Box */}
+      {backgrounds.length > 0 && <div className="flex-1 overflow-hidden px-3 sm:px-4 pb-3 sm:pb-4 mb-16 sm:mb-0">
+          <div className="h-full overflow-y-auto rounded-2xl sm:rounded-3xl bg-[#111827]/50 border-2 border-[#FFD700]/20 p-3 sm:p-4 shadow-[0_0_30px_rgba(255,215,0,0.1)]">
+            <div className="grid grid-cols-4 gap-2 sm:gap-3">
+              {Array.from({
+            length: 16
+          }, (_, i) => i + 1).map(slotNum => {
+            const bg = backgrounds.find(b => b.slot_number === slotNum);
+            const isSelected = selectedTemplate === slotNum - 1;
+            return <button key={slotNum} onClick={() => setSelectedTemplate(slotNum - 1)} className={`aspect-square rounded-lg overflow-hidden transition-all ${isSelected ? 'border-4 border-[#FFD700] scale-105 shadow-[0_0_20px_rgba(255,215,0,0.5)]' : 'border-2 border-gray-600 hover:border-[#FFD700] hover:scale-105'}`}>
+                    {bg?.background_image_url ? <img src={bg.background_image_url} alt={`Slot ${slotNum}`} className="w-full h-full object-cover" /> : <div className={`w-full h-full bg-gradient-to-br ${templateColors[slotNum - 1]?.bgColor || 'from-gray-800 to-gray-900'} flex items-center justify-center`}>
+                         <span className="text-white text-xs font-bold">{slotNum}</span>
+                      </div>}
+                  </button>;
+          })}
+            </div>
           </div>
-        </div>
-      </div>
+        </div>}
 
       {/* Ranks & Stickers Panel */}
       <RanksStickersPanel
