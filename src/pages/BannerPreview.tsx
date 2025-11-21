@@ -427,8 +427,8 @@ export default function BannerPreview() {
                 {bannerDefaults?.congratulations_image && <div className="absolute z-20" style={{
                 top: '12%',
                 right: '8%',
-                width: '44%',
-                height: '11%'
+                width: '48%',
+                height: '12%'
               }}>
                     <img src={bannerDefaults.congratulations_image} alt="Congratulations" className="w-full h-full drop-shadow-2xl object-cover" />
                   </div>}
