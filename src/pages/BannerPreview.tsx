@@ -440,7 +440,7 @@ export default function BannerPreview() {
                 width: '48%'
               }}>
                     <p style={{
-                  fontSize: 'clamp(8px, 1vw, 12px)',
+                  fontSize: 'clamp(6.4px, 0.8vw, 9.6px)',
                   lineHeight: '1.2',
                   whiteSpace: 'nowrap'
                 }} className="text-white text-center font-semibold drop-shadow-lg text-xs mx-[6px] px-0 py-0 pr-0 pb-0 my-[13px]">
