@@ -575,99 +575,46 @@ export default function BannerPreview() {
           </div>
         </div>
 
-        {/* Profile Photo Selector Row */}
-        <div className="px-2 sm:px-4 mt-3 sm:mt-4">
+        {/* Profile Avatars (Left) + Download Button (Right) */}
+        <div className="flex items-center justify-between px-2 sm:px-4 mt-3 sm:mt-4 gap-2">
+          {/* Left: Profile Images Row - Clickable to change main photo */}
           <div className="flex gap-2 sm:gap-3 overflow-x-auto scrollbar-hide">
             {profilePhotos.slice(0, 6).map((photo, idx) => <button key={photo.id} onClick={() => {
             setSelectedMentorPhotoIndex(idx);
             setIsMentorPhotoFlipped(!isMentorPhotoFlipped);
-          }} className={`h-10 w-10 sm:h-12 sm:w-12 rounded-full border-2 object-cover flex-shrink-0 shadow-lg transition-all hover:scale-105 active:scale-95 ${selectedMentorPhotoIndex === idx ? 'border-primary ring-2 ring-primary ring-offset-2 ring-offset-background' : 'border-border hover:border-primary'}`}>
+          }} className={`h-8 w-8 sm:h-10 sm:w-10 rounded-full border-2 object-cover flex-shrink-0 shadow-lg transition-all hover:scale-105 active:scale-95 ${selectedMentorPhotoIndex === idx ? 'border-[#FFD700] ring-2 ring-[#FFD700] ring-offset-2 ring-offset-[#0B0E15]' : 'border-gray-500 hover:border-[#FFD700]'}`}>
                 <img src={photo.photo_url} alt="Profile" className="w-full h-full rounded-full object-cover" />
               </button>)}
-            {profilePhotos.length > 6 && <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full border-2 border-primary bg-card flex items-center justify-center text-primary text-xs font-bold flex-shrink-0">
+            {profilePhotos.length > 6 && <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full border-2 border-[#FFD700] bg-[#111827] flex items-center justify-center text-[#FFD700] text-[10px] sm:text-xs font-bold flex-shrink-0">
                 +{profilePhotos.length - 6}
               </div>}
           </div>
+
+          {/* Right: Download Button */}
+          <button onClick={handleDownload} disabled={isDownloading} className="cursor-pointer transition-transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0">
+            <img src={downloadIcon} alt="Download" className="h-12 w-auto sm:h-16" />
+          </button>
         </div>
       </div>
 
-      {/* 16-Slot Background Selector - Theme Consistent */}
-      <div className="px-3 sm:px-4 pb-3 sm:pb-4 mt-4">
-        <h2 className="text-base sm:text-lg font-semibold text-primary mb-3 sm:mb-4 text-center tracking-widest uppercase">
-          Select Background
-        </h2>
-        <div className="rounded-2xl bg-card/50 border-2 border-primary/20 p-3 sm:p-4 shadow-lg max-w-[520px] mx-auto">
-          <div className="grid grid-cols-4 gap-2 sm:gap-3">
-            {Array.from({ length: 16 }, (_, i) => {
-              const slotNumber = i + 1;
-              const bgData = backgrounds.find(bg => bg.slot_number === slotNumber);
-              const isSelected = selectedSlot === slotNumber;
-              
-              return (
-                <button
-                  key={slotNumber}
-                  onClick={() => setSelectedTemplate(i)}
-                  className={`
-                    aspect-square rounded-xl overflow-hidden transition-all relative
-                    ${isSelected 
-                      ? "border-4 border-primary ring-2 ring-primary/50 scale-105 shadow-xl shadow-primary/40" 
-                      : "border-2 border-border hover:border-primary/60 hover:scale-102"}
-                  `}
-                >
-                  {bgData?.background_image_url ? (
-                    <img 
-                      src={bgData.background_image_url} 
-                      alt={`Background ${slotNumber}`}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-muted">
-                      <span className="text-xl sm:text-2xl font-bold text-muted-foreground">{slotNumber}</span>
-                    </div>
-                  )}
-                  
-                  {/* Selected indicator overlay */}
-                  {isSelected && (
-                    <div className="absolute inset-0 bg-primary/10 flex items-center justify-center">
-                      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-primary flex items-center justify-center shadow-lg">
-                        <svg className="w-4 h-4 sm:w-5 sm:h-5 text-primary-foreground" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                      </div>
-                    </div>
-                  )}
-                </button>
-              );
-            })}
+      {/* Scrollable Slot Selector Box */}
+      {backgrounds.length > 0 && <div className="flex-1 overflow-hidden px-3 sm:px-4 pb-3 sm:pb-4 mb-16 sm:mb-0">
+          <div className="h-full overflow-y-auto rounded-2xl sm:rounded-3xl bg-[#111827]/50 border-2 border-[#FFD700]/20 p-3 sm:p-4 shadow-[0_0_30px_rgba(255,215,0,0.1)]">
+            <div className="grid grid-cols-4 gap-2 sm:gap-3">
+              {Array.from({
+            length: 16
+          }, (_, i) => i + 1).map(slotNum => {
+            const bg = backgrounds.find(b => b.slot_number === slotNum);
+            const isSelected = selectedTemplate === slotNum - 1;
+            return <button key={slotNum} onClick={() => setSelectedTemplate(slotNum - 1)} className={`aspect-square rounded-lg overflow-hidden transition-all ${isSelected ? 'border-4 border-[#FFD700] scale-105 shadow-[0_0_20px_rgba(255,215,0,0.5)]' : 'border-2 border-gray-600 hover:border-[#FFD700] hover:scale-105'}`}>
+                    {bg?.background_image_url ? <img src={bg.background_image_url} alt={`Slot ${slotNum}`} className="w-full h-full object-cover" /> : <div className={`w-full h-full bg-gradient-to-br ${templateColors[slotNum - 1]?.bgColor || 'from-gray-800 to-gray-900'} flex items-center justify-center`}>
+                         <span className="text-white text-xs font-bold">{slotNum}</span>
+                      </div>}
+                  </button>;
+          })}
+            </div>
           </div>
-        </div>
-      </div>
-      
-      {/* Download Button - Theme Styled */}
-      <div className="px-4 sm:px-6 py-4 sm:py-6 mb-16 sm:mb-0">
-        <Button 
-          onClick={handleDownload} 
-          disabled={isDownloading} 
-          size="lg" 
-          className="w-full max-w-[520px] mx-auto h-14 sm:h-16 text-base sm:text-lg font-bold rounded-2xl bg-gradient-to-r from-primary via-accent to-primary hover:from-accent hover:via-primary hover:to-accent text-primary-foreground shadow-xl shadow-primary/30 transition-all border-2 border-primary/50 flex items-center justify-center gap-3"
-        >
-          {isDownloading ? (
-            <>
-              <span className="animate-spin text-xl">⏳</span>
-              <span>GENERATING...</span>
-            </>
-          ) : (
-            <>
-              <img 
-                src={downloadIcon} 
-                alt="Download" 
-                className="w-6 h-6 sm:w-7 sm:h-7 brightness-0" 
-              />
-              <span>DOWNLOAD BANNER</span>
-            </>
-          )}
-        </Button>
-      </div>
+        </div>}
 
       {/* Ranks & Stickers Panel */}
       <RanksStickersPanel
