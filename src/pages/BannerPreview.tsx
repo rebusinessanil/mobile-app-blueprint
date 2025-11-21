@@ -469,14 +469,12 @@ export default function BannerPreview() {
 
                 {/* CENTER-RIGHT - Name with responsive typography */}
                 <div className="banner-text-content absolute px-2" style={{
-                top: '18%',
+                top: '25%',
                 right: '5%',
                 width: '50%',
                 maxWidth: '50%'
               }}>
-                  <h2 title={mainBannerName.toUpperCase()} className="banner-preview-name text-foreground tracking-wider font-extrabold text-center mx-auto" style={{
-                    fontSize: 'clamp(12px, 1.7vw, 20px)'
-                  }}>
+                  <h2 title={mainBannerName.toUpperCase()} className="banner-preview-name text-foreground tracking-wider font-extrabold text-center mx-auto">
                     {truncatedMainName.toUpperCase()}
                   </h2>
                   
