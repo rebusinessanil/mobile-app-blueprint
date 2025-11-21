@@ -375,11 +375,23 @@ export default function BannerPreview() {
         </div>
       </header>
 
-      {/* Banner Preview Container - Centered with scroll */}
-      <div className="flex-1 overflow-auto flex items-center justify-center bg-background p-4">
-        {/* Fixed-size canvas wrapper - centers the 1350x1350 canvas */}
-        <div className="flex items-center justify-center" style={{ minHeight: '1350px', minWidth: '1350px' }}>
-          {/* PURE STATIC CANVAS - 1350x1350 FIXED */}
+      {/* Banner Preview Container - Centered and scaled to fit */}
+      <div className="flex-1 overflow-hidden flex items-center justify-center bg-background p-2 sm:p-4">
+        {/* Scaled wrapper - maintains aspect ratio and fits to screen */}
+        <div 
+          className="border-4 border-primary rounded-xl sm:rounded-2xl shadow-2xl banner-canvas-container"
+          style={{
+            width: 'min(100%, calc(100vh - 280px))',
+            height: 'min(100%, calc(100vh - 280px))',
+            aspectRatio: '1 / 1',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            overflow: 'hidden',
+            position: 'relative'
+          }}
+        >
+          {/* PURE STATIC CANVAS - 1350x1350 FIXED but CSS scaled to fit container */}
           <div 
             id="banner-canvas" 
             ref={bannerRef}
@@ -388,6 +400,7 @@ export default function BannerPreview() {
               position: 'relative',
               width: '1350px',
               height: '1350px',
+              flexShrink: 0,
               overflow: 'hidden'
             }}
           >
