@@ -457,7 +457,7 @@ export default function BannerPreview() {
               width: '1350px',
               height: '1350px'
             }} className="banner-scale-container">
-                <div ref={bannerRef} id="banner-canvas" className={`border-4 ${templateColors[selectedTemplate].border}`} style={{
+                <div ref={bannerRef} id="banner-canvas" style={{
                 position: 'relative',
                 width: '1350px',
                 height: '1350px',
