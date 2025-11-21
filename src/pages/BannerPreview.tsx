@@ -470,7 +470,7 @@ export default function BannerPreview() {
                 textAlign: 'center'
               }}>
                     <p style={{
-                  fontSize: '12px',
+                  fontSize: '36px',
                   lineHeight: '1.2',
                   whiteSpace: 'nowrap',
                   color: '#ffffff',
