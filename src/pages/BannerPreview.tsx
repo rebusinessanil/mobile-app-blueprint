@@ -479,6 +479,16 @@ export default function BannerPreview() {
                     {truncatedMainName.toUpperCase()}
                   </h2>
                   
+                  {/* "To Our Brand New Leader" text below achiever name */}
+                  <p className="text-foreground tracking-wider font-bold text-center mx-auto" style={{
+                    fontSize: 'clamp(10px, 1.2vw, 14px)',
+                    marginTop: '8px',
+                    textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
+                    letterSpacing: '0.1em'
+                  }}>
+                    TO OUR BRAND NEW LEADER
+                  </p>
+                  
                   {bannerData.teamCity && <p title={bannerData.teamCity.toUpperCase()} className="banner-team text-foreground tracking-widest mt-1 sm:mt-2 font-light font-sans text-center">
                       {bannerData.teamCity.toUpperCase()}
                     </p>}
