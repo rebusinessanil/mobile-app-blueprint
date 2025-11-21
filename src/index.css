@@ -157,34 +157,53 @@
     overflow: hidden;
   }
 
+  /* Fixed Typography - No Responsive Scaling */
   .banner-preview-name {
-    font-size: 30px; /* Fixed size for 1350px canvas */
-    font-weight: 700;
-    line-height: 1.2;
-    letter-spacing: 1.5px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 90%;
-    display: block;
-    text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.9);
+    font-size: 30px !important; /* LOCKED - Never change */
+    font-weight: 700 !important;
+    line-height: 1.2 !important;
+    letter-spacing: 1.5px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 90% !important;
+    display: block !important;
+    text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.9) !important;
   }
 
   .banner-team {
-    font-size: 25px; /* Fixed size for 1350px canvas */
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 100%;
-    text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.9);
+    font-size: 25px !important; /* LOCKED - Never change */
+    font-weight: 300 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 100% !important;
+    text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.9) !important;
+    letter-spacing: 3px !important;
   }
 
   .banner-contact {
-    font-size: 22px; /* Fixed size for 1350px canvas */
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.9);
+    font-size: 24px !important; /* LOCKED - Never change */
+    font-weight: 700 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.9) !important;
+    letter-spacing: 1px !important;
+  }
+
+  .banner-profile-name {
+    font-size: 12px !important; /* LOCKED - Never change */
+    font-weight: 800 !important;
+    letter-spacing: 1.5px !important;
+    text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.9) !important;
+  }
+
+  .banner-profile-rank {
+    font-size: 9px !important; /* LOCKED - Never change */
+    font-weight: 600 !important;
+    letter-spacing: 2px !important;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.9) !important;
   }
 }
 

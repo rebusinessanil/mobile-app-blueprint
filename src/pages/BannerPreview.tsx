@@ -482,7 +482,7 @@ export default function BannerPreview() {
                     </p>
                   </div>
 
-                {/* Top - Small circular upline avatars */}
+                {/* Top - Upline avatars - FIXED SIZE AND POSITION */}
                 <div className="absolute z-20" style={{
                 top: '24px',
                 left: '675px',
@@ -491,29 +491,39 @@ export default function BannerPreview() {
                 gap: '6px'
               }}>
                   {bannerData.uplines?.slice(0, 5).map((upline, idx) => <div key={upline.id} style={{
-                    width: '38px',
-                    height: '38px',
+                    width: '38px', /* LOCKED */
+                    height: '38px', /* LOCKED */
+                    minWidth: '38px',
+                    minHeight: '38px',
+                    maxWidth: '38px',
+                    maxHeight: '38px',
                     borderRadius: '50%',
                     border: '2px solid #ffffff',
                     overflow: 'hidden',
-                    boxShadow: '0 4px 8px rgba(0,0,0,0.5)'
+                    boxShadow: '0 4px 8px rgba(0,0,0,0.5)',
+                    flexShrink: 0
                   }}>
-                      <img src={upline.avatar || primaryPhoto || "/placeholder.svg"} alt={upline.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <img src={upline.avatar || primaryPhoto || "/placeholder.svg"} alt={upline.name} style={{ width: '38px', height: '38px', objectFit: 'cover' }} />
                     </div>)}
                 </div>
 
-                {/* LEFT - Main User Photo (rounded, bottom fade, flippable) */}
-                {primaryPhoto && <div className="absolute overflow-hidden rounded-2xl cursor-pointer transition-transform duration-500 ease-in-out" onClick={() => setIsPhotoFlipped(!isPhotoFlipped)} style={{
-                left: '40px',
-                top: '162px',
-                width: '540px',
-                height: '860px',
+                {/* LEFT - Main User Photo - FIXED SIZE AND POSITION */}
+                {primaryPhoto && <div className="absolute overflow-hidden cursor-pointer transition-transform duration-500 ease-in-out" onClick={() => setIsPhotoFlipped(!isPhotoFlipped)} style={{
+                left: '40px', /* LOCKED */
+                top: '162px', /* LOCKED */
+                width: '540px', /* LOCKED */
+                height: '860px', /* LOCKED */
+                minWidth: '540px',
+                minHeight: '860px',
+                maxWidth: '540px',
+                maxHeight: '860px',
+                borderRadius: '24px',
                 transform: isPhotoFlipped ? 'scaleX(-1)' : 'scaleX(1)'
               }}>
-                    <img src={primaryPhoto} alt={mainBannerName} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
+                    <img src={primaryPhoto} alt={mainBannerName} style={{ width: '540px', height: '860px', objectFit: 'cover', objectPosition: 'top' }} />
                     {/* Bottom feather fade overlay */}
                     <div className="absolute bottom-0 left-0 right-0 pointer-events-none" style={{
-                  height: '30%',
+                  height: '258px', /* Fixed 30% of 860px */
                   background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%)'
                 }} />
                   </div>}
@@ -528,41 +538,53 @@ export default function BannerPreview() {
                   
                 </div>
 
-                {/* CENTER-RIGHT - Name with fixed typography */}
+                {/* CENTER-RIGHT - Name - FIXED SIZE, POSITION, FONTS */}
                 <div className="banner-text-content absolute" style={{
-                top: '337px',
-                left: '978px',
+                top: '337px', /* LOCKED */
+                left: '978px', /* LOCKED */
                 transform: 'translateX(-50%)',
-                width: '648px',
+                width: '648px', /* LOCKED */
+                minWidth: '648px',
                 maxWidth: '648px',
                 padding: '0 27px'
               }}>
-                  <h2 title={mainBannerName.toUpperCase()} className="banner-preview-name text-foreground tracking-wider font-extrabold text-center mx-auto">
+                  <h2 title={mainBannerName.toUpperCase()} className="banner-preview-name text-center" style={{
+                    color: '#ffffff',
+                    textAlign: 'center',
+                    margin: '0 auto'
+                  }}>
                     {truncatedMainName.toUpperCase()}
                   </h2>
                   
-                  {bannerData.teamCity && <p title={bannerData.teamCity.toUpperCase()} className="banner-team text-foreground tracking-widest font-light font-sans text-center" style={{ marginTop: '13px' }}>
+                  {bannerData.teamCity && <p title={bannerData.teamCity.toUpperCase()} className="banner-team text-center" style={{ 
+                    marginTop: '13px',
+                    color: '#ffffff',
+                    textAlign: 'center'
+                  }}>
                       {bannerData.teamCity.toUpperCase()}
                     </p>}
                 </div>
-                {/* BOTTOM CENTER - Income */}
-                {bannerData.chequeAmount && <div className="absolute text-center" style={{
-                bottom: '202px',
-                left: '67px',
-                width: '743px'
+                {/* BOTTOM CENTER - Income - FIXED FONTS AND POSITION */}
+                {bannerData.chequeAmount && <div className="absolute" style={{
+                bottom: '202px', /* LOCKED */
+                left: '67px', /* LOCKED */
+                width: '743px', /* LOCKED */
+                minWidth: '743px',
+                maxWidth: '743px'
               }}>
                     <p style={{
-                  fontSize: '18px',
+                  fontSize: '18px !important', /* LOCKED */
                   textShadow: '2px 2px 4px rgba(0,0,0,0.9)',
                   color: '#ffffff',
                   fontWeight: '300',
                   letterSpacing: '3px',
-                  textAlign: 'left'
+                  textAlign: 'left',
+                  margin: 0
                 }}>
                       THIS WEEK INCOME 
                     </p>
                     <p style={{
-                  fontSize: '97px',
+                  fontSize: '97px !important', /* LOCKED */
                   textShadow: '6px 6px 12px rgba(0,0,0,0.95)',
                   lineHeight: '1',
                   fontWeight: '900',
@@ -576,93 +598,103 @@ export default function BannerPreview() {
                     </p>
                   </div>}
 
-                {/* LOWER THIRD - Contact Info */}
-                <div className="banner-contact absolute" style={{
-                bottom: '40px',
-                left: '27px',
+                {/* LOWER THIRD - Contact Info - FIXED FONTS AND POSITION */}
+                <div className="absolute" style={{
+                bottom: '40px', /* LOCKED */
+                left: '27px', /* LOCKED */
+                width: '675px', /* LOCKED */
+                minWidth: '675px',
                 maxWidth: '675px'
               }}>
-                  <p className="text-foreground font-light tracking-wide" style={{
-                  fontSize: '9px',
+                  <p style={{
+                  fontSize: '9px !important', /* LOCKED */
                   textShadow: '2px 2px 4px rgba(0,0,0,0.9)',
                   marginBottom: '1px',
                   textTransform: 'uppercase',
                   position: 'relative',
-                  top: '13px'
+                  top: '13px',
+                  color: '#ffffff',
+                  fontWeight: '300',
+                  letterSpacing: '2px'
                 }}>
                     CALL FOR MENTORSHIP                                                                 
                   </p>
-                  <p title={`+91 ${displayContact}`} style={{
-                  fontSize: '24px',
-                  textShadow: '3px 3px 6px rgba(0,0,0,0.9)',
+                  <p title={`+91 ${displayContact}`} className="banner-contact" style={{
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   color: '#ffffff',
-                  fontWeight: '700',
-                  letterSpacing: '1px',
                   fontFamily: 'sans-serif'
                 }}>
                     +91 {displayContact}
                   </p>
                 </div>
 
-                {/* BOTTOM RIGHT - Mentor Photo with rounded corners and feather fade (tap to flip) */}
-                {mentorPhoto && <div className="absolute overflow-hidden shadow-2xl rounded-xl cursor-pointer transition-transform duration-500 ease-in-out" onClick={() => setIsMentorPhotoFlipped(!isMentorPhotoFlipped)} style={{
-                bottom: 0,
-                right: 0,
-                width: '445px',
-                height: '520px',
+                {/* BOTTOM RIGHT - Mentor Photo - FIXED SIZE AND POSITION */}
+                {mentorPhoto && <div className="absolute overflow-hidden shadow-2xl cursor-pointer transition-transform duration-500 ease-in-out" onClick={() => setIsMentorPhotoFlipped(!isMentorPhotoFlipped)} style={{
+                bottom: 0, /* LOCKED */
+                right: 0, /* LOCKED */
+                width: '445px', /* LOCKED */
+                height: '520px', /* LOCKED */
+                minWidth: '445px',
+                minHeight: '520px',
+                maxWidth: '445px',
+                maxHeight: '520px',
+                borderRadius: '16px',
                 transform: isMentorPhotoFlipped ? 'scaleX(-1)' : 'scaleX(1)'
               }}>
-                    <img src={mentorPhoto} alt={profileName} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
+                    <img src={mentorPhoto} alt={profileName} style={{ width: '445px', height: '520px', objectFit: 'cover', objectPosition: 'top' }} />
                     {/* Bottom feather fade overlay */}
                     <div className="absolute bottom-0 left-0 right-0 pointer-events-none" style={{
-                  height: '30%',
+                  height: '156px', /* Fixed 30% of 520px */
                   background: 'linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 100%)'
                 }} />
                   </div>}
 
 
-                {/* BOTTOM CENTER - Profile Name & Rank */}
+                {/* BOTTOM CENTER - Profile Name & Rank - FIXED FONTS AND POSITION */}
                 <div className="absolute text-center" style={{
-                bottom: '40px',
-                left: '50%',
+                bottom: '40px', /* LOCKED */
+                left: '50%', /* LOCKED */
                 transform: 'translateX(-45%)',
                 width: 'max-content',
-                maxWidth: '80%',
+                maxWidth: '1080px',
                 zIndex: 3
               }}>
-                  <p title={profileName} className="banner-profile-name text-foreground font-extrabold tracking-wider" style={{
-                  fontSize: '12px',
-                  textShadow: '3px 3px 6px rgba(0,0,0,0.9)',
+                  <p title={profileName} className="banner-profile-name" style={{
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   marginBottom: '1px',
                   position: 'relative',
-                  top: '20px'
+                  top: '20px',
+                  color: '#ffffff',
+                  textAlign: 'center'
                 }}>
                     {truncatedProfileName.toUpperCase()}
                   </p>
-                  <p className="banner-profile-rank text-yellow-500 font-semibold tracking-widest" style={{
-                  fontSize: '9px',
-                  textShadow: '2px 2px 4px rgba(0,0,0,0.9)',
-                  textTransform: 'uppercase'
+                  <p className="banner-profile-rank" style={{
+                  textTransform: 'uppercase',
+                  color: '#eab308',
+                  textAlign: 'center'
                 }}>
                     {displayRank}
                   </p>
                 </div>
 
-                {/* Achievement Stickers - Only for current slot */}
+                {/* Achievement Stickers - FIXED SIZE */}
                 {stickerImages[selectedTemplate + 1]?.map((sticker, index) => {
                 return <img key={sticker.id} src={sticker.url} alt="Achievement Sticker" className="absolute pointer-events-none animate-in fade-in zoom-in duration-300" style={{
                   left: `${sticker.position_x ?? 50}%`,
                   top: `${sticker.position_y ?? 50}%`,
                   transform: `translate(-50%, -50%) scale(${sticker.scale ?? 1}) rotate(${sticker.rotation ?? 0}deg)`,
                   transformOrigin: 'center center',
-                  width: '162px',
-                  height: '162px',
+                  width: '162px', /* LOCKED */
+                  height: '162px', /* LOCKED */
+                  minWidth: '162px',
+                  minHeight: '162px',
+                  maxWidth: '162px',
+                  maxHeight: '162px',
                   objectFit: 'contain',
                   filter: 'drop-shadow(0 6px 9px rgba(0,0,0,0.4))',
                   zIndex: 10
