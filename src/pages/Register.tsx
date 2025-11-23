@@ -93,6 +93,7 @@ export default function Register() {
       const { data, error } = await supabase.auth.signUp({
         email: formData.email,
         password: password,
+        phone: formattedMobile, // Store phone in auth.users table for Supabase dashboard
         options: {
           emailRedirectTo: `${window.location.origin}/`,
           data: {
