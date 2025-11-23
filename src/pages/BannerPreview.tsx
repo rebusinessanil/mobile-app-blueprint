@@ -41,47 +41,6 @@ interface BannerData {
   eventVenue?: string;
   quote?: string;
 }
-/**
- * BannerPreview Component - Unified Rank-18 System for All Categories
- * 
- * CRITICAL: All 6 Dashboard categories (Bonanza, Birthday, Anniversary, Meeting, 
- * Festival, Motivational) follow the exact same Rank-18 rendering logic:
- * 
- * 1. PHOTO RULES (Rank-18):
- *    - Achiever photo (left): 594×792px, 3:4 ratio, 12% size reduction
- *    - Profile photo (right-bottom): 540×540px, 1:1 ratio, +10% right offset
- *    - Both use fit:'cover', no stretching, maintain aspect ratio
- *    - Photos persist throughout session, never auto-hide or timeout
- * 
- * 2. NAME RULES (Rank-18):
- *    - Top Name = User input from banner creation (bannerData.name)
- *    - Bottom Name = User profile name (profile.name) - NEVER changes
- *    - No auto-copy or duplication between top and bottom
- * 
- * 3. STICKER CONTROL (Rank-18):
- *    - Admin-only editing with drag, resize, rotation controls
- *    - Position between top (team/title) and bottom sections
- *    - Horizontal placement from achiever photo right-edge → right boundary
- *    - Save/Reset buttons persist changes to database
- * 
- * 4. DOWNLOAD RULES (Rank-18):
- *    - Output: 1350×1350px PNG at scale:1 (exact pixel-perfect match)
- *    - Achiever + profile photo scale exactly matches preview
- *    - No stretching, repositioning, or distortion during export
- *    - Loading screen: "ReBusiness • Creating your success banner…"
- * 
- * 5. POSITIONING RULES (Rank-18):
- *    - All coordinates use fixed pixel values (no percentages or viewport units)
- *    - Achiever photo: left:40px, top:162px, width:594px, height:792px
- *    - Profile photo: bottom:40px, right:44px, width:540px, height:540px
- *    - Text/icons use absolute positioning from banner edges
- * 
- * 6. EXPORT ENGINE (Rank-18):
- *    - html2canvas with useCORS:true, allowTaint:true, scale:1
- *    - Temporary transform removal during capture for pixel accuracy
- *    - Credit deduction (₹10) after successful download
- *    - Real-time balance update and transaction recording
- */
 export default function BannerPreview() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -341,8 +300,7 @@ export default function BannerPreview() {
     return null;
   }
 
-  // Rank-18 unified category content renderer
-  // All categories follow the same positioning, scaling, and export logic
+  // Category-specific content render function
   const renderCategoryContent = () => {
     const category = bannerData.categoryType || 'rank';
 
@@ -350,7 +308,7 @@ export default function BannerPreview() {
       case 'bonanza':
         return (
           <>
-            {/* Congratulations Image - Rank-18 positioning */}
+            {/* Congratulations Image */}
             {bannerDefaults?.congratulations_image && (
               <div className="absolute z-20" style={{
                 top: '162px',
@@ -407,7 +365,7 @@ export default function BannerPreview() {
               </h2>
             </div>
 
-            {/* Top Name - from user input (Rank-18 rule) */}
+            {/* Achiever Name & Team */}
             <div className="absolute" style={{
               top: '420px',
               left: '978px',
@@ -443,7 +401,7 @@ export default function BannerPreview() {
       case 'birthday':
         return (
           <>
-            {/* Birthday Icon - Rank-18 positioning */}
+            {/* Birthday Emoji/Icon */}
             <div className="absolute z-20" style={{
               top: '140px',
               left: '978px',
@@ -453,7 +411,7 @@ export default function BannerPreview() {
               🎂
             </div>
 
-            {/* Happy Birthday Text - Rank-18 font sizing */}
+            {/* Happy Birthday Text */}
             <div className="absolute z-20" style={{
               top: '280px',
               left: '978px',
@@ -472,7 +430,7 @@ export default function BannerPreview() {
               </p>
             </div>
 
-            {/* Top Name - from user input only (Rank-18 rule) */}
+            {/* Name */}
             <div className="absolute" style={{
               top: '370px',
               left: '978px',
@@ -490,23 +448,12 @@ export default function BannerPreview() {
               }}>
                 {truncatedMainName.toUpperCase()}
               </h2>
-              {bannerData.teamCity && (
-                <p style={{
-                  marginTop: '13px',
-                  color: '#ffffff',
-                  textAlign: 'center',
-                  fontSize: '28px',
-                  textShadow: '2px 2px 4px rgba(0,0,0,0.9)'
-                }}>
-                  {bannerData.teamCity.toUpperCase()}
-                </p>
-              )}
             </div>
 
-            {/* Birthday Message - Optional */}
+            {/* Birthday Message */}
             {bannerData.message && (
               <div className="absolute" style={{
-                top: '480px',
+                top: '450px',
                 left: '978px',
                 transform: 'translateX(-50%)',
                 width: '648px',
@@ -530,7 +477,7 @@ export default function BannerPreview() {
       case 'anniversary':
         return (
           <>
-            {/* Anniversary Icon - Rank-18 positioning */}
+            {/* Anniversary Icon */}
             <div className="absolute z-20" style={{
               top: '140px',
               left: '978px',
@@ -540,7 +487,7 @@ export default function BannerPreview() {
               💞
             </div>
 
-            {/* Happy Anniversary Text - Rank-18 font sizing */}
+            {/* Happy Anniversary Text */}
             <div className="absolute z-20" style={{
               top: '280px',
               left: '978px',
@@ -559,7 +506,7 @@ export default function BannerPreview() {
               </p>
             </div>
 
-            {/* Top Name - from user input only (Rank-18 rule) */}
+            {/* Name */}
             <div className="absolute" style={{
               top: '370px',
               left: '978px',
@@ -590,7 +537,7 @@ export default function BannerPreview() {
               )}
             </div>
 
-            {/* Anniversary Message - Optional */}
+            {/* Anniversary Message */}
             {bannerData.message && (
               <div className="absolute" style={{
                 top: '480px',
@@ -617,7 +564,7 @@ export default function BannerPreview() {
       case 'meeting':
         return (
           <>
-            {/* Event Icon - Rank-18 positioning */}
+            {/* Event Icon */}
             <div className="absolute z-20" style={{
               top: '140px',
               left: '978px',
@@ -627,7 +574,7 @@ export default function BannerPreview() {
               📅
             </div>
 
-            {/* Event Type - Rank-18 font sizing */}
+            {/* Event Type */}
             <div className="absolute z-20" style={{
               top: '270px',
               left: '978px',
@@ -646,7 +593,7 @@ export default function BannerPreview() {
               </p>
             </div>
 
-            {/* Event Title - uses top name (Rank-18 rule) */}
+            {/* Event Title */}
             <div className="absolute" style={{
               top: '350px',
               left: '978px',
@@ -703,7 +650,7 @@ export default function BannerPreview() {
       case 'festival':
         return (
           <>
-            {/* Festival Icon - Rank-18 positioning */}
+            {/* Festival Icon */}
             <div className="absolute z-20" style={{
               top: '140px',
               left: '978px',
@@ -713,7 +660,7 @@ export default function BannerPreview() {
               🎉
             </div>
 
-            {/* Festival Greeting - Rank-18 font sizing */}
+            {/* Festival Greeting */}
             <div className="absolute z-20" style={{
               top: '280px',
               left: '978px',
@@ -732,7 +679,7 @@ export default function BannerPreview() {
               </p>
             </div>
 
-            {/* Top Name - from user input only (Rank-18 rule) */}
+            {/* Name */}
             <div className="absolute" style={{
               top: '370px',
               left: '978px',
@@ -763,7 +710,7 @@ export default function BannerPreview() {
               )}
             </div>
 
-            {/* Festival Message - Optional */}
+            {/* Festival Message */}
             {bannerData.message && (
               <div className="absolute" style={{
                 top: '480px',
@@ -790,7 +737,7 @@ export default function BannerPreview() {
       case 'motivational':
         return (
           <>
-            {/* Motivational Icon - Rank-18 positioning */}
+            {/* Motivational Icon */}
             <div className="absolute z-20" style={{
               top: '140px',
               left: '978px',
@@ -800,7 +747,7 @@ export default function BannerPreview() {
               💪
             </div>
 
-            {/* Motivational Title - Rank-18 font sizing */}
+            {/* Motivational Title */}
             <div className="absolute z-20" style={{
               top: '270px',
               left: '978px',
@@ -843,7 +790,7 @@ export default function BannerPreview() {
               </div>
             )}
 
-            {/* Name Attribution - from user input (Rank-18 rule) */}
+            {/* Name Attribution */}
             <div className="absolute" style={{
               top: '520px',
               left: '978px',
@@ -1242,9 +1189,7 @@ export default function BannerPreview() {
     }
 
     setIsDownloading(true);
-    const loadingToast = toast.loading("ReBusiness • Creating your success banner… Just a moment!", {
-      description: "Preparing your banner — this may take a few seconds."
-    });
+    const loadingToast = toast.loading("Generating pixel-perfect banner...");
     try {
       // Wait for all images to fully load
       const images = bannerRef.current.querySelectorAll('img');
