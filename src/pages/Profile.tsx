@@ -1,11 +1,12 @@
 import { Link, useNavigate } from "react-router-dom";
 import BottomNav from "@/components/BottomNav";
-import { User, Wallet, Download, Settings, Lock, HelpCircle, MessageCircle, LogOut, Star, Edit, Shield } from "lucide-react";
+import { User, Wallet, Download, Settings, Lock, HelpCircle, MessageCircle, LogOut, Star, Edit, Shield, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import { useProfile } from "@/hooks/useProfile";
+import { SheetClose } from "@/components/ui/sheet";
 
 export default function Profile() {
   const navigate = useNavigate();
@@ -62,7 +63,12 @@ export default function Profile() {
   const allMenuItems = isAdmin ? [adminMenuItem, ...menuItems] : menuItems;
 
   return (
-    <div className="min-h-screen bg-navy-dark pb-24">
+    <div className="min-h-screen bg-navy-dark pb-24 relative">
+      {/* Close Button */}
+      <SheetClose className="absolute top-4 right-6 z-50 w-10 h-10 rounded-xl border-2 border-primary flex items-center justify-center hover:bg-primary/10 transition-colors">
+        <X className="w-5 h-5 text-primary" />
+      </SheetClose>
+
       {/* Profile Header */}
       <div className="relative px-6 pt-8 pb-6">
         {/* Profile Card */}
