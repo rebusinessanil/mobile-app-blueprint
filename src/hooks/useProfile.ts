@@ -5,7 +5,7 @@ export interface Profile {
   id: string;
   user_id: string;
   name: string;
-  mobile: string | null;
+  mobile: string; // Now required, not nullable
   whatsapp: string | null;
   rank: string | null;
   role: string | null;
@@ -85,7 +85,7 @@ export const useProfile = (userId?: string) => {
           .insert({
             user_id: userId,
             name: updates.name || 'User',
-            mobile: updates.mobile || null,
+            mobile: updates.mobile || '+000000000000', // Required field
             whatsapp: updates.whatsapp || null,
             rank: updates.rank || null,
             role: updates.role || null,
