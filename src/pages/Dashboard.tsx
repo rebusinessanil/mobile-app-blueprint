@@ -111,6 +111,23 @@ export default function Dashboard() {
             </Link>)}
         </div>
 
+        {/* Featured: Bonanza Trips */}
+        <Link 
+          to="/bonanza-trips" 
+          className="block gold-border bg-gradient-to-br from-primary/20 via-card to-primary/10 rounded-2xl overflow-hidden hover:gold-glow transition-all"
+        >
+          <div className="p-6 flex items-center gap-4">
+            <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center text-3xl">
+              ✈️
+            </div>
+            <div className="flex-1">
+              <h3 className="text-xl font-bold text-foreground mb-1">Bonanza Trips</h3>
+              <p className="text-sm text-muted-foreground">Create your trip achievement banner</p>
+            </div>
+            <div className="text-primary text-2xl">→</div>
+          </div>
+        </Link>
+
         {/* Category Sections - Backend Integrated */}
         {categories.map(category => {
         const categoryTemplates = getCategoryTemplates(category.id);
