@@ -6,48 +6,43 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Lock, MessageCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-
 export default function Login() {
   const navigate = useNavigate();
   const [emailOrMobile, setEmailOrMobile] = useState("");
   const [pin, setPin] = useState(["", "", "", ""]);
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
-
   const handlePinChange = (index: number, value: string) => {
     if (value.length <= 1 && /^\d*$/.test(value)) {
       const newPin = [...pin];
       newPin[index] = value;
       setPin(newPin);
-      
       if (value && index < 3) {
         document.getElementById(`pin-${index + 1}`)?.focus();
       }
     }
   };
-
   const handleLogin = async () => {
     // Validation
     if (!emailOrMobile.trim()) {
       toast.error("Please enter your email");
       return;
     }
-
     const pinString = pin.join("");
     if (pinString.length !== 4) {
       toast.error("Please enter your 4-digit PIN");
       return;
     }
-
     setLoading(true);
-
     try {
       // Sign in with email and PIN as password
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const {
+        data,
+        error
+      } = await supabase.auth.signInWithPassword({
         email: emailOrMobile,
-        password: pinString,
+        password: pinString
       });
-
       if (error) {
         if (error.message.includes("Invalid login credentials")) {
           toast.error("Invalid email or PIN. Please try again.");
@@ -56,7 +51,6 @@ export default function Login() {
         }
         return;
       }
-
       if (data.user) {
         toast.success("Login successful!");
         navigate("/dashboard");
@@ -68,9 +62,7 @@ export default function Login() {
       setLoading(false);
     }
   };
-
-  return (
-    <div className="min-h-screen bg-navy-dark flex items-center justify-center p-6">
+  return <div className="min-h-screen bg-navy-dark flex items-center justify-center p-6">
       <div className="w-full max-w-md">
         <div className="gold-border bg-card p-8 space-y-6">
           {/* Icon */}
@@ -86,41 +78,21 @@ export default function Login() {
           {/* Email/Mobile Input */}
           <div className="space-y-2">
             <label className="text-sm text-foreground">Email / Mobile</label>
-            <Input
-              type="text"
-              placeholder="Enter email or mobile number"
-              value={emailOrMobile}
-              onChange={(e) => setEmailOrMobile(e.target.value)}
-              className="gold-border bg-secondary text-foreground placeholder:text-muted-foreground h-12"
-            />
+            <Input type="text" placeholder="Enter email or mobile number" value={emailOrMobile} onChange={e => setEmailOrMobile(e.target.value)} className="gold-border bg-secondary text-foreground placeholder:text-muted-foreground h-12" />
           </div>
 
           {/* PIN Input */}
           <div className="space-y-2">
             <label className="text-sm text-foreground">4-Digit PIN</label>
             <div className="flex gap-3 justify-between">
-              {pin.map((digit, index) => (
-                <input
-                  key={index}
-                  id={`pin-${index}`}
-                  type="password"
-                  maxLength={1}
-                  value={digit}
-                  onChange={(e) => handlePinChange(index, e.target.value)}
-                  className="pin-input"
-                />
-              ))}
+              {pin.map((digit, index) => <input key={index} id={`pin-${index}`} type="password" maxLength={1} value={digit} onChange={e => handlePinChange(index, e.target.value)} className="pin-input" />)}
             </div>
           </div>
 
           {/* Remember Me & Forgot Password */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Checkbox
-                checked={rememberMe}
-                onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-                className="border-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
-              />
+              <Checkbox checked={rememberMe} onCheckedChange={checked => setRememberMe(checked as boolean)} className="border-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground" />
               <label className="text-sm text-foreground">Remember Me</label>
             </div>
             <Link to="/forgot-password" className="text-sm text-primary hover:underline">
@@ -129,11 +101,7 @@ export default function Login() {
           </div>
 
           {/* Login Button */}
-          <Button
-            onClick={handleLogin}
-            disabled={loading}
-            className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-base rounded-xl disabled:opacity-50"
-          >
+          <Button onClick={handleLogin} disabled={loading} className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-base rounded-xl disabled:opacity-50">
             {loading ? "Logging in..." : "LOGIN"}
           </Button>
 
@@ -148,14 +116,6 @@ export default function Login() {
       </div>
 
       {/* WhatsApp FAB */}
-      <a
-        href="https://wa.me/"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="fixed bottom-6 right-6 w-14 h-14 bg-green-500 rounded-full flex items-center justify-center shadow-lg hover:bg-green-600 transition-colors"
-      >
-        <MessageCircle className="w-7 h-7 text-white" fill="white" />
-      </a>
-    </div>
-  );
+      
+    </div>;
 }
