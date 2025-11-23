@@ -115,6 +115,7 @@ export default function Dashboard() {
         {categories.map(category => {
         const categoryTemplates = getCategoryTemplates(category.id);
         const isRankPromotion = category.slug === 'rank-promotion';
+        const isBonanzaTrips = category.slug === 'bonanza-trips';
         
         return <div key={category.id} className="space-y-3">
               <div className="flex items-center justify-between">
@@ -122,7 +123,7 @@ export default function Dashboard() {
                   <span className="text-2xl">{category.icon}</span>
                   <h2 className="text-lg font-bold text-foreground">{category.name}</h2>
                 </div>
-                <Link to={isRankPromotion ? '/rank-selection' : `/categories/${category.slug}`} className="text-primary text-sm font-semibold hover:underline">
+                <Link to={isRankPromotion ? '/rank-selection' : isBonanzaTrips ? '/trip-selection' : `/categories/${category.slug}`} className="text-primary text-sm font-semibold hover:underline">
                   See All →
                 </Link>
               </div>
@@ -157,6 +158,41 @@ export default function Dashboard() {
                       </Link>
                     );
                   })}
+                </div>
+              ) : isBonanzaTrips ? (
+                /* Bonanza Trips - Show Trip Templates with Cover Images */
+                <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                  {categoryTemplates.length > 0 ? categoryTemplates.map(template => (
+                    <Link 
+                      key={template.id} 
+                      to={`/trip-banner-create/${template.id}`}
+                      className="min-w-[140px] gold-border bg-card rounded-2xl overflow-hidden flex-shrink-0 hover:gold-glow transition-all"
+                    >
+                      {template.cover_thumbnail_url ? (
+                        <div className="h-32 relative">
+                          <img 
+                            src={template.cover_thumbnail_url} 
+                            alt={template.name} 
+                            className="w-full h-full object-cover" 
+                          />
+                        </div>
+                      ) : (
+                        <div className="h-32 bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
+                          <div className="text-center px-2">
+                            <p className="text-white font-bold text-sm">TRIP</p>
+                            <p className="text-primary text-xs mt-1">🏖️</p>
+                          </div>
+                        </div>
+                      )}
+                      <div className="p-3 text-center">
+                        <p className="text-sm font-semibold text-foreground leading-tight">{template.name}</p>
+                      </div>
+                    </Link>
+                  )) : (
+                    <div className="min-w-[140px] gold-border bg-card rounded-2xl overflow-hidden flex-shrink-0 p-4">
+                      <p className="text-xs text-muted-foreground text-center">No trips yet</p>
+                    </div>
+                  )}
                 </div>
               ) : (
                 /* Template Scroll - Dynamic from Backend */

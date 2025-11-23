@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import UplineCarousel from "@/components/UplineCarousel";
 import BackgroundRemoverModal from "@/components/BackgroundRemoverModal";
 import ImageCropper from "@/components/ImageCropper";
-import { trips } from "@/data/trips";
 import { toast } from "sonner";
 import { removeBackground, loadImage } from "@/lib/backgroundRemover";
 import { useProfile } from "@/hooks/useProfile";
@@ -21,36 +20,73 @@ interface Upline {
 
 export default function TripBannerCreate() {
   const navigate = useNavigate();
-  const { tripId } = useParams();
-  const trip = trips.find(t => t.id === tripId);
+  const { tripId } = useParams(); // This is now the template ID from backend
   const [mode, setMode] = useState<"myPhoto" | "others">("myPhoto");
   const [userId, setUserId] = useState<string | null>(null);
   const { profile } = useProfile(userId || undefined);
   const { settings: bannerSettings } = useBannerSettings(userId || undefined);
+  const [tripTemplate, setTripTemplate] = useState<any>(null);
   
   const [uplines, setUplines] = useState<Upline[]>([]);
   const [formData, setFormData] = useState({
     name: "",
     teamCity: "",
-    tripName: trip?.name || ""
+    tripName: ""
   });
   const [photo, setPhoto] = useState<string | null>(null);
   const [tempPhoto, setTempPhoto] = useState<string | null>(null);
   const [showCropper, setShowCropper] = useState(false);
   const [showBgRemover, setShowBgRemover] = useState(false);
   const [processingBg, setProcessingBg] = useState(false);
-  const [selectedTripFilter, setSelectedTripFilter] = useState(tripId || "jaisalmer");
+  const [allTrips, setAllTrips] = useState<any[]>([]);
+  const [selectedTripFilter, setSelectedTripFilter] = useState(tripId || "");
 
-  // Get authenticated user
+  // Get authenticated user and fetch trip template
   useEffect(() => {
-    const getUser = async () => {
+    const initializeData = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         setUserId(user.id);
       }
+
+      // Fetch the specific trip template by ID
+      if (tripId) {
+        const { data: template } = await supabase
+          .from('templates')
+          .select('*, template_categories(*)')
+          .eq('id', tripId)
+          .single();
+        
+        if (template) {
+          setTripTemplate(template);
+          setFormData(prev => ({ ...prev, tripName: template.name }));
+          setSelectedTripFilter(tripId);
+        }
+      }
+
+      // Fetch all trip templates for filter
+      const { data: category } = await supabase
+        .from('template_categories')
+        .select('id')
+        .eq('slug', 'bonanza-trips')
+        .single();
+      
+      if (category) {
+        const { data: trips } = await supabase
+          .from('templates')
+          .select('*')
+          .eq('category_id', category.id)
+          .eq('is_active', true)
+          .order('display_order');
+        
+        if (trips) {
+          setAllTrips(trips);
+        }
+      }
     };
-    getUser();
-  }, []);
+
+    initializeData();
+  }, [tripId]);
 
   // Auto-fill name from profile
   useEffect(() => {
@@ -73,14 +109,21 @@ export default function TripBannerCreate() {
 
   // Update trip name when filter changes
   useEffect(() => {
-    const selectedTrip = trips.find(t => t.id === selectedTripFilter);
+    const selectedTrip = allTrips.find(t => t.id === selectedTripFilter);
     if (selectedTrip) {
       setFormData(prev => ({ ...prev, tripName: selectedTrip.name }));
     }
-  }, [selectedTripFilter]);
+  }, [selectedTripFilter, allTrips]);
 
-  if (!trip) {
-    return null;
+  if (!tripTemplate) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-background via-background/95 to-background/90 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading trip details...</p>
+        </div>
+      </div>
+    );
   }
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -149,30 +192,23 @@ export default function TripBannerCreate() {
       return;
     }
 
-    // Fetch template data for trip category
-    const { data: templateData } = await supabase
-      .from('templates')
-      .select('*, ranks(*)')
-      .eq('category_id', (await supabase.from('template_categories').select('id').eq('slug', 'bonanza-trips').single()).data?.id)
-      .single();
-
     navigate("/banner-preview", {
       state: {
         category: "bonanza-trips",
-        tripId: trip.id,
+        tripId: tripTemplate.id,
         tripName: formData.tripName,
         name: formData.name,
         teamCity: formData.teamCity,
         photo,
         uplines,
-        template: templateData,
+        template: tripTemplate,
         mode
       }
     });
   };
 
   const handleReset = () => {
-    setFormData({ name: profile?.name || "", teamCity: "", tripName: trip.name });
+    setFormData({ name: profile?.name || "", teamCity: "", tripName: tripTemplate?.name || "" });
     setPhoto(null);
     setUplines(bannerSettings?.upline_avatars.map((upline, index) => ({
       id: `upline-${index}`,
@@ -242,8 +278,8 @@ export default function TripBannerCreate() {
         {/* Trip Name Display */}
         <div className="bg-card border border-border rounded-2xl p-4">
           <div className="flex items-center gap-3">
-            <div className={`w-12 h-12 rounded-full ${trip.gradient} flex items-center justify-center text-2xl`}>
-              {trip.icon}
+            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-2xl">
+              🏖️
             </div>
             <div className="flex-1">
               <p className="text-sm text-muted-foreground">Trip Destination</p>
@@ -313,7 +349,7 @@ export default function TripBannerCreate() {
           <p className="text-sm font-medium text-muted-foreground">Filter</p>
           <div className="flex items-center gap-3">
             <div className="flex-1 flex gap-2 overflow-x-auto pb-2">
-              {trips.map((t) => (
+              {allTrips.map((t) => (
                 <button
                   key={t.id}
                   onClick={() => setSelectedTripFilter(t.id)}
@@ -330,6 +366,7 @@ export default function TripBannerCreate() {
             <Button 
               variant="default" 
               className="rounded-full px-6 bg-primary hover:bg-primary/90"
+              onClick={() => navigate('/trip-selection')}
             >
               View All
             </Button>
