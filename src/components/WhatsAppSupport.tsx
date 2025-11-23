@@ -5,11 +5,11 @@ import { supabase } from "@/integrations/supabase/client";
 import whatsappIcon from "@/assets/whatsapp-icon.png";
 
 const SUPPORT_NUMBER = "917734990035";
+const WHATSAPP_URL = `https://wa.me/${SUPPORT_NUMBER}`;
 
 export default function WhatsAppSupport() {
   const [isVisible, setIsVisible] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [userWhatsapp, setUserWhatsapp] = useState<string>("");
 
   useEffect(() => {
     // Check authentication status
@@ -21,17 +21,6 @@ export default function WhatsAppSupport() {
         // Check if user has hidden the widget
         const hidden = localStorage.getItem("whatsapp-support-hidden");
         setIsVisible(hidden !== "true");
-        
-        // Fetch user's WhatsApp number
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("whatsapp")
-          .eq("user_id", user.id)
-          .single();
-        
-        if (profile?.whatsapp) {
-          setUserWhatsapp(profile.whatsapp);
-        }
       }
     };
 
@@ -64,11 +53,7 @@ export default function WhatsAppSupport() {
   };
 
   const handleWhatsAppClick = () => {
-    const message = userWhatsapp 
-      ? `Hi, I need support. My WhatsApp: ${userWhatsapp}`
-      : "Hi, I need support with ReBusiness";
-    const url = `https://wa.me/${SUPPORT_NUMBER}?text=${encodeURIComponent(message)}`;
-    window.open(url, "_blank", "noopener,noreferrer");
+    window.open(WHATSAPP_URL, "_blank", "noopener,noreferrer");
   };
 
   if (!isAuthenticated || !isVisible) {
