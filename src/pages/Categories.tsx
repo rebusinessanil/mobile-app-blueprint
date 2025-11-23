@@ -1,33 +1,23 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import BottomNav from "@/components/BottomNav";
-import { Search, Filter, Trophy, Gift, Calendar, Star, MessageCircle, Zap, Briefcase, Target, Medal, Image, Users, IndianRupee, BarChart3 } from "lucide-react";
+import { Search, Filter } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { useTemplateCategories } from "@/hooks/useTemplates";
 
 export default function Categories() {
   const [searchQuery, setSearchQuery] = useState("");
-
-  const categories = [
-    { icon: Trophy, label: "Rank Promotion", color: "bg-yellow-600", path: "/rank-selection" },
-    { icon: Gift, label: "Bonanza Promotion", color: "bg-red-600", path: "/banner-create/bonanza" },
-    { icon: Calendar, label: "Birthday Banner", color: "bg-teal-600", path: "/banner-create/birthday" },
-    { icon: Star, label: "Anniversary Banner", color: "bg-blue-600", path: "/banner-create/anniversary" },
-    { icon: MessageCircle, label: "Thank You Message", color: "bg-green-600", path: "/category/thank-you-message" },
-    { icon: Zap, label: "Motivational Quote", color: "bg-yellow-600", path: "/banner-create/motivational" },
-    { icon: Calendar, label: "Festival Banner", color: "bg-purple-600", path: "/banner-create/festival" },
-    { icon: Target, label: "Weekly Achievement", color: "bg-teal-600", path: "/category/weekly-achievement" },
-    { icon: Briefcase, label: "Special Campaign", color: "bg-yellow-700", path: "/category/special-campaign" },
-    { icon: Medal, label: "Achievements", color: "bg-purple-600", path: "/category/achievements" },
-    { icon: Image, label: "Custom Banner", color: "bg-blue-700", path: "/category/custom-banner" },
-    { icon: Users, label: "Event / Meeting", color: "bg-yellow-600", path: "/banner-create/meeting" },
-    { icon: Users, label: "New Joiner Banner", color: "bg-teal-700", path: "/category/new-joiner-banner" },
-    { icon: IndianRupee, label: "Income Banner", color: "bg-green-700", path: "/category/income-banner" },
-    { icon: BarChart3, label: "Capping Banner", color: "bg-red-700", path: "/category/capping-banner" },
-  ];
+  const { categories, loading } = useTemplateCategories();
 
   const filteredCategories = categories.filter((cat) =>
-    cat.label.toLowerCase().includes(searchQuery.toLowerCase())
+    cat.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
+  
+  // Map category slug to route
+  const getCategoryPath = (slug: string) => {
+    if (slug === 'rank-promotion') return '/rank-selection';
+    return `/banner-create/${slug}`;
+  };
 
   return (
     <div className="min-h-screen bg-navy-dark pb-24">
@@ -55,25 +45,28 @@ export default function Categories() {
 
       {/* Categories Grid */}
       <div className="px-6 py-6">
-        <div className="grid grid-cols-3 gap-4">
-          {filteredCategories.map((category, index) => {
-            const Icon = category.icon;
-            return (
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-3 gap-4">
+            {filteredCategories.map((category) => (
               <Link
-                key={index}
-                to={category.path}
+                key={category.id}
+                to={getCategoryPath(category.slug)}
                 className="gold-border bg-card rounded-2xl p-5 flex flex-col items-center justify-center gap-3 hover:gold-glow transition-all"
               >
-                <div className={`w-14 h-14 ${category.color} rounded-2xl flex items-center justify-center`}>
-                  <Icon className="w-7 h-7 text-white" />
+                <div className="w-14 h-14 bg-primary rounded-2xl flex items-center justify-center text-2xl">
+                  {category.icon || '📁'}
                 </div>
                 <span className="text-xs font-semibold text-center text-foreground leading-tight">
-                  {category.label}
+                  {category.name}
                 </span>
               </Link>
-            );
-          })}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <BottomNav />
