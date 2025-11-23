@@ -61,9 +61,9 @@ export default function Dashboard() {
       <header className="sticky top-0 bg-navy-dark/95 backdrop-blur-sm z-40 px-6 py-4 border-b border-primary/20">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link to="/profile" className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center hover:bg-primary/90 transition-colors cursor-pointer">
+            <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center">
               <Star className="w-6 h-6 text-primary-foreground" />
-            </Link>
+            </div>
             <div>
               <h1 className="text-xl font-bold text-foreground">ReBusiness</h1>
               <p className="text-sm text-muted-foreground">
