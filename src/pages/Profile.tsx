@@ -48,7 +48,7 @@ export default function Profile() {
     { icon: Settings, label: "Banner Settings", description: "Customize default banner preferences", path: "/banner-settings" },
     { icon: Lock, label: "Change PIN", description: "Update your security PIN", path: "/change-pin" },
     { icon: HelpCircle, label: "Help & FAQ", description: "Get help and find answers", path: "/help" },
-    { icon: MessageCircle, label: "Contact Support", description: "Get in touch with our team", path: "/support" },
+    { icon: MessageCircle, label: "Contact Support", description: "Get in touch with our team", path: "https://wa.me/917734990035", isExternal: true },
   ];
 
   // Add admin menu item if user is admin
@@ -109,6 +109,36 @@ export default function Profile() {
       <div className="px-6 space-y-3">
         {allMenuItems.map((item, index) => {
           const Icon = item.icon;
+          const isExternal = 'isExternal' in item && item.isExternal;
+          
+          if (isExternal) {
+            return (
+              <a
+                key={index}
+                href={item.path}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="gold-border bg-card rounded-2xl p-5 flex items-center gap-4 hover:gold-glow transition-all"
+              >
+                <div className="w-12 h-12 bg-secondary rounded-xl flex items-center justify-center">
+                  <Icon className="w-6 h-6 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-foreground">{item.label}</h3>
+                  <p className="text-sm text-muted-foreground">{item.description}</p>
+                </div>
+                <svg
+                  className="w-5 h-5 text-muted-foreground flex-shrink-0"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </a>
+            );
+          }
+          
           return (
             <Link
               key={index}

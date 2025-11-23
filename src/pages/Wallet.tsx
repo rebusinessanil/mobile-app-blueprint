@@ -332,7 +332,7 @@ export default function Wallet() {
               <Button
                 onClick={() => {
                   setShowTopUpModal(false);
-                  navigate("/support");
+                  window.open("https://wa.me/917734990035", "_blank", "noopener,noreferrer");
                 }}
                 className="flex-1 bg-primary hover:bg-primary/90"
               >
