@@ -81,7 +81,7 @@ export default function Dashboard() {
                   <Menu className="w-5 h-5 text-primary" />
                 </button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-full p-0 border-l border-primary/20">
+              <SheetContent side="right" className="w-full p-0 border-l border-primary/20 overflow-y-auto">
                 <Profile />
               </SheetContent>
             </Sheet>
