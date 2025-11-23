@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Wallet as WalletIcon, ArrowUp, ArrowDown, Clock, ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import BottomNav from "@/components/BottomNav";
 import {
   Dialog,
   DialogContent,
@@ -342,8 +341,6 @@ export default function Wallet() {
           </div>
         </DialogContent>
       </Dialog>
-
-      <BottomNav />
     </div>
   );
 }

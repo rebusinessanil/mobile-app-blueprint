@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import WhatsAppSupport from "@/components/WhatsAppSupport";
+import BottomNav from "@/components/BottomNav";
 import AuthGuard from "@/components/AuthGuard";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
@@ -79,6 +80,7 @@ const App = () => (
           {/* Catch-all for undefined routes */}
           <Route path="*" element={<AuthGuard><ComingSoon /></AuthGuard>} />
         </Routes>
+        <BottomNav />
         <WhatsAppSupport />
       </BrowserRouter>
     </TooltipProvider>
