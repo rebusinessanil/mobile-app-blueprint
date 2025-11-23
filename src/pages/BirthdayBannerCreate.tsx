@@ -29,7 +29,8 @@ export default function BirthdayBannerCreate() {
   const [formData, setFormData] = useState({
     name: "",
     teamCity: "",
-    message: ""
+    rank: "",
+    rankType: ""
   });
   const [photo, setPhoto] = useState<string | null>(null);
   const [tempPhoto, setTempPhoto] = useState<string | null>(null);
@@ -117,6 +118,10 @@ export default function BirthdayBannerCreate() {
       toast.error("Name can't exceed 20 characters");
       return;
     }
+    if (!formData.rank) {
+      toast.error("Please enter Rank");
+      return;
+    }
     if (mode === "myPhoto" && !photo) {
       toast.error("Please upload your photo");
       return;
@@ -125,10 +130,11 @@ export default function BirthdayBannerCreate() {
     navigate("/banner-preview", {
       state: {
         categoryType: "birthday",
-        rankName: "Birthday Celebration",
+        rankName: formData.rank,
         name: formData.name,
         teamCity: formData.teamCity,
-        message: formData.message,
+        rank: formData.rank,
+        rankType: formData.rankType,
         photo,
         uplines,
         slotStickers
@@ -140,7 +146,8 @@ export default function BirthdayBannerCreate() {
     setFormData({
       name: "",
       teamCity: "",
-      message: ""
+      rank: "",
+      rankType: ""
     });
     setPhoto(null);
     setTempPhoto(null);
@@ -175,8 +182,7 @@ export default function BirthdayBannerCreate() {
           </div>
           <div className="flex-1 pt-2">
             <p className="text-sm text-muted-foreground mb-1">Please fill up</p>
-            <h1 className="text-3xl font-bold text-primary mb-1">Birthday Banner</h1>
-            <p className="text-lg text-blue-400">Celebration Details</p>
+            <h1 className="text-3xl font-bold text-primary mb-1">Birthday Details</h1>
           </div>
         </div>
 
@@ -219,17 +225,27 @@ export default function BirthdayBannerCreate() {
               <Input 
                 value={formData.teamCity} 
                 onChange={e => setFormData({ ...formData, teamCity: e.target.value })} 
-                placeholder="Team Name (Optional)" 
+                placeholder="Team Name" 
                 className="bg-transparent border-0 border-b-2 border-muted rounded-none text-foreground h-12 focus-visible:ring-0 focus-visible:border-primary" 
               />
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm text-foreground">Birthday Message <span className="text-muted-foreground">(optional)</span></label>
+              <label className="text-sm text-foreground">Rank <span className="text-red-400">*</span></label>
               <Input 
-                value={formData.message} 
-                onChange={e => setFormData({ ...formData, message: e.target.value })} 
-                placeholder="Enter birthday wishes" 
+                value={formData.rank} 
+                onChange={e => setFormData({ ...formData, rank: e.target.value })} 
+                placeholder="Enter Rank" 
+                className="bg-transparent border-0 border-b-2 border-muted rounded-none text-foreground h-12 focus-visible:ring-0 focus-visible:border-primary" 
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm text-foreground">Rank Type <span className="text-muted-foreground">(Optional)</span></label>
+              <Input 
+                value={formData.rankType} 
+                onChange={e => setFormData({ ...formData, rankType: e.target.value })} 
+                placeholder="Rank Type" 
                 className="bg-transparent border-0 border-b-2 border-muted rounded-none text-foreground h-12 focus-visible:ring-0 focus-visible:border-primary" 
               />
             </div>
