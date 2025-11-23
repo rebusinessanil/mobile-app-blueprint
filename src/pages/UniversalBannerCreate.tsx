@@ -230,6 +230,7 @@ export default function UniversalBannerCreate() {
   };
 
   const handleCreate = async () => {
+    // Rank-18 validation rules applied to all categories
     if (!formData.name) {
       toast.error("Please enter Name");
       return;
@@ -243,14 +244,33 @@ export default function UniversalBannerCreate() {
       return;
     }
 
+    // Fetch template_id for this category to ensure correct background slot mapping
+    const { data: template } = await supabase
+      .from('templates')
+      .select('id')
+      .eq('category_id', category)
+      .single();
+
+    // Navigate to banner preview with Rank-18 consistent data structure
     navigate("/banner-preview", {
       state: {
         categoryType: config.categoryType,
         rankName: config.rankName,
-        ...formData,
-        photo,
-        uplines,
-        slotStickers
+        name: formData.name, // Top name - from user input
+        teamCity: formData.teamCity,
+        photo, // Left achiever photo
+        uplines, // Top circular avatars
+        slotStickers,
+        templateId: template?.id,
+        // Category-specific additional fields
+        message: formData['message'],
+        tripName: formData['tripName'],
+        years: formData['years'],
+        eventTitle: formData['eventTitle'],
+        eventDate: formData['eventDate'],
+        eventVenue: formData['eventVenue'],
+        festivalName: formData['festivalName'],
+        quote: formData['quote']
       }
     });
   };
