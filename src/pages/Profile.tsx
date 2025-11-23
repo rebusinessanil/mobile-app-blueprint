@@ -16,18 +16,16 @@ export default function Profile() {
   useEffect(() => {
     const getUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        navigate("/login");
-        return;
+      if (user) {
+        setUserId(user.id);
+        
+        // Check if user is admin
+        const { data: adminCheck } = await supabase.rpc('is_admin', { user_id: user.id });
+        setIsAdmin(adminCheck || false);
       }
-      setUserId(user.id);
-      
-      // Check if user is admin
-      const { data: adminCheck } = await supabase.rpc('is_admin', { user_id: user.id });
-      setIsAdmin(adminCheck || false);
     };
     getUser();
-  }, [navigate]);
+  }, []);
 
   const handleLogout = async () => {
     try {

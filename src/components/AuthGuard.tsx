@@ -14,7 +14,19 @@ export default function AuthGuard({ children }: AuthGuardProps) {
   const [checkingProfile, setCheckingProfile] = useState(true);
 
   useEffect(() => {
-    // Check current session
+    // Listen for auth changes FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setUser(session?.user ?? null);
+        
+        // Only redirect on explicit sign out, not on session refresh or other events
+        if (event === 'SIGNED_OUT') {
+          navigate("/login", { replace: true });
+        }
+      }
+    );
+
+    // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       setLoading(false);
@@ -23,17 +35,6 @@ export default function AuthGuard({ children }: AuthGuardProps) {
         navigate("/login", { replace: true });
       }
     });
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setUser(session?.user ?? null);
-        
-        if (!session) {
-          navigate("/login", { replace: true });
-        }
-      }
-    );
 
     return () => subscription.unsubscribe();
   }, [navigate]);
