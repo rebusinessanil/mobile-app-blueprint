@@ -8,43 +8,12 @@ const SUPPORT_NUMBER = "917734990035";
 const WHATSAPP_URL = `https://wa.me/${SUPPORT_NUMBER}`;
 
 export default function WhatsAppSupport() {
-  const [isVisible, setIsVisible] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
 
   useEffect(() => {
-    // Check authentication status
-    const checkAuth = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setIsAuthenticated(!!user);
-      
-      if (user) {
-        // Check if user has hidden the widget
-        const hidden = localStorage.getItem("whatsapp-support-hidden");
-        setIsVisible(hidden !== "true");
-      }
-    };
-
-    checkAuth();
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setIsAuthenticated(!!session?.user);
-      
-      // Reset visibility on login
-      if (event === "SIGNED_IN") {
-        localStorage.removeItem("whatsapp-support-hidden");
-        setIsVisible(true);
-      }
-      
-      // Hide on logout
-      if (event === "SIGNED_OUT") {
-        setIsVisible(false);
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
+    // Check if user has hidden the widget
+    const hidden = localStorage.getItem("whatsapp-support-hidden");
+    setIsVisible(hidden !== "true");
   }, []);
 
   const handleClose = () => {
@@ -56,7 +25,7 @@ export default function WhatsAppSupport() {
     window.open(WHATSAPP_URL, "_blank", "noopener,noreferrer");
   };
 
-  if (!isAuthenticated || !isVisible) {
+  if (!isVisible) {
     return null;
   }
 
