@@ -183,6 +183,7 @@ export default function UserManagement() {
           <TableHeader>
             <TableRow className="border-primary/20 hover:bg-transparent">
               <TableHead className="text-primary font-semibold">User</TableHead>
+              <TableHead className="text-primary font-semibold">Mobile</TableHead>
               <TableHead className="text-primary font-semibold">Email</TableHead>
               <TableHead className="text-primary font-semibold">Credits</TableHead>
               <TableHead className="text-primary font-semibold">Role</TableHead>
@@ -193,6 +194,7 @@ export default function UserManagement() {
             {filteredUsers.map((user) => (
               <TableRow key={user.user_id} className="border-primary/10">
                 <TableCell className="font-medium text-foreground">{user.name}</TableCell>
+                <TableCell className="text-muted-foreground">{user.mobile}</TableCell>
                 <TableCell className="text-muted-foreground text-sm">{user.email}</TableCell>
                 <TableCell>
                   <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-primary/10 text-primary text-sm font-semibold">
