@@ -133,6 +133,42 @@ export type Database = {
           },
         ]
       }
+      bonanza_trips: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          display_order: number | null
+          id: string
+          is_active: boolean | null
+          short_title: string | null
+          title: string
+          trip_image_url: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          short_title?: string | null
+          title: string
+          trip_image_url: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          short_title?: string | null
+          title?: string
+          trip_image_url?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       category_banner_settings: {
         Row: {
           category_slug: string
