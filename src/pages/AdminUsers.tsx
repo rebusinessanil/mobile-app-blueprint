@@ -28,7 +28,7 @@ interface User {
   id: string;
   user_id: string;
   name: string;
-  mobile: string | null;
+  mobile: string; // Required field as per database schema
   whatsapp: string | null;
   rank: string | null;
   role: string | null;
@@ -96,7 +96,7 @@ export default function AdminUsers() {
     setSelectedUser(user);
     setEditForm({
       name: user.name,
-      mobile: user.mobile || "",
+      mobile: user.mobile,
       whatsapp: user.whatsapp || "",
       rank: user.rank || "",
       role: user.role || "",
@@ -260,7 +260,7 @@ export default function AdminUsers() {
                 {filteredUsers.map((user) => (
                   <TableRow key={user.id}>
                     <TableCell className="font-medium">{user.name}</TableCell>
-                    <TableCell>{user.mobile || "-"}</TableCell>
+                    <TableCell>{user.mobile}</TableCell>
                     <TableCell>{user.whatsapp || "-"}</TableCell>
                     <TableCell>
                       {user.rank ? (
