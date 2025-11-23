@@ -52,7 +52,7 @@ export default function Wallet() {
         .from("profiles")
         .select("customer_code")
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
       
       if (profile?.customer_code) {
         setCustomerCode(profile.customer_code);
@@ -111,10 +111,10 @@ export default function Wallet() {
         .from("user_credits")
         .select("balance, total_earned, total_spent")
         .eq("user_id", uid)
-        .single();
+        .maybeSingle();
 
       if (creditsError) throw creditsError;
-      setBalance(credits);
+      setBalance(credits || { balance: 0, total_earned: 0, total_spent: 0 });
 
       // Fetch recent transactions (last 5)
       const { data: txns, error: txnsError } = await supabase
