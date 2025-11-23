@@ -21,7 +21,6 @@ import RankSelection from "./pages/RankSelection";
 import RankBannerCreate from "./pages/RankBannerCreate";
 import BannerSettings from "./pages/BannerSettings";
 import BannerPreview from "./pages/BannerPreview";
-import BonanzaTrips from "./pages/BonanzaTrips";
 import AdminStickers from "./pages/AdminStickers";
 import AdminRankStickers from "./pages/AdminRankStickers";
 import AdminTemplates from "./pages/AdminTemplates";
@@ -60,7 +59,6 @@ const App = () => (
           <Route path="/profile-edit" element={<AuthGuard><ProfileEdit /></AuthGuard>} />
           <Route path="/rank-selection" element={<AuthGuard><RankSelection /></AuthGuard>} />
           <Route path="/rank-banner-create/:rankId" element={<AuthGuard><RankBannerCreate /></AuthGuard>} />
-          <Route path="/bonanza-trips" element={<AuthGuard><BonanzaTrips /></AuthGuard>} />
           <Route path="/banner-settings" element={<AuthGuard><BannerSettings /></AuthGuard>} />
           <Route path="/banner-preview" element={<AuthGuard><BannerPreview /></AuthGuard>} />
           <Route path="/wallet" element={<AuthGuard><Wallet /></AuthGuard>} />
