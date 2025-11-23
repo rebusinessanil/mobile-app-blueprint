@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useRanks } from "@/hooks/useTemplates";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import Profile from "./Profile";
+import Messages from "./Messages";
 export default function Dashboard() {
   const {
     categories
@@ -21,6 +22,7 @@ export default function Dashboard() {
     profile
   } = useProfile(userId ?? undefined);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isMessagesOpen, setIsMessagesOpen] = useState(false);
 
   // Get rank templates with covers
   const getRankTemplates = () => {
@@ -85,12 +87,19 @@ export default function Dashboard() {
                 <Profile />
               </SheetContent>
             </Sheet>
-            <Link to="/messages" className="relative w-10 h-10 rounded-xl border-2 border-primary flex items-center justify-center hover:bg-primary/10 transition-colors">
-              <Bell className="w-5 h-5 text-primary" />
-              <span className="absolute -top-1 -right-1 w-5 h-5 bg-destructive rounded-full text-xs font-bold flex items-center justify-center text-white">
-                2
-              </span>
-            </Link>
+            <Sheet open={isMessagesOpen} onOpenChange={setIsMessagesOpen}>
+              <SheetTrigger asChild>
+                <button className="relative w-10 h-10 rounded-xl border-2 border-primary flex items-center justify-center hover:bg-primary/10 transition-colors">
+                  <Bell className="w-5 h-5 text-primary" />
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-destructive rounded-full text-xs font-bold flex items-center justify-center text-white pulse">
+                    2
+                  </span>
+                </button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-full p-0 border-l border-primary/20 overflow-y-auto">
+                <Messages />
+              </SheetContent>
+            </Sheet>
           </div>
         </div>
       </header>
