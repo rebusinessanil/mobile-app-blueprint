@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
-import { MessageCircle, X } from "lucide-react";
+import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import whatsappIcon from "@/assets/whatsapp-icon.png";
 
 const SUPPORT_NUMBER = "917734990035";
-const WHATSAPP_URL = `https://api.whatsapp.com/send?phone=${SUPPORT_NUMBER}&text=Hi, I need support with ReBusiness`;
+const WHATSAPP_URL = `https://wa.me/${SUPPORT_NUMBER}`;
 
 export default function WhatsAppSupport() {
   const [isVisible, setIsVisible] = useState(false);
@@ -76,10 +77,10 @@ export default function WhatsAppSupport() {
       <Button
         size="icon"
         onClick={handleWhatsAppClick}
-        className="w-14 h-14 rounded-full bg-[#25D366] hover:bg-[#20BA5A] text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110"
+        className="w-14 h-14 rounded-full bg-[#25D366] hover:bg-[#20BA5A] shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 p-0 overflow-hidden"
         aria-label="Contact support on WhatsApp"
       >
-        <MessageCircle className="w-7 h-7" fill="currentColor" />
+        <img src={whatsappIcon} alt="WhatsApp" className="w-full h-full object-cover" />
       </Button>
 
       {/* Tooltip */}
