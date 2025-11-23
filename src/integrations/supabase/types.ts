@@ -133,6 +133,33 @@ export type Database = {
           },
         ]
       }
+      category_banner_settings: {
+        Row: {
+          category_slug: string
+          created_at: string | null
+          id: string
+          updated_at: string | null
+          upline_avatars: Json | null
+          user_id: string
+        }
+        Insert: {
+          category_slug: string
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          upline_avatars?: Json | null
+          user_id: string
+        }
+        Update: {
+          category_slug?: string
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          upline_avatars?: Json | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       credit_transactions: {
         Row: {
           amount: number

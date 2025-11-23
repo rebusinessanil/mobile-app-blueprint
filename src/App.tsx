@@ -33,12 +33,7 @@ import AdminUsers from "./pages/AdminUsers";
 import AdminStories from "./pages/AdminStories";
 import AdminStickerLibrary from "./pages/AdminStickerLibrary";
 import Wallet from "./pages/Wallet";
-import BonanzaBannerCreate from "./pages/BonanzaBannerCreate";
-import BirthdayBannerCreate from "./pages/BirthdayBannerCreate";
-import AnniversaryBannerCreate from "./pages/AnniversaryBannerCreate";
-import MeetingBannerCreate from "./pages/MeetingBannerCreate";
-import FestivalBannerCreate from "./pages/FestivalBannerCreate";
-import MotivationalBannerCreate from "./pages/MotivationalBannerCreate";
+import UniversalBannerCreate from "./pages/UniversalBannerCreate";
 
 const queryClient = new QueryClient();
 
@@ -68,12 +63,7 @@ const App = () => (
           <Route path="/banner-settings" element={<AuthGuard><BannerSettings /></AuthGuard>} />
           <Route path="/banner-preview" element={<AuthGuard><BannerPreview /></AuthGuard>} />
           <Route path="/wallet" element={<AuthGuard><Wallet /></AuthGuard>} />
-          <Route path="/bonanza-banner-create" element={<AuthGuard><BonanzaBannerCreate /></AuthGuard>} />
-          <Route path="/birthday-banner-create" element={<AuthGuard><BirthdayBannerCreate /></AuthGuard>} />
-          <Route path="/anniversary-banner-create" element={<AuthGuard><AnniversaryBannerCreate /></AuthGuard>} />
-          <Route path="/meeting-banner-create" element={<AuthGuard><MeetingBannerCreate /></AuthGuard>} />
-          <Route path="/festival-banner-create" element={<AuthGuard><FestivalBannerCreate /></AuthGuard>} />
-          <Route path="/motivational-banner-create" element={<AuthGuard><MotivationalBannerCreate /></AuthGuard>} />
+          <Route path="/banner-create/:category" element={<AuthGuard><UniversalBannerCreate /></AuthGuard>} />
           
           {/* Admin routes - auth required */}
           <Route path="/admin" element={<AuthGuard><AdminDashboard /></AuthGuard>} />
