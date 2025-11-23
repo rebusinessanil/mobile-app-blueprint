@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import BottomNav from "@/components/BottomNav";
-import { Menu, Bell, Star, Calendar, Zap, Award } from "lucide-react";
+import { MoreVertical, Bell, Star, Calendar, Zap, Award } from "lucide-react";
 import { useTemplateCategories, useTemplates } from "@/hooks/useTemplates";
 import { useProfile } from "@/hooks/useProfile";
 import { supabase } from "@/integrations/supabase/client";
 import { useRanks } from "@/hooks/useTemplates";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
+import Profile from "@/pages/Profile";
 export default function Dashboard() {
   const {
     categories
@@ -18,6 +20,7 @@ export default function Dashboard() {
   const {
     profile
   } = useProfile(userId ?? undefined);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   // Get rank templates with covers
   const getRankTemplates = () => {
@@ -72,8 +75,11 @@ export default function Dashboard() {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <button className="w-10 h-10 rounded-xl border-2 border-primary flex items-center justify-center hover:bg-primary/10 transition-colors">
-              <Menu className="w-5 h-5 text-primary" />
+            <button 
+              onClick={() => setIsProfileOpen(true)}
+              className="w-10 h-10 rounded-xl border-2 border-primary flex items-center justify-center hover:bg-primary/10 transition-colors"
+            >
+              <MoreVertical className="w-5 h-5 text-primary" />
             </button>
             <button className="relative w-10 h-10 rounded-xl border-2 border-primary flex items-center justify-center hover:bg-primary/10 transition-colors">
               <Bell className="w-5 h-5 text-primary" />
@@ -168,6 +174,12 @@ export default function Dashboard() {
             </div>;
       })}
       </div>
+
+      <Sheet open={isProfileOpen} onOpenChange={setIsProfileOpen}>
+        <SheetContent side="right" className="w-full p-0 border-0">
+          <Profile />
+        </SheetContent>
+      </Sheet>
 
       <BottomNav />
     </div>;
