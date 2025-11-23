@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import UplineCarousel from "@/components/UplineCarousel";
 import BackgroundRemoverModal from "@/components/BackgroundRemoverModal";
 import ImageCropper from "@/components/ImageCropper";
+import CategoryStickerSelector from "@/components/CategoryStickerSelector";
 import { toast } from "sonner";
 import { removeBackground, loadImage } from "@/lib/backgroundRemover";
 import { useProfile } from "@/hooks/useProfile";
@@ -123,6 +124,7 @@ export default function UniversalBannerCreate() {
   const [showBgRemover, setShowBgRemover] = useState(false);
   const [processingBg, setProcessingBg] = useState(false);
   const [slotStickers, setSlotStickers] = useState<Record<number, string[]>>({});
+  const [selectedCategoryStickers, setSelectedCategoryStickers] = useState<string[]>([]);
 
   // Get authenticated user
   useEffect(() => {
@@ -250,7 +252,8 @@ export default function UniversalBannerCreate() {
         ...formData,
         photo,
         uplines,
-        slotStickers
+        slotStickers,
+        categoryStickers: selectedCategoryStickers
       }
     });
   };
@@ -409,6 +412,22 @@ export default function UniversalBannerCreate() {
               )}
             </div>
           )}
+        </div>
+
+        {/* Sticker Selection */}
+        <div className="space-y-2">
+          <CategoryStickerSelector 
+            category={category}
+            selectedStickers={selectedCategoryStickers}
+            onSelectSticker={(stickerId) => {
+              setSelectedCategoryStickers(prev => 
+                prev.includes(stickerId) 
+                  ? prev.filter(id => id !== stickerId)
+                  : [...prev, stickerId]
+              );
+            }}
+            maxStickers={5}
+          />
         </div>
 
         {/* Action Buttons */}
