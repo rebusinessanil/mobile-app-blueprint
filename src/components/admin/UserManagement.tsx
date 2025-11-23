@@ -104,35 +104,49 @@ export default function UserManagement() {
     }
 
     try {
-      // Get current balance
+      // Get current balance or create if doesn't exist
       const { data: currentCredit, error: fetchError } = await supabase
         .from('user_credits')
         .select('balance, total_earned, total_spent')
         .eq('user_id', selectedUser.user_id)
-        .single();
+        .maybeSingle();
 
       if (fetchError) throw fetchError;
 
-      const newBalance = action === 'add' 
-        ? currentCredit.balance + amount 
-        : currentCredit.balance - amount;
+      // If no record exists, create one
+      if (!currentCredit) {
+        const { error: insertError } = await supabase
+          .from('user_credits')
+          .insert({
+            user_id: selectedUser.user_id,
+            balance: action === 'add' ? amount : 0,
+            total_earned: action === 'add' ? amount : 0,
+            total_spent: 0,
+          });
 
-      if (newBalance < 0) {
-        toast.error("Insufficient balance to deduct");
-        return;
+        if (insertError) throw insertError;
+      } else {
+        const newBalance = action === 'add' 
+          ? currentCredit.balance + amount 
+          : currentCredit.balance - amount;
+
+        if (newBalance < 0) {
+          toast.error("Insufficient balance to deduct");
+          return;
+        }
+
+        // Update balance
+        const { error: updateError } = await supabase
+          .from('user_credits')
+          .update({
+            balance: newBalance,
+            total_earned: action === 'add' ? currentCredit.total_earned + amount : currentCredit.total_earned,
+            total_spent: action === 'deduct' ? currentCredit.total_spent + amount : currentCredit.total_spent,
+          })
+          .eq('user_id', selectedUser.user_id);
+
+        if (updateError) throw updateError;
       }
-
-      // Update balance
-      const { error: updateError } = await supabase
-        .from('user_credits')
-        .update({
-          balance: newBalance,
-          total_earned: action === 'add' ? currentCredit.total_earned + amount : currentCredit.total_earned,
-          total_spent: action === 'deduct' ? currentCredit.total_spent + amount : currentCredit.total_spent,
-        })
-        .eq('user_id', selectedUser.user_id);
-
-      if (updateError) throw updateError;
 
       // Log transaction
       const { error: txError } = await supabase
