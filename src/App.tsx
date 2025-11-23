@@ -32,6 +32,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import AdminUsers from "./pages/AdminUsers";
 import AdminStories from "./pages/AdminStories";
 import AdminStickerLibrary from "./pages/AdminStickerLibrary";
+import AdminCategoryStickers from "./pages/AdminCategoryStickers";
 import Wallet from "./pages/Wallet";
 import UniversalBannerCreate from "./pages/UniversalBannerCreate";
 
@@ -77,6 +78,7 @@ const App = () => (
           <Route path="/admin/banner-preview-defaults" element={<AuthGuard><AdminBannerPreviewDefaults /></AuthGuard>} />
           <Route path="/admin/template-backgrounds" element={<AuthGuard><AdminTemplateBackgrounds /></AuthGuard>} />
           <Route path="/admin/sticker-library" element={<AuthGuard><AdminStickerLibrary /></AuthGuard>} />
+          <Route path="/admin/category-stickers" element={<AuthGuard><AdminCategoryStickers /></AuthGuard>} />
           
           {/* Catch-all for undefined routes */}
           <Route path="*" element={<AuthGuard><ComingSoon /></AuthGuard>} />
