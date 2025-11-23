@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, ImagePlus } from "lucide-react";
+import { ArrowLeft, ImagePlus, Gift, Cake, Heart, Users, PartyPopper, Zap, LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import UplineCarousel from "@/components/UplineCarousel";
@@ -20,6 +20,7 @@ interface Upline {
 
 interface CategoryConfig {
   icon: string;
+  IconComponent: LucideIcon;
   title: string;
   subtitle: string;
   gradient: string;
@@ -37,6 +38,7 @@ interface CategoryConfig {
 const categoryConfigs: Record<string, CategoryConfig> = {
   'bonanza': {
     icon: '🎁',
+    IconComponent: Gift,
     title: 'Bonanza Promotion',
     subtitle: 'Trip Achievement Details',
     gradient: 'from-red-600 to-orange-600',
@@ -48,6 +50,7 @@ const categoryConfigs: Record<string, CategoryConfig> = {
   },
   'birthday': {
     icon: '🎂',
+    IconComponent: Cake,
     title: 'Birthday Banner',
     subtitle: 'Celebration Details',
     gradient: 'from-teal-600 to-blue-600',
@@ -56,6 +59,7 @@ const categoryConfigs: Record<string, CategoryConfig> = {
   },
   'anniversary': {
     icon: '💞',
+    IconComponent: Heart,
     title: 'Anniversary Banner',
     subtitle: 'Celebration Details',
     gradient: 'from-blue-600 to-purple-600',
@@ -67,6 +71,7 @@ const categoryConfigs: Record<string, CategoryConfig> = {
   },
   'meeting': {
     icon: '📊',
+    IconComponent: Users,
     title: 'Meeting Banner',
     subtitle: 'Event Details',
     gradient: 'from-green-600 to-teal-600',
@@ -80,6 +85,7 @@ const categoryConfigs: Record<string, CategoryConfig> = {
   },
   'festival': {
     icon: '🎉',
+    IconComponent: PartyPopper,
     title: 'Festival Banner',
     subtitle: 'Celebration Details',
     gradient: 'from-pink-600 to-purple-600',
@@ -91,6 +97,7 @@ const categoryConfigs: Record<string, CategoryConfig> = {
   },
   'motivational': {
     icon: '⚡',
+    IconComponent: Zap,
     title: 'Motivational Banner',
     subtitle: 'Inspiration Message',
     gradient: 'from-orange-600 to-yellow-600',
@@ -306,7 +313,7 @@ export default function UniversalBannerCreate() {
         {/* Category Header */}
         <div className="flex items-start gap-4">
           <div className={`bg-gradient-to-br ${config.gradient} rounded-3xl p-6 flex items-center justify-center gold-border flex-shrink-0 w-32 h-32`}>
-            <div className="text-5xl">{config.icon}</div>
+            <config.IconComponent className="w-16 h-16 text-white" strokeWidth={2.5} />
           </div>
           <div className="flex-1 pt-2">
             <p className="text-sm text-muted-foreground mb-1">Please fill up</p>
