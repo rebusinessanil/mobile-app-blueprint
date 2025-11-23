@@ -6,6 +6,8 @@ import { useTemplateCategories, useTemplates } from "@/hooks/useTemplates";
 import { useProfile } from "@/hooks/useProfile";
 import { supabase } from "@/integrations/supabase/client";
 import { useRanks } from "@/hooks/useTemplates";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import Profile from "./Profile";
 export default function Dashboard() {
   const {
     categories
@@ -18,6 +20,7 @@ export default function Dashboard() {
   const {
     profile
   } = useProfile(userId ?? undefined);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   // Get rank templates with covers
   const getRankTemplates = () => {
@@ -72,9 +75,16 @@ export default function Dashboard() {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <button className="w-10 h-10 rounded-xl border-2 border-primary flex items-center justify-center hover:bg-primary/10 transition-colors">
-              <Menu className="w-5 h-5 text-primary" />
-            </button>
+            <Sheet open={isProfileOpen} onOpenChange={setIsProfileOpen}>
+              <SheetTrigger asChild>
+                <button className="w-10 h-10 rounded-xl border-2 border-primary flex items-center justify-center hover:bg-primary/10 transition-colors">
+                  <Menu className="w-5 h-5 text-primary" />
+                </button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-full p-0 border-l border-primary/20">
+                <Profile />
+              </SheetContent>
+            </Sheet>
             <button className="relative w-10 h-10 rounded-xl border-2 border-primary flex items-center justify-center hover:bg-primary/10 transition-colors">
               <Bell className="w-5 h-5 text-primary" />
               <span className="absolute -top-1 -right-1 w-5 h-5 bg-destructive rounded-full text-xs font-bold flex items-center justify-center text-white">
