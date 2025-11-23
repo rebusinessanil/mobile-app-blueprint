@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import BottomNav from "@/components/BottomNav";
 import { Search, Filter, Trophy, Gift, Calendar, Star, MessageCircle, Zap, Briefcase, Target, Medal, Image, Users, IndianRupee, BarChart3 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
@@ -75,8 +74,6 @@ export default function Categories() {
           })}
         </div>
       </div>
-
-      <BottomNav />
     </div>
   );
 }
