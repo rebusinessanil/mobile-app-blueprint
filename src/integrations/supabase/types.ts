@@ -332,7 +332,6 @@ export type Database = {
       }
       stickers: {
         Row: {
-          banner_category: string | null
           category_id: string | null
           created_at: string | null
           description: string | null
@@ -350,7 +349,6 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
-          banner_category?: string | null
           category_id?: string | null
           created_at?: string | null
           description?: string | null
@@ -368,7 +366,6 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
-          banner_category?: string | null
           category_id?: string | null
           created_at?: string | null
           description?: string | null

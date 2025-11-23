@@ -10,14 +10,11 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import Profile from "./Profile";
 export default function Dashboard() {
   const {
-    categories: allCategories
+    categories
   } = useTemplateCategories();
   const {
     templates: allTemplates
   } = useTemplates();
-  
-  // Show only first 6 categories on dashboard
-  const categories = allCategories.slice(0, 6);
   const { ranks } = useRanks();
   const [userId, setUserId] = useState<string | null>(null);
   const {
@@ -125,7 +122,7 @@ export default function Dashboard() {
                   <span className="text-2xl">{category.icon}</span>
                   <h2 className="text-lg font-bold text-foreground">{category.name}</h2>
                 </div>
-                <Link to="/categories" className="text-primary text-sm font-semibold hover:underline">
+                <Link to={isRankPromotion ? '/rank-selection' : `/categories/${category.slug}`} className="text-primary text-sm font-semibold hover:underline">
                   See All →
                 </Link>
               </div>
