@@ -19,8 +19,6 @@ import Profile from "./pages/Profile";
 import ProfileEdit from "./pages/ProfileEdit";
 import RankSelection from "./pages/RankSelection";
 import RankBannerCreate from "./pages/RankBannerCreate";
-import TripSelection from "./pages/TripSelection";
-import TripBannerCreate from "./pages/TripBannerCreate";
 import BannerSettings from "./pages/BannerSettings";
 import BannerPreview from "./pages/BannerPreview";
 import AdminStickers from "./pages/AdminStickers";
@@ -34,8 +32,6 @@ import AdminDashboard from "./pages/AdminDashboard";
 import AdminUsers from "./pages/AdminUsers";
 import AdminStories from "./pages/AdminStories";
 import AdminStickerLibrary from "./pages/AdminStickerLibrary";
-import AdminTripBackgrounds from "./pages/AdminTripBackgrounds";
-import AdminTripStickers from "./pages/AdminTripStickers";
 import Wallet from "./pages/Wallet";
 
 const queryClient = new QueryClient();
@@ -63,8 +59,6 @@ const App = () => (
           <Route path="/profile-edit" element={<AuthGuard><ProfileEdit /></AuthGuard>} />
           <Route path="/rank-selection" element={<AuthGuard><RankSelection /></AuthGuard>} />
           <Route path="/rank-banner-create/:rankId" element={<AuthGuard><RankBannerCreate /></AuthGuard>} />
-          <Route path="/trip-selection" element={<AuthGuard><TripSelection /></AuthGuard>} />
-          <Route path="/trip-banner-create/:tripId" element={<AuthGuard><TripBannerCreate /></AuthGuard>} />
           <Route path="/banner-settings" element={<AuthGuard><BannerSettings /></AuthGuard>} />
           <Route path="/banner-preview" element={<AuthGuard><BannerPreview /></AuthGuard>} />
           <Route path="/wallet" element={<AuthGuard><Wallet /></AuthGuard>} />
@@ -81,8 +75,6 @@ const App = () => (
           <Route path="/admin/banner-preview-defaults" element={<AuthGuard><AdminBannerPreviewDefaults /></AuthGuard>} />
           <Route path="/admin/template-backgrounds" element={<AuthGuard><AdminTemplateBackgrounds /></AuthGuard>} />
           <Route path="/admin/sticker-library" element={<AuthGuard><AdminStickerLibrary /></AuthGuard>} />
-          <Route path="/admin/trip-backgrounds" element={<AuthGuard><AdminTripBackgrounds /></AuthGuard>} />
-          <Route path="/admin/trip-stickers" element={<AuthGuard><AdminTripStickers /></AuthGuard>} />
           
           {/* Catch-all for undefined routes */}
           <Route path="*" element={<AuthGuard><ComingSoon /></AuthGuard>} />

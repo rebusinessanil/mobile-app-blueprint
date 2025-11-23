@@ -34,8 +34,6 @@ const adminRoutes = [
   { path: "/admin/stickers", icon: Sticker, label: "Stickers" },
   { path: "/admin/rank-stickers", icon: Award, label: "Rank Stickers" },
   { path: "/admin/template-backgrounds", icon: Image, label: "Backgrounds" },
-  { path: "/admin/trip-backgrounds", icon: Image, label: "Trip Backgrounds" },
-  { path: "/admin/trip-stickers", icon: Sticker, label: "Trip Stickers" },
   { path: "/admin/banner-defaults", icon: Settings, label: "Banner Defaults" },
   { path: "/admin/banner-preview-defaults", icon: Settings, label: "Banner Preview Defaults" },
 ];
