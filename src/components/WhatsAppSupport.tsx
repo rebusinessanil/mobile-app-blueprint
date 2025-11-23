@@ -4,29 +4,20 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import whatsappIcon from "@/assets/whatsapp-icon.png";
 
+const SUPPORT_NUMBER = "917734990035";
+const WHATSAPP_URL = `https://wa.me/${SUPPORT_NUMBER}`;
+
 export default function WhatsAppSupport() {
   const [isVisible, setIsVisible] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [whatsappNumber, setWhatsappNumber] = useState<string | null>(null);
 
   useEffect(() => {
-    // Check authentication status and fetch WhatsApp number
+    // Check authentication status
     const checkAuth = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       setIsAuthenticated(!!user);
       
       if (user) {
-        // Fetch user's WhatsApp number from profile
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("whatsapp")
-          .eq("user_id", user.id)
-          .maybeSingle();
-        
-        if (profile?.whatsapp) {
-          setWhatsappNumber(profile.whatsapp);
-        }
-        
         // Check if user has hidden the widget
         const hidden = localStorage.getItem("whatsapp-support-hidden");
         setIsVisible(hidden !== "true");
@@ -62,13 +53,10 @@ export default function WhatsAppSupport() {
   };
 
   const handleWhatsAppClick = () => {
-    if (whatsappNumber) {
-      const whatsappUrl = `https://wa.me/${whatsappNumber.replace(/\D/g, '')}`;
-      window.open(whatsappUrl, "_blank", "noopener,noreferrer");
-    }
+    window.open(WHATSAPP_URL, "_blank", "noopener,noreferrer");
   };
 
-  if (!isAuthenticated || !isVisible || !whatsappNumber) {
+  if (!isAuthenticated || !isVisible) {
     return null;
   }
 
