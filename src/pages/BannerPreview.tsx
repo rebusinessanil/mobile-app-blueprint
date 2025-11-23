@@ -33,6 +33,13 @@ interface BannerData {
   slotStickers?: Record<number, string[]>;
   templateId?: string;
   rankId?: string;
+  categoryType?: 'rank' | 'bonanza' | 'birthday' | 'anniversary' | 'meeting' | 'festival' | 'motivational';
+  message?: string;
+  tripName?: string;
+  eventTitle?: string;
+  eventDate?: string;
+  eventVenue?: string;
+  quote?: string;
 }
 export default function BannerPreview() {
   const navigate = useNavigate();
@@ -292,6 +299,620 @@ export default function BannerPreview() {
     navigate("/rank-selection");
     return null;
   }
+
+  // Category-specific content render function
+  const renderCategoryContent = () => {
+    const category = bannerData.categoryType || 'rank';
+
+    switch (category) {
+      case 'bonanza':
+        return (
+          <>
+            {/* Congratulations Image */}
+            {bannerDefaults?.congratulations_image && (
+              <div className="absolute z-20" style={{
+                top: '162px',
+                left: '978px',
+                transform: 'translateX(-50%)',
+                width: '648px',
+                height: '162px'
+              }}>
+                <img src={bannerDefaults.congratulations_image} alt="Congratulations" style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.7))'
+                }} />
+              </div>
+            )}
+
+            {/* Trip Achievement Title */}
+            <div className="absolute z-20" style={{
+              top: '236px',
+              left: '978px',
+              transform: 'translateX(-50%)',
+              width: '648px',
+              textAlign: 'center'
+            }}>
+              <p style={{
+                fontSize: '42px',
+                fontWeight: '600',
+                color: '#ffffff',
+                textShadow: '2px 2px 8px rgba(0,0,0,0.9)',
+                letterSpacing: '1px'
+              }}>
+                BONANZA TRIP WINNER
+              </p>
+            </div>
+
+            {/* Trip Name */}
+            <div className="absolute" style={{
+              top: '337px',
+              left: '978px',
+              transform: 'translateX(-50%)',
+              width: '648px',
+              padding: '0 27px'
+            }}>
+              <h2 style={{
+                color: '#FFD700',
+                textAlign: 'center',
+                fontSize: '48px',
+                fontWeight: '700',
+                textShadow: '3px 3px 10px rgba(0,0,0,0.95)',
+                margin: 0
+              }}>
+                {bannerData.tripName?.toUpperCase() || 'TRIP DESTINATION'}
+              </h2>
+            </div>
+
+            {/* Achiever Name & Team */}
+            <div className="absolute" style={{
+              top: '420px',
+              left: '978px',
+              transform: 'translateX(-50%)',
+              width: '648px',
+              padding: '0 27px'
+            }}>
+              <h3 style={{
+                color: '#ffffff',
+                textAlign: 'center',
+                fontSize: '36px',
+                fontWeight: '600',
+                textShadow: '2px 2px 6px rgba(0,0,0,0.9)',
+                margin: 0
+              }}>
+                {truncatedMainName.toUpperCase()}
+              </h3>
+              {bannerData.teamCity && (
+                <p style={{
+                  marginTop: '13px',
+                  color: '#ffffff',
+                  textAlign: 'center',
+                  fontSize: '28px',
+                  textShadow: '2px 2px 4px rgba(0,0,0,0.9)'
+                }}>
+                  {bannerData.teamCity.toUpperCase()}
+                </p>
+              )}
+            </div>
+          </>
+        );
+
+      case 'birthday':
+        return (
+          <>
+            {/* Birthday Emoji/Icon */}
+            <div className="absolute z-20" style={{
+              top: '140px',
+              left: '978px',
+              transform: 'translateX(-50%)',
+              fontSize: '120px'
+            }}>
+              🎂
+            </div>
+
+            {/* Happy Birthday Text */}
+            <div className="absolute z-20" style={{
+              top: '280px',
+              left: '978px',
+              transform: 'translateX(-50%)',
+              width: '648px',
+              textAlign: 'center'
+            }}>
+              <p style={{
+                fontSize: '52px',
+                fontWeight: '700',
+                color: '#FFD700',
+                textShadow: '3px 3px 10px rgba(0,0,0,0.9)',
+                letterSpacing: '2px'
+              }}>
+                HAPPY BIRTHDAY
+              </p>
+            </div>
+
+            {/* Name */}
+            <div className="absolute" style={{
+              top: '370px',
+              left: '978px',
+              transform: 'translateX(-50%)',
+              width: '648px',
+              padding: '0 27px'
+            }}>
+              <h2 style={{
+                color: '#ffffff',
+                textAlign: 'center',
+                fontSize: '44px',
+                fontWeight: '600',
+                textShadow: '2px 2px 8px rgba(0,0,0,0.9)',
+                margin: 0
+              }}>
+                {truncatedMainName.toUpperCase()}
+              </h2>
+            </div>
+
+            {/* Birthday Message */}
+            {bannerData.message && (
+              <div className="absolute" style={{
+                top: '450px',
+                left: '978px',
+                transform: 'translateX(-50%)',
+                width: '648px',
+                padding: '0 40px'
+              }}>
+                <p style={{
+                  color: '#ffffff',
+                  textAlign: 'center',
+                  fontSize: '24px',
+                  fontStyle: 'italic',
+                  textShadow: '2px 2px 6px rgba(0,0,0,0.9)',
+                  lineHeight: '1.4'
+                }}>
+                  {bannerData.message}
+                </p>
+              </div>
+            )}
+          </>
+        );
+
+      case 'anniversary':
+        return (
+          <>
+            {/* Anniversary Icon */}
+            <div className="absolute z-20" style={{
+              top: '140px',
+              left: '978px',
+              transform: 'translateX(-50%)',
+              fontSize: '120px'
+            }}>
+              💞
+            </div>
+
+            {/* Happy Anniversary Text */}
+            <div className="absolute z-20" style={{
+              top: '280px',
+              left: '978px',
+              transform: 'translateX(-50%)',
+              width: '648px',
+              textAlign: 'center'
+            }}>
+              <p style={{
+                fontSize: '48px',
+                fontWeight: '700',
+                color: '#FFD700',
+                textShadow: '3px 3px 10px rgba(0,0,0,0.9)',
+                letterSpacing: '1px'
+              }}>
+                HAPPY ANNIVERSARY
+              </p>
+            </div>
+
+            {/* Name */}
+            <div className="absolute" style={{
+              top: '370px',
+              left: '978px',
+              transform: 'translateX(-50%)',
+              width: '648px',
+              padding: '0 27px'
+            }}>
+              <h2 style={{
+                color: '#ffffff',
+                textAlign: 'center',
+                fontSize: '44px',
+                fontWeight: '600',
+                textShadow: '2px 2px 8px rgba(0,0,0,0.9)',
+                margin: 0
+              }}>
+                {truncatedMainName.toUpperCase()}
+              </h2>
+              {bannerData.teamCity && (
+                <p style={{
+                  marginTop: '13px',
+                  color: '#ffffff',
+                  textAlign: 'center',
+                  fontSize: '28px',
+                  textShadow: '2px 2px 4px rgba(0,0,0,0.9)'
+                }}>
+                  {bannerData.teamCity.toUpperCase()}
+                </p>
+              )}
+            </div>
+
+            {/* Anniversary Message */}
+            {bannerData.message && (
+              <div className="absolute" style={{
+                top: '480px',
+                left: '978px',
+                transform: 'translateX(-50%)',
+                width: '648px',
+                padding: '0 40px'
+              }}>
+                <p style={{
+                  color: '#ffffff',
+                  textAlign: 'center',
+                  fontSize: '22px',
+                  fontStyle: 'italic',
+                  textShadow: '2px 2px 6px rgba(0,0,0,0.9)',
+                  lineHeight: '1.4'
+                }}>
+                  {bannerData.message}
+                </p>
+              </div>
+            )}
+          </>
+        );
+
+      case 'meeting':
+        return (
+          <>
+            {/* Event Icon */}
+            <div className="absolute z-20" style={{
+              top: '140px',
+              left: '978px',
+              transform: 'translateX(-50%)',
+              fontSize: '110px'
+            }}>
+              📅
+            </div>
+
+            {/* Event Type */}
+            <div className="absolute z-20" style={{
+              top: '270px',
+              left: '978px',
+              transform: 'translateX(-50%)',
+              width: '648px',
+              textAlign: 'center'
+            }}>
+              <p style={{
+                fontSize: '42px',
+                fontWeight: '700',
+                color: '#FFD700',
+                textShadow: '3px 3px 10px rgba(0,0,0,0.9)',
+                letterSpacing: '1px'
+              }}>
+                TEAM MEETING
+              </p>
+            </div>
+
+            {/* Event Title */}
+            <div className="absolute" style={{
+              top: '350px',
+              left: '978px',
+              transform: 'translateX(-50%)',
+              width: '648px',
+              padding: '0 27px'
+            }}>
+              <h2 style={{
+                color: '#ffffff',
+                textAlign: 'center',
+                fontSize: '38px',
+                fontWeight: '600',
+                textShadow: '2px 2px 8px rgba(0,0,0,0.9)',
+                margin: 0
+              }}>
+                {bannerData.eventTitle?.toUpperCase() || truncatedMainName.toUpperCase()}
+              </h2>
+            </div>
+
+            {/* Event Details */}
+            <div className="absolute" style={{
+              top: '430px',
+              left: '978px',
+              transform: 'translateX(-50%)',
+              width: '648px',
+              padding: '0 40px'
+            }}>
+              {bannerData.eventDate && (
+                <p style={{
+                  color: '#ffffff',
+                  textAlign: 'center',
+                  fontSize: '26px',
+                  textShadow: '2px 2px 6px rgba(0,0,0,0.9)',
+                  margin: '8px 0'
+                }}>
+                  📆 {bannerData.eventDate}
+                </p>
+              )}
+              {bannerData.eventVenue && (
+                <p style={{
+                  color: '#ffffff',
+                  textAlign: 'center',
+                  fontSize: '24px',
+                  textShadow: '2px 2px 6px rgba(0,0,0,0.9)',
+                  margin: '8px 0'
+                }}>
+                  📍 {bannerData.eventVenue}
+                </p>
+              )}
+            </div>
+          </>
+        );
+
+      case 'festival':
+        return (
+          <>
+            {/* Festival Icon */}
+            <div className="absolute z-20" style={{
+              top: '140px',
+              left: '978px',
+              transform: 'translateX(-50%)',
+              fontSize: '120px'
+            }}>
+              🎉
+            </div>
+
+            {/* Festival Greeting */}
+            <div className="absolute z-20" style={{
+              top: '280px',
+              left: '978px',
+              transform: 'translateX(-50%)',
+              width: '648px',
+              textAlign: 'center'
+            }}>
+              <p style={{
+                fontSize: '48px',
+                fontWeight: '700',
+                color: '#FFD700',
+                textShadow: '3px 3px 10px rgba(0,0,0,0.9)',
+                letterSpacing: '1px'
+              }}>
+                FESTIVAL GREETINGS
+              </p>
+            </div>
+
+            {/* Name */}
+            <div className="absolute" style={{
+              top: '370px',
+              left: '978px',
+              transform: 'translateX(-50%)',
+              width: '648px',
+              padding: '0 27px'
+            }}>
+              <h2 style={{
+                color: '#ffffff',
+                textAlign: 'center',
+                fontSize: '44px',
+                fontWeight: '600',
+                textShadow: '2px 2px 8px rgba(0,0,0,0.9)',
+                margin: 0
+              }}>
+                {truncatedMainName.toUpperCase()}
+              </h2>
+              {bannerData.teamCity && (
+                <p style={{
+                  marginTop: '13px',
+                  color: '#ffffff',
+                  textAlign: 'center',
+                  fontSize: '28px',
+                  textShadow: '2px 2px 4px rgba(0,0,0,0.9)'
+                }}>
+                  {bannerData.teamCity.toUpperCase()}
+                </p>
+              )}
+            </div>
+
+            {/* Festival Message */}
+            {bannerData.message && (
+              <div className="absolute" style={{
+                top: '480px',
+                left: '978px',
+                transform: 'translateX(-50%)',
+                width: '648px',
+                padding: '0 40px'
+              }}>
+                <p style={{
+                  color: '#ffffff',
+                  textAlign: 'center',
+                  fontSize: '24px',
+                  fontStyle: 'italic',
+                  textShadow: '2px 2px 6px rgba(0,0,0,0.9)',
+                  lineHeight: '1.4'
+                }}>
+                  {bannerData.message}
+                </p>
+              </div>
+            )}
+          </>
+        );
+
+      case 'motivational':
+        return (
+          <>
+            {/* Motivational Icon */}
+            <div className="absolute z-20" style={{
+              top: '140px',
+              left: '978px',
+              transform: 'translateX(-50%)',
+              fontSize: '110px'
+            }}>
+              💪
+            </div>
+
+            {/* Motivational Title */}
+            <div className="absolute z-20" style={{
+              top: '270px',
+              left: '978px',
+              transform: 'translateX(-50%)',
+              width: '648px',
+              textAlign: 'center'
+            }}>
+              <p style={{
+                fontSize: '44px',
+                fontWeight: '700',
+                color: '#FFD700',
+                textShadow: '3px 3px 10px rgba(0,0,0,0.9)',
+                letterSpacing: '1px'
+              }}>
+                STAY MOTIVATED
+              </p>
+            </div>
+
+            {/* Quote/Message */}
+            {bannerData.quote && (
+              <div className="absolute" style={{
+                top: '360px',
+                left: '978px',
+                transform: 'translateX(-50%)',
+                width: '648px',
+                padding: '0 50px'
+              }}>
+                <p style={{
+                  color: '#ffffff',
+                  textAlign: 'center',
+                  fontSize: '32px',
+                  fontWeight: '500',
+                  fontStyle: 'italic',
+                  textShadow: '2px 2px 8px rgba(0,0,0,0.9)',
+                  lineHeight: '1.5',
+                  quotes: '"\"""\""'
+                }}>
+                  "{bannerData.quote}"
+                </p>
+              </div>
+            )}
+
+            {/* Name Attribution */}
+            <div className="absolute" style={{
+              top: '520px',
+              left: '978px',
+              transform: 'translateX(-50%)',
+              width: '648px',
+              padding: '0 27px'
+            }}>
+              <p style={{
+                color: '#FFD700',
+                textAlign: 'center',
+                fontSize: '30px',
+                fontWeight: '600',
+                textShadow: '2px 2px 6px rgba(0,0,0,0.9)',
+                margin: 0
+              }}>
+                - {truncatedMainName.toUpperCase()}
+              </p>
+            </div>
+          </>
+        );
+
+      default: // 'rank' category - original rank banner layout
+        return (
+          <>
+            {/* Congratulations Image - Admin controlled, always displayed */}
+            {bannerDefaults?.congratulations_image && (
+              <div className="absolute z-20" style={{
+                top: '162px',
+                left: '978px',
+                transform: 'translateX(-50%)',
+                width: '648px',
+                height: '162px'
+              }}>
+                <img src={bannerDefaults.congratulations_image} alt="Congratulations" style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.7))'
+                }} />
+              </div>
+            )}
+
+            {/* Text Below Congratulations Image */}
+            <div className="absolute z-20" style={{
+              top: '236px',
+              left: '978px',
+              transform: 'translateX(-50%)',
+              width: '648px',
+              textAlign: 'center'
+            }}>
+              {/* Placeholder for future content */}
+            </div>
+
+            {/* CENTER-RIGHT - Name - FIXED SIZE, POSITION, FONTS */}
+            <div className="banner-text-content absolute" style={{
+              top: '337px',
+              left: '978px',
+              transform: 'translateX(-50%)',
+              width: '648px',
+              minWidth: '648px',
+              maxWidth: '648px',
+              padding: '0 27px'
+            }}>
+              <h2 title={mainBannerName.toUpperCase()} style={{
+                color: '#ffffff',
+                textAlign: 'center',
+                margin: '0 auto'
+              }} className="banner-preview-name text-center px-0 py-[2px] mx-[26px]">
+                {truncatedMainName.toUpperCase()}
+              </h2>
+              
+              {bannerData.teamCity && (
+                <p title={bannerData.teamCity.toUpperCase()} style={{
+                  marginTop: '13px',
+                  color: '#ffffff',
+                  textAlign: 'center'
+                }} className="banner-team text-center px-[5px] py-[6px]">
+                  {bannerData.teamCity.toUpperCase()}
+                </p>
+              )}
+            </div>
+
+            {/* BOTTOM CENTER - Income - FIXED FONTS AND POSITION */}
+            {bannerData.chequeAmount && (
+              <div className="absolute" style={{
+                bottom: '202px',
+                left: '67px',
+                width: '743px',
+                minWidth: '743px',
+                maxWidth: '743px'
+              }}>
+                <p style={{
+                  fontSize: '36px',
+                  textShadow: '2px 2px 4px rgba(0,0,0,0.9)',
+                  color: '#ffffff',
+                  fontWeight: '500',
+                  letterSpacing: '1px',
+                  textAlign: 'left',
+                  margin: 0,
+                  marginBottom: '28px'
+                }}>
+                  THIS WEEK INCOME 
+                </p>
+                <p style={{
+                  fontSize: '62px',
+                  textShadow: '4px 4px 12px rgba(0,0,0,0.95)',
+                  lineHeight: '1',
+                  fontWeight: '800',
+                  letterSpacing: '2px',
+                  textAlign: 'left',
+                  margin: 0,
+                  color: '#FFD600',
+                  fontFamily: 'sans-serif'
+                }}>
+                  {Number(bannerData.chequeAmount).toLocaleString('en-IN')}
+                </p>
+              </div>
+            )}
+          </>
+        );
+    }
+  };
 
   // Handle sticker dragging - Admin only
   const handleStickerMouseDown = (e: React.MouseEvent, stickerId: string) => {
@@ -789,33 +1410,6 @@ export default function BannerPreview() {
                     }} />
                   </div>}
 
-                {/* Congratulations Image - Admin controlled, always displayed */}
-                {bannerDefaults?.congratulations_image && <div className="absolute z-20" style={{
-                    top: '162px',
-                    left: '978px',
-                    transform: 'translateX(-50%)',
-                    width: '648px',
-                    height: '162px'
-                  }}>
-                    <img src={bannerDefaults.congratulations_image} alt="Congratulations" style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover',
-                      filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.7))'
-                    }} />
-                  </div>}
-
-                {/* Text Below Congratulations Image */}
-                <div className="absolute z-20" style={{
-                    top: '236px',
-                    left: '978px',
-                    transform: 'translateX(-50%)',
-                    width: '648px',
-                    textAlign: 'center'
-                  }}>
-                    
-                  </div>
-
                 {/* Top - Upline avatars - FIXED SIZE AND POSITION */}
                 <div className="absolute z-20" style={{
                     top: '10px',
@@ -888,74 +1482,8 @@ export default function BannerPreview() {
                   
                 </div>
 
-                {/* CENTER-RIGHT - Name - FIXED SIZE, POSITION, FONTS */}
-                <div className="banner-text-content absolute" style={{
-                    top: '337px',
-                    /* LOCKED */
-                    left: '978px',
-                    /* LOCKED */
-                    transform: 'translateX(-50%)',
-                    width: '648px',
-                    /* LOCKED */
-                    minWidth: '648px',
-                    maxWidth: '648px',
-                    padding: '0 27px'
-                  }}>
-                  <h2 title={mainBannerName.toUpperCase()} style={{
-                      color: '#ffffff',
-                      textAlign: 'center',
-                      margin: '0 auto'
-                    }} className="banner-preview-name text-center px-0 py-[2px] mx-[26px]">
-                    {truncatedMainName.toUpperCase()}
-                  </h2>
-                  
-                  {bannerData.teamCity && <p title={bannerData.teamCity.toUpperCase()} style={{
-                      marginTop: '13px',
-                      color: '#ffffff',
-                      textAlign: 'center'
-                    }} className="banner-team text-center px-[5px] py-[6px]">
-                      {bannerData.teamCity.toUpperCase()}
-                    </p>}
-                </div>
-                {/* BOTTOM CENTER - Income - FIXED FONTS AND POSITION */}
-                {bannerData.chequeAmount && <div className="absolute" style={{
-                    bottom: '202px',
-                    /* LOCKED */
-                    left: '67px',
-                    /* LOCKED */
-                    width: '743px',
-                    /* LOCKED */
-                    minWidth: '743px',
-                    maxWidth: '743px'
-                  }}>
-                    <p style={{
-                      fontSize: '36px',
-                      /* LOCKED */
-                      textShadow: '2px 2px 4px rgba(0,0,0,0.9)',
-                      color: '#ffffff',
-                      fontWeight: '500',
-                      letterSpacing: '1px',
-                      textAlign: 'left',
-                      margin: 0,
-                      marginBottom: '28px'
-                    }}>
-                      THIS WEEK INCOME 
-                    </p>
-                    <p style={{
-                      fontSize: '62px',
-                      /* LOCKED */
-                      textShadow: '4px 4px 12px rgba(0,0,0,0.95)',
-                      lineHeight: '1',
-                      fontWeight: '800',
-                      letterSpacing: '2px',
-                      textAlign: 'left',
-                      margin: 0,
-                      color: '#FFD600',
-                      fontFamily: 'sans-serif'
-                    }}>
-                      {Number(bannerData.chequeAmount).toLocaleString('en-IN')}
-                    </p>
-                  </div>}
+                {/* Category-specific content */}
+                {renderCategoryContent()}
 
                 {/* LOWER THIRD - Contact Info - FIXED FONTS AND POSITION */}
                 <div className="absolute" style={{
