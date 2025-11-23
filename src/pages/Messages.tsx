@@ -1,4 +1,5 @@
 import { useState } from "react";
+import BottomNav from "@/components/BottomNav";
 import { Search, MessageSquare, PartyPopper, Trophy, Wallet, Sparkles } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
@@ -102,6 +103,8 @@ export default function Messages() {
           );
         })}
       </div>
+
+      <BottomNav />
     </div>
   );
 }

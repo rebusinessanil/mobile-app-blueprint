@@ -1,4 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
+import BottomNav from "@/components/BottomNav";
 import { User, Wallet, Download, Settings, Lock, HelpCircle, MessageCircle, LogOut, Star, Edit, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -173,6 +174,8 @@ export default function Profile() {
           Logout
         </Button>
       </div>
+
+      <BottomNav />
     </div>
   );
 }

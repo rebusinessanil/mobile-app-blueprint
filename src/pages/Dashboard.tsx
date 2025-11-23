@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import BottomNav from "@/components/BottomNav";
 import { Menu, Bell, Star, Calendar, Zap, Award } from "lucide-react";
 import { useTemplateCategories, useTemplates } from "@/hooks/useTemplates";
 import { useProfile } from "@/hooks/useProfile";
@@ -177,5 +178,7 @@ export default function Dashboard() {
             </div>;
       })}
       </div>
+
+      <BottomNav />
     </div>;
 }
