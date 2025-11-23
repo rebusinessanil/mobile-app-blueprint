@@ -31,6 +31,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import AdminUsers from "./pages/AdminUsers";
 import AdminStories from "./pages/AdminStories";
 import AdminStickerLibrary from "./pages/AdminStickerLibrary";
+import Wallet from "./pages/Wallet";
 
 const queryClient = new QueryClient();
 
@@ -59,6 +60,7 @@ const App = () => (
           <Route path="/rank-banner-create/:rankId" element={<AuthGuard><RankBannerCreate /></AuthGuard>} />
           <Route path="/banner-settings" element={<AuthGuard><BannerSettings /></AuthGuard>} />
           <Route path="/banner-preview" element={<AuthGuard><BannerPreview /></AuthGuard>} />
+          <Route path="/wallet" element={<AuthGuard><Wallet /></AuthGuard>} />
           
           {/* Admin routes - auth required */}
           <Route path="/admin" element={<AuthGuard><AdminDashboard /></AuthGuard>} />

@@ -541,6 +541,32 @@ export default function BannerPreview() {
       toast.error("Banner not ready for download");
       return;
     }
+
+    // Check credit balance before download
+    if (userId) {
+      const { data: credits, error: creditsError } = await supabase
+        .from("user_credits")
+        .select("balance")
+        .eq("user_id", userId)
+        .single();
+
+      if (creditsError || !credits) {
+        toast.error("Failed to check credit balance");
+        return;
+      }
+
+      const BANNER_COST = 10; // Cost per banner download
+      if (credits.balance < BANNER_COST) {
+        toast.error(`Insufficient balance! You need ₹${BANNER_COST} credits to download this banner.`, {
+          action: {
+            label: "Top Up",
+            onClick: () => navigate("/wallet"),
+          },
+        });
+        return;
+      }
+    }
+
     setIsDownloading(true);
     const loadingToast = toast.loading("Generating pixel-perfect banner...");
     try {
@@ -604,7 +630,7 @@ export default function BannerPreview() {
       }
 
       // Convert to PNG blob with maximum quality
-      canvas.toBlob(blob => {
+      canvas.toBlob(async (blob) => {
         toast.dismiss(loadingToast);
         if (!blob) {
           toast.error("Failed to generate image");
@@ -618,7 +644,56 @@ export default function BannerPreview() {
         link.click();
         URL.revokeObjectURL(url);
         const sizeMB = (blob.size / 1024 / 1024).toFixed(2);
-        toast.success(`Pixel-perfect banner downloaded! (${sizeMB} MB, 1350×1350 PNG)`);
+
+        // Deduct credits after successful download
+        if (userId) {
+          const BANNER_COST = 10;
+          try {
+            // Get current balance
+            const { data: currentCredits } = await supabase
+              .from("user_credits")
+              .select("balance, total_spent")
+              .eq("user_id", userId)
+              .single();
+
+            if (currentCredits) {
+              const newBalance = currentCredits.balance - BANNER_COST;
+              const newTotalSpent = currentCredits.total_spent + BANNER_COST;
+
+              // Update balance
+              await supabase
+                .from("user_credits")
+                .update({
+                  balance: newBalance,
+                  total_spent: newTotalSpent,
+                })
+                .eq("user_id", userId);
+
+              // Record transaction
+              await supabase
+                .from("credit_transactions")
+                .insert({
+                  user_id: userId,
+                  amount: BANNER_COST,
+                  transaction_type: "spent",
+                  description: `Banner download - ${bannerData.rankName}`,
+                });
+
+              toast.success(
+                `Banner downloaded! (${sizeMB} MB) • ₹${BANNER_COST} deducted`,
+                {
+                  description: `Remaining balance: ₹${newBalance}`,
+                }
+              );
+            }
+          } catch (error) {
+            console.error("Credit deduction error:", error);
+            // Still show success for download even if credit deduction fails
+            toast.success(`Pixel-perfect banner downloaded! (${sizeMB} MB, 1350×1350 PNG)`);
+          }
+        } else {
+          toast.success(`Pixel-perfect banner downloaded! (${sizeMB} MB, 1350×1350 PNG)`);
+        }
       }, "image/png", 1.0);
     } catch (error) {
       console.error("Download error:", error);
