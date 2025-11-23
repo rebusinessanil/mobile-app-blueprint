@@ -223,16 +223,6 @@ export default function BirthdayBannerCreate() {
                 className="bg-transparent border-0 border-b-2 border-muted rounded-none text-foreground h-12 focus-visible:ring-0 focus-visible:border-primary" 
               />
             </div>
-
-            <div className="space-y-2">
-              <label className="text-sm text-foreground">Birthday Message <span className="text-muted-foreground">(optional)</span></label>
-              <Input 
-                value={formData.message} 
-                onChange={e => setFormData({ ...formData, message: e.target.value })} 
-                placeholder="Enter birthday wishes" 
-                className="bg-transparent border-0 border-b-2 border-muted rounded-none text-foreground h-12 focus-visible:ring-0 focus-visible:border-primary" 
-              />
-            </div>
           </div>
 
           {mode === "myPhoto" && (
