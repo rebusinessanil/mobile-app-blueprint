@@ -25,7 +25,7 @@ interface UserData {
   user_id: string;
   name: string;
   email: string;
-  mobile: string | null;
+  mobile: string; // Required field as per database schema
   rank: string | null;
   created_at: string;
   balance: number;
@@ -46,19 +46,12 @@ export default function UserManagement() {
 
   const fetchUsers = async () => {
     try {
-      // Fetch profiles with credits
+      // Fetch profiles with mobile numbers
       const { data: profiles, error: profileError } = await supabase
         .from('profiles')
         .select('user_id, name, mobile, rank, created_at');
 
       if (profileError) throw profileError;
-
-      // Fetch auth users for email
-      const { data: authData, error: authError } = await supabase.auth.admin.listUsers();
-      
-      if (authError) throw authError;
-      
-      const authUsers = authData?.users || [];
 
       // Fetch credits
       const { data: credits, error: creditsError } = await supabase
@@ -77,14 +70,13 @@ export default function UserManagement() {
 
       // Combine data
       const combinedUsers: UserData[] = profiles?.map(profile => {
-        const authUser = authUsers.find(u => u.id === profile.user_id);
         const userCredit = credits?.find(c => c.user_id === profile.user_id);
         const isAdmin = adminRoles?.some(r => r.user_id === profile.user_id) || false;
 
         return {
           user_id: profile.user_id,
           name: profile.name,
-          email: authUser?.email || 'N/A',
+          email: 'N/A', // Email not available without admin API
           mobile: profile.mobile,
           rank: profile.rank,
           created_at: profile.created_at || '',
