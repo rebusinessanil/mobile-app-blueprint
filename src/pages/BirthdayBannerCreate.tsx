@@ -48,11 +48,7 @@ export default function BirthdayBannerCreate() {
     getUser();
   }, []);
 
-  // Auto-load uplines from banner settings with real-time sync
   useEffect(() => {
-    if (!userId) return;
-
-    // Initial load
     if (bannerSettings && uplines.length === 0) {
       const defaultUplines = bannerSettings.upline_avatars.map((upline, index) => ({
         id: `upline-${index}`,
@@ -61,37 +57,7 @@ export default function BirthdayBannerCreate() {
       }));
       setUplines(defaultUplines);
     }
-
-    // Real-time subscription for banner settings changes
-    const channel = supabase
-      .channel('banner-settings-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'user_banner_settings',
-          filter: `user_id=eq.${userId}`
-        },
-        (payload) => {
-          console.log('Banner settings updated:', payload);
-          if (payload.new && 'upline_avatars' in payload.new) {
-            const updatedUplines = (payload.new.upline_avatars as any[]).map((upline, index) => ({
-              id: `upline-${index}`,
-              name: upline.name,
-              avatar: upline.avatar_url
-            }));
-            setUplines(updatedUplines);
-            toast.success('Upline settings updated');
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [userId, bannerSettings]);
+  }, [bannerSettings]);
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -209,7 +175,7 @@ export default function BirthdayBannerCreate() {
           </div>
           <div className="flex-1 pt-2">
             <p className="text-sm text-muted-foreground mb-1">Please fill up</p>
-            <h1 className="text-3xl font-bold text-primary mb-1">Birthday Details</h1>
+            <h1 className="text-3xl font-bold text-primary mb-1">Birthday Banner</h1>
             <p className="text-lg text-blue-400">Celebration Details</p>
           </div>
         </div>
