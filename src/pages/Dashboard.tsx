@@ -85,12 +85,12 @@ export default function Dashboard() {
                 <Profile />
               </SheetContent>
             </Sheet>
-            <button className="relative w-10 h-10 rounded-xl border-2 border-primary flex items-center justify-center hover:bg-primary/10 transition-colors">
+            <Link to="/messages" className="relative w-10 h-10 rounded-xl border-2 border-primary flex items-center justify-center hover:bg-primary/10 transition-colors">
               <Bell className="w-5 h-5 text-primary" />
               <span className="absolute -top-1 -right-1 w-5 h-5 bg-destructive rounded-full text-xs font-bold flex items-center justify-center text-white">
                 2
               </span>
-            </button>
+            </Link>
           </div>
         </div>
       </header>
