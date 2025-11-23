@@ -34,6 +34,8 @@ import AdminDashboard from "./pages/AdminDashboard";
 import AdminUsers from "./pages/AdminUsers";
 import AdminStories from "./pages/AdminStories";
 import AdminStickerLibrary from "./pages/AdminStickerLibrary";
+import AdminTripBackgrounds from "./pages/AdminTripBackgrounds";
+import AdminTripStickers from "./pages/AdminTripStickers";
 import Wallet from "./pages/Wallet";
 
 const queryClient = new QueryClient();
@@ -79,6 +81,8 @@ const App = () => (
           <Route path="/admin/banner-preview-defaults" element={<AuthGuard><AdminBannerPreviewDefaults /></AuthGuard>} />
           <Route path="/admin/template-backgrounds" element={<AuthGuard><AdminTemplateBackgrounds /></AuthGuard>} />
           <Route path="/admin/sticker-library" element={<AuthGuard><AdminStickerLibrary /></AuthGuard>} />
+          <Route path="/admin/trip-backgrounds" element={<AuthGuard><AdminTripBackgrounds /></AuthGuard>} />
+          <Route path="/admin/trip-stickers" element={<AuthGuard><AdminTripStickers /></AuthGuard>} />
           
           {/* Catch-all for undefined routes */}
           <Route path="*" element={<AuthGuard><ComingSoon /></AuthGuard>} />
