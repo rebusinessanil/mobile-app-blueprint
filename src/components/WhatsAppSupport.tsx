@@ -77,10 +77,10 @@ export default function WhatsAppSupport() {
       <Button
         size="icon"
         onClick={handleWhatsAppClick}
-        className="w-14 h-14 rounded-full bg-[#25D366] hover:bg-[#20BA5A] shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 p-0 overflow-hidden"
+        className="w-14 h-14 bg-transparent hover:bg-transparent border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 p-0"
         aria-label="Contact support on WhatsApp"
       >
-        <img src={whatsappIcon} alt="WhatsApp" className="w-full h-full object-cover" />
+        <img src={whatsappIcon} alt="WhatsApp" className="w-14 h-14 object-contain" />
       </Button>
 
       {/* Tooltip */}
