@@ -204,6 +204,7 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string | null
+          customer_code: string | null
           id: string
           mobile: string
           name: string
@@ -216,6 +217,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          customer_code?: string | null
           id?: string
           mobile: string
           name: string
@@ -228,6 +230,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          customer_code?: string | null
           id?: string
           mobile?: string
           name?: string
@@ -654,6 +657,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_customer_code: { Args: never; Returns: string }
       is_admin: { Args: { user_id: string }; Returns: boolean }
     }
     Enums: {
