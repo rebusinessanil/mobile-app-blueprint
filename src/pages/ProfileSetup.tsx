@@ -137,11 +137,16 @@ export default function ProfileSetup() {
       }
 
       // Create profile
+      // Get mobile from auth user metadata
+      const { data: { user } } = await supabase.auth.getUser();
+      const mobile = user?.user_metadata?.mobile || user?.phone || '+000000000000';
+
       const { error: profileError } = await supabase
         .from("profiles")
         .insert({
           user_id: userId,
           name: name.trim(),
+          mobile: mobile, // Required field
           role: role.trim() || null,
           profile_photo: uploadedPhotoUrls[0], // Primary photo
         });

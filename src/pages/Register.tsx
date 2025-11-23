@@ -45,8 +45,30 @@ export default function Register() {
       return;
     }
 
-    if (!formData.mobile.trim() || !/^\d{10}$/.test(formData.mobile)) {
-      toast.error("Please enter a valid 10-digit mobile number");
+    // Validate mobile number (E.164 format support)
+    // Must start with + and contain 10-15 digits
+    const mobileNumber = formData.mobile.trim();
+    if (!mobileNumber) {
+      toast.error("Mobile number is required");
+      return;
+    }
+
+    // E.164 format validation: +[country code][number] (10-15 digits total)
+    const e164Pattern = /^\+[1-9]\d{9,14}$/;
+    
+    // Also support plain 10-digit numbers (will be converted to E.164)
+    const plainPattern = /^\d{10}$/;
+    
+    let formattedMobile = mobileNumber;
+    
+    if (e164Pattern.test(mobileNumber)) {
+      // Already in E.164 format
+      formattedMobile = mobileNumber;
+    } else if (plainPattern.test(mobileNumber)) {
+      // Convert 10-digit to E.164 format with default country code +91 (India)
+      formattedMobile = `+91${mobileNumber}`;
+    } else {
+      toast.error("Please enter a valid mobile number (10 digits or +[country code][number])");
       return;
     }
 
@@ -75,8 +97,12 @@ export default function Register() {
           emailRedirectTo: `${window.location.origin}/`,
           data: {
             full_name: formData.fullName,
-            mobile: formData.mobile,
-            whatsapp: formData.differentWhatsApp ? formData.whatsappNumber : formData.mobile,
+            mobile: formattedMobile, // Store in E.164 format
+            whatsapp: formData.differentWhatsApp 
+              ? (formData.whatsappNumber.startsWith('+') 
+                  ? formData.whatsappNumber 
+                  : `+91${formData.whatsappNumber}`)
+              : formattedMobile,
             gender: formData.gender,
           },
         },
@@ -147,11 +173,13 @@ export default function Register() {
             <label className="text-sm text-foreground">Mobile Number *</label>
             <Input
               type="tel"
-              placeholder="10-digit mobile number"
+              placeholder="+91XXXXXXXXXX or 10-digit number"
               value={formData.mobile}
               onChange={(e) => setFormData({ ...formData, mobile: e.target.value })}
               className="gold-border bg-secondary text-foreground placeholder:text-muted-foreground h-12"
+              required
             />
+            <p className="text-xs text-muted-foreground">Enter with country code (+91...) or 10 digits</p>
           </div>
 
           {/* Different WhatsApp Number Checkbox */}

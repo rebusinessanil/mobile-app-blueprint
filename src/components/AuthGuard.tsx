@@ -65,6 +65,7 @@ export default function AuthGuard({ children }: AuthGuardProps) {
           .insert({
             user_id: user.id,
             name: user.email?.split('@')[0] || 'User',
+            mobile: user.phone || '+000000000000', // Required field
           });
 
         if (insertError) {
