@@ -6,6 +6,7 @@ import { useTemplateCategories, useTemplates } from "@/hooks/useTemplates";
 import { useProfile } from "@/hooks/useProfile";
 import { supabase } from "@/integrations/supabase/client";
 import { useRanks } from "@/hooks/useTemplates";
+import { useBonanzaTrips } from "@/hooks/useBonanzaTrips";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import Profile from "./Profile";
 export default function Dashboard() {
@@ -16,6 +17,7 @@ export default function Dashboard() {
     templates: allTemplates
   } = useTemplates();
   const { ranks } = useRanks();
+  const { data: bonanzaTrips = [] } = useBonanzaTrips();
   const [userId, setUserId] = useState<string | null>(null);
   const {
     profile
@@ -122,7 +124,10 @@ export default function Dashboard() {
                   <span className="text-2xl">{category.icon}</span>
                   <h2 className="text-lg font-bold text-foreground">{category.name}</h2>
                 </div>
-                <Link to={isRankPromotion ? '/rank-selection' : `/categories/${category.slug}`} className="text-primary text-sm font-semibold hover:underline">
+                <Link 
+                  to={isRankPromotion ? '/rank-selection' : category.slug === 'bonanza-promotion' ? '/categories/bonanza-trips' : `/categories/${category.slug}`} 
+                  className="text-primary text-sm font-semibold hover:underline"
+                >
                   See All →
                 </Link>
               </div>
@@ -157,6 +162,27 @@ export default function Dashboard() {
                       </Link>
                     );
                   })}
+                </div>
+              ) : category.slug === 'bonanza-promotion' && bonanzaTrips.length > 0 ? (
+                <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                  {bonanzaTrips.slice(0, 5).map(trip => (
+                    <Link 
+                      key={trip.id} 
+                      to={`/banner-create/bonanza?tripId=${trip.id}`}
+                      className="min-w-[140px] gold-border bg-card rounded-2xl overflow-hidden flex-shrink-0 hover:gold-glow transition-all"
+                    >
+                      <div className="h-24 relative">
+                        <img 
+                          src={trip.trip_image_url} 
+                          alt={trip.title} 
+                          className="w-full h-full object-cover" 
+                        />
+                      </div>
+                      <div className="p-3 text-center">
+                        <p className="text-sm font-semibold text-foreground leading-tight">{trip.title}</p>
+                      </div>
+                    </Link>
+                  ))}
                 </div>
               ) : (
                 /* Template Scroll - Dynamic from Backend */

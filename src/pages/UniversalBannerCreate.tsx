@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, ImagePlus, Gift, Cake, Heart, Users, PartyPopper, Zap, LucideIcon } from "lucide-react";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { ArrowLeft, ImagePlus, Gift, Cake, Heart, Users, PartyPopper, Zap, Plane, LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import UplineCarousel from "@/components/UplineCarousel";
@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { removeBackground, loadImage } from "@/lib/backgroundRemover";
 import { useProfile } from "@/hooks/useProfile";
 import { useBannerSettings } from "@/hooks/useBannerSettings";
+import { useBonanzaTrip } from "@/hooks/useBonanzaTrips";
 import { supabase } from "@/integrations/supabase/client";
 
 interface Upline {
@@ -38,14 +39,14 @@ interface CategoryConfig {
 const categoryConfigs: Record<string, CategoryConfig> = {
   'bonanza': {
     icon: '🎁',
-    IconComponent: Gift,
-    title: 'Bonanza Promotion',
+    IconComponent: Plane,
+    title: 'Bonanza Trips Banner',
     subtitle: 'Trip Achievement Details',
     gradient: 'from-red-600 to-orange-600',
     categoryType: 'bonanza',
     rankName: 'Bonanza Achievement',
     additionalFields: [
-      { name: 'tripName', label: 'Trip Name', placeholder: 'Enter trip name', optional: true }
+      { name: 'tripName', label: 'Trip Name', placeholder: 'Trip destination', optional: false }
     ]
   },
   'birthday': {
@@ -112,12 +113,15 @@ const categoryConfigs: Record<string, CategoryConfig> = {
 export default function UniversalBannerCreate() {
   const navigate = useNavigate();
   const { category = 'bonanza' } = useParams<{ category: string }>();
+  const [searchParams] = useSearchParams();
+  const tripId = searchParams.get('tripId');
   const config = categoryConfigs[category] || categoryConfigs['bonanza'];
   
   const [mode, setMode] = useState<"myPhoto" | "others">("myPhoto");
   const [userId, setUserId] = useState<string | null>(null);
   const { profile } = useProfile(userId || undefined);
   const { settings: bannerSettings } = useBannerSettings(userId || undefined);
+  const { data: selectedTrip } = useBonanzaTrip(tripId);
   
   const [uplines, setUplines] = useState<Upline[]>([]);
   const [formData, setFormData] = useState<Record<string, string>>({
@@ -141,6 +145,13 @@ export default function UniversalBannerCreate() {
     };
     getUser();
   }, []);
+
+  // Auto-fill trip name when trip is selected
+  useEffect(() => {
+    if (selectedTrip) {
+      setFormData(prev => ({ ...prev, tripName: selectedTrip.title }));
+    }
+  }, [selectedTrip]);
 
   // Auto-load uplines from banner settings with real-time sync
   useEffect(() => {
