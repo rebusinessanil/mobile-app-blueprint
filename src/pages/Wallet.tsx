@@ -50,14 +50,12 @@ export default function Wallet() {
       // Fetch profile for customer code
       const { data: profile } = await supabase
         .from("profiles")
-        .select("mobile")
+        .select("customer_code")
         .eq("user_id", user.id)
         .single();
       
-      if (profile?.mobile) {
-        // Use last 6 digits of mobile as customer code
-        const code = profile.mobile.slice(-6);
-        setCustomerCode(code);
+      if (profile?.customer_code) {
+        setCustomerCode(profile.customer_code);
       }
 
       await fetchWalletData(user.id);
