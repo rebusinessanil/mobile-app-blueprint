@@ -41,10 +41,8 @@ export default function Wallet() {
   useEffect(() => {
     const initializeWallet = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        navigate("/login");
-        return;
-      }
+      if (!user) return;
+      
       setUserId(user.id);
       
       // Fetch profile for customer code

@@ -30,10 +30,6 @@ export default function AuthGuard({ children }: AuthGuardProps) {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       setLoading(false);
-      
-      if (!session) {
-        navigate("/login", { replace: true });
-      }
     });
 
     return () => subscription.unsubscribe();
