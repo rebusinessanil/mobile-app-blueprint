@@ -20,11 +20,11 @@ export default function ComingSoon() {
         </div>
 
         <Button
-          onClick={() => navigate("/dashboard")}
+          onClick={() => navigate("/banner-create/bonanza")}
           className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Dashboard
+          Create Bonanza Banner
         </Button>
       </div>
     </div>
