@@ -676,6 +676,135 @@ export type Database = {
           },
         ]
       }
+      stories_events: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          event_date: string
+          event_type: string
+          id: string
+          person_name: string
+          poster_url: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          event_date: string
+          event_type: string
+          id?: string
+          person_name: string
+          poster_url: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          event_date?: string
+          event_type?: string
+          id?: string
+          person_name?: string
+          poster_url?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      stories_festivals: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          festival_date: string
+          festival_name: string
+          id: string
+          is_active: boolean | null
+          poster_url: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          festival_date: string
+          festival_name: string
+          id?: string
+          is_active?: boolean | null
+          poster_url: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          festival_date?: string
+          festival_name?: string
+          id?: string
+          is_active?: boolean | null
+          poster_url?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      stories_generated: {
+        Row: {
+          created_at: string | null
+          event_date: string
+          expires_at: string
+          id: string
+          poster_url: string
+          source_id: string
+          source_type: string
+          status: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          event_date: string
+          expires_at: string
+          id?: string
+          poster_url: string
+          source_id: string
+          source_type: string
+          status?: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          event_date?: string
+          expires_at?: string
+          id?: string
+          poster_url?: string
+          source_id?: string
+          source_type?: string
+          status?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      stories_settings: {
+        Row: {
+          description: string | null
+          id: string
+          setting_key: string
+          setting_value: Json
+          updated_at: string | null
+        }
+        Insert: {
+          description?: string | null
+          id?: string
+          setting_key: string
+          setting_value: Json
+          updated_at?: string | null
+        }
+        Update: {
+          description?: string | null
+          id?: string
+          setting_key?: string
+          setting_value?: Json
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       template_backgrounds: {
         Row: {
           background_image_url: string

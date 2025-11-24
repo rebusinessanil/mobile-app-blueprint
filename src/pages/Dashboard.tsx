@@ -10,8 +10,10 @@ import { useBonanzaTrips } from "@/hooks/useBonanzaTrips";
 import { useBirthdays } from "@/hooks/useBirthdays";
 import { useAnniversaries } from "@/hooks/useAnniversaries";
 import { useMotivationalBanners } from "@/hooks/useMotivationalBanners";
+import { useGeneratedStories } from "@/hooks/useAutoStories";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import Profile from "./Profile";
+import { Badge } from "@/components/ui/badge";
 export default function Dashboard() {
   const {
     categories
@@ -24,6 +26,7 @@ export default function Dashboard() {
   const { birthdays } = useBirthdays();
   const { anniversaries } = useAnniversaries();
   const { motivationalBanners } = useMotivationalBanners();
+  const { stories: generatedStories } = useGeneratedStories();
   const [userId, setUserId] = useState<string | null>(null);
   const {
     profile
@@ -125,6 +128,52 @@ export default function Dashboard() {
 
       {/* Content */}
       <div className="px-6 py-6 space-y-6">
+        {/* Auto-Generated Stories Section */}
+        {generatedStories.length > 0 && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">✨</span>
+                <h2 className="text-lg font-bold text-foreground">Today's Stories</h2>
+              </div>
+            </div>
+            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+              {generatedStories.map((story) => (
+                <Link
+                  key={story.id}
+                  to={story.status === 'active' ? `/story/${story.id}` : '#'}
+                  className={`min-w-[140px] gold-border bg-card rounded-2xl overflow-hidden flex-shrink-0 transition-all ${
+                    story.status === 'active' ? 'hover:gold-glow' : 'opacity-75'
+                  }`}
+                >
+                  <div className="h-24 relative">
+                    <img
+                      src={story.poster_url}
+                      alt={story.title}
+                      className="w-full h-full object-cover"
+                    />
+                    {story.status === 'preview_only' && (
+                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                        <Badge variant="secondary" className="text-xs">
+                          Coming Tomorrow
+                        </Badge>
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-3 text-center">
+                    <p className="text-sm font-semibold text-foreground leading-tight">
+                      {story.title}
+                    </p>
+                    {story.status === 'preview_only' && (
+                      <p className="text-xs text-muted-foreground mt-1">Preview Only</p>
+                    )}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Quick Actions */}
         <div className="grid grid-cols-4 gap-3">
           {quickActions.map((action, index) => <Link key={index} to={`/create/${action.label.toLowerCase().replace(/\s+/g, "-")}`} className="gold-border bg-card p-4 rounded-2xl flex flex-col items-center justify-center text-center gap-2 hover:gold-glow transition-all">
