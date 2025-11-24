@@ -10,8 +10,6 @@ import { toast } from "sonner";
 import { removeBackground, loadImage } from "@/lib/backgroundRemover";
 import { useProfile } from "@/hooks/useProfile";
 import { useBannerSettings } from "@/hooks/useBannerSettings";
-import { useTemplateCategories } from "@/hooks/useTemplates";
-import { useBonanzaTrips } from "@/hooks/useBonanzaTrips";
 import { supabase } from "@/integrations/supabase/client";
 
 interface Upline {
@@ -113,25 +111,8 @@ const categoryConfigs: Record<string, CategoryConfig> = {
 
 export default function UniversalBannerCreate() {
   const navigate = useNavigate();
-  const { category = 'bonanza-trips' } = useParams<{ category: string }>();
-  
-  // Fetch categories from backend
-  const { categories } = useTemplateCategories();
-  const currentCategory = categories.find(cat => cat.slug === category);
-  
-  // Fetch bonanza trips if this is the bonanza category
-  const { trips } = useBonanzaTrips(currentCategory?.id);
-  
-  // Fallback config with dynamic category data
-  const config = categoryConfigs[category] || {
-    icon: currentCategory?.icon || '🎁',
-    IconComponent: Gift,
-    title: currentCategory?.name || 'Banner Creator',
-    subtitle: 'Fill up details',
-    gradient: 'from-primary to-secondary',
-    categoryType: category,
-    rankName: currentCategory?.name || 'Achievement',
-  };
+  const { category = 'bonanza' } = useParams<{ category: string }>();
+  const config = categoryConfigs[category] || categoryConfigs['bonanza'];
   
   const [mode, setMode] = useState<"myPhoto" | "others">("myPhoto");
   const [userId, setUserId] = useState<string | null>(null);
