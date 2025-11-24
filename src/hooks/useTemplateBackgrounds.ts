@@ -75,8 +75,7 @@ export const useTemplateBackgrounds = (templateId?: string) => {
 export const uploadTemplateBackground = async (
   templateId: string,
   file: File,
-  slotNumber: number = 1,
-  categorySlug?: string
+  slotNumber: number = 1
 ): Promise<{ id: string | null; url: string | null; error: Error | null }> => {
   try {
     // Validate slot_number is between 1-16
@@ -92,12 +91,10 @@ export const uploadTemplateBackground = async (
       .eq('slot_number', slotNumber)
       .maybeSingle();
 
-    // Upload to storage with category folder structure
+    // Upload to storage
     const fileExt = file.name.split('.').pop();
     const fileName = `template-${templateId}-slot-${slotNumber}-${Date.now()}.${fileExt}`;
-    const filePath = categorySlug 
-      ? `${categorySlug}/${fileName}`
-      : fileName;
+    const filePath = `${fileName}`;
 
     const { error: uploadError } = await supabase.storage
       .from('template-backgrounds')
@@ -129,9 +126,8 @@ export const uploadTemplateBackground = async (
 
     // Clean up old storage file if we replaced an existing background
     if (existing?.background_image_url) {
-      const urlParts = existing.background_image_url.split('/template-backgrounds/');
-      if (urlParts.length > 1) {
-        const oldPath = urlParts[1];
+      const oldPath = existing.background_image_url.split('/').pop();
+      if (oldPath) {
         await supabase.storage
           .from('template-backgrounds')
           .remove([oldPath]);
