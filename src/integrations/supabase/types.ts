@@ -614,6 +614,7 @@ export type Database = {
           name: string
           rank_id: string | null
           required_fields: Json | null
+          trip_id: string | null
           updated_at: string | null
         }
         Insert: {
@@ -629,6 +630,7 @@ export type Database = {
           name: string
           rank_id?: string | null
           required_fields?: Json | null
+          trip_id?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -644,6 +646,7 @@ export type Database = {
           name?: string
           rank_id?: string | null
           required_fields?: Json | null
+          trip_id?: string | null
           updated_at?: string | null
         }
         Relationships: [
@@ -659,6 +662,13 @@ export type Database = {
             columns: ["rank_id"]
             isOneToOne: false
             referencedRelation: "ranks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "templates_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "bonanza_trips"
             referencedColumns: ["id"]
           },
         ]
