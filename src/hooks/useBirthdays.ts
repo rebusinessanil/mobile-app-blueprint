@@ -6,7 +6,7 @@ export interface Birthday {
   title: string;
   short_title?: string;
   description?: string;
-  trip_image_url: string;
+  Birthday_image_url: string;
   category_id?: string;
   is_active: boolean;
   display_order?: number;
