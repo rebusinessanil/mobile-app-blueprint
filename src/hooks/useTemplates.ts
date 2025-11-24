@@ -31,6 +31,7 @@ export interface Template {
   category_id: string;
   rank_id: string | null;
   trip_id: string | null;
+  birthday_id: string | null;
   name: string;
   description: string | null;
   cover_thumbnail_url: string;
@@ -111,7 +112,7 @@ export const useTemplateCategories = () => {
   return { categories, loading, error };
 };
 
-export const useTemplates = (categoryId?: string, tripId?: string, rankId?: string) => {
+export const useTemplates = (categoryId?: string, tripId?: string, rankId?: string, birthdayId?: string) => {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -134,11 +135,15 @@ export const useTemplates = (categoryId?: string, tripId?: string, rankId?: stri
           query = query.eq('trip_id', tripId);
         }
 
-        if (rankId) {
-          query = query.eq('rank_id', rankId);
-        }
+      if (rankId) {
+        query = query.eq('rank_id', rankId);
+      }
 
-        const { data, error } = await query;
+      if (birthdayId) {
+        query = query.eq('birthday_id', birthdayId);
+      }
+
+      const { data, error } = await query;
 
         if (error) throw error;
         setTemplates(data || []);
@@ -154,9 +159,17 @@ export const useTemplates = (categoryId?: string, tripId?: string, rankId?: stri
     fetchTemplates();
 
     // Real-time subscription for instant cover updates
-    const filterKey = tripId ? `trip_id=eq.${tripId}` : categoryId ? `category_id=eq.${categoryId}` : undefined;
+    const filterKey = tripId 
+      ? `trip_id=eq.${tripId}` 
+      : rankId 
+      ? `rank_id=eq.${rankId}`
+      : birthdayId
+      ? `birthday_id=eq.${birthdayId}`
+      : categoryId 
+      ? `category_id=eq.${categoryId}` 
+      : undefined;
     const channel = supabase
-      .channel(`templates-changes-${categoryId || tripId || 'all'}-${Math.random()}`)
+      .channel(`templates-changes-${categoryId || tripId || rankId || birthdayId || 'all'}-${Math.random()}`)
       .on(
         'postgres_changes',
         {
@@ -175,7 +188,7 @@ export const useTemplates = (categoryId?: string, tripId?: string, rankId?: stri
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [categoryId, tripId, rankId]);
+  }, [categoryId, tripId, rankId, birthdayId]);
 
   return { templates, loading, error };
 };

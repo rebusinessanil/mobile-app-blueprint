@@ -7,6 +7,7 @@ import { useProfile } from "@/hooks/useProfile";
 import { supabase } from "@/integrations/supabase/client";
 import { useRanks } from "@/hooks/useTemplates";
 import { useBonanzaTrips } from "@/hooks/useBonanzaTrips";
+import { useBirthdays } from "@/hooks/useBirthdays";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import Profile from "./Profile";
 export default function Dashboard() {
@@ -18,6 +19,7 @@ export default function Dashboard() {
   } = useTemplates();
   const { ranks } = useRanks();
   const { trips } = useBonanzaTrips();
+  const { birthdays } = useBirthdays();
   const [userId, setUserId] = useState<string | null>(null);
   const {
     profile
@@ -32,6 +34,11 @@ export default function Dashboard() {
   // Get trip templates with covers
   const getTripTemplates = () => {
     return allTemplates.filter(t => t.trip_id && trips.some(trip => trip.id === t.trip_id));
+  };
+
+  // Get birthday templates with covers
+  const getBirthdayTemplates = () => {
+    return allTemplates.filter(t => t.birthday_id && birthdays.some(birthday => birthday.id === t.birthday_id));
   };
 
   // Get authenticated user
@@ -123,6 +130,7 @@ export default function Dashboard() {
         const categoryTemplates = getCategoryTemplates(category.id);
         const isRankPromotion = category.slug === 'rank-promotion';
         const isBonanzaPromotion = category.slug === 'bonanza-promotion';
+        const isBirthday = category.slug === 'birthday';
         
         return <div key={category.id} className="space-y-3">
               <div className="flex items-center justify-between">
@@ -134,8 +142,9 @@ export default function Dashboard() {
                   to={
                     isRankPromotion ? '/rank-selection' : 
                     isBonanzaPromotion ? '/categories/bonanza-trips' :
+                    isBirthday ? '/categories/birthdays' :
                     `/categories/${category.slug}`
-                  } 
+                  }
                   className="text-primary text-sm font-semibold hover:underline"
                 >
                   See All →
@@ -195,6 +204,37 @@ export default function Dashboard() {
                         ) : (
                           <div className="h-24 bg-gradient-to-br from-red-600 to-orange-600 flex items-center justify-center text-4xl">
                             {trip?.short_title || '🎁'}
+                          </div>
+                        )}
+                        <div className="p-3 text-center">
+                          <p className="text-sm font-semibold text-foreground leading-tight">{template.name}</p>
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              ) : isBirthday ? (
+                /* Birthday - Show Birthday themes with Cover Images */
+                <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                  {getBirthdayTemplates().map(template => {
+                    const birthday = birthdays.find(b => b.id === template.birthday_id);
+                    return (
+                      <Link 
+                        key={template.id} 
+                        to={`/banner-create/birthday?birthdayId=${template.birthday_id}`}
+                        className="min-w-[140px] gold-border bg-card rounded-2xl overflow-hidden flex-shrink-0 hover:gold-glow transition-all"
+                      >
+                        {template.cover_thumbnail_url ? (
+                          <div className="h-24 relative">
+                            <img 
+                              src={template.cover_thumbnail_url} 
+                              alt={template.name} 
+                              className="w-full h-full object-cover" 
+                            />
+                          </div>
+                        ) : (
+                          <div className="h-24 bg-gradient-to-br from-pink-600 to-purple-600 flex items-center justify-center text-4xl">
+                            {birthday?.short_title || '🎂'}
                           </div>
                         )}
                         <div className="p-3 text-center">

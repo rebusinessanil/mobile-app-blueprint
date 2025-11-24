@@ -133,6 +133,60 @@ export type Database = {
           },
         ]
       }
+      Birthday: {
+        Row: {
+          category_id: string | null
+          created_at: string | null
+          description: string | null
+          display_order: number | null
+          id: string
+          is_active: boolean | null
+          short_title: string | null
+          title: string
+          trip_image_url: string
+          updated_at: string | null
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          short_title?: string | null
+          title: string
+          trip_image_url: string
+          updated_at?: string | null
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          short_title?: string | null
+          title?: string
+          trip_image_url?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "Birthday_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "template_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "Birthday_category_id_fkey1"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "template_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bonanza_trips: {
         Row: {
           category_id: string | null
@@ -602,6 +656,7 @@ export type Database = {
       }
       templates: {
         Row: {
+          birthday_id: string | null
           category_id: string | null
           cover_thumbnail_url: string
           created_at: string | null
@@ -618,6 +673,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          birthday_id?: string | null
           category_id?: string | null
           cover_thumbnail_url: string
           created_at?: string | null
@@ -634,6 +690,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          birthday_id?: string | null
           category_id?: string | null
           cover_thumbnail_url?: string
           created_at?: string | null
@@ -650,6 +707,13 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "templates_birthday_id_fkey"
+            columns: ["birthday_id"]
+            isOneToOne: false
+            referencedRelation: "Birthday"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "templates_category_id_fkey"
             columns: ["category_id"]
