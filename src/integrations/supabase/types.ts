@@ -14,9 +14,9 @@ export type Database = {
   }
   public: {
     Tables: {
-      anniversary: {
+      Anniversary: {
         Row: {
-          anniversary_image_url: string
+          Anniversary_image_url: string
           category_id: string | null
           created_at: string | null
           description: string | null
@@ -28,7 +28,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
-          anniversary_image_url: string
+          Anniversary_image_url: string
           category_id?: string | null
           created_at?: string | null
           description?: string | null
@@ -40,7 +40,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
-          anniversary_image_url?: string
+          Anniversary_image_url?: string
           category_id?: string | null
           created_at?: string | null
           description?: string | null
@@ -53,28 +53,20 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "anniversary_category_id_fkey"
+            foreignKeyName: "Anniversary_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "template_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "Anniversary_category_id_fkey1"
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "template_categories"
             referencedColumns: ["id"]
           },
         ]
-      }
-      Anniversary: {
-        Row: {
-          created_at: string
-          id: number
-        }
-        Insert: {
-          created_at?: string
-          id?: number
-        }
-        Update: {
-          created_at?: string
-          id?: number
-        }
-        Relationships: []
       }
       banner_defaults: {
         Row: {
@@ -776,7 +768,7 @@ export type Database = {
             foreignKeyName: "templates_anniversary_id_fkey"
             columns: ["anniversary_id"]
             isOneToOne: false
-            referencedRelation: "anniversary"
+            referencedRelation: "Anniversary"
             referencedColumns: ["id"]
           },
           {

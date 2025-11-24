@@ -53,7 +53,7 @@ const AnniversariesSelection = () => {
               >
                 <div className="aspect-[3/4] relative overflow-hidden bg-muted">
                   <img
-                    src={anniversary.anniversary_image_url}
+                    src={anniversary.Anniversary_image_url}
                     alt={anniversary.title}
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                   />
