@@ -17,24 +17,20 @@ export const useTemplateBackgrounds = (templateId?: string) => {
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    // CRITICAL: Clear backgrounds immediately when template changes to prevent cross-contamination
-    setBackgrounds([]);
-    setError(null);
-    
-    if (!templateId) {
-      setLoading(false);
-      return;
-    }
-
     const fetchBackgrounds = async () => {
       try {
         setLoading(true);
-        const { data, error } = await supabase
+        let query = supabase
           .from('template_backgrounds')
           .select('*')
-          .eq('template_id', templateId)
           .eq('is_active', true)
           .order('slot_number', { ascending: true });
+
+        if (templateId) {
+          query = query.eq('template_id', templateId);
+        }
+
+        const { data, error } = await query;
 
         if (error) throw error;
 
@@ -42,7 +38,7 @@ export const useTemplateBackgrounds = (templateId?: string) => {
         setError(null);
       } catch (err) {
         setError(err as Error);
-        console.error('Error fetching backgrounds for template:', templateId, err);
+        console.error('Error fetching backgrounds:', err);
       } finally {
         setLoading(false);
       }
@@ -50,55 +46,30 @@ export const useTemplateBackgrounds = (templateId?: string) => {
 
     fetchBackgrounds();
 
-    // Set up real-time subscription for instant template-specific updates
+    // Set up real-time subscription for instant updates
     const channel = supabase
-      .channel(`template-backgrounds-${templateId}`)
+      .channel(`template-backgrounds-${templateId || 'all'}`)
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
           table: 'template_backgrounds',
-          filter: `template_id=eq.${templateId}`,
+          filter: templateId ? `template_id=eq.${templateId}` : undefined,
         },
         (payload) => {
-          console.log('Background updated for template:', templateId, payload);
+          console.log('Background changed:', payload);
           fetchBackgrounds();
         }
       )
-      .subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
-          console.log('Real-time sync active for template:', templateId);
-        }
-      });
+      .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
   }, [templateId]);
 
-  const refetch = async () => {
-    if (!templateId) return;
-    setLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('template_backgrounds')
-        .select('*')
-        .eq('template_id', templateId)
-        .eq('is_active', true)
-        .order('slot_number', { ascending: true });
-
-      if (error) throw error;
-      setBackgrounds(data || []);
-      setError(null);
-    } catch (err) {
-      setError(err as Error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return { backgrounds, loading, error, refetch };
+  return { backgrounds, loading, error };
 };
 
 export const uploadTemplateBackground = async (
@@ -107,17 +78,12 @@ export const uploadTemplateBackground = async (
   slotNumber: number = 1
 ): Promise<{ id: string | null; url: string | null; error: Error | null }> => {
   try {
-    // Validate template ID exists
-    if (!templateId) {
-      throw new Error('Template ID is required');
-    }
-
     // Validate slot_number is between 1-16
     if (slotNumber < 1 || slotNumber > 16) {
       throw new Error(`Invalid slot number: ${slotNumber}. Must be between 1-16.`);
     }
 
-    // Check if slot is already occupied for this specific template
+    // First check if slot is already occupied
     const { data: existing } = await supabase
       .from('template_backgrounds')
       .select('id, background_image_url')
@@ -141,25 +107,22 @@ export const uploadTemplateBackground = async (
       .from('template-backgrounds')
       .getPublicUrl(filePath);
 
-    // Upsert: Update if exists, insert if new - strict template isolation
+    // Upsert: Update if exists, insert if new
     const { data, error: dbError } = await supabase
       .from('template_backgrounds')
       .upsert({
         id: existing?.id, // Keep same ID if updating
-        template_id: templateId, // Enforce template_id binding
+        template_id: templateId,
         background_image_url: publicUrl,
         slot_number: slotNumber,
         is_active: true,
       }, {
-        onConflict: 'template_id,slot_number', // Unique constraint ensures one bg per template+slot
+        onConflict: 'template_id,slot_number'
       })
       .select()
       .single();
 
-    if (dbError) {
-      console.error('Database error during background upload:', dbError);
-      throw dbError;
-    }
+    if (dbError) throw dbError;
 
     // Clean up old storage file if we replaced an existing background
     if (existing?.background_image_url) {

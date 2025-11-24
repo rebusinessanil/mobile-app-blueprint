@@ -151,19 +151,11 @@ export default function BannerPreview() {
     enabled: !!(bannerData?.templateId || bannerData?.rankId)
   });
 
-  // Fetch backgrounds for the current template - ONLY for this template_id with strict isolation
+  // Fetch backgrounds for the current template - ONLY for this template_id
   const currentTemplateId = bannerData?.templateId || templateData?.id;
   const {
-    backgrounds,
-    refetch: refetchBackgrounds
+    backgrounds
   } = useTemplateBackgrounds(currentTemplateId);
-
-  // Force refetch when template changes to ensure no cross-contamination
-  useEffect(() => {
-    if (currentTemplateId) {
-      refetchBackgrounds();
-    }
-  }, [currentTemplateId]);
 
   // Real-time sync for sticker updates from admin panel
   useRealtimeStickerSync({

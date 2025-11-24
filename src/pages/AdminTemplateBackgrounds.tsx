@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -49,15 +49,8 @@ export default function AdminTemplateBackgrounds() {
     enabled: !!selectedCategory,
   });
 
-  // Fetch backgrounds for selected template - with strict isolation
-  const { backgrounds, loading: backgroundsLoading, refetch: refetchBackgrounds } = useTemplateBackgrounds(selectedTemplate);
-
-  // Reset backgrounds when template changes
-  useEffect(() => {
-    if (selectedTemplate) {
-      refetchBackgrounds();
-    }
-  }, [selectedTemplate]);
+  // Fetch backgrounds for selected template
+  const { backgrounds, loading: backgroundsLoading } = useTemplateBackgrounds(selectedTemplate);
 
   const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
