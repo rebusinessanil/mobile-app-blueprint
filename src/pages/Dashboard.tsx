@@ -9,23 +9,28 @@ import { useRanks } from "@/hooks/useTemplates";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import Profile from "./Profile";
 export default function Dashboard() {
-  const {
-    categories
-  } = useTemplateCategories();
-  const {
-    templates: allTemplates
-  } = useTemplates();
   const { ranks } = useRanks();
   const [userId, setUserId] = useState<string | null>(null);
-  const {
-    profile
-  } = useProfile(userId ?? undefined);
+  const { profile } = useProfile(userId ?? undefined);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [bonanzaTrips, setBonanzaTrips] = useState<Array<{
+    id: string;
+    title: string;
+    trip_image_url: string;
+  }>>([]);
 
-  // Get rank templates with covers
-  const getRankTemplates = () => {
-    return allTemplates.filter(t => t.rank_id && ranks.some(r => r.id === t.rank_id));
-  };
+  // Fetch bonanza trips
+  useEffect(() => {
+    const fetchTrips = async () => {
+      const { data } = await (supabase as any)
+        .from('bonanza_trips')
+        .select('*')
+        .eq('is_active', true)
+        .order('display_order');
+      if (data) setBonanzaTrips(data);
+    };
+    fetchTrips();
+  }, []);
 
   // Get authenticated user
   useEffect(() => {
@@ -37,28 +42,28 @@ export default function Dashboard() {
       setUserId(session?.user?.id ?? null);
     });
   }, []);
+
   const quickActions = [{
     icon: Calendar,
     label: "Festival Banner",
-    color: "bg-icon-purple"
+    color: "bg-icon-purple",
+    path: "/banner-create/festival"
   }, {
     icon: Zap,
     label: "Motivational Quote",
-    color: "bg-icon-orange"
+    color: "bg-icon-orange",
+    path: "/banner-create/motivational"
   }, {
     icon: Award,
     label: "Achievements",
-    color: "bg-icon-purple"
+    color: "bg-icon-purple",
+    path: "/categories/achievements"
   }, {
     label: "Special Offer Today",
     color: "bg-secondary",
-    special: true
+    special: true,
+    path: "/categories/special"
   }];
-
-  // Get templates for each category
-  const getCategoryTemplates = (categoryId: string) => {
-    return allTemplates.filter(t => t.category_id === categoryId).slice(0, 3);
-  };
   return <div className="min-h-screen bg-navy-dark pb-24">
       {/* Header */}
       <header className="sticky top-0 bg-navy-dark/95 backdrop-blur-sm z-40 px-6 py-4 border-b border-primary/20">
@@ -99,105 +104,160 @@ export default function Dashboard() {
       <div className="px-6 py-6 space-y-6">
         {/* Quick Actions */}
         <div className="grid grid-cols-4 gap-3">
-          {quickActions.map((action, index) => <Link key={index} to={`/create/${action.label.toLowerCase().replace(/\s+/g, "-")}`} className="gold-border bg-card p-4 rounded-2xl flex flex-col items-center justify-center text-center gap-2 hover:gold-glow transition-all">
-              {action.special ? <div className="text-xs font-semibold text-foreground leading-tight">
+          {quickActions.map((action, index) => (
+            <Link 
+              key={index} 
+              to={action.path}
+              className="gold-border bg-card p-4 rounded-2xl flex flex-col items-center justify-center text-center gap-2 hover:gold-glow transition-all"
+            >
+              {action.special ? (
+                <div className="text-xs font-semibold text-foreground leading-tight">
                   {action.label}
-                </div> : <>
+                </div>
+              ) : (
+                <>
                   <div className={`w-12 h-12 ${action.color} rounded-2xl flex items-center justify-center`}>
                     {action.icon && <action.icon className="w-6 h-6 text-white" />}
                   </div>
                   <span className="text-xs font-semibold text-foreground">{action.label}</span>
-                </>}
-            </Link>)}
+                </>
+              )}
+            </Link>
+          ))}
         </div>
 
-        {/* Category Sections - Backend Integrated */}
-        {categories.map(category => {
-        const categoryTemplates = getCategoryTemplates(category.id);
-        const isRankPromotion = category.slug === 'rank-promotion';
-        
-        return <div key={category.id} className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-2xl">{category.icon}</span>
-                  <h2 className="text-lg font-bold text-foreground">{category.name}</h2>
+        {/* Rank Promotion Section */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-2xl">🏆</span>
+              <h2 className="text-lg font-bold text-foreground">Rank Promotion</h2>
+            </div>
+            <Link to="/rank-selection" className="text-primary text-sm font-semibold hover:underline">
+              See All →
+            </Link>
+          </div>
+          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+            {ranks.slice(0, 3).map((rank) => (
+              <Link 
+                key={rank.id} 
+                to={`/rank-banner-create/${rank.id}`}
+                className="min-w-[140px] gold-border bg-card rounded-2xl overflow-hidden flex-shrink-0 hover:gold-glow transition-all"
+              >
+                <div className={`h-24 ${rank.gradient} flex items-center justify-center text-4xl`}>
+                  {rank.icon}
                 </div>
-                <Link to={isRankPromotion ? '/rank-selection' : `/categories/${category.slug}`} className="text-primary text-sm font-semibold hover:underline">
-                  See All →
-                </Link>
-              </div>
+                <div className="p-3 text-center">
+                  <p className="text-sm font-semibold text-foreground leading-tight">{rank.name}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
 
-              {/* Rank Promotion - Show Ranks with Cover Images */}
-              {isRankPromotion ? (
-                <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-                  {getRankTemplates().map(template => {
-                    const rank = ranks.find(r => r.id === template.rank_id);
-                    return (
-                      <Link 
-                        key={template.id} 
-                        to={`/rank-banner-create/${template.rank_id}`}
-                        className="min-w-[140px] gold-border bg-card rounded-2xl overflow-hidden flex-shrink-0 hover:gold-glow transition-all"
-                      >
-                        {template.cover_thumbnail_url ? (
-                          <div className="h-24 relative">
-                            <img 
-                              src={template.cover_thumbnail_url} 
-                              alt={template.name} 
-                              className="w-full h-full object-cover" 
-                            />
-                          </div>
-                        ) : (
-                          <div className={`h-24 ${rank?.gradient || 'bg-gradient-to-br from-secondary to-card'} flex items-center justify-center text-4xl`}>
-                            {rank?.icon || '🏆'}
-                          </div>
-                        )}
-                        <div className="p-3 text-center">
-                          <p className="text-sm font-semibold text-foreground leading-tight">{template.name}</p>
-                        </div>
-                      </Link>
-                    );
-                  })}
+        {/* Bonanza Trips Section */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-2xl">✈️</span>
+              <h2 className="text-lg font-bold text-foreground">Bonanza Trips</h2>
+            </div>
+            <Link to="/categories/bonanza" className="text-primary text-sm font-semibold hover:underline">
+              See All →
+            </Link>
+          </div>
+          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+            {bonanzaTrips.slice(0, 3).map((trip) => (
+              <Link 
+                key={trip.id} 
+                to={`/banner-create/bonanza?tripId=${trip.id}`}
+                className="min-w-[140px] gold-border bg-card rounded-2xl overflow-hidden flex-shrink-0 hover:gold-glow transition-all"
+              >
+                {trip.trip_image_url ? (
+                  <div className="h-24 relative">
+                    <img 
+                      src={trip.trip_image_url} 
+                      alt={trip.title} 
+                      className="w-full h-full object-cover" 
+                    />
+                  </div>
+                ) : (
+                  <div className="h-24 bg-gradient-to-br from-secondary to-card flex items-center justify-center text-4xl">
+                    ✈️
+                  </div>
+                )}
+                <div className="p-3 text-center">
+                  <p className="text-sm font-semibold text-foreground leading-tight">{trip.title}</p>
                 </div>
-              ) : (
-                /* Template Scroll - Dynamic from Backend */
-                <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-                  {categoryTemplates.length > 0 ? categoryTemplates.map(template => {
-                    // Map category slugs to unified banner routes
-                    const getCategoryRoute = () => {
-                      const routeMap: Record<string, string> = {
-                        'bonanza-promotion': '/banner-create/bonanza',
-                        'birthday': '/banner-create/birthday',
-                        'anniversary': '/banner-create/anniversary',
-                        'meeting': '/banner-create/meeting',
-                        'festival': '/banner-create/festival',
-                        'motivational': '/banner-create/motivational'
-                      };
-                      return routeMap[category.slug] || `/template/${template.id}`;
-                    };
-                    
-                    return (
-                      <Link 
-                        key={template.id} 
-                        to={getCategoryRoute()} 
-                        className="min-w-[140px] gold-border bg-card rounded-2xl overflow-hidden flex-shrink-0 hover:gold-glow transition-all mx-0 my-0 py-0 px-0"
-                      >
-                        {template.cover_thumbnail_url ? <div className="h-32 relative">
-                            <img src={template.cover_thumbnail_url} alt={template.name} className="w-full h-full object-cover" />
-                          </div> : <div className="h-32 bg-gradient-to-br from-secondary to-card flex items-center justify-center">
-                            <div className="text-center px-2">
-                              <p className="text-white font-bold text-sm">CHANGE COVER</p>
-                              <p className="text-primary text-xs mt-1">{"{ BACKEND }"}</p>
-                            </div>
-                          </div>}
-                      </Link>
-                    );
-                  }) : <div className="min-w-[140px] gold-border bg-card rounded-2xl overflow-hidden flex-shrink-0 p-4">
-                      <p className="text-xs text-muted-foreground text-center">No templates yet</p>
-                    </div>}
-                </div>
-              )}
-            </div>;
-      })}
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        {/* Birthday Section */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-2xl">🎂</span>
+              <h2 className="text-lg font-bold text-foreground">Birthday</h2>
+            </div>
+            <Link to="/banner-create/birthday" className="text-primary text-sm font-semibold hover:underline">
+              Create →
+            </Link>
+          </div>
+        </div>
+
+        {/* Anniversary Section */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-2xl">💞</span>
+              <h2 className="text-lg font-bold text-foreground">Anniversary</h2>
+            </div>
+            <Link to="/banner-create/anniversary" className="text-primary text-sm font-semibold hover:underline">
+              Create →
+            </Link>
+          </div>
+        </div>
+
+        {/* Meeting Section */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-2xl">👥</span>
+              <h2 className="text-lg font-bold text-foreground">Meeting</h2>
+            </div>
+            <Link to="/banner-create/meeting" className="text-primary text-sm font-semibold hover:underline">
+              Create →
+            </Link>
+          </div>
+        </div>
+
+        {/* Festival Section */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-2xl">🎉</span>
+              <h2 className="text-lg font-bold text-foreground">Festival</h2>
+            </div>
+            <Link to="/banner-create/festival" className="text-primary text-sm font-semibold hover:underline">
+              Create →
+            </Link>
+          </div>
+        </div>
+
+        {/* Motivational Section */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-2xl">⚡</span>
+              <h2 className="text-lg font-bold text-foreground">Motivational</h2>
+            </div>
+            <Link to="/banner-create/motivational" className="text-primary text-sm font-semibold hover:underline">
+              Create →
+            </Link>
+          </div>
+        </div>
       </div>
 
       <BottomNav />
