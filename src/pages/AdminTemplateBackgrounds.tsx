@@ -29,7 +29,7 @@ export default function AdminTemplateBackgrounds() {
     },
   });
 
-  // Fetch templates for selected category with rank info
+  // Fetch templates for selected category with optional rank info
   const { data: templates, isLoading: templatesLoading } = useQuery({
     queryKey: ['templates', selectedCategory],
     queryFn: async () => {
@@ -185,6 +185,9 @@ export default function AdminTemplateBackgrounds() {
                           <span className="text-lg">{template.ranks.icon}</span>
                           <span className="text-xs opacity-75 truncate">{template.ranks.name}</span>
                         </div>
+                      )}
+                      {!template.ranks && template.description && (
+                        <span className="text-xs opacity-75 truncate block text-center">{template.description}</span>
                       )}
                     </div>
                   </Button>
