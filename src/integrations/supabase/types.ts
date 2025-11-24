@@ -352,6 +352,60 @@ export type Database = {
         }
         Relationships: []
       }
+      "Motivational Banner": {
+        Row: {
+          Anniversary_image_url: string
+          category_id: string | null
+          created_at: string | null
+          description: string | null
+          display_order: number | null
+          id: string
+          is_active: boolean | null
+          short_title: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          Anniversary_image_url: string
+          category_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          short_title?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          Anniversary_image_url?: string
+          category_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          short_title?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "Motivational Banner_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "template_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "Motivational Banner_category_id_fkey1"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "template_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profile_photos: {
         Row: {
           created_at: string | null
@@ -721,6 +775,7 @@ export type Database = {
           id: string
           is_active: boolean | null
           layout_config: Json | null
+          motivational_banner_id: string | null
           name: string
           rank_id: string | null
           required_fields: Json | null
@@ -739,6 +794,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           layout_config?: Json | null
+          motivational_banner_id?: string | null
           name: string
           rank_id?: string | null
           required_fields?: Json | null
@@ -757,6 +813,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           layout_config?: Json | null
+          motivational_banner_id?: string | null
           name?: string
           rank_id?: string | null
           required_fields?: Json | null
@@ -783,6 +840,13 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "template_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "templates_motivational_banner_id_fkey"
+            columns: ["motivational_banner_id"]
+            isOneToOne: false
+            referencedRelation: "Motivational Banner"
             referencedColumns: ["id"]
           },
           {

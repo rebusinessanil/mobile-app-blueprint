@@ -25,6 +25,8 @@ import BirthdaysSelection from "./pages/BirthdaysSelection";
 import BirthdayBannerCreate from "./pages/BirthdayBannerCreate";
 import AnniversariesSelection from "./pages/AnniversariesSelection";
 import AnniversaryBannerCreate from "./pages/AnniversaryBannerCreate";
+import MotivationalBannersSelection from "./pages/MotivationalBannersSelection";
+import MotivationalBannerCreate from "./pages/MotivationalBannerCreate";
 import BannerSettings from "./pages/BannerSettings";
 import BannerPreview from "./pages/BannerPreview";
 import AdminStickers from "./pages/AdminStickers";
@@ -63,6 +65,7 @@ const App = () => (
           <Route path="/categories/bonanza-trips" element={<AuthGuard><BonanzaTripsSelection /></AuthGuard>} />
           <Route path="/categories/birthdays" element={<AuthGuard><BirthdaysSelection /></AuthGuard>} />
           <Route path="/categories/anniversaries" element={<AuthGuard><AnniversariesSelection /></AuthGuard>} />
+          <Route path="/categories/motivational" element={<AuthGuard><MotivationalBannersSelection /></AuthGuard>} />
           <Route path="/category/:slug" element={<AuthGuard><ComingSoon /></AuthGuard>} />
           <Route path="/messages" element={<AuthGuard><Messages /></AuthGuard>} />
           <Route path="/profile" element={<AuthGuard><Profile /></AuthGuard>} />
@@ -76,6 +79,7 @@ const App = () => (
           <Route path="/banner-create/bonanza" element={<AuthGuard><BonanzaBannerCreate /></AuthGuard>} />
           <Route path="/banner-create/birthday" element={<AuthGuard><BirthdayBannerCreate /></AuthGuard>} />
           <Route path="/banner-create/anniversary" element={<AuthGuard><AnniversaryBannerCreate /></AuthGuard>} />
+          <Route path="/banner-create/motivational" element={<AuthGuard><MotivationalBannerCreate /></AuthGuard>} />
           
           {/* Admin routes - auth required */}
           <Route path="/admin" element={<AuthGuard><AdminDashboard /></AuthGuard>} />
