@@ -8,7 +8,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useRanks } from "@/hooks/useTemplates";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import Profile from "./Profile";
-import { CATEGORY_IDS } from "@/constants/categories";
 export default function Dashboard() {
   const {
     categories
@@ -23,9 +22,9 @@ export default function Dashboard() {
   } = useProfile(userId ?? undefined);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
-  // Get rank templates with covers - filter by Rank Promotion category
+  // Get rank templates with covers
   const getRankTemplates = () => {
-    return allTemplates.filter(t => t.category_id === CATEGORY_IDS.RANK_PROMOTION && t.rank_id);
+    return allTemplates.filter(t => t.rank_id && ranks.some(r => r.id === t.rank_id));
   };
 
   // Get authenticated user
