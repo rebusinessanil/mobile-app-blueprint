@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, ImagePlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,8 @@ import { toast } from "sonner";
 import { removeBackground, loadImage } from "@/lib/backgroundRemover";
 import { useProfile } from "@/hooks/useProfile";
 import { useBannerSettings } from "@/hooks/useBannerSettings";
+import { useBirthday } from "@/hooks/useBirthdays";
+import { useTemplates } from "@/hooks/useTemplates";
 import { supabase } from "@/integrations/supabase/client";
 
 interface Upline {
@@ -20,6 +22,12 @@ interface Upline {
 
 export default function BirthdayBannerCreate() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const birthdayId = searchParams.get('birthdayId');
+  
+  const { birthday, loading: birthdayLoading } = useBirthday(birthdayId || undefined);
+  const { templates, loading: templatesLoading } = useTemplates(undefined, undefined, undefined, birthdayId || undefined);
+  
   const [mode, setMode] = useState<"myPhoto" | "others">("myPhoto");
   const [userId, setUserId] = useState<string | null>(null);
   const { profile } = useProfile(userId || undefined);
@@ -29,7 +37,8 @@ export default function BirthdayBannerCreate() {
   const [formData, setFormData] = useState({
     name: "",
     teamCity: "",
-    message: ""
+    message: "",
+    birthdayTitle: ""
   });
   const [photo, setPhoto] = useState<string | null>(null);
   const [tempPhoto, setTempPhoto] = useState<string | null>(null);
@@ -58,6 +67,12 @@ export default function BirthdayBannerCreate() {
       setUplines(defaultUplines);
     }
   }, [bannerSettings]);
+
+  useEffect(() => {
+    if (birthday) {
+      setFormData(prev => ({ ...prev, birthdayTitle: birthday.title }));
+    }
+  }, [birthday]);
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -122,16 +137,20 @@ export default function BirthdayBannerCreate() {
       return;
     }
 
+    const templateId = templates.length > 0 ? templates[0].id : undefined;
+
     navigate("/banner-preview", {
       state: {
         categoryType: "birthday",
-        rankName: "Birthday Celebration",
+        rankName: formData.birthdayTitle || "Birthday Celebration",
         name: formData.name,
         teamCity: formData.teamCity,
         message: formData.message,
         photo,
         uplines,
-        slotStickers
+        slotStickers,
+        templateId,
+        birthdayId
       }
     });
   };
@@ -140,7 +159,8 @@ export default function BirthdayBannerCreate() {
     setFormData({
       name: "",
       teamCity: "",
-      message: ""
+      message: "",
+      birthdayTitle: birthday?.title || ""
     });
     setPhoto(null);
     setTempPhoto(null);
@@ -157,6 +177,30 @@ export default function BirthdayBannerCreate() {
     setSlotStickers({});
     toast.success("Form reset to default values");
   };
+
+  if (birthdayLoading || templatesLoading) {
+    return (
+      <div className="min-h-screen bg-navy-dark flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading birthday details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!birthday) {
+    return (
+      <div className="min-h-screen bg-navy-dark flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-foreground text-xl mb-4">Birthday theme not found</p>
+          <Button onClick={() => navigate('/categories/birthdays')}>
+            Back to Birthdays
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-navy-dark pb-6">
