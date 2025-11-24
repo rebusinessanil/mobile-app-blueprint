@@ -133,6 +133,42 @@ export type Database = {
           },
         ]
       }
+      bonanza_trips: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          display_order: number | null
+          id: string
+          is_active: boolean | null
+          short_title: string | null
+          title: string
+          trip_image_url: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          short_title?: string | null
+          title: string
+          trip_image_url: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          short_title?: string | null
+          title?: string
+          trip_image_url?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       category_banner_settings: {
         Row: {
           category_slug: string
@@ -585,6 +621,57 @@ export type Database = {
             columns: ["rank_id"]
             isOneToOne: false
             referencedRelation: "ranks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trip_achievements: {
+        Row: {
+          achievement_photo: string | null
+          banner_id: string | null
+          created_at: string | null
+          id: string
+          name: string
+          team_city: string | null
+          trip_id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          achievement_photo?: string | null
+          banner_id?: string | null
+          created_at?: string | null
+          id?: string
+          name: string
+          team_city?: string | null
+          trip_id: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          achievement_photo?: string | null
+          banner_id?: string | null
+          created_at?: string | null
+          id?: string
+          name?: string
+          team_city?: string | null
+          trip_id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trip_achievements_banner_id_fkey"
+            columns: ["banner_id"]
+            isOneToOne: false
+            referencedRelation: "banners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trip_achievements_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "bonanza_trips"
             referencedColumns: ["id"]
           },
         ]
