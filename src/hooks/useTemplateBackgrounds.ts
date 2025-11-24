@@ -75,12 +75,29 @@ export const useTemplateBackgrounds = (templateId?: string) => {
 export const uploadTemplateBackground = async (
   templateId: string,
   file: File,
-  slotNumber: number = 1
+  slotNumber: number = 1,
+  categorySlug?: string
 ): Promise<{ id: string | null; url: string | null; error: Error | null }> => {
   try {
     // Validate slot_number is between 1-16
     if (slotNumber < 1 || slotNumber > 16) {
       throw new Error(`Invalid slot number: ${slotNumber}. Must be between 1-16.`);
+    }
+
+    // Fetch template to get category_slug if not provided
+    let folderPath = '';
+    if (categorySlug) {
+      folderPath = categorySlug;
+    } else {
+      const { data: template } = await supabase
+        .from('templates')
+        .select('category_id, template_categories(slug)')
+        .eq('id', templateId)
+        .single();
+      
+      if (template?.template_categories) {
+        folderPath = (template.template_categories as any).slug;
+      }
     }
 
     // First check if slot is already occupied
@@ -91,10 +108,10 @@ export const uploadTemplateBackground = async (
       .eq('slot_number', slotNumber)
       .maybeSingle();
 
-    // Upload to storage
+    // Upload to storage with category-specific folder
     const fileExt = file.name.split('.').pop();
     const fileName = `template-${templateId}-slot-${slotNumber}-${Date.now()}.${fileExt}`;
-    const filePath = `${fileName}`;
+    const filePath = folderPath ? `${folderPath}/${fileName}` : fileName;
 
     const { error: uploadError } = await supabase.storage
       .from('template-backgrounds')
@@ -126,7 +143,7 @@ export const uploadTemplateBackground = async (
 
     // Clean up old storage file if we replaced an existing background
     if (existing?.background_image_url) {
-      const oldPath = existing.background_image_url.split('/').pop();
+      const oldPath = existing.background_image_url.split('/template-backgrounds/public/').pop();
       if (oldPath) {
         await supabase.storage
           .from('template-backgrounds')
