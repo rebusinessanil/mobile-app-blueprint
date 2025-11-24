@@ -14,6 +14,68 @@ export type Database = {
   }
   public: {
     Tables: {
+      anniversary: {
+        Row: {
+          anniversary_image_url: string
+          category_id: string | null
+          created_at: string | null
+          description: string | null
+          display_order: number | null
+          id: string
+          is_active: boolean | null
+          short_title: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          anniversary_image_url: string
+          category_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          short_title?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          anniversary_image_url?: string
+          category_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          short_title?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "anniversary_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "template_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      Anniversary: {
+        Row: {
+          created_at: string
+          id: number
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+        }
+        Update: {
+          created_at?: string
+          id?: number
+        }
+        Relationships: []
+      }
       banner_defaults: {
         Row: {
           congratulations_image: string | null
@@ -656,6 +718,7 @@ export type Database = {
       }
       templates: {
         Row: {
+          anniversary_id: string | null
           birthday_id: string | null
           category_id: string | null
           cover_thumbnail_url: string
@@ -673,6 +736,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          anniversary_id?: string | null
           birthday_id?: string | null
           category_id?: string | null
           cover_thumbnail_url: string
@@ -690,6 +754,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          anniversary_id?: string | null
           birthday_id?: string | null
           category_id?: string | null
           cover_thumbnail_url?: string
@@ -707,6 +772,13 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "templates_anniversary_id_fkey"
+            columns: ["anniversary_id"]
+            isOneToOne: false
+            referencedRelation: "anniversary"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "templates_birthday_id_fkey"
             columns: ["birthday_id"]
