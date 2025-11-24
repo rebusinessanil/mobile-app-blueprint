@@ -84,7 +84,9 @@ export default function AdminTemplateBackgrounds() {
         toast.error('Failed to upload background');
         console.error(error);
       } else {
-        toast.success(`Background uploaded to slot ${nextSlot} - Updates will sync instantly`);
+        toast.success(`Background uploaded to slot ${nextSlot} - Syncing to all categories instantly!`);
+        // Force immediate refetch to ensure instant display
+        await refetchBackgrounds();
       }
     } finally {
       setUploading(false);
@@ -140,9 +142,12 @@ export default function AdminTemplateBackgrounds() {
     event.target.value = '';
 
     if (successCount > 0 && failCount === 0) {
-      toast.success(`Successfully uploaded ${successCount} backgrounds! Updates synced instantly.`);
+      toast.success(`Successfully uploaded ${successCount} backgrounds! Syncing to all categories instantly.`);
+      // Force immediate refetch after bulk upload
+      await refetchBackgrounds();
     } else if (successCount > 0 && failCount > 0) {
       toast.warning(`Uploaded ${successCount} backgrounds. ${failCount} failed.`);
+      await refetchBackgrounds();
     } else {
       toast.error('Failed to upload backgrounds');
     }
@@ -155,7 +160,9 @@ export default function AdminTemplateBackgrounds() {
     if (error) {
       toast.error('Failed to remove background');
     } else {
-      toast.success('Background removed');
+      toast.success('Background removed - Syncing across all categories');
+      // Force immediate refetch after deletion
+      await refetchBackgrounds();
     }
   };
 
@@ -164,7 +171,9 @@ export default function AdminTemplateBackgrounds() {
     if (error) {
       toast.error('Failed to update background status');
     } else {
-      toast.success(`Background ${!isActive ? 'activated' : 'deactivated'}`);
+      toast.success(`Background ${!isActive ? 'activated' : 'deactivated'} - Syncing to all users`);
+      // Force immediate refetch after status change
+      await refetchBackgrounds();
     }
   };
 
@@ -179,8 +188,8 @@ export default function AdminTemplateBackgrounds() {
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-foreground mb-2">Template Backgrounds</h1>
-        <p className="text-muted-foreground">Manage background images for banner templates</p>
+        <h1 className="text-3xl font-bold text-foreground mb-2">Template Backgrounds (All Categories)</h1>
+        <p className="text-muted-foreground">Manage background images for all banner templates - updates sync instantly across Rank, Bonanza Trips, Birthday, Anniversary, Festival, Motivational, and all other categories</p>
       </div>
 
       {/* Category Selection */}
