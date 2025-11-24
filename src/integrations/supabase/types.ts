@@ -625,6 +625,57 @@ export type Database = {
           },
         ]
       }
+      trip_achievements: {
+        Row: {
+          achievement_photo: string | null
+          banner_id: string | null
+          created_at: string | null
+          id: string
+          name: string
+          team_city: string | null
+          trip_id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          achievement_photo?: string | null
+          banner_id?: string | null
+          created_at?: string | null
+          id?: string
+          name: string
+          team_city?: string | null
+          trip_id: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          achievement_photo?: string | null
+          banner_id?: string | null
+          created_at?: string | null
+          id?: string
+          name?: string
+          team_city?: string | null
+          trip_id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trip_achievements_banner_id_fkey"
+            columns: ["banner_id"]
+            isOneToOne: false
+            referencedRelation: "banners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trip_achievements_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "bonanza_trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_banner_settings: {
         Row: {
           auto_share_to_feed: boolean | null
