@@ -17,8 +17,11 @@ export const useTemplateBackgrounds = (templateId?: string) => {
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
+    // CRITICAL: Clear backgrounds immediately when template changes to prevent cross-contamination
+    setBackgrounds([]);
+    setError(null);
+    
     if (!templateId) {
-      setBackgrounds([]);
       setLoading(false);
       return;
     }
@@ -74,7 +77,28 @@ export const useTemplateBackgrounds = (templateId?: string) => {
     };
   }, [templateId]);
 
-  return { backgrounds, loading, error };
+  const refetch = async () => {
+    if (!templateId) return;
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('template_backgrounds')
+        .select('*')
+        .eq('template_id', templateId)
+        .eq('is_active', true)
+        .order('slot_number', { ascending: true });
+
+      if (error) throw error;
+      setBackgrounds(data || []);
+      setError(null);
+    } catch (err) {
+      setError(err as Error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { backgrounds, loading, error, refetch };
 };
 
 export const uploadTemplateBackground = async (
