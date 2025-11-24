@@ -34,8 +34,6 @@ import AdminStories from "./pages/AdminStories";
 import AdminStickerLibrary from "./pages/AdminStickerLibrary";
 import Wallet from "./pages/Wallet";
 import UniversalBannerCreate from "./pages/UniversalBannerCreate";
-import BonanzaTripsCategory from "./pages/BonanzaTripsCategory";
-import AdminBonanzaTrips from "./pages/AdminBonanzaTrips";
 
 const queryClient = new QueryClient();
 
@@ -66,7 +64,6 @@ const App = () => (
           <Route path="/banner-preview" element={<AuthGuard><BannerPreview /></AuthGuard>} />
           <Route path="/wallet" element={<AuthGuard><Wallet /></AuthGuard>} />
           <Route path="/banner-create/:category" element={<AuthGuard><UniversalBannerCreate /></AuthGuard>} />
-          <Route path="/categories/bonanza-trips" element={<AuthGuard><BonanzaTripsCategory /></AuthGuard>} />
           
           {/* Admin routes - auth required */}
           <Route path="/admin" element={<AuthGuard><AdminDashboard /></AuthGuard>} />
@@ -80,7 +77,6 @@ const App = () => (
           <Route path="/admin/banner-preview-defaults" element={<AuthGuard><AdminBannerPreviewDefaults /></AuthGuard>} />
           <Route path="/admin/template-backgrounds" element={<AuthGuard><AdminTemplateBackgrounds /></AuthGuard>} />
           <Route path="/admin/sticker-library" element={<AuthGuard><AdminStickerLibrary /></AuthGuard>} />
-          <Route path="/admin/bonanza-trips" element={<AuthGuard><AdminBonanzaTrips /></AuthGuard>} />
           
           {/* Catch-all for undefined routes */}
           <Route path="*" element={<AuthGuard><ComingSoon /></AuthGuard>} />

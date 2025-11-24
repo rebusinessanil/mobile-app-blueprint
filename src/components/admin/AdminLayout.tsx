@@ -12,8 +12,7 @@ import {
   LogOut,
   Menu,
   X,
-  Library,
-  Plane
+  Library
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -29,7 +28,6 @@ const adminRoutes = [
   { path: "/admin", icon: LayoutDashboard, label: "Dashboard" },
   { path: "/admin/users", icon: Users, label: "Users" },
   { path: "/admin/templates", icon: FileImage, label: "Templates" },
-  { path: "/admin/bonanza-trips", icon: Plane, label: "Bonanza Trips" },
   { path: "/admin/stories", icon: BookOpen, label: "Stories" },
   { path: "/admin/ranks", icon: Award, label: "Ranks" },
   { path: "/admin/sticker-library", icon: Library, label: "Sticker Library" },
