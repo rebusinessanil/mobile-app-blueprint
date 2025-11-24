@@ -30,6 +30,7 @@ export interface Template {
   id: string;
   category_id: string;
   rank_id: string | null;
+  trip_id: string | null;
   name: string;
   description: string | null;
   cover_thumbnail_url: string;
@@ -110,7 +111,7 @@ export const useTemplateCategories = () => {
   return { categories, loading, error };
 };
 
-export const useTemplates = (categoryId?: string) => {
+export const useTemplates = (categoryId?: string, tripId?: string, rankId?: string) => {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -129,6 +130,14 @@ export const useTemplates = (categoryId?: string) => {
           query = query.eq('category_id', categoryId);
         }
 
+        if (tripId) {
+          query = query.eq('trip_id', tripId);
+        }
+
+        if (rankId) {
+          query = query.eq('rank_id', rankId);
+        }
+
         const { data, error } = await query;
 
         if (error) throw error;
@@ -145,15 +154,16 @@ export const useTemplates = (categoryId?: string) => {
     fetchTemplates();
 
     // Real-time subscription for instant cover updates
+    const filterKey = tripId ? `trip_id=eq.${tripId}` : categoryId ? `category_id=eq.${categoryId}` : undefined;
     const channel = supabase
-      .channel(`templates-changes-${categoryId || 'all'}-${Math.random()}`)
+      .channel(`templates-changes-${categoryId || tripId || 'all'}-${Math.random()}`)
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
           table: 'templates',
-          filter: categoryId ? `category_id=eq.${categoryId}` : undefined,
+          filter: filterKey,
         },
         (payload) => {
           console.log('📡 Template update received:', payload);
@@ -165,7 +175,7 @@ export const useTemplates = (categoryId?: string) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [categoryId]);
+  }, [categoryId, tripId, rankId]);
 
   return { templates, loading, error };
 };

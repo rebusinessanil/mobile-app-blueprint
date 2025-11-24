@@ -6,6 +6,7 @@ import { useTemplateCategories, useTemplates } from "@/hooks/useTemplates";
 import { useProfile } from "@/hooks/useProfile";
 import { supabase } from "@/integrations/supabase/client";
 import { useRanks } from "@/hooks/useTemplates";
+import { useBonanzaTrips } from "@/hooks/useBonanzaTrips";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import Profile from "./Profile";
 export default function Dashboard() {
@@ -16,6 +17,7 @@ export default function Dashboard() {
     templates: allTemplates
   } = useTemplates();
   const { ranks } = useRanks();
+  const { trips } = useBonanzaTrips();
   const [userId, setUserId] = useState<string | null>(null);
   const {
     profile
@@ -25,6 +27,11 @@ export default function Dashboard() {
   // Get rank templates with covers
   const getRankTemplates = () => {
     return allTemplates.filter(t => t.rank_id && ranks.some(r => r.id === t.rank_id));
+  };
+
+  // Get trip templates with covers
+  const getTripTemplates = () => {
+    return allTemplates.filter(t => t.trip_id && trips.some(trip => trip.id === t.trip_id));
   };
 
   // Get authenticated user
@@ -115,6 +122,7 @@ export default function Dashboard() {
         {categories.map(category => {
         const categoryTemplates = getCategoryTemplates(category.id);
         const isRankPromotion = category.slug === 'rank-promotion';
+        const isBonanzaPromotion = category.slug === 'bonanza-promotion';
         
         return <div key={category.id} className="space-y-3">
               <div className="flex items-center justify-between">
@@ -122,7 +130,14 @@ export default function Dashboard() {
                   <span className="text-2xl">{category.icon}</span>
                   <h2 className="text-lg font-bold text-foreground">{category.name}</h2>
                 </div>
-                <Link to={isRankPromotion ? '/rank-selection' : `/categories/${category.slug}`} className="text-primary text-sm font-semibold hover:underline">
+                <Link 
+                  to={
+                    isRankPromotion ? '/rank-selection' : 
+                    isBonanzaPromotion ? '/categories/bonanza-trips' :
+                    `/categories/${category.slug}`
+                  } 
+                  className="text-primary text-sm font-semibold hover:underline"
+                >
                   See All →
                 </Link>
               </div>
@@ -149,6 +164,37 @@ export default function Dashboard() {
                         ) : (
                           <div className={`h-24 ${rank?.gradient || 'bg-gradient-to-br from-secondary to-card'} flex items-center justify-center text-4xl`}>
                             {rank?.icon || '🏆'}
+                          </div>
+                        )}
+                        <div className="p-3 text-center">
+                          <p className="text-sm font-semibold text-foreground leading-tight">{template.name}</p>
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              ) : isBonanzaPromotion ? (
+                /* Bonanza Trips - Show Trips with Cover Images */
+                <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                  {getTripTemplates().map(template => {
+                    const trip = trips.find(t => t.id === template.trip_id);
+                    return (
+                      <Link 
+                        key={template.id} 
+                        to={`/banner-create/bonanza?tripId=${template.trip_id}`}
+                        className="min-w-[140px] gold-border bg-card rounded-2xl overflow-hidden flex-shrink-0 hover:gold-glow transition-all"
+                      >
+                        {template.cover_thumbnail_url ? (
+                          <div className="h-24 relative">
+                            <img 
+                              src={template.cover_thumbnail_url} 
+                              alt={template.name} 
+                              className="w-full h-full object-cover" 
+                            />
+                          </div>
+                        ) : (
+                          <div className="h-24 bg-gradient-to-br from-red-600 to-orange-600 flex items-center justify-center text-4xl">
+                            {trip?.short_title || '🎁'}
                           </div>
                         )}
                         <div className="p-3 text-center">

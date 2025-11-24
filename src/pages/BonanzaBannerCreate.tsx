@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, ImagePlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,8 @@ import { toast } from "sonner";
 import { removeBackground, loadImage } from "@/lib/backgroundRemover";
 import { useProfile } from "@/hooks/useProfile";
 import { useBannerSettings } from "@/hooks/useBannerSettings";
+import { useBonanzaTrip } from "@/hooks/useBonanzaTrips";
+import { useTemplates } from "@/hooks/useTemplates";
 import { supabase } from "@/integrations/supabase/client";
 
 interface Upline {
@@ -20,10 +22,15 @@ interface Upline {
 
 export default function BonanzaBannerCreate() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const tripId = searchParams.get('tripId');
+  
   const [mode, setMode] = useState<"myPhoto" | "others">("myPhoto");
   const [userId, setUserId] = useState<string | null>(null);
   const { profile } = useProfile(userId || undefined);
   const { settings: bannerSettings } = useBannerSettings(userId || undefined);
+  const { trip, loading: tripLoading } = useBonanzaTrip(tripId || undefined);
+  const { templates, loading: templatesLoading } = useTemplates(undefined, tripId || undefined);
   
   const [uplines, setUplines] = useState<Upline[]>([]);
   const [formData, setFormData] = useState({
@@ -37,6 +44,16 @@ export default function BonanzaBannerCreate() {
   const [showBgRemover, setShowBgRemover] = useState(false);
   const [processingBg, setProcessingBg] = useState(false);
   const [slotStickers, setSlotStickers] = useState<Record<number, string[]>>({});
+
+  // Auto-fill trip name when trip is loaded
+  useEffect(() => {
+    if (trip && !formData.tripName) {
+      setFormData(prev => ({
+        ...prev,
+        tripName: trip.title
+      }));
+    }
+  }, [trip]);
 
   useEffect(() => {
     const getUser = async () => {
@@ -122,16 +139,21 @@ export default function BonanzaBannerCreate() {
       return;
     }
 
+    // Get the template for this trip
+    const tripTemplate = templates[0]; // Use first template for this trip
+
     navigate("/banner-preview", {
       state: {
         categoryType: "bonanza",
-        rankName: "Bonanza Achievement",
+        rankName: trip?.title || "Bonanza Achievement",
         name: formData.name,
         teamCity: formData.teamCity,
-        tripName: formData.tripName,
+        tripName: formData.tripName || trip?.title,
         photo,
         uplines,
-        slotStickers
+        slotStickers,
+        templateId: tripTemplate?.id,
+        tripId: trip?.id
       }
     });
   };
@@ -157,6 +179,30 @@ export default function BonanzaBannerCreate() {
     setSlotStickers({});
     toast.success("Form reset to default values");
   };
+
+  if (tripLoading || templatesLoading) {
+    return (
+      <div className="min-h-screen bg-navy-dark flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading trip details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!trip) {
+    return (
+      <div className="min-h-screen bg-navy-dark flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-muted-foreground">Trip not found</p>
+          <Button onClick={() => navigate('/categories/bonanza-trips')} className="mt-4">
+            Back to Trips
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-navy-dark pb-6">
