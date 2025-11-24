@@ -1,32 +1,75 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import BottomNav from "@/components/BottomNav";
-import { Search, Filter, Trophy, Gift, Calendar, Star, MessageCircle, Zap, Briefcase, Target, Medal, Image, Users, IndianRupee, BarChart3 } from "lucide-react";
+import { Search, Filter, Trophy, Gift, Calendar, Star, MessageCircle, Zap, Briefcase, Target, Medal, Image, Users, IndianRupee, BarChart3, LucideIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { supabase } from "@/integrations/supabase/client";
+
+// Icon mapping
+const ICON_MAP: Record<string, LucideIcon> = {
+  Trophy, Gift, Calendar, Star, MessageCircle, Zap, 
+  Briefcase, Target, Medal, Image, Users, IndianRupee, BarChart3
+};
+
+interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  icon_name: string | null;
+  color_class: string | null;
+  route_path: string | null;
+  is_active: boolean;
+  display_order: number | null;
+}
 
 export default function Categories() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const categories = [
-    { icon: Trophy, label: "Rank Promotion", color: "bg-yellow-600", path: "/rank-selection" },
-    { icon: Gift, label: "Bonanza Promotion", color: "bg-red-600", path: "/banner-create/bonanza" },
-    { icon: Calendar, label: "Birthday Banner", color: "bg-teal-600", path: "/banner-create/birthday" },
-    { icon: Star, label: "Anniversary Banner", color: "bg-blue-600", path: "/banner-create/anniversary" },
-    { icon: MessageCircle, label: "Thank You Message", color: "bg-green-600", path: "/category/thank-you-message" },
-    { icon: Zap, label: "Motivational Quote", color: "bg-yellow-600", path: "/banner-create/motivational" },
-    { icon: Calendar, label: "Festival Banner", color: "bg-purple-600", path: "/banner-create/festival" },
-    { icon: Target, label: "Weekly Achievement", color: "bg-teal-600", path: "/category/weekly-achievement" },
-    { icon: Briefcase, label: "Special Campaign", color: "bg-yellow-700", path: "/category/special-campaign" },
-    { icon: Medal, label: "Achievements", color: "bg-purple-600", path: "/category/achievements" },
-    { icon: Image, label: "Custom Banner", color: "bg-blue-700", path: "/category/custom-banner" },
-    { icon: Users, label: "Event / Meeting", color: "bg-yellow-600", path: "/banner-create/meeting" },
-    { icon: Users, label: "New Joiner Banner", color: "bg-teal-700", path: "/category/new-joiner-banner" },
-    { icon: IndianRupee, label: "Income Banner", color: "bg-green-700", path: "/category/income-banner" },
-    { icon: BarChart3, label: "Capping Banner", color: "bg-red-700", path: "/category/capping-banner" },
-  ];
+  useEffect(() => {
+    fetchCategories();
+
+    // Real-time subscription for instant updates
+    const channel = supabase
+      .channel('categories-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'template_categories',
+        },
+        () => {
+          fetchCategories();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  const fetchCategories = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('template_categories')
+        .select('*')
+        .eq('is_active', true)
+        .order('display_order', { ascending: true });
+
+      if (error) throw error;
+      setCategories(data || []);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredCategories = categories.filter((cat) =>
-    cat.label.toLowerCase().includes(searchQuery.toLowerCase())
+    cat.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -55,25 +98,35 @@ export default function Categories() {
 
       {/* Categories Grid */}
       <div className="px-6 py-6">
-        <div className="grid grid-cols-3 gap-4">
-          {filteredCategories.map((category, index) => {
-            const Icon = category.icon;
-            return (
-              <Link
-                key={index}
-                to={category.path}
-                className="gold-border bg-card rounded-2xl p-5 flex flex-col items-center justify-center gap-3 hover:gold-glow transition-all"
-              >
-                <div className={`w-14 h-14 ${category.color} rounded-2xl flex items-center justify-center`}>
-                  <Icon className="w-7 h-7 text-white" />
-                </div>
-                <span className="text-xs font-semibold text-center text-foreground leading-tight">
-                  {category.label}
-                </span>
-              </Link>
-            );
-          })}
-        </div>
+        {loading ? (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">Loading categories...</p>
+          </div>
+        ) : filteredCategories.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">No categories found</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-3 gap-4">
+            {filteredCategories.map((category) => {
+              const Icon = ICON_MAP[category.icon_name || 'Trophy'] || Trophy;
+              return (
+                <Link
+                  key={category.id}
+                  to={category.route_path || '/'}
+                  className="gold-border bg-card rounded-2xl p-5 flex flex-col items-center justify-center gap-3 hover:gold-glow transition-all"
+                >
+                  <div className={`w-14 h-14 ${category.color_class || 'bg-primary'} rounded-2xl flex items-center justify-center`}>
+                    <Icon className="w-7 h-7 text-white" />
+                  </div>
+                  <span className="text-xs font-semibold text-center text-foreground leading-tight">
+                    {category.name}
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       <BottomNav />
