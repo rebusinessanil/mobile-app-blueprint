@@ -53,7 +53,7 @@ const BirthdaysSelection = () => {
               >
                 <div className="aspect-[3/4] relative overflow-hidden bg-muted">
                   <img
-                    src={birthday.trip_image_url}
+                    src={birthday.Birthday_image_url}
                     alt={birthday.title}
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                   />

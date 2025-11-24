@@ -135,6 +135,7 @@ export type Database = {
       }
       Birthday: {
         Row: {
+          Birthday_image_url: string
           category_id: string | null
           created_at: string | null
           description: string | null
@@ -143,10 +144,10 @@ export type Database = {
           is_active: boolean | null
           short_title: string | null
           title: string
-          trip_image_url: string
           updated_at: string | null
         }
         Insert: {
+          Birthday_image_url: string
           category_id?: string | null
           created_at?: string | null
           description?: string | null
@@ -155,10 +156,10 @@ export type Database = {
           is_active?: boolean | null
           short_title?: string | null
           title: string
-          trip_image_url: string
           updated_at?: string | null
         }
         Update: {
+          Birthday_image_url?: string
           category_id?: string | null
           created_at?: string | null
           description?: string | null
@@ -167,7 +168,6 @@ export type Database = {
           is_active?: boolean | null
           short_title?: string | null
           title?: string
-          trip_image_url?: string
           updated_at?: string | null
         }
         Relationships: [
