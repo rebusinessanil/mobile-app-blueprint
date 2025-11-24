@@ -164,12 +164,12 @@ export default function Dashboard() {
                   })}
                 </div>
               ) : category.slug === 'bonanza-promotion' && bonanzaTrips.length > 0 ? (
-                <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide snap-x snap-mandatory">
-                  {bonanzaTrips.map(trip => (
+                <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                  {bonanzaTrips.slice(0, 5).map(trip => (
                     <Link 
                       key={trip.id} 
                       to={`/banner-create/bonanza?tripId=${trip.id}`}
-                      className="min-w-[140px] max-w-[140px] gold-border bg-card rounded-2xl overflow-hidden flex-shrink-0 hover:gold-glow transition-all snap-start"
+                      className="min-w-[140px] gold-border bg-card rounded-2xl overflow-hidden flex-shrink-0 hover:gold-glow transition-all"
                     >
                       <div className="h-24 relative">
                         <img 
@@ -179,7 +179,7 @@ export default function Dashboard() {
                         />
                       </div>
                       <div className="p-3 text-center">
-                        <p className="text-sm font-semibold text-foreground leading-tight line-clamp-2">{trip.title}</p>
+                        <p className="text-sm font-semibold text-foreground leading-tight">{trip.title}</p>
                       </div>
                     </Link>
                   ))}
