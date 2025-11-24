@@ -6,7 +6,7 @@ export interface MotivationalBanner {
   id: string;
   title: string;
   short_title: string | null;
-  Anniversary_image_url: string;
+  Motivational_image_url: string;
   description: string | null;
   category_id: string | null;
   is_active: boolean | null;

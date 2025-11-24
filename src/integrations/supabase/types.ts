@@ -354,37 +354,37 @@ export type Database = {
       }
       "Motivational Banner": {
         Row: {
-          Anniversary_image_url: string
           category_id: string | null
           created_at: string | null
           description: string | null
           display_order: number | null
           id: string
           is_active: boolean | null
+          Motivational_image_url: string
           short_title: string | null
           title: string
           updated_at: string | null
         }
         Insert: {
-          Anniversary_image_url: string
           category_id?: string | null
           created_at?: string | null
           description?: string | null
           display_order?: number | null
           id?: string
           is_active?: boolean | null
+          Motivational_image_url: string
           short_title?: string | null
           title: string
           updated_at?: string | null
         }
         Update: {
-          Anniversary_image_url?: string
           category_id?: string | null
           created_at?: string | null
           description?: string | null
           display_order?: number | null
           id?: string
           is_active?: boolean | null
+          Motivational_image_url?: string
           short_title?: string | null
           title?: string
           updated_at?: string | null
