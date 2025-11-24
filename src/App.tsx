@@ -7,7 +7,6 @@ import WhatsAppSupport from "@/components/WhatsAppSupport";
 import AuthGuard from "@/components/AuthGuard";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
-import ComingSoon from "./pages/ComingSoon";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import OTPVerification from "./pages/OTPVerification";
@@ -56,7 +55,6 @@ const App = () => (
           {/* Protected routes - auth required */}
           <Route path="/dashboard" element={<AuthGuard><Dashboard /></AuthGuard>} />
           <Route path="/categories" element={<AuthGuard><Categories /></AuthGuard>} />
-          <Route path="/category/:slug" element={<AuthGuard><ComingSoon /></AuthGuard>} />
           <Route path="/messages" element={<AuthGuard><Messages /></AuthGuard>} />
           <Route path="/profile" element={<AuthGuard><Profile /></AuthGuard>} />
           <Route path="/profile-edit" element={<AuthGuard><ProfileEdit /></AuthGuard>} />
@@ -83,7 +81,7 @@ const App = () => (
           <Route path="/admin/bonanza-trips" element={<AuthGuard><AdminBonanzaTrips /></AuthGuard>} />
           
           {/* Catch-all for undefined routes */}
-          <Route path="*" element={<AuthGuard><ComingSoon /></AuthGuard>} />
+          <Route path="*" element={<AuthGuard><NotFound /></AuthGuard>} />
         </Routes>
         <WhatsAppSupport />
       </BrowserRouter>
