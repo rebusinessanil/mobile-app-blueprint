@@ -13,6 +13,8 @@ export default function AdminTemplateBackgrounds() {
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedTemplate, setSelectedTemplate] = useState<string>('');
   const [uploading, setUploading] = useState(false);
+  const [bulkUploading, setBulkUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number } | null>(null);
 
   // Fetch categories
   const { data: categories, isLoading: categoriesLoading } = useQuery({
@@ -80,6 +82,62 @@ export default function AdminTemplateBackgrounds() {
     } finally {
       setUploading(false);
       event.target.value = '';
+    }
+  };
+
+  const handleBulkUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0 || !selectedTemplate) return;
+
+    const filesToUpload = Array.from(files).slice(0, 16); // Limit to 16 files
+    const usedSlots = backgrounds.map(bg => bg.slot_number);
+    const availableSlots = Array.from({ length: 16 }, (_, i) => i + 1).filter(i => !usedSlots.includes(i));
+
+    if (availableSlots.length === 0) {
+      toast.error('All 16 slots are filled. Delete some backgrounds first.');
+      return;
+    }
+
+    if (filesToUpload.length > availableSlots.length) {
+      toast.warning(`Only ${availableSlots.length} slots available. Uploading first ${availableSlots.length} images.`);
+    }
+
+    setBulkUploading(true);
+    setUploadProgress({ current: 0, total: Math.min(filesToUpload.length, availableSlots.length) });
+
+    let successCount = 0;
+    let failCount = 0;
+
+    for (let i = 0; i < Math.min(filesToUpload.length, availableSlots.length); i++) {
+      const file = filesToUpload[i];
+      const slot = availableSlots[i];
+
+      setUploadProgress({ current: i + 1, total: Math.min(filesToUpload.length, availableSlots.length) });
+
+      try {
+        const { error } = await uploadTemplateBackground(selectedTemplate, file, slot);
+        if (error) {
+          failCount++;
+          console.error(`Failed to upload to slot ${slot}:`, error);
+        } else {
+          successCount++;
+        }
+      } catch (err) {
+        failCount++;
+        console.error(`Error uploading to slot ${slot}:`, err);
+      }
+    }
+
+    setBulkUploading(false);
+    setUploadProgress(null);
+    event.target.value = '';
+
+    if (successCount > 0 && failCount === 0) {
+      toast.success(`Successfully uploaded ${successCount} backgrounds! Updates synced instantly.`);
+    } else if (successCount > 0 && failCount > 0) {
+      toast.warning(`Uploaded ${successCount} backgrounds. ${failCount} failed.`);
+    } else {
+      toast.error('Failed to upload backgrounds');
     }
   };
 
@@ -209,20 +267,51 @@ export default function AdminTemplateBackgrounds() {
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Upload Section */}
-            <div className="space-y-2">
-              <Label htmlFor="background-upload">Upload New Background</Label>
-              <div className="flex items-center gap-4">
-                <Input
-                  id="background-upload"
-                  type="file"
-                  accept="image/png,image/jpeg,image/jpg"
-                  onChange={handleUpload}
-                  disabled={uploading || backgrounds.length >= 16}
-                  className="flex-1"
-                />
-                {uploading && <Loader2 className="h-5 w-5 animate-spin text-gold" />}
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="background-upload">Upload Single Background</Label>
+                <div className="flex items-center gap-4">
+                  <Input
+                    id="background-upload"
+                    type="file"
+                    accept="image/png,image/jpeg,image/jpg"
+                    onChange={handleUpload}
+                    disabled={uploading || bulkUploading || backgrounds.length >= 16}
+                    className="flex-1"
+                  />
+                  {uploading && <Loader2 className="h-5 w-5 animate-spin text-gold" />}
+                </div>
               </div>
-              <p className="text-sm text-muted-foreground">
+
+              <div className="space-y-2">
+                <Label htmlFor="bulk-background-upload">Bulk Upload Backgrounds (Up to 16)</Label>
+                <div className="flex items-center gap-4">
+                  <Input
+                    id="bulk-background-upload"
+                    type="file"
+                    accept="image/png,image/jpeg,image/jpg"
+                    multiple
+                    onChange={handleBulkUpload}
+                    disabled={uploading || bulkUploading || backgrounds.length >= 16}
+                    className="flex-1"
+                  />
+                  {bulkUploading && (
+                    <div className="flex items-center gap-2">
+                      <Loader2 className="h-5 w-5 animate-spin text-gold" />
+                      {uploadProgress && (
+                        <span className="text-sm text-muted-foreground">
+                          {uploadProgress.current} / {uploadProgress.total}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Select multiple images to upload. They will be assigned to available slots automatically.
+                </p>
+              </div>
+
+              <p className="text-sm text-muted-foreground font-medium">
                 {backgrounds.length} of 16 slots filled
                 {backgrounds.length >= 16 && " (Maximum reached)"}
               </p>
