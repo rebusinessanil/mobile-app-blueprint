@@ -333,6 +333,30 @@ export default function UniversalBannerCreate() {
           </div>
         </div>
 
+        {/* Selected Trip Info - Only for Bonanza */}
+        {category === 'bonanza' && selectedTrip && (
+          <div className="gold-border bg-card/50 rounded-2xl overflow-hidden">
+            <div className="flex items-center gap-4 p-4">
+              {selectedTrip.trip_image_url && (
+                <div className="w-24 h-24 rounded-xl overflow-hidden flex-shrink-0">
+                  <img 
+                    src={selectedTrip.trip_image_url} 
+                    alt={selectedTrip.title} 
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              )}
+              <div className="flex-1">
+                <p className="text-xs text-muted-foreground mb-1">Selected Trip</p>
+                <h3 className="text-xl font-bold text-primary mb-1">{selectedTrip.title}</h3>
+                {selectedTrip.description && (
+                  <p className="text-sm text-muted-foreground">{selectedTrip.description}</p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Banner Type Toggle */}
         <div className="space-y-2">
           <label className="text-sm text-foreground font-semibold">Banner Type</label>
