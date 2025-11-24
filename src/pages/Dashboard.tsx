@@ -168,7 +168,7 @@ export default function Dashboard() {
                   {bonanzaTrips.slice(0, 5).map(trip => (
                     <Link 
                       key={trip.id} 
-                      to={`/banner-create/bonanza?tripId=${trip.id}`}
+                      to="/categories/bonanza-trips"
                       className="min-w-[140px] gold-border bg-card rounded-2xl overflow-hidden flex-shrink-0 hover:gold-glow transition-all"
                     >
                       <div className="h-24 relative">
