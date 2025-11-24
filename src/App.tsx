@@ -32,6 +32,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import AdminUsers from "./pages/AdminUsers";
 import AdminStories from "./pages/AdminStories";
 import AdminStickerLibrary from "./pages/AdminStickerLibrary";
+import AdminCategories from "./pages/AdminCategories";
 import Wallet from "./pages/Wallet";
 import UniversalBannerCreate from "./pages/UniversalBannerCreate";
 
@@ -68,6 +69,7 @@ const App = () => (
           {/* Admin routes - auth required */}
           <Route path="/admin" element={<AuthGuard><AdminDashboard /></AuthGuard>} />
           <Route path="/admin/users" element={<AuthGuard><AdminUsers /></AuthGuard>} />
+          <Route path="/admin/categories" element={<AuthGuard><AdminCategories /></AuthGuard>} />
           <Route path="/admin/templates" element={<AuthGuard><AdminTemplates /></AuthGuard>} />
           <Route path="/admin/stories" element={<AuthGuard><AdminStories /></AuthGuard>} />
           <Route path="/admin/ranks" element={<AuthGuard><AdminRanks /></AuthGuard>} />
