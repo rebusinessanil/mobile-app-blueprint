@@ -151,6 +151,9 @@ export default function MotivationalBannerCreate() {
       return;
     }
 
+    // Get the first template for this motivational banner if available
+    const firstTemplate = templates && templates.length > 0 ? templates[0] : null;
+
     navigate("/banner-preview", {
       state: {
         categoryType: "motivational",
@@ -163,7 +166,9 @@ export default function MotivationalBannerCreate() {
         photo,
         uplines,
         slotStickers,
-        templates
+        templates,
+        templateId: firstTemplate?.id || undefined,
+        rankId: undefined // Motivational doesn't use rankId
       }
     });
   };
