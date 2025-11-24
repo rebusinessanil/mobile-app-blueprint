@@ -17,20 +17,21 @@ export const useTemplateBackgrounds = (templateId?: string) => {
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
+    if (!templateId) {
+      setBackgrounds([]);
+      setLoading(false);
+      return;
+    }
+
     const fetchBackgrounds = async () => {
       try {
         setLoading(true);
-        let query = supabase
+        const { data, error } = await supabase
           .from('template_backgrounds')
           .select('*')
+          .eq('template_id', templateId)
           .eq('is_active', true)
           .order('slot_number', { ascending: true });
-
-        if (templateId) {
-          query = query.eq('template_id', templateId);
-        }
-
-        const { data, error } = await query;
 
         if (error) throw error;
 
@@ -38,7 +39,7 @@ export const useTemplateBackgrounds = (templateId?: string) => {
         setError(null);
       } catch (err) {
         setError(err as Error);
-        console.error('Error fetching backgrounds:', err);
+        console.error('Error fetching backgrounds for template:', templateId, err);
       } finally {
         setLoading(false);
       }
@@ -46,23 +47,27 @@ export const useTemplateBackgrounds = (templateId?: string) => {
 
     fetchBackgrounds();
 
-    // Set up real-time subscription for instant updates
+    // Set up real-time subscription for instant template-specific updates
     const channel = supabase
-      .channel(`template-backgrounds-${templateId || 'all'}`)
+      .channel(`template-backgrounds-${templateId}`)
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
           table: 'template_backgrounds',
-          filter: templateId ? `template_id=eq.${templateId}` : undefined,
+          filter: `template_id=eq.${templateId}`,
         },
         (payload) => {
-          console.log('Background changed:', payload);
+          console.log('Background updated for template:', templateId, payload);
           fetchBackgrounds();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('Real-time sync active for template:', templateId);
+        }
+      });
 
     return () => {
       supabase.removeChannel(channel);
@@ -78,12 +83,17 @@ export const uploadTemplateBackground = async (
   slotNumber: number = 1
 ): Promise<{ id: string | null; url: string | null; error: Error | null }> => {
   try {
+    // Validate template ID exists
+    if (!templateId) {
+      throw new Error('Template ID is required');
+    }
+
     // Validate slot_number is between 1-16
     if (slotNumber < 1 || slotNumber > 16) {
       throw new Error(`Invalid slot number: ${slotNumber}. Must be between 1-16.`);
     }
 
-    // First check if slot is already occupied
+    // Check if slot is already occupied for this specific template
     const { data: existing } = await supabase
       .from('template_backgrounds')
       .select('id, background_image_url')
@@ -107,22 +117,25 @@ export const uploadTemplateBackground = async (
       .from('template-backgrounds')
       .getPublicUrl(filePath);
 
-    // Upsert: Update if exists, insert if new
+    // Upsert: Update if exists, insert if new - strict template isolation
     const { data, error: dbError } = await supabase
       .from('template_backgrounds')
       .upsert({
         id: existing?.id, // Keep same ID if updating
-        template_id: templateId,
+        template_id: templateId, // Enforce template_id binding
         background_image_url: publicUrl,
         slot_number: slotNumber,
         is_active: true,
       }, {
-        onConflict: 'template_id,slot_number'
+        onConflict: 'template_id,slot_number', // Unique constraint ensures one bg per template+slot
       })
       .select()
       .single();
 
-    if (dbError) throw dbError;
+    if (dbError) {
+      console.error('Database error during background upload:', dbError);
+      throw dbError;
+    }
 
     // Clean up old storage file if we replaced an existing background
     if (existing?.background_image_url) {
