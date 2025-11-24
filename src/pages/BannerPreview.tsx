@@ -151,17 +151,14 @@ export default function BannerPreview() {
     enabled: !!(bannerData?.templateId || bannerData?.rankId)
   });
 
-  // Fetch backgrounds for the current template - CROSS-CATEGORY REAL-TIME SYNC
-  // This hook works for ALL categories (Rank, Bonanza Trips, Birthday, Anniversary, Festival, etc.)
-  // Admin updates instantly sync across all templates and categories via Supabase real-time
+  // Fetch backgrounds for the current template - ONLY for this template_id with strict isolation
   const currentTemplateId = bannerData?.templateId || templateData?.id;
   const {
     backgrounds,
     refetch: refetchBackgrounds
   } = useTemplateBackgrounds(currentTemplateId);
 
-  // Force refetch when template changes to ensure strict category isolation
-  // Prevents backgrounds from one category/template appearing in another
+  // Force refetch when template changes to ensure no cross-contamination
   useEffect(() => {
     if (currentTemplateId) {
       refetchBackgrounds();
