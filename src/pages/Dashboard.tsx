@@ -191,7 +191,6 @@ export default function Dashboard() {
                     // Map category slugs to unified banner routes
                     const getCategoryRoute = () => {
                       const routeMap: Record<string, string> = {
-                        'bonanza': '/banner-create/bonanza',
                         'bonanza-promotion': '/banner-create/bonanza',
                         'birthday': '/banner-create/birthday',
                         'anniversary': '/banner-create/anniversary',
