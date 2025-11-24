@@ -83,19 +83,6 @@ export const uploadTemplateBackground = async (
       throw new Error(`Invalid slot number: ${slotNumber}. Must be between 1-16.`);
     }
 
-    // Fetch template with category info to determine folder path
-    const { data: template, error: templateError } = await supabase
-      .from('templates')
-      .select('id, category_id, template_categories(slug)')
-      .eq('id', templateId)
-      .single();
-
-    if (templateError || !template) {
-      throw new Error('Template not found or missing category');
-    }
-
-    const categorySlug = (template.template_categories as any)?.slug || 'default';
-
     // First check if slot is already occupied
     const { data: existing } = await supabase
       .from('template_backgrounds')
@@ -104,10 +91,10 @@ export const uploadTemplateBackground = async (
       .eq('slot_number', slotNumber)
       .maybeSingle();
 
-    // Upload to storage with category-based folder isolation
+    // Upload to storage
     const fileExt = file.name.split('.').pop();
     const fileName = `template-${templateId}-slot-${slotNumber}-${Date.now()}.${fileExt}`;
-    const filePath = `${categorySlug}/${fileName}`; // Category folder isolation
+    const filePath = `${fileName}`;
 
     const { error: uploadError } = await supabase.storage
       .from('template-backgrounds')
@@ -139,10 +126,8 @@ export const uploadTemplateBackground = async (
 
     // Clean up old storage file if we replaced an existing background
     if (existing?.background_image_url) {
-      // Extract full path including category folder from old URL
-      const urlParts = existing.background_image_url.split('/template-backgrounds/');
-      if (urlParts.length > 1) {
-        const oldPath = urlParts[1];
+      const oldPath = existing.background_image_url.split('/').pop();
+      if (oldPath) {
         await supabase.storage
           .from('template-backgrounds')
           .remove([oldPath]);
