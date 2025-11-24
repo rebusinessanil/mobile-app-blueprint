@@ -34,7 +34,7 @@ const MotivationalBannersSelection = () => {
             >
               <div className="aspect-square relative">
                 <img
-                  src={banner.Anniversary_image_url}
+                  src={banner.Motivational_image_url}
                   alt={banner.title}
                   className="w-full h-full object-cover"
                 />
