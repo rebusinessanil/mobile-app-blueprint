@@ -65,16 +65,12 @@ export default function AdminTemplateBackgrounds() {
     const usedSlots = backgrounds.map(bg => bg.slot_number);
     const nextSlot = Array.from({ length: 16 }, (_, i) => i + 1).find(i => !usedSlots.includes(i)) ?? (backgrounds.length + 1);
 
-    // Get category slug for folder isolation
-    const selectedCategorySlug = categories?.find(cat => cat.id === selectedCategory)?.slug;
-
     setUploading(true);
     try {
       const { url, error } = await uploadTemplateBackground(
         selectedTemplate,
         file,
-        nextSlot,
-        selectedCategorySlug
+        nextSlot
       );
 
       if (error) {
@@ -106,9 +102,6 @@ export default function AdminTemplateBackgrounds() {
       toast.warning(`Only ${availableSlots.length} slots available. Uploading first ${availableSlots.length} images.`);
     }
 
-    // Get category slug for folder isolation
-    const selectedCategorySlug = categories?.find(cat => cat.id === selectedCategory)?.slug;
-
     setBulkUploading(true);
     setUploadProgress({ current: 0, total: Math.min(filesToUpload.length, availableSlots.length) });
 
@@ -122,7 +115,7 @@ export default function AdminTemplateBackgrounds() {
       setUploadProgress({ current: i + 1, total: Math.min(filesToUpload.length, availableSlots.length) });
 
       try {
-        const { error } = await uploadTemplateBackground(selectedTemplate, file, slot, selectedCategorySlug);
+        const { error } = await uploadTemplateBackground(selectedTemplate, file, slot);
         if (error) {
           failCount++;
           console.error(`Failed to upload to slot ${slot}:`, error);
