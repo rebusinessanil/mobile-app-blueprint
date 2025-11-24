@@ -133,6 +133,60 @@ export type Database = {
           },
         ]
       }
+      bonanza_trips: {
+        Row: {
+          category_id: string | null
+          created_at: string | null
+          description: string | null
+          display_order: number | null
+          id: string
+          is_active: boolean | null
+          short_title: string | null
+          title: string
+          trip_image_url: string
+          updated_at: string | null
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          short_title?: string | null
+          title: string
+          trip_image_url: string
+          updated_at?: string | null
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          short_title?: string | null
+          title?: string
+          trip_image_url?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bonanza_trips_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "template_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_bonanza_trips_category"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "template_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       category_banner_settings: {
         Row: {
           category_slug: string
@@ -272,6 +326,7 @@ export type Database = {
       }
       ranks: {
         Row: {
+          category_id: string | null
           color: string
           created_at: string | null
           display_order: number | null
@@ -283,6 +338,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          category_id?: string | null
           color: string
           created_at?: string | null
           display_order?: number | null
@@ -294,6 +350,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          category_id?: string | null
           color?: string
           created_at?: string | null
           display_order?: number | null
@@ -304,7 +361,15 @@ export type Database = {
           name?: string
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_ranks_category"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "template_categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sticker_categories: {
         Row: {
@@ -489,38 +554,47 @@ export type Database = {
       }
       template_categories: {
         Row: {
+          color_class: string | null
           cover_image_url: string | null
           created_at: string | null
           description: string | null
           display_order: number | null
           icon: string | null
+          icon_name: string | null
           id: string
           is_active: boolean | null
           name: string
+          route_path: string | null
           slug: string
           updated_at: string | null
         }
         Insert: {
+          color_class?: string | null
           cover_image_url?: string | null
           created_at?: string | null
           description?: string | null
           display_order?: number | null
           icon?: string | null
+          icon_name?: string | null
           id?: string
           is_active?: boolean | null
           name: string
+          route_path?: string | null
           slug: string
           updated_at?: string | null
         }
         Update: {
+          color_class?: string | null
           cover_image_url?: string | null
           created_at?: string | null
           description?: string | null
           display_order?: number | null
           icon?: string | null
+          icon_name?: string | null
           id?: string
           is_active?: boolean | null
           name?: string
+          route_path?: string | null
           slug?: string
           updated_at?: string | null
         }
@@ -585,6 +659,57 @@ export type Database = {
             columns: ["rank_id"]
             isOneToOne: false
             referencedRelation: "ranks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trip_achievements: {
+        Row: {
+          achievement_photo: string | null
+          banner_id: string | null
+          created_at: string | null
+          id: string
+          name: string
+          team_city: string | null
+          trip_id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          achievement_photo?: string | null
+          banner_id?: string | null
+          created_at?: string | null
+          id?: string
+          name: string
+          team_city?: string | null
+          trip_id: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          achievement_photo?: string | null
+          banner_id?: string | null
+          created_at?: string | null
+          id?: string
+          name?: string
+          team_city?: string | null
+          trip_id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trip_achievements_banner_id_fkey"
+            columns: ["banner_id"]
+            isOneToOne: false
+            referencedRelation: "banners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trip_achievements_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "bonanza_trips"
             referencedColumns: ["id"]
           },
         ]
