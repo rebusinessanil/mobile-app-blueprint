@@ -168,7 +168,7 @@ export default function Dashboard() {
                   {bonanzaTrips.map(trip => (
                     <Link 
                       key={trip.id} 
-                      to="/categories/bonanza-trips"
+                      to={`/banner-create/bonanza?tripId=${trip.id}`}
                       className="min-w-[140px] max-w-[140px] gold-border bg-card rounded-2xl overflow-hidden flex-shrink-0 hover:gold-glow transition-all snap-start"
                     >
                       <div className="h-24 relative">
