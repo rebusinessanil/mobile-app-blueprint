@@ -50,25 +50,28 @@ export const useTemplateBackgrounds = (templateId?: string) => {
 
     fetchBackgrounds();
 
-    // Set up real-time subscription for instant template-specific updates
+    // Set up real-time subscription for instant cross-category template updates
     const channel = supabase
       .channel(`template-backgrounds-${templateId}`)
       .on(
         'postgres_changes',
         {
-          event: '*',
+          event: '*', // Listen to INSERT, UPDATE, DELETE
           schema: 'public',
           table: 'template_backgrounds',
-          filter: `template_id=eq.${templateId}`,
+          filter: `template_id=eq.${templateId}`, // Strict template isolation
         },
         (payload) => {
-          console.log('Background updated for template:', templateId, payload);
+          console.log(`[Real-time] Background ${payload.eventType} for template ${templateId}:`, payload);
+          // Instantly refetch backgrounds for this template across all categories
           fetchBackgrounds();
         }
       )
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
-          console.log('Real-time sync active for template:', templateId);
+          console.log(`[Real-time] Active sync for template ${templateId} - all updates will reflect instantly`);
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error(`[Real-time] Subscription error for template ${templateId}`);
         }
       });
 
