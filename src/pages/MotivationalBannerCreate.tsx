@@ -151,8 +151,6 @@ export default function MotivationalBannerCreate() {
       return;
     }
 
-    const templateId = templates && templates.length > 0 ? templates[0].id : undefined;
-    
     navigate("/banner-preview", {
       state: {
         categoryType: "motivational",
@@ -165,7 +163,7 @@ export default function MotivationalBannerCreate() {
         photo,
         uplines,
         slotStickers,
-        templateId
+        templates
       }
     });
   };
