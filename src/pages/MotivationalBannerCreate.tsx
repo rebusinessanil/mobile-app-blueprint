@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, ImagePlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,7 +11,10 @@ import { toast } from "sonner";
 import { removeBackground, loadImage } from "@/lib/backgroundRemover";
 import { useProfile } from "@/hooks/useProfile";
 import { useBannerSettings } from "@/hooks/useBannerSettings";
+import { useMotivationalBanner } from "@/hooks/useMotivationalBanners";
+import { useTemplates } from "@/hooks/useTemplates";
 import { supabase } from "@/integrations/supabase/client";
+import { Loader2 } from "lucide-react";
 
 interface Upline {
   id: string;
@@ -21,6 +24,12 @@ interface Upline {
 
 export default function MotivationalBannerCreate() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const motivationalBannerId = searchParams.get("motivationalBannerId") || undefined;
+  
+  const { motivationalBanner, loading: motivationalBannerLoading } = useMotivationalBanner(motivationalBannerId);
+  const { templates, loading: templatesLoading } = useTemplates(undefined, undefined, undefined, undefined, undefined, motivationalBannerId);
+  
   const [mode, setMode] = useState<"myPhoto" | "others">("myPhoto");
   const [userId, setUserId] = useState<string | null>(null);
   const { profile } = useProfile(userId || undefined);
@@ -31,7 +40,8 @@ export default function MotivationalBannerCreate() {
     name: "",
     teamCity: "",
     quote: "",
-    author: ""
+    author: "",
+    motivationalBannerTitle: ""
   });
   const [photo, setPhoto] = useState<string | null>(null);
   const [tempPhoto, setTempPhoto] = useState<string | null>(null);
@@ -60,6 +70,23 @@ export default function MotivationalBannerCreate() {
       setUplines(defaultUplines);
     }
   }, [bannerSettings]);
+
+  useEffect(() => {
+    if (motivationalBanner) {
+      setFormData(prev => ({
+        ...prev,
+        motivationalBannerTitle: motivationalBanner.title
+      }));
+    }
+  }, [motivationalBanner]);
+
+  if (motivationalBannerLoading || templatesLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-navy-dark">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -127,14 +154,16 @@ export default function MotivationalBannerCreate() {
     navigate("/banner-preview", {
       state: {
         categoryType: "motivational",
-        rankName: "Motivational Quote",
+        rankName: motivationalBanner?.title || "Motivational Quote",
         name: formData.name,
         teamCity: formData.teamCity,
         quote: formData.quote,
         author: formData.author,
+        motivationalBannerTitle: formData.motivationalBannerTitle,
         photo,
         uplines,
-        slotStickers
+        slotStickers,
+        templates
       }
     });
   };
@@ -144,7 +173,8 @@ export default function MotivationalBannerCreate() {
       name: "",
       teamCity: "",
       quote: "",
-      author: ""
+      author: "",
+      motivationalBannerTitle: motivationalBanner?.title || ""
     });
     setPhoto(null);
     setTempPhoto(null);

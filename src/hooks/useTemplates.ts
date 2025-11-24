@@ -33,6 +33,7 @@ export interface Template {
   trip_id: string | null;
   birthday_id: string | null;
   anniversary_id: string | null;
+  motivational_banner_id: string | null;
   name: string;
   description: string | null;
   cover_thumbnail_url: string;
@@ -113,7 +114,7 @@ export const useTemplateCategories = () => {
   return { categories, loading, error };
 };
 
-export const useTemplates = (categoryId?: string, tripId?: string, rankId?: string, birthdayId?: string, anniversaryId?: string) => {
+export const useTemplates = (categoryId?: string, tripId?: string, rankId?: string, birthdayId?: string, anniversaryId?: string, motivationalBannerId?: string) => {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -148,6 +149,10 @@ export const useTemplates = (categoryId?: string, tripId?: string, rankId?: stri
         query = query.eq('anniversary_id', anniversaryId);
       }
 
+      if (motivationalBannerId) {
+        query = query.eq('motivational_banner_id', motivationalBannerId);
+      }
+
       const { data, error } = await query;
 
         if (error) throw error;
@@ -172,11 +177,13 @@ export const useTemplates = (categoryId?: string, tripId?: string, rankId?: stri
       ? `birthday_id=eq.${birthdayId}`
       : anniversaryId
       ? `anniversary_id=eq.${anniversaryId}`
+      : motivationalBannerId
+      ? `motivational_banner_id=eq.${motivationalBannerId}`
       : categoryId 
       ? `category_id=eq.${categoryId}` 
       : undefined;
     const channel = supabase
-      .channel(`templates-changes-${categoryId || tripId || rankId || birthdayId || anniversaryId || 'all'}-${Math.random()}`)
+      .channel(`templates-changes-${categoryId || tripId || rankId || birthdayId || anniversaryId || motivationalBannerId || 'all'}-${Math.random()}`)
       .on(
         'postgres_changes',
         {
@@ -195,7 +202,7 @@ export const useTemplates = (categoryId?: string, tripId?: string, rankId?: stri
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [categoryId, tripId, rankId, birthdayId]);
+  }, [categoryId, tripId, rankId, birthdayId, anniversaryId, motivationalBannerId]);
 
   return { templates, loading, error };
 };

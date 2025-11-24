@@ -9,6 +9,7 @@ import { useRanks } from "@/hooks/useTemplates";
 import { useBonanzaTrips } from "@/hooks/useBonanzaTrips";
 import { useBirthdays } from "@/hooks/useBirthdays";
 import { useAnniversaries } from "@/hooks/useAnniversaries";
+import { useMotivationalBanners } from "@/hooks/useMotivationalBanners";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import Profile from "./Profile";
 export default function Dashboard() {
@@ -22,6 +23,7 @@ export default function Dashboard() {
   const { trips } = useBonanzaTrips();
   const { birthdays } = useBirthdays();
   const { anniversaries } = useAnniversaries();
+  const { motivationalBanners } = useMotivationalBanners();
   const [userId, setUserId] = useState<string | null>(null);
   const {
     profile
@@ -46,6 +48,11 @@ export default function Dashboard() {
   // Get anniversary templates with covers
   const getAnniversaryTemplates = () => {
     return allTemplates.filter(t => t.anniversary_id && anniversaries.some(anniversary => anniversary.id === t.anniversary_id));
+  };
+
+  // Get motivational banner templates with covers
+  const getMotivationalBannerTemplates = () => {
+    return allTemplates.filter(t => t.motivational_banner_id && motivationalBanners.some(mb => mb.id === t.motivational_banner_id));
   };
 
   // Get authenticated user
@@ -139,6 +146,7 @@ export default function Dashboard() {
         const isBonanzaPromotion = category.slug === 'bonanza-promotion';
         const isBirthday = category.slug === 'birthday';
         const isAnniversary = category.slug === 'anniversary';
+        const isMotivational = category.slug === 'motivational';
         
         return <div key={category.id} className="space-y-3">
               <div className="flex items-center justify-between">
@@ -152,6 +160,7 @@ export default function Dashboard() {
                     isBonanzaPromotion ? '/categories/bonanza-trips' :
                     isBirthday ? '/categories/birthdays' :
                     isAnniversary ? '/categories/anniversaries' :
+                    isMotivational ? '/categories/motivational' :
                     `/categories/${category.slug}`
                   }
                   className="text-primary text-sm font-semibold hover:underline"
@@ -275,6 +284,37 @@ export default function Dashboard() {
                         ) : (
                           <div className="h-24 bg-gradient-to-br from-rose-600 to-pink-600 flex items-center justify-center text-4xl">
                             {anniversary?.short_title || '💞'}
+                          </div>
+                        )}
+                        <div className="p-3 text-center">
+                          <p className="text-sm font-semibold text-foreground leading-tight">{template.name}</p>
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              ) : isMotivational ? (
+                /* Motivational - Show motivational banner themes with Cover Images */
+                <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                  {getMotivationalBannerTemplates().map(template => {
+                    const motivationalBanner = motivationalBanners.find(mb => mb.id === template.motivational_banner_id);
+                    return (
+                      <Link 
+                        key={template.id} 
+                        to={`/banner-create/motivational?motivationalBannerId=${template.motivational_banner_id}`}
+                        className="min-w-[140px] gold-border bg-card rounded-2xl overflow-hidden flex-shrink-0 hover:gold-glow transition-all"
+                      >
+                        {template.cover_thumbnail_url ? (
+                          <div className="h-24 relative">
+                            <img 
+                              src={template.cover_thumbnail_url} 
+                              alt={template.name} 
+                              className="w-full h-full object-cover" 
+                            />
+                          </div>
+                        ) : (
+                          <div className="h-24 bg-gradient-to-br from-yellow-600 to-orange-600 flex items-center justify-center text-4xl">
+                            {motivationalBanner?.short_title || '⚡'}
                           </div>
                         )}
                         <div className="p-3 text-center">
