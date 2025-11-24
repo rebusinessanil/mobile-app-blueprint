@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { removeBackground, loadImage } from "@/lib/backgroundRemover";
 import { useProfile } from "@/hooks/useProfile";
 import { useBannerSettings } from "@/hooks/useBannerSettings";
+import { useTemplates } from "@/hooks/useTemplates";
 import { supabase } from "@/integrations/supabase/client";
 
 interface Upline {
@@ -24,6 +25,7 @@ export default function FestivalBannerCreate() {
   const [userId, setUserId] = useState<string | null>(null);
   const { profile } = useProfile(userId || undefined);
   const { settings: bannerSettings } = useBannerSettings(userId || undefined);
+  const { templates } = useTemplates(); // Fetch templates
   
   const [uplines, setUplines] = useState<Upline[]>([]);
   const [formData, setFormData] = useState({
@@ -123,6 +125,9 @@ export default function FestivalBannerCreate() {
       return;
     }
 
+    // Get the first template for festival category if available
+    const firstTemplate = templates && templates.length > 0 ? templates[0] : null;
+
     navigate("/banner-preview", {
       state: {
         categoryType: "festival",
@@ -133,7 +138,10 @@ export default function FestivalBannerCreate() {
         greeting: formData.greeting,
         photo,
         uplines,
-        slotStickers
+        slotStickers,
+        templates,
+        templateId: firstTemplate?.id || undefined,
+        rankId: undefined // Festival doesn't use rankId
       }
     });
   };
