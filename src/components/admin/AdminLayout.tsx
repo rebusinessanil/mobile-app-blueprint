@@ -12,8 +12,7 @@ import {
   LogOut,
   Menu,
   X,
-  Library,
-  FolderTree
+  Library
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -28,7 +27,6 @@ interface AdminLayoutProps {
 const adminRoutes = [
   { path: "/admin", icon: LayoutDashboard, label: "Dashboard" },
   { path: "/admin/users", icon: Users, label: "Users" },
-  { path: "/admin/categories", icon: FolderTree, label: "Categories" },
   { path: "/admin/templates", icon: FileImage, label: "Templates" },
   { path: "/admin/stories", icon: BookOpen, label: "Stories" },
   { path: "/admin/ranks", icon: Award, label: "Ranks" },
