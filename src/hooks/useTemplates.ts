@@ -32,6 +32,7 @@ export interface Template {
   rank_id: string | null;
   trip_id: string | null;
   birthday_id: string | null;
+  anniversary_id: string | null;
   name: string;
   description: string | null;
   cover_thumbnail_url: string;
@@ -112,7 +113,7 @@ export const useTemplateCategories = () => {
   return { categories, loading, error };
 };
 
-export const useTemplates = (categoryId?: string, tripId?: string, rankId?: string, birthdayId?: string) => {
+export const useTemplates = (categoryId?: string, tripId?: string, rankId?: string, birthdayId?: string, anniversaryId?: string) => {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -143,6 +144,10 @@ export const useTemplates = (categoryId?: string, tripId?: string, rankId?: stri
         query = query.eq('birthday_id', birthdayId);
       }
 
+      if (anniversaryId) {
+        query = query.eq('anniversary_id', anniversaryId);
+      }
+
       const { data, error } = await query;
 
         if (error) throw error;
@@ -165,11 +170,13 @@ export const useTemplates = (categoryId?: string, tripId?: string, rankId?: stri
       ? `rank_id=eq.${rankId}`
       : birthdayId
       ? `birthday_id=eq.${birthdayId}`
+      : anniversaryId
+      ? `anniversary_id=eq.${anniversaryId}`
       : categoryId 
       ? `category_id=eq.${categoryId}` 
       : undefined;
     const channel = supabase
-      .channel(`templates-changes-${categoryId || tripId || rankId || birthdayId || 'all'}-${Math.random()}`)
+      .channel(`templates-changes-${categoryId || tripId || rankId || birthdayId || anniversaryId || 'all'}-${Math.random()}`)
       .on(
         'postgres_changes',
         {

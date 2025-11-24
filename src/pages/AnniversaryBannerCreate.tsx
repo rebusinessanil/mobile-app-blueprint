@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, ImagePlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,8 @@ import { toast } from "sonner";
 import { removeBackground, loadImage } from "@/lib/backgroundRemover";
 import { useProfile } from "@/hooks/useProfile";
 import { useBannerSettings } from "@/hooks/useBannerSettings";
+import { useAnniversary } from "@/hooks/useAnniversaries";
+import { useTemplates } from "@/hooks/useTemplates";
 import { supabase } from "@/integrations/supabase/client";
 
 interface Upline {
@@ -20,6 +22,12 @@ interface Upline {
 
 export default function AnniversaryBannerCreate() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const anniversaryId = searchParams.get('anniversaryId');
+  
+  const { anniversary, loading: anniversaryLoading } = useAnniversary(anniversaryId || undefined);
+  const { templates, loading: templatesLoading } = useTemplates(undefined, undefined, undefined, undefined, anniversaryId || undefined);
+  
   const [mode, setMode] = useState<"myPhoto" | "others">("myPhoto");
   const [userId, setUserId] = useState<string | null>(null);
   const { profile } = useProfile(userId || undefined);
@@ -29,7 +37,8 @@ export default function AnniversaryBannerCreate() {
   const [formData, setFormData] = useState({
     name: "",
     teamCity: "",
-    years: ""
+    years: "",
+    anniversaryTitle: ""
   });
   const [photo, setPhoto] = useState<string | null>(null);
   const [tempPhoto, setTempPhoto] = useState<string | null>(null);
@@ -58,6 +67,12 @@ export default function AnniversaryBannerCreate() {
       setUplines(defaultUplines);
     }
   }, [bannerSettings]);
+
+  useEffect(() => {
+    if (anniversary) {
+      setFormData(prev => ({ ...prev, anniversaryTitle: anniversary.title }));
+    }
+  }, [anniversary]);
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -122,16 +137,20 @@ export default function AnniversaryBannerCreate() {
       return;
     }
 
+    const templateId = templates.length > 0 ? templates[0].id : undefined;
+
     navigate("/banner-preview", {
       state: {
         categoryType: "anniversary",
-        rankName: "Anniversary Celebration",
+        rankName: formData.anniversaryTitle || "Anniversary Celebration",
         name: formData.name,
         teamCity: formData.teamCity,
         years: formData.years,
         photo,
         uplines,
-        slotStickers
+        slotStickers,
+        templateId,
+        anniversaryId
       }
     });
   };
@@ -140,7 +159,8 @@ export default function AnniversaryBannerCreate() {
     setFormData({
       name: "",
       teamCity: "",
-      years: ""
+      years: "",
+      anniversaryTitle: anniversary?.title || ""
     });
     setPhoto(null);
     setTempPhoto(null);
@@ -157,6 +177,30 @@ export default function AnniversaryBannerCreate() {
     setSlotStickers({});
     toast.success("Form reset to default values");
   };
+
+  if (anniversaryLoading || templatesLoading) {
+    return (
+      <div className="min-h-screen bg-navy-dark flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading anniversary details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!anniversary) {
+    return (
+      <div className="min-h-screen bg-navy-dark flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-foreground text-xl mb-4">Anniversary theme not found</p>
+          <Button onClick={() => navigate('/categories/anniversaries')}>
+            Back to Anniversaries
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-navy-dark pb-6">

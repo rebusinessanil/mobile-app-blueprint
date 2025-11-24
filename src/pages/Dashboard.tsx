@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useRanks } from "@/hooks/useTemplates";
 import { useBonanzaTrips } from "@/hooks/useBonanzaTrips";
 import { useBirthdays } from "@/hooks/useBirthdays";
+import { useAnniversaries } from "@/hooks/useAnniversaries";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import Profile from "./Profile";
 export default function Dashboard() {
@@ -20,6 +21,7 @@ export default function Dashboard() {
   const { ranks } = useRanks();
   const { trips } = useBonanzaTrips();
   const { birthdays } = useBirthdays();
+  const { anniversaries } = useAnniversaries();
   const [userId, setUserId] = useState<string | null>(null);
   const {
     profile
@@ -39,6 +41,11 @@ export default function Dashboard() {
   // Get birthday templates with covers
   const getBirthdayTemplates = () => {
     return allTemplates.filter(t => t.birthday_id && birthdays.some(birthday => birthday.id === t.birthday_id));
+  };
+
+  // Get anniversary templates with covers
+  const getAnniversaryTemplates = () => {
+    return allTemplates.filter(t => t.anniversary_id && anniversaries.some(anniversary => anniversary.id === t.anniversary_id));
   };
 
   // Get authenticated user
@@ -131,6 +138,7 @@ export default function Dashboard() {
         const isRankPromotion = category.slug === 'rank-promotion';
         const isBonanzaPromotion = category.slug === 'bonanza-promotion';
         const isBirthday = category.slug === 'birthday';
+        const isAnniversary = category.slug === 'anniversary';
         
         return <div key={category.id} className="space-y-3">
               <div className="flex items-center justify-between">
@@ -143,6 +151,7 @@ export default function Dashboard() {
                     isRankPromotion ? '/rank-selection' : 
                     isBonanzaPromotion ? '/categories/bonanza-trips' :
                     isBirthday ? '/categories/birthdays' :
+                    isAnniversary ? '/categories/anniversaries' :
                     `/categories/${category.slug}`
                   }
                   className="text-primary text-sm font-semibold hover:underline"
@@ -235,6 +244,37 @@ export default function Dashboard() {
                         ) : (
                           <div className="h-24 bg-gradient-to-br from-pink-600 to-purple-600 flex items-center justify-center text-4xl">
                             {birthday?.short_title || '🎂'}
+                          </div>
+                        )}
+                        <div className="p-3 text-center">
+                          <p className="text-sm font-semibold text-foreground leading-tight">{template.name}</p>
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              ) : isAnniversary ? (
+                /* Anniversary - Show Anniversary themes with Cover Images */
+                <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                  {getAnniversaryTemplates().map(template => {
+                    const anniversary = anniversaries.find(a => a.id === template.anniversary_id);
+                    return (
+                      <Link 
+                        key={template.id} 
+                        to={`/banner-create/anniversary?anniversaryId=${template.anniversary_id}`}
+                        className="min-w-[140px] gold-border bg-card rounded-2xl overflow-hidden flex-shrink-0 hover:gold-glow transition-all"
+                      >
+                        {template.cover_thumbnail_url ? (
+                          <div className="h-24 relative">
+                            <img 
+                              src={template.cover_thumbnail_url} 
+                              alt={template.name} 
+                              className="w-full h-full object-cover" 
+                            />
+                          </div>
+                        ) : (
+                          <div className="h-24 bg-gradient-to-br from-rose-600 to-pink-600 flex items-center justify-center text-4xl">
+                            {anniversary?.short_title || '💞'}
                           </div>
                         )}
                         <div className="p-3 text-center">
