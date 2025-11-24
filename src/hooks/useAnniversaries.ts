@@ -6,7 +6,7 @@ export interface Anniversary {
   title: string;
   short_title?: string;
   description?: string;
-  anniversary_image_url: string;
+  Anniversary_image_url: string;
   category_id?: string;
   is_active: boolean;
   display_order?: number;
@@ -24,7 +24,7 @@ export const useAnniversaries = () => {
       try {
         setLoading(true);
         const { data, error } = await supabase
-          .from('anniversary')
+          .from('Anniversary')
           .select('*')
           .eq('is_active', true)
           .order('display_order', { ascending: true });
@@ -51,7 +51,7 @@ export const useAnniversaries = () => {
         {
           event: '*',
           schema: 'public',
-          table: 'anniversary',
+          table: 'Anniversary',
         },
         (payload) => {
           console.log('Anniversary changed:', payload);
@@ -83,7 +83,7 @@ export const useAnniversary = (anniversaryId?: string) => {
       try {
         setLoading(true);
         const { data, error } = await supabase
-          .from('anniversary')
+          .from('Anniversary')
           .select('*')
           .eq('id', anniversaryId)
           .single();
@@ -110,7 +110,7 @@ export const useAnniversary = (anniversaryId?: string) => {
         {
           event: '*',
           schema: 'public',
-          table: 'anniversary',
+          table: 'Anniversary',
           filter: `id=eq.${anniversaryId}`,
         },
         (payload) => {
