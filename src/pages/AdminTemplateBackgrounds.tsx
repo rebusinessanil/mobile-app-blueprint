@@ -52,33 +52,10 @@ export default function AdminTemplateBackgrounds() {
 
   const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file) {
-      toast.error('Please select an image file');
-      return;
-    }
-
-    if (!selectedTemplate) {
-      toast.error('Please select a template first');
-      return;
-    }
-
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      toast.error('Please upload a valid image file (PNG, JPG, or JPEG)');
-      event.target.value = '';
-      return;
-    }
-
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('Image size must be less than 5MB');
-      event.target.value = '';
-      return;
-    }
+    if (!file || !selectedTemplate) return;
 
     if (backgrounds.length >= 16) {
-      toast.error('Maximum 16 backgrounds per template reached');
-      event.target.value = '';
+      toast.error('Maximum 16 backgrounds per template');
       return;
     }
 
@@ -95,14 +72,11 @@ export default function AdminTemplateBackgrounds() {
       );
 
       if (error) {
-        toast.error(`Failed to upload background: ${error.message || 'Unknown error'}`);
-        console.error('Upload error:', error);
+        toast.error('Failed to upload background');
+        console.error(error);
       } else {
-        toast.success(`Background uploaded to slot ${nextSlot} successfully! Changes sync instantly to all users.`);
+        toast.success(`Background uploaded to slot ${nextSlot} - Updates will sync instantly`);
       }
-    } catch (err) {
-      toast.error('Unexpected error during upload');
-      console.error('Upload exception:', err);
     } finally {
       setUploading(false);
       event.target.value = '';
@@ -243,22 +217,12 @@ export default function AdminTemplateBackgrounds() {
                   disabled={uploading || backgrounds.length >= 16}
                   className="flex-1"
                 />
-                {uploading && (
-                  <div className="flex items-center gap-2">
-                    <Loader2 className="h-5 w-5 animate-spin text-gold" />
-                    <span className="text-sm text-muted-foreground">Uploading...</span>
-                  </div>
-                )}
+                {uploading && <Loader2 className="h-5 w-5 animate-spin text-gold" />}
               </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className={backgrounds.length >= 16 ? "text-destructive font-medium" : "text-muted-foreground"}>
-                  {backgrounds.length} of 16 slots filled
-                  {backgrounds.length >= 16 && " (Maximum reached)"}
-                </span>
-                <span className="text-muted-foreground">
-                  Max file size: 5MB | Formats: PNG, JPG, JPEG
-                </span>
-              </div>
+              <p className="text-sm text-muted-foreground">
+                {backgrounds.length} of 16 slots filled
+                {backgrounds.length >= 16 && " (Maximum reached)"}
+              </p>
             </div>
 
             {/* 16-Slot Grid */}
