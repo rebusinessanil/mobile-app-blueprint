@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { removeBackground, loadImage } from "@/lib/backgroundRemover";
 import { useProfile } from "@/hooks/useProfile";
 import { useBannerSettings } from "@/hooks/useBannerSettings";
-import { useTemplates } from "@/hooks/useTemplates";
+import { useTemplates, useTemplateCategories } from "@/hooks/useTemplates";
 import { supabase } from "@/integrations/supabase/client";
 
 interface Upline {
@@ -25,7 +25,9 @@ export default function FestivalBannerCreate() {
   const [userId, setUserId] = useState<string | null>(null);
   const { profile } = useProfile(userId || undefined);
   const { settings: bannerSettings } = useBannerSettings(userId || undefined);
-  const { templates } = useTemplates(); // Fetch templates
+  const { categories } = useTemplateCategories();
+  const festivalCategory = categories?.find(cat => cat.slug === 'festival');
+  const { templates } = useTemplates(festivalCategory?.id);
   
   const [uplines, setUplines] = useState<Upline[]>([]);
   const [formData, setFormData] = useState({
