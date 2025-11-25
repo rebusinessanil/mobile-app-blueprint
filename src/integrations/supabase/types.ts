@@ -406,6 +406,44 @@ export type Database = {
           },
         ]
       }
+      motivational_profile_defaults: {
+        Row: {
+          created_at: string | null
+          id: string
+          motivational_banner_id: string
+          profile_position_x: number
+          profile_position_y: number
+          profile_scale: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          motivational_banner_id: string
+          profile_position_x?: number
+          profile_position_y?: number
+          profile_scale?: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          motivational_banner_id?: string
+          profile_position_x?: number
+          profile_position_y?: number
+          profile_scale?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "motivational_profile_defaults_motivational_banner_id_fkey"
+            columns: ["motivational_banner_id"]
+            isOneToOne: true
+            referencedRelation: "Motivational Banner"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profile_photos: {
         Row: {
           created_at: string | null
