@@ -16,7 +16,6 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Sticker } from "@/hooks/useStickers";
 import html2canvas from "html2canvas";
 import { useRealtimeStickerSync } from "@/hooks/useRealtimeStickerSync";
-import LowerThirdBanner from "@/components/LowerThirdBanner";
 interface Upline {
   id: string;
   name: string;
@@ -1520,22 +1519,152 @@ export default function BannerPreview() {
                 {/* Category-specific content */}
                 {renderCategoryContent()}
 
-                {/* LOWER THIRD - Contact Info with Dark Theme Banner Variants */}
-                <div className="absolute" style={{
-                    bottom: '20px',
-                    ...(bannerData.categoryType === 'motivational' 
-                      ? { right: '150px', transform: 'translateX(50%)' }
-                      : { left: '150px', transform: 'translateX(-50%)' }
-                    ),
-                  }}>
-                  <LowerThirdBanner
-                    slotNumber={selectedTemplate + 1}
-                    name={profileName}
-                    rank={bannerData.rankName}
-                    contactNumber={displayContact}
-                    position={bannerData.categoryType === 'motivational' ? 'right' : 'left'}
-                  />
-                </div>
+                {/* LOWER THIRD BANNER - Dark theme with name and rank inside */}
+                {(() => {
+                  // Determine color variant based on slot (1-16): Red, Orange, Teal pattern
+                  const slotNumber = selectedTemplate + 1;
+                  const variantIndex = ((slotNumber - 1) % 3);
+                  
+                  const variants = [
+                    { borderColor: '#e63946', labelBg: '#e63946', shadowColor: 'rgba(230, 57, 70, 0.5)' }, // Red
+                    { borderColor: '#f77f00', labelBg: '#f77f00', shadowColor: 'rgba(247, 127, 0, 0.5)' }, // Orange
+                    { borderColor: '#06d6a0', labelBg: '#06d6a0', shadowColor: 'rgba(6, 214, 160, 0.5)' }, // Teal
+                  ];
+                  
+                  const variant = variants[variantIndex];
+                  
+                  return (
+                    <div className="absolute" style={{
+                      bottom: '20px',
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      width: '1200px',
+                      height: '120px',
+                      zIndex: 25
+                    }}>
+                      {/* SVG Shape with border */}
+                      <svg width="1200" height="120" viewBox="0 0 1200 120" style={{ position: 'absolute', top: 0, left: 0 }}>
+                        <defs>
+                          <filter id={`shadow-${variantIndex}`} x="-50%" y="-50%" width="200%" height="200%">
+                            <feGaussianBlur in="SourceAlpha" stdDeviation="4"/>
+                            <feOffset dx="0" dy="3" result="offsetblur"/>
+                            <feComponentTransfer>
+                              <feFuncA type="linear" slope="0.6"/>
+                            </feComponentTransfer>
+                            <feMerge>
+                              <feMergeNode/>
+                              <feMergeNode in="SourceGraphic"/>
+                            </feMerge>
+                          </filter>
+                        </defs>
+                        
+                        {/* Border path */}
+                        <path
+                          d="M 50 5 
+                             L 1050 5 
+                             L 1100 60 
+                             L 1050 115 
+                             L 50 115 
+                             Q 5 115 5 60 
+                             Q 5 5 50 5 Z"
+                          fill="none"
+                          stroke={variant.borderColor}
+                          strokeWidth="5"
+                          filter={`url(#shadow-${variantIndex})`}
+                        />
+                        
+                        {/* Inner dark fill */}
+                        <path
+                          d="M 50 10 
+                             L 1048 10 
+                             L 1095 60 
+                             L 1048 110 
+                             L 50 110 
+                             Q 10 110 10 60 
+                             Q 10 10 50 10 Z"
+                          fill="#1a2332"
+                          fillOpacity="0.95"
+                        />
+                      </svg>
+                      
+                      {/* Name and Rank Text inside banner */}
+                      <div style={{
+                        position: 'absolute',
+                        left: '60px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        maxWidth: '700px',
+                        zIndex: 26
+                      }}>
+                        <p title={profileName} style={{
+                          color: '#ffffff',
+                          fontSize: '28px',
+                          fontWeight: '700',
+                          margin: 0,
+                          marginBottom: '4px',
+                          textTransform: 'uppercase',
+                          letterSpacing: '1px',
+                          textShadow: '2px 2px 6px rgba(0,0,0,0.8)',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
+                        }}>
+                          {truncatedProfileName.toUpperCase()}
+                        </p>
+                        <p style={{
+                          color: '#eab308',
+                          fontSize: '18px',
+                          fontWeight: '600',
+                          margin: 0,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.8px',
+                          textShadow: '1px 1px 4px rgba(0,0,0,0.7)'
+                        }}>
+                          {displayRank}
+                        </p>
+                      </div>
+                      
+                      {/* Contact Label on the right */}
+                      <div style={{
+                        position: 'absolute',
+                        right: '-130px',
+                        top: '50%',
+                        transform: 'translateY(-50%) skewX(-8deg)',
+                        background: variant.labelBg,
+                        padding: '20px 50px 20px 45px',
+                        clipPath: 'polygon(8% 0%, 100% 0%, 92% 100%, 0% 100%)',
+                        boxShadow: `0 4px 16px ${variant.shadowColor}`,
+                        zIndex: 30
+                      }}>
+                        <div style={{ transform: 'skewX(8deg)' }}>
+                          <p style={{
+                            fontSize: '13px',
+                            fontWeight: '600',
+                            color: '#ffffff',
+                            letterSpacing: '1.3px',
+                            textTransform: 'uppercase',
+                            margin: 0,
+                            lineHeight: '1.3',
+                            textShadow: '1px 1px 3px rgba(0,0,0,0.5)'
+                          }}>
+                            CALL FOR MENTORSHIP
+                          </p>
+                          <p style={{
+                            fontSize: '22px',
+                            fontWeight: '800',
+                            color: '#ffffff',
+                            margin: 0,
+                            lineHeight: '1.2',
+                            letterSpacing: '0.5px',
+                            textShadow: '1px 1px 3px rgba(0,0,0,0.5)'
+                          }}>
+                            +91 {displayContact}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 {/* LEFT SIDE - Profile Photo - 75% HEIGHT - Motivational Layout */}
                 {mentorPhoto && bannerData.categoryType === 'motivational' && <div className="absolute overflow-hidden shadow-2xl cursor-pointer transition-transform duration-500 ease-in-out" onClick={() => setIsMentorPhotoFlipped(!isMentorPhotoFlipped)} style={{
@@ -1588,8 +1717,10 @@ export default function BannerPreview() {
                   </div>}
 
 
-                {/* BOTTOM CENTER - Profile Name & Rank - FIXED FONTS AND POSITION */}
+
+                {/* BOTTOM CENTER - Profile Name & Rank - HIDDEN (now inside lower-third banner) */}
                 <div className="absolute text-center" style={{
+                    display: 'none', // Hidden - name and rank now inside lower-third banner
                     bottom: '40px',
                     ...(bannerData.categoryType === 'motivational' 
                       ? { left: '30%', transform: 'translateX(-50%)' }
