@@ -769,10 +769,33 @@ export default function BannerPreview() {
       case 'motivational':
         return (
           <>
+            {/* User Photo - Left Side Full Height */}
+            {primaryPhoto && (
+              <div className="absolute overflow-hidden" style={{
+                left: '40px',
+                top: '162px',
+                width: '420px',
+                height: '1026px',
+                borderRadius: '24px'
+              }}>
+                <img src={primaryPhoto} alt="User" style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  objectPosition: 'center'
+                }} />
+                {/* Bottom feather fade overlay */}
+                <div className="absolute bottom-0 left-0 right-0 pointer-events-none" style={{
+                  height: '308px',
+                  background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%)'
+                }} />
+              </div>
+            )}
+
             {/* Motivational Icon */}
             <div className="absolute z-20" style={{
               top: '140px',
-              left: '978px',
+              left: '825px',
               transform: 'translateX(-50%)',
               fontSize: '110px'
             }}>
@@ -782,7 +805,7 @@ export default function BannerPreview() {
             {/* Motivational Title */}
             <div className="absolute z-20" style={{
               top: '270px',
-              left: '978px',
+              left: '825px',
               transform: 'translateX(-50%)',
               width: '648px',
               textAlign: 'center'
@@ -802,7 +825,7 @@ export default function BannerPreview() {
             {bannerData.quote && (
               <div className="absolute" style={{
                 top: '360px',
-                left: '978px',
+                left: '825px',
                 transform: 'translateX(-50%)',
                 width: '648px',
                 padding: '0 50px'
@@ -822,11 +845,11 @@ export default function BannerPreview() {
               </div>
             )}
 
-            {/* Name Attribution - Only show if name exists */}
+            {/* Name Attribution - Center Bottom */}
             {truncatedMainName && (
               <div className="absolute" style={{
-                top: '520px',
-                left: '978px',
+                bottom: '180px',
+                left: '675px',
                 transform: 'translateX(-50%)',
                 width: '648px',
                 padding: '0 27px'
@@ -841,8 +864,48 @@ export default function BannerPreview() {
                 }}>
                   - {truncatedMainName.toUpperCase()}
                 </p>
+                {profile?.rank && (
+                  <p style={{
+                    color: '#ffffff',
+                    textAlign: 'center',
+                    fontSize: '24px',
+                    fontWeight: '500',
+                    textShadow: '2px 2px 6px rgba(0,0,0,0.9)',
+                    marginTop: '8px'
+                  }}>
+                    {profile.rank.toUpperCase()}
+                  </p>
+                )}
               </div>
             )}
+
+            {/* Contact Info - Right Bottom */}
+            <div className="absolute" style={{
+              bottom: '40px',
+              right: '40px',
+              textAlign: 'right'
+            }}>
+              <p style={{
+                fontSize: '11px',
+                textShadow: '2px 2px 4px rgba(0,0,0,0.9)',
+                marginBottom: '4px',
+                textTransform: 'uppercase',
+                color: '#ffffff',
+                fontWeight: '300',
+                letterSpacing: '2px'
+              }}>
+                CALL FOR MENTORSHIP
+              </p>
+              <p style={{
+                color: '#ffffff',
+                fontFamily: 'sans-serif',
+                fontSize: '28px',
+                fontWeight: '600',
+                textShadow: '2px 2px 4px rgba(0,0,0,0.9)'
+              }}>
+                +91 {displayContact}
+              </p>
+            </div>
           </>
         );
 
