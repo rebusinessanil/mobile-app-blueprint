@@ -1403,7 +1403,9 @@ export default function BannerPreview() {
                     position: 'relative',
                     width: '1350px',
                     height: '1350px',
-                    background: templateColors[selectedTemplate].bgGradient,
+                    background: bannerData.categoryType === 'motivational' 
+                      ? 'linear-gradient(135deg, #064e3b 0%, #134e4a 50%, #065f46 100%)' 
+                      : templateColors[selectedTemplate].bgGradient,
                     overflow: 'hidden',
                     cursor: isAdmin && isDragMode ? 'crosshair' : 'default',
                   }}
