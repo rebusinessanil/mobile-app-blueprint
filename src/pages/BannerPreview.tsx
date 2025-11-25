@@ -1585,6 +1585,39 @@ export default function BannerPreview() {
                         />
                       </svg>
                       
+                      {/* Left side - Name and Rank */}
+                      <div style={{
+                        position: 'absolute',
+                        left: '40px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        zIndex: 30
+                      }}>
+                        <p style={{
+                          fontSize: '28px',
+                          fontWeight: '700',
+                          color: '#ffffff',
+                          letterSpacing: '1px',
+                          textTransform: 'uppercase',
+                          margin: 0,
+                          lineHeight: '1.2',
+                          textShadow: '2px 2px 4px rgba(0,0,0,0.6)'
+                        }}>
+                          {truncatedProfileName}
+                        </p>
+                        <p style={{
+                          fontSize: '18px',
+                          fontWeight: '600',
+                          color: '#ffffff',
+                          letterSpacing: '0.8px',
+                          margin: '4px 0 0 0',
+                          lineHeight: '1.2',
+                          textShadow: '1px 1px 3px rgba(0,0,0,0.5)'
+                        }}>
+                          {displayRank}
+                        </p>
+                      </div>
+                      
                       {/* Label on the right */}
                       <div style={{
                         position: 'absolute',
