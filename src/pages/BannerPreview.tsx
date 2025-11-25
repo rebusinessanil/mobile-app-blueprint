@@ -1522,17 +1522,16 @@ export default function BannerPreview() {
                 {/* LOWER THIRD - Contact Info - FIXED FONTS AND POSITION */}
                 <div className="absolute" style={{
                     bottom: '40px',
-                    /* LOCKED */
-                    left: '27px',
-                    /* LOCKED */
+                    ...(bannerData.categoryType === 'motivational' 
+                      ? { right: '27px', textAlign: 'right' as const }
+                      : { left: '27px' }
+                    ),
                     width: '675px',
-                    /* LOCKED */
                     minWidth: '675px',
                     maxWidth: '675px'
                   }}>
                   <p style={{
                       fontSize: '9px !important',
-                      /* LOCKED */
                       textShadow: '2px 2px 4px rgba(0,0,0,0.9)',
                       marginBottom: '1px',
                       textTransform: 'uppercase',
