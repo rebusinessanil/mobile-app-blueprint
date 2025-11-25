@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import RanksStickersPanel from "@/components/RanksStickersPanel";
 import StickerControl from "@/components/StickerControl";
+import ProfilePhotoControl from "@/components/ProfilePhotoControl";
 import downloadIcon from "@/assets/download-icon.png";
 import { useProfile } from "@/hooks/useProfile";
 import { useProfilePhotos } from "@/hooks/useProfilePhotos";
@@ -78,6 +79,19 @@ export default function BannerPreview() {
     position_y: number;
     scale: number;
   }>>({});
+
+  // Profile photo transform states
+  const [profilePhotoScale, setProfilePhotoScale] = useState<number>(1.0);
+  const [profilePhotoRotation, setProfilePhotoRotation] = useState<number>(0);
+  const [profilePhotoPosition, setProfilePhotoPosition] = useState<{ x: number; y: number }>({ x: 50, y: 50 });
+  const [isProfilePhotoDragMode, setIsProfilePhotoDragMode] = useState(false);
+  const [profilePhotoDragStart, setProfilePhotoDragStart] = useState<{ x: number; y: number } | null>(null);
+  const [originalProfilePhotoState, setOriginalProfilePhotoState] = useState<{
+    scale: number;
+    rotation: number;
+    position: { x: number; y: number };
+  }>({ scale: 1.0, rotation: 0, position: { x: 50, y: 50 } });
+  const [isSavingProfilePhoto, setIsSavingProfilePhoto] = useState(false);
 
   // Compute scale factor for display
   useEffect(() => {
@@ -1109,6 +1123,61 @@ export default function BannerPreview() {
     return 0.5;
   };
 
+  // Profile photo control handlers
+  const handleProfilePhotoMouseDown = (e: React.MouseEvent) => {
+    if (!isProfilePhotoDragMode) return;
+    e.preventDefault();
+    e.stopPropagation();
+    setProfilePhotoDragStart({ x: e.clientX, y: e.clientY });
+  };
+
+  const handleProfilePhotoMouseMove = (e: React.MouseEvent) => {
+    if (!isProfilePhotoDragMode || !profilePhotoDragStart || !bannerRef.current) return;
+    
+    const banner = bannerRef.current;
+    const rect = banner.getBoundingClientRect();
+    const scale = rect.width / 1350;
+    
+    const deltaX = (e.clientX - profilePhotoDragStart.x) / scale;
+    const deltaY = (e.clientY - profilePhotoDragStart.y) / scale;
+    
+    const currentX = (profilePhotoPosition.x / 100) * 1350;
+    const currentY = (profilePhotoPosition.y / 100) * 1350;
+    const newX = Math.max(0, Math.min(1350, currentX + deltaX));
+    const newY = Math.max(0, Math.min(1350, currentY + deltaY));
+    
+    setProfilePhotoPosition({
+      x: (newX / 1350) * 100,
+      y: (newY / 1350) * 100,
+    });
+    
+    setProfilePhotoDragStart({ x: e.clientX, y: e.clientY });
+  };
+
+  const handleProfilePhotoMouseUp = () => {
+    setProfilePhotoDragStart(null);
+  };
+
+  const handleSaveProfilePhoto = () => {
+    setOriginalProfilePhotoState({
+      scale: profilePhotoScale,
+      rotation: profilePhotoRotation,
+      position: profilePhotoPosition,
+    });
+    setIsSavingProfilePhoto(true);
+    setTimeout(() => {
+      setIsSavingProfilePhoto(false);
+      toast.success("Profile photo position saved!");
+    }, 500);
+  };
+
+  const handleResetProfilePhoto = () => {
+    setProfilePhotoScale(originalProfilePhotoState.scale);
+    setProfilePhotoRotation(originalProfilePhotoState.rotation);
+    setProfilePhotoPosition(originalProfilePhotoState.position);
+    toast.success("Profile photo reset to saved position");
+  };
+
   // 16 template variations (4x4 grid) with actual CSS colors
   const templateColors = [{
     id: 0,
@@ -1555,20 +1624,29 @@ export default function BannerPreview() {
                 </div>
 
                 {/* LEFT SIDE - Profile Photo - 75% HEIGHT - Motivational Layout */}
-                {mentorPhoto && bannerData.categoryType === 'motivational' && <div className="absolute overflow-hidden shadow-2xl cursor-pointer transition-transform duration-500 ease-in-out" onClick={() => setIsMentorPhotoFlipped(!isMentorPhotoFlipped)} style={{
-                    top: '50%',
-                    left: 0,
+                {mentorPhoto && bannerData.categoryType === 'motivational' && <div 
+                  className="absolute overflow-hidden shadow-2xl transition-transform duration-500 ease-in-out" 
+                  onMouseDown={handleProfilePhotoMouseDown}
+                  style={{
+                    left: `${profilePhotoPosition.x}%`,
+                    top: `${profilePhotoPosition.y}%`,
                     width: 'auto',
                     height: '1026px', // 5% reduction from 1080px
                     aspectRatio: '3/4',
                     borderRadius: '16px',
-                    transform: isMentorPhotoFlipped ? 'translateY(-50%) scaleX(-1)' : 'translateY(-50%) scaleX(1)'
-                  }}>
+                    transform: `translate(-50%, -50%) scale(${profilePhotoScale}) rotate(${profilePhotoRotation}deg) ${isMentorPhotoFlipped ? 'scaleX(-1)' : 'scaleX(1)'}`,
+                    transformOrigin: 'center center',
+                    cursor: isProfilePhotoDragMode ? 'move' : 'pointer',
+                    border: isProfilePhotoDragMode ? '3px solid #FFD700' : 'none',
+                  }}
+                  onClick={!isProfilePhotoDragMode ? () => setIsMentorPhotoFlipped(!isMentorPhotoFlipped) : undefined}
+                >
                     <img src={mentorPhoto} alt={profileName} style={{
                       width: '100%',
                       height: '100%',
                       objectFit: 'cover',
-                      objectPosition: 'center'
+                      objectPosition: 'center',
+                      pointerEvents: 'none',
                     }} />
                     {/* Bottom feather fade overlay */}
                     <div className="absolute bottom-0 left-0 right-0 pointer-events-none" style={{
@@ -1577,24 +1655,29 @@ export default function BannerPreview() {
                     }} />
                   </div>}
 
-                {/* BOTTOM RIGHT - Mentor Photo - FIXED SIZE AND POSITION - SQUARE 1:1 RATIO - Other Categories */}
-                {mentorPhoto && bannerData.categoryType !== 'motivational' && <div className="absolute overflow-hidden shadow-2xl cursor-pointer transition-transform duration-500 ease-in-out" onClick={() => setIsMentorPhotoFlipped(!isMentorPhotoFlipped)} style={{
-                    bottom: 0,
-                    right: 0,
+                {/* BOTTOM RIGHT - Mentor Photo - SQUARE 1:1 RATIO - Other Categories */}
+                {mentorPhoto && bannerData.categoryType !== 'motivational' && <div 
+                  className="absolute overflow-hidden shadow-2xl transition-transform duration-500 ease-in-out" 
+                  onMouseDown={handleProfilePhotoMouseDown}
+                  style={{
+                    left: `${profilePhotoPosition.x}%`,
+                    top: `${profilePhotoPosition.y}%`,
                     width: '540px',
                     height: '540px',
-                    minWidth: '540px',
-                    minHeight: '540px',
-                    maxWidth: '540px',
-                    maxHeight: '540px',
                     borderRadius: '16px',
-                    transform: isMentorPhotoFlipped ? 'scaleX(-1)' : 'scaleX(1)'
-                  }}>
+                    transform: `translate(-50%, -50%) scale(${profilePhotoScale}) rotate(${profilePhotoRotation}deg) ${isMentorPhotoFlipped ? 'scaleX(-1)' : 'scaleX(1)'}`,
+                    transformOrigin: 'center center',
+                    cursor: isProfilePhotoDragMode ? 'move' : 'pointer',
+                    border: isProfilePhotoDragMode ? '3px solid #FFD700' : 'none',
+                  }}
+                  onClick={!isProfilePhotoDragMode ? () => setIsMentorPhotoFlipped(!isMentorPhotoFlipped) : undefined}
+                >
                     <img src={mentorPhoto} alt={profileName} style={{
                       width: '540px',
                       height: '540px',
                       objectFit: 'cover',
-                      objectPosition: 'center'
+                      objectPosition: 'center',
+                      pointerEvents: 'none',
                     }} />
                     {/* Bottom feather fade overlay */}
                     <div className="absolute bottom-0 left-0 right-0 pointer-events-none" style={{
@@ -1861,6 +1944,22 @@ export default function BannerPreview() {
           isDragMode={isDragMode}
           isSaving={isSavingSticker}
           isAdmin={true}
+        />
+      )}
+
+      {/* Profile Photo Control Panel - Always Available */}
+      {mentorPhoto && (
+        <ProfilePhotoControl
+          onPositionChange={(x, y) => setProfilePhotoPosition({ x, y })}
+          onScaleChange={setProfilePhotoScale}
+          onRotationChange={setProfilePhotoRotation}
+          onSave={handleSaveProfilePhoto}
+          onReset={handleResetProfilePhoto}
+          currentScale={profilePhotoScale}
+          currentRotation={profilePhotoRotation}
+          isDragMode={isProfilePhotoDragMode}
+          onToggleDragMode={setIsProfilePhotoDragMode}
+          isSaving={isSavingProfilePhoto}
         />
       )}
 
