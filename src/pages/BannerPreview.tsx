@@ -1294,12 +1294,7 @@ export default function BannerPreview() {
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
         const timestamp = new Date().getTime();
-        
-        // Generate appropriate filename based on category
-        const categoryLabel = bannerData.categoryType === 'motivational' 
-          ? 'Motivational' 
-          : bannerData.rankName || 'Banner';
-        link.download = `ReBusiness-Banner-${categoryLabel}-${timestamp}.png`;
+        link.download = `ReBusiness-Banner-${bannerData.rankName}-${timestamp}.png`;
         link.href = url;
         link.click();
         URL.revokeObjectURL(url);
@@ -1329,18 +1324,14 @@ export default function BannerPreview() {
                 })
                 .eq("user_id", userId);
 
-              // Record transaction with appropriate description
-              const transactionDescription = bannerData.categoryType === 'motivational'
-                ? 'Motivational Banner download'
-                : `Banner download - ${bannerData.rankName}`;
-              
+              // Record transaction
               await supabase
                 .from("credit_transactions")
                 .insert({
                   user_id: userId,
                   amount: BANNER_COST,
                   transaction_type: "spent",
-                  description: transactionDescription,
+                  description: `Banner download - ${bannerData.rankName}`,
                 });
 
               toast.success(
@@ -1412,9 +1403,7 @@ export default function BannerPreview() {
                     position: 'relative',
                     width: '1350px',
                     height: '1350px',
-                    background: bannerData.categoryType === 'motivational' 
-                      ? 'linear-gradient(135deg, #064e3b 0%, #134e4a 50%, #065f46 100%)' 
-                      : templateColors[selectedTemplate].bgGradient,
+                    background: templateColors[selectedTemplate].bgGradient,
                     overflow: 'hidden',
                     cursor: isAdmin && isDragMode ? 'crosshair' : 'default',
                   }}
@@ -1681,13 +1670,13 @@ export default function BannerPreview() {
                             {profileName?.toUpperCase() || 'USER NAME'}
                           </div>
                           <div style={{
-                            fontSize: '20px',
+                            fontSize: '16px',
                             fontWeight: '600',
                             color: currentVariant.borderColor,
                             letterSpacing: '0.8px',
                             textShadow: '0 1px 3px rgba(0, 0, 0, 0.4)'
                           }}>
-                            {profileName?.toUpperCase() || 'USER NAME'}
+                            {displayRank || 'RANK'} • @{profileName?.toLowerCase().replace(/\s+/g, '') || 'username'}
                           </div>
                         </div>
                       </div>
