@@ -64,7 +64,7 @@ export default function MotivationalPreview() {
       state: {
         categoryType: "motivational",
         rankName: "Motivational Banner",
-        name: profile.name, // Auto-fill from profile
+        name: "", // MOTIVATIONAL: No achiever name auto-load - keep empty
         teamCity: "", // Optional
         quote: "", // Optional motivational quote
         photo: null, // MOTIVATIONAL: No achiever image auto-load

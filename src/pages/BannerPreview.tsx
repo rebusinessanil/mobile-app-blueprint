@@ -820,25 +820,27 @@ export default function BannerPreview() {
               </div>
             )}
 
-            {/* Name Attribution */}
-            <div className="absolute" style={{
-              top: '520px',
-              left: '978px',
-              transform: 'translateX(-50%)',
-              width: '648px',
-              padding: '0 27px'
-            }}>
-              <p style={{
-                color: '#FFD700',
-                textAlign: 'center',
-                fontSize: '30px',
-                fontWeight: '600',
-                textShadow: '2px 2px 6px rgba(0,0,0,0.9)',
-                margin: 0
+            {/* Name Attribution - Only show if name exists */}
+            {truncatedMainName && (
+              <div className="absolute" style={{
+                top: '520px',
+                left: '978px',
+                transform: 'translateX(-50%)',
+                width: '648px',
+                padding: '0 27px'
               }}>
-                - {truncatedMainName.toUpperCase()}
-              </p>
-            </div>
+                <p style={{
+                  color: '#FFD700',
+                  textAlign: 'center',
+                  fontSize: '30px',
+                  fontWeight: '600',
+                  textShadow: '2px 2px 6px rgba(0,0,0,0.9)',
+                  margin: 0
+                }}>
+                  - {truncatedMainName.toUpperCase()}
+                </p>
+              </div>
+            )}
           </>
         );
 
