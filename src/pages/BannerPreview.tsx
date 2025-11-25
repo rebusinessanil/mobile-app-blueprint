@@ -40,13 +40,11 @@ interface BannerData {
   eventDate?: string;
   eventVenue?: string;
   quote?: string;
-  storyId?: string;
 }
 export default function BannerPreview() {
   const navigate = useNavigate();
   const location = useLocation();
-  const initialBannerData = location.state as BannerData;
-  const [bannerData, setBannerData] = useState<BannerData>(initialBannerData);
+  const bannerData = location.state as BannerData;
   const [selectedTemplate, setSelectedTemplate] = useState(0);
   const [stickers, setStickers] = useState<Sticker[]>([]);
   const [isDownloading, setIsDownloading] = useState(false);
@@ -66,7 +64,6 @@ export default function BannerPreview() {
     scale?: number;
     rotation?: number;
   }[]>>({});
-  const [isLoadingStory, setIsLoadingStory] = useState(false);
   const bannerRef = useRef<HTMLDivElement>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   
@@ -118,117 +115,6 @@ export default function BannerPreview() {
       }
     });
   }, []);
-
-  // Auto-fill story data if storyId is present (direct story preview flow)
-  useEffect(() => {
-    const fetchAndFillStoryData = async () => {
-      if (!initialBannerData?.storyId || !userId) return;
-
-      try {
-        setIsLoadingStory(true);
-
-        // Fetch the generated story
-        const { data: storyData, error: storyError } = await supabase
-          .from("stories_generated")
-          .select("*")
-          .eq("id", initialBannerData.storyId)
-          .eq("status", "active")
-          .single();
-
-        if (storyError || !storyData) {
-          toast.error("Story not found or not active");
-          navigate("/dashboard");
-          return;
-        }
-
-        // Fetch source data based on source_type
-        let sourceData: any = null;
-        if (storyData.source_type === "event") {
-          const { data: eventData } = await supabase
-            .from("stories_events")
-            .select("*")
-            .eq("id", storyData.source_id)
-            .single();
-          sourceData = eventData;
-        } else if (storyData.source_type === "festival") {
-          const { data: festivalData } = await supabase
-            .from("stories_festivals")
-            .select("*")
-            .eq("id", storyData.source_id)
-            .single();
-          sourceData = festivalData;
-        }
-
-        // Fetch user profile and photos
-        const { data: profileData } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("user_id", userId)
-          .single();
-
-        const { data: photosData } = await supabase
-          .from("profile_photos")
-          .select("*")
-          .eq("user_id", userId)
-          .order("display_order", { ascending: true });
-
-        const primaryPhoto = photosData?.find(p => p.is_primary) || photosData?.[0];
-
-        // Fetch template for this story's rank/category
-        let templateId: string | undefined = undefined;
-        if (profileData?.rank) {
-          const { data: rankData } = await supabase
-            .from("ranks")
-            .select("id")
-            .eq("name", profileData.rank)
-            .single();
-
-          if (rankData?.id) {
-            const { data: templateData } = await supabase
-              .from("templates")
-              .select("id, rank_id")
-              .eq("rank_id", rankData.id)
-              .single();
-            templateId = templateData?.id;
-          }
-        }
-
-        // Determine category type based on story source
-        let categoryType: 'birthday' | 'anniversary' | 'festival' = 'festival';
-        if (storyData.source_type === 'event' && sourceData && 'event_type' in sourceData) {
-          categoryType = sourceData.event_type === 'birthday' ? 'birthday' : 'anniversary';
-        }
-
-        // Auto-fill banner data with story information
-        setBannerData({
-          rankName: profileData?.rank || "ACHIEVER",
-          rankIcon: "",
-          rankGradient: "",
-          name: profileData?.name || "",
-          teamCity: `${profileData?.role || ""} ${profileData?.mobile || ""}`.trim(),
-          photo: primaryPhoto?.photo_url || null,
-          uplines: [],
-          templateId: templateId || undefined,
-          categoryType,
-          eventTitle: storyData.title || "",
-          eventDate: storyData.event_date || "",
-          message: sourceData?.description || "",
-          storyId: storyData.id,
-        });
-
-        toast.success("Story loaded successfully!");
-      } catch (error) {
-        console.error("Error fetching story:", error);
-        toast.error("Failed to load story data");
-        navigate("/dashboard");
-      } finally {
-        setIsLoadingStory(false);
-      }
-    };
-
-    fetchAndFillStoryData();
-  }, [initialBannerData?.storyId, userId, navigate]);
-
   const {
     profile
   } = useProfile(userId ?? undefined);
@@ -1465,19 +1351,6 @@ export default function BannerPreview() {
       setIsDownloading(false);
     }
   };
-  
-  // Show loading screen while fetching story data
-  if (isLoadingStory) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <Sparkles className="w-12 h-12 text-primary animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading story banner...</p>
-        </div>
-      </div>
-    );
-  }
-
   return <div className="h-screen overflow-hidden bg-background flex flex-col">
       {/* Header - Fixed */}
       <header className="bg-background/95 backdrop-blur-sm z-40 px-4 sm:px-6 py-3 sm:py-4 flex-shrink-0">

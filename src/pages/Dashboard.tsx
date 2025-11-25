@@ -148,8 +148,7 @@ export default function Dashboard() {
               {generatedStories.map((story) => (
                 <Link
                   key={story.id}
-                  to={story.status === 'active' ? '/banner-preview' : '#'}
-                  state={story.status === 'active' ? { storyId: story.id } : undefined}
+                  to={story.status === 'active' ? `/story/${story.id}` : '#'}
                   className={`min-w-[140px] gold-border bg-card rounded-2xl overflow-hidden flex-shrink-0 transition-all ${
                     story.status === 'active' ? 'hover:gold-glow' : 'opacity-75'
                   }`}
