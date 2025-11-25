@@ -709,36 +709,38 @@ export default function BannerPreview() {
               </p>
             </div>
 
-            {/* Name */}
-            <div className="absolute" style={{
-              top: '370px',
-              left: '978px',
-              transform: 'translateX(-50%)',
-              width: '648px',
-              padding: '0 27px'
-            }}>
-              <h2 style={{
-                color: '#ffffff',
-                textAlign: 'center',
-                fontSize: '44px',
-                fontWeight: '600',
-                textShadow: '2px 2px 8px rgba(0,0,0,0.9)',
-                margin: 0
+            {/* Name - Only show if name exists */}
+            {truncatedMainName && (
+              <div className="absolute" style={{
+                top: '370px',
+                left: '978px',
+                transform: 'translateX(-50%)',
+                width: '648px',
+                padding: '0 27px'
               }}>
-                {truncatedMainName.toUpperCase()}
-              </h2>
-              {bannerData.teamCity && (
-                <p style={{
-                  marginTop: '13px',
+                <h2 style={{
                   color: '#ffffff',
                   textAlign: 'center',
-                  fontSize: '28px',
-                  textShadow: '2px 2px 4px rgba(0,0,0,0.9)'
+                  fontSize: '44px',
+                  fontWeight: '600',
+                  textShadow: '2px 2px 8px rgba(0,0,0,0.9)',
+                  margin: 0
                 }}>
-                  {bannerData.teamCity.toUpperCase()}
-                </p>
-              )}
-            </div>
+                  {truncatedMainName.toUpperCase()}
+                </h2>
+                {bannerData.teamCity && (
+                  <p style={{
+                    marginTop: '13px',
+                    color: '#ffffff',
+                    textAlign: 'center',
+                    fontSize: '28px',
+                    textShadow: '2px 2px 4px rgba(0,0,0,0.9)'
+                  }}>
+                    {bannerData.teamCity.toUpperCase()}
+                  </p>
+                )}
+              </div>
+            )}
 
             {/* Festival Message */}
             {bannerData.message && (
