@@ -352,14 +352,14 @@ export default function Dashboard() {
                   })}
                 </div>
               ) : isMotivational ? (
-                /* Motivational - Direct navigation to Banner Preview with motivationalBannerId */
+                /* Motivational - Show motivational banner themes with Cover Images */
                 <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
                   {getMotivationalBannerTemplates().map(template => {
                     const motivationalBanner = motivationalBanners.find(mb => mb.id === template.motivational_banner_id);
                     return (
                       <Link 
                         key={template.id} 
-                        to={`/motivational-preview/${template.motivational_banner_id}`}
+                        to={`/banner-create/motivational?motivationalBannerId=${template.motivational_banner_id}`}
                         className="min-w-[140px] gold-border bg-card rounded-2xl overflow-hidden flex-shrink-0 hover:gold-glow transition-all"
                       >
                         {template.cover_thumbnail_url ? (
