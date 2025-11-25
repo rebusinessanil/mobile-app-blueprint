@@ -93,6 +93,17 @@ export default function BannerPreview() {
   }>({ scale: 1.0, rotation: 0, position: { x: 50, y: 50 } });
   const [isSavingProfilePhoto, setIsSavingProfilePhoto] = useState(false);
 
+  // Initialize profile photo position based on category
+  useEffect(() => {
+    if (bannerData?.categoryType === 'motivational') {
+      setProfilePhotoPosition({ x: 19, y: 50 });
+      setOriginalProfilePhotoState(prev => ({ ...prev, position: { x: 19, y: 50 } }));
+    } else {
+      setProfilePhotoPosition({ x: 80, y: 80 });
+      setOriginalProfilePhotoState(prev => ({ ...prev, position: { x: 80, y: 80 } }));
+    }
+  }, [bannerData?.categoryType]);
+
   // Compute scale factor for display
   useEffect(() => {
     const updateScale = () => {
