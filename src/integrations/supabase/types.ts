@@ -909,6 +909,7 @@ export type Database = {
           name: string
           rank_id: string | null
           required_fields: Json | null
+          story_id: string | null
           trip_id: string | null
           updated_at: string | null
         }
@@ -929,6 +930,7 @@ export type Database = {
           name: string
           rank_id?: string | null
           required_fields?: Json | null
+          story_id?: string | null
           trip_id?: string | null
           updated_at?: string | null
         }
@@ -949,6 +951,7 @@ export type Database = {
           name?: string
           rank_id?: string | null
           required_fields?: Json | null
+          story_id?: string | null
           trip_id?: string | null
           updated_at?: string | null
         }
@@ -993,6 +996,13 @@ export type Database = {
             columns: ["rank_id"]
             isOneToOne: false
             referencedRelation: "ranks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "templates_story_id_fkey"
+            columns: ["story_id"]
+            isOneToOne: false
+            referencedRelation: "stories"
             referencedColumns: ["id"]
           },
           {
