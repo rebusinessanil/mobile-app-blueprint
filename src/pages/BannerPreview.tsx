@@ -16,7 +16,6 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Sticker } from "@/hooks/useStickers";
 import html2canvas from "html2canvas";
 import { useRealtimeStickerSync } from "@/hooks/useRealtimeStickerSync";
-import LowerThirdBanner from "@/components/LowerThirdBanner";
 interface Upline {
   id: string;
   name: string;
@@ -1520,22 +1519,113 @@ export default function BannerPreview() {
                 {/* Category-specific content */}
                 {renderCategoryContent()}
 
-                {/* LOWER THIRD - Contact Info with Dark Theme Banner Variants */}
-                <div className="absolute" style={{
-                    bottom: '20px',
-                    ...(bannerData.categoryType === 'motivational' 
-                      ? { right: '150px', transform: 'translateX(50%)' }
-                      : { left: '150px', transform: 'translateX(-50%)' }
-                    ),
-                  }}>
-                  <LowerThirdBanner
-                    slotNumber={selectedTemplate + 1}
-                    name={profileName}
-                    rank={bannerData.rankName}
-                    contactNumber={displayContact}
-                    position={bannerData.categoryType === 'motivational' ? 'right' : 'left'}
-                  />
-                </div>
+                {/* LOWER THIRD BANNER - Dark theme with color-coded borders */}
+                {(() => {
+                  // Determine color variant based on slot (1-16): Red, Orange, Teal pattern
+                  const slotNumber = selectedTemplate + 1;
+                  const variantIndex = ((slotNumber - 1) % 3);
+                  
+                  const variants = [
+                    { borderColor: '#e63946', labelBg: '#e63946', shadowColor: 'rgba(230, 57, 70, 0.5)' }, // Red
+                    { borderColor: '#f77f00', labelBg: '#f77f00', shadowColor: 'rgba(247, 127, 0, 0.5)' }, // Orange
+                    { borderColor: '#06d6a0', labelBg: '#06d6a0', shadowColor: 'rgba(6, 214, 160, 0.5)' }, // Teal
+                  ];
+                  
+                  const variant = variants[variantIndex];
+                  
+                  return (
+                    <div className="absolute" style={{
+                      bottom: '35px',
+                      left: '67px',
+                      width: '920px',
+                      height: '90px',
+                      zIndex: 25
+                    }}>
+                      {/* SVG Shape with border */}
+                      <svg width="920" height="90" viewBox="0 0 920 90" style={{ position: 'absolute', top: 0, left: 0 }}>
+                        <defs>
+                          <filter id={`shadow-${variantIndex}`} x="-50%" y="-50%" width="200%" height="200%">
+                            <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
+                            <feOffset dx="0" dy="2" result="offsetblur"/>
+                            <feComponentTransfer>
+                              <feFuncA type="linear" slope="0.5"/>
+                            </feComponentTransfer>
+                            <feMerge>
+                              <feMergeNode/>
+                              <feMergeNode in="SourceGraphic"/>
+                            </feMerge>
+                          </filter>
+                        </defs>
+                        
+                        {/* Border path */}
+                        <path
+                          d="M 45 4 
+                             L 810 4 
+                             L 850 45 
+                             L 810 86 
+                             L 45 86 
+                             Q 4 86 4 45 
+                             Q 4 4 45 4 Z"
+                          fill="none"
+                          stroke={variant.borderColor}
+                          strokeWidth="4"
+                          filter={`url(#shadow-${variantIndex})`}
+                        />
+                        
+                        {/* Inner dark fill */}
+                        <path
+                          d="M 45 8 
+                             L 808 8 
+                             L 846 45 
+                             L 808 82 
+                             L 45 82 
+                             Q 8 82 8 45 
+                             Q 8 8 45 8 Z"
+                          fill="#1a2332"
+                        />
+                      </svg>
+                      
+                      {/* Label on the right */}
+                      <div style={{
+                        position: 'absolute',
+                        right: '-100px',
+                        top: '50%',
+                        transform: 'translateY(-50%) skewX(-8deg)',
+                        background: variant.labelBg,
+                        padding: '18px 45px 18px 40px',
+                        clipPath: 'polygon(8% 0%, 100% 0%, 92% 100%, 0% 100%)',
+                        boxShadow: `0 4px 12px ${variant.shadowColor}`,
+                        zIndex: 30
+                      }}>
+                        <div style={{ transform: 'skewX(8deg)' }}>
+                          <p style={{
+                            fontSize: '12px',
+                            fontWeight: '600',
+                            color: '#ffffff',
+                            letterSpacing: '1.2px',
+                            textTransform: 'uppercase',
+                            margin: 0,
+                            lineHeight: '1.3',
+                            textShadow: '1px 1px 3px rgba(0,0,0,0.5)'
+                          }}>
+                            CALL FOR MENTORSHIP
+                          </p>
+                          <p style={{
+                            fontSize: '20px',
+                            fontWeight: '800',
+                            color: '#ffffff',
+                            margin: 0,
+                            lineHeight: '1.2',
+                            letterSpacing: '0.5px',
+                            textShadow: '1px 1px 3px rgba(0,0,0,0.5)'
+                          }}>
+                            +91 {displayContact}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 {/* LEFT SIDE - Profile Photo - 75% HEIGHT - Motivational Layout */}
                 {mentorPhoto && bannerData.categoryType === 'motivational' && <div className="absolute overflow-hidden shadow-2xl cursor-pointer transition-transform duration-500 ease-in-out" onClick={() => setIsMentorPhotoFlipped(!isMentorPhotoFlipped)} style={{
