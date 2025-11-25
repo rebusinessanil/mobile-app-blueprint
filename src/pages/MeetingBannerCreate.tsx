@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { removeBackground, loadImage } from "@/lib/backgroundRemover";
 import { useProfile } from "@/hooks/useProfile";
 import { useBannerSettings } from "@/hooks/useBannerSettings";
+import { useTemplates, useTemplateCategories } from "@/hooks/useTemplates";
 import { supabase } from "@/integrations/supabase/client";
 
 interface Upline {
@@ -24,6 +25,11 @@ export default function MeetingBannerCreate() {
   const [userId, setUserId] = useState<string | null>(null);
   const { profile } = useProfile(userId || undefined);
   const { settings: bannerSettings } = useBannerSettings(userId || undefined);
+  
+  // Fetch meeting category and templates
+  const { categories } = useTemplateCategories();
+  const meetingCategory = categories.find(c => c.slug === 'meeting' || c.name.toLowerCase().includes('meeting'));
+  const { templates } = useTemplates(meetingCategory?.id);
   
   const [uplines, setUplines] = useState<Upline[]>([]);
   const [formData, setFormData] = useState({
@@ -123,6 +129,8 @@ export default function MeetingBannerCreate() {
       return;
     }
 
+    const templateId = templates.length > 0 ? templates[0].id : undefined;
+
     navigate("/banner-preview", {
       state: {
         categoryType: "meeting",
@@ -133,7 +141,9 @@ export default function MeetingBannerCreate() {
         venue: formData.venue,
         photo,
         uplines,
-        slotStickers
+        slotStickers,
+        templateId,
+        templates
       }
     });
   };
