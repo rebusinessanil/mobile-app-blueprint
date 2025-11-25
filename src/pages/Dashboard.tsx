@@ -383,20 +383,14 @@ export default function Dashboard() {
                   })}
                 </div>
               ) : isFestival ? (
-                /* Festival - Show festival themes with Cover Images */
+                /* Festival - Show festival themes navigating to Festival Selection Page */
                 <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
                   {getFestivalTemplates().map(template => {
                     const festival = festivals.find(f => f.id === template.festival_id);
                     return (
-                      <button
+                      <Link
                         key={template.id}
-                        onClick={() => {
-                          window.location.href = `/banner-create/festival`;
-                          // Pass festivalId via navigation state
-                          setTimeout(() => {
-                            window.history.replaceState({ festivalId: template.festival_id }, '');
-                          }, 0);
-                        }}
+                        to="/categories/festival"
                         className="min-w-[140px] gold-border bg-card rounded-2xl overflow-hidden flex-shrink-0 hover:gold-glow transition-all"
                       >
                         {template.cover_thumbnail_url ? (
@@ -409,13 +403,13 @@ export default function Dashboard() {
                           </div>
                         ) : (
                           <div className="h-24 bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center text-4xl">
-                            {festival?.festival_name.slice(0, 2) || '🎉'}
+                            🎉
                           </div>
                         )}
                         <div className="p-3 text-center">
                           <p className="text-sm font-semibold text-foreground leading-tight">{template.name}</p>
                         </div>
-                      </button>
+                      </Link>
                     );
                   })}
                 </div>
