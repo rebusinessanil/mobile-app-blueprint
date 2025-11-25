@@ -12,10 +12,11 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Plus, Trash2, Edit, Eye, EyeOff, RefreshCw } from "lucide-react";
+import { Plus, Trash2, Edit, Eye, EyeOff, RefreshCw, Sparkles, Calendar } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { useStories, useTemplateCategories } from "@/hooks/useTemplates";
+import { useGeneratedStories } from "@/hooks/useAutoStories";
 import {
   Select,
   SelectContent,
@@ -23,11 +24,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function AdminStories() {
   const { stories, loading, refetch } = useStories();
+  const { stories: generatedStories, refetch: refetchGenerated } = useGeneratedStories();
   const { categories } = useTemplateCategories();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [editingStory, setEditingStory] = useState<any>(null);
   const [formData, setFormData] = useState({
     title: "",
@@ -169,6 +173,26 @@ export default function AdminStories() {
     }
   };
 
+  const handleGenerateTestStories = async () => {
+    try {
+      setIsGenerating(true);
+      toast.info("Generating test stories...");
+
+      const { data, error } = await supabase.functions.invoke('auto-story-generator', {
+        body: {}
+      });
+
+      if (error) throw error;
+
+      toast.success(`Test stories generated successfully! ${data?.stats?.tomorrowEvents || 0} events, ${data?.stats?.tomorrowFestivals || 0} festivals`);
+      refetchGenerated();
+    } catch (error: any) {
+      toast.error("Failed to generate test stories: " + error.message);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   return (
     <AdminLayout>
       <div className="space-y-6">
@@ -177,12 +201,16 @@ export default function AdminStories() {
           <div>
             <h1 className="text-3xl font-bold text-foreground">Stories Management</h1>
             <p className="text-muted-foreground mt-1">
-              Create and manage app stories
+              Create and manage manual stories & auto-generated daily stories
             </p>
           </div>
           <div className="flex gap-2">
             <Button onClick={() => refetch()} variant="outline" size="icon">
               <RefreshCw className="w-4 h-4" />
+            </Button>
+            <Button onClick={handleGenerateTestStories} variant="secondary" disabled={isGenerating}>
+              <Sparkles className="w-4 h-4 mr-2" />
+              {isGenerating ? "Generating..." : "Create Test Stories"}
             </Button>
             <Button onClick={() => handleOpenDialog()}>
               <Plus className="w-4 h-4 mr-2" />
@@ -192,87 +220,170 @@ export default function AdminStories() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="gold-border bg-card rounded-xl p-6">
-            <p className="text-sm text-muted-foreground">Total Stories</p>
+            <p className="text-sm text-muted-foreground">Manual Stories</p>
             <p className="text-3xl font-bold text-primary mt-2">{stories.length}</p>
           </div>
           <div className="gold-border bg-card rounded-xl p-6">
-            <p className="text-sm text-muted-foreground">Active Stories</p>
+            <p className="text-sm text-muted-foreground">Active Manual</p>
             <p className="text-3xl font-bold text-primary mt-2">
               {stories.filter((s) => s.is_active).length}
             </p>
           </div>
           <div className="gold-border bg-card rounded-xl p-6">
-            <p className="text-sm text-muted-foreground">Video Stories</p>
+            <p className="text-sm text-muted-foreground">Generated Stories</p>
             <p className="text-3xl font-bold text-primary mt-2">
-              {stories.filter((s) => s.type === "video").length}
+              {generatedStories.length}
+            </p>
+          </div>
+          <div className="gold-border bg-card rounded-xl p-6">
+            <p className="text-sm text-muted-foreground">Active Generated</p>
+            <p className="text-3xl font-bold text-primary mt-2">
+              {generatedStories.filter((s) => s.status === "active").length}
             </p>
           </div>
         </div>
 
-        {/* Stories Grid */}
-        {loading ? (
-          <div className="text-center py-12 text-muted-foreground">Loading...</div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {stories.map((story) => (
-              <div
-                key={story.id}
-                className="gold-border bg-card rounded-xl overflow-hidden hover:gold-glow transition-all"
-              >
-                <div className="relative aspect-[9/16] bg-muted">
-                  <img
-                    src={story.cover_image_url}
-                    alt={story.title}
-                    className="w-full h-full object-cover"
-                  />
-                  {!story.is_active && (
-                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                      <EyeOff className="w-8 h-8 text-white" />
-                    </div>
-                  )}
-                </div>
-                <div className="p-4">
-                  <h3 className="font-semibold text-foreground mb-2">{story.title}</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Type: {story.type} • Status: {story.is_active ? "Active" : "Inactive"}
-                  </p>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="flex-1"
-                      onClick={() => handleOpenDialog(story)}
-                    >
-                      <Edit className="w-4 h-4 mr-1" />
-                      Edit
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleToggleActive(story.id, story.is_active)}
-                    >
-                      {story.is_active ? (
-                        <EyeOff className="w-4 h-4" />
-                      ) : (
-                        <Eye className="w-4 h-4" />
-                      )}
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDelete(story.id)}
-                      className="text-destructive hover:text-destructive"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
+        {/* Stories Tabs */}
+        <Tabs defaultValue="manual" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="manual">Manual Stories</TabsTrigger>
+            <TabsTrigger value="generated">Auto-Generated Stories</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="manual" className="space-y-4">
+            {loading ? (
+              <div className="text-center py-12 text-muted-foreground">Loading...</div>
+            ) : stories.length === 0 ? (
+              <div className="gold-border bg-card rounded-xl p-12 text-center">
+                <Calendar className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-foreground mb-2">No Manual Stories Yet</h3>
+                <p className="text-muted-foreground mb-6">
+                  Create your first manual story to get started
+                </p>
+                <Button onClick={() => handleOpenDialog()}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add First Story
+                </Button>
               </div>
-            ))}
-          </div>
-        )}
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {stories.map((story) => (
+                  <div
+                    key={story.id}
+                    className="gold-border bg-card rounded-xl overflow-hidden hover:gold-glow transition-all"
+                  >
+                    <div className="relative aspect-[9/16] bg-muted">
+                      <img
+                        src={story.cover_image_url}
+                        alt={story.title}
+                        className="w-full h-full object-cover"
+                      />
+                      {!story.is_active && (
+                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                          <EyeOff className="w-8 h-8 text-white" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="p-4">
+                      <h3 className="font-semibold text-foreground mb-2">{story.title}</h3>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Type: {story.type} • Status: {story.is_active ? "Active" : "Inactive"}
+                      </p>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="flex-1"
+                          onClick={() => handleOpenDialog(story)}
+                        >
+                          <Edit className="w-4 h-4 mr-1" />
+                          Edit
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleToggleActive(story.id, story.is_active)}
+                        >
+                          {story.is_active ? (
+                            <EyeOff className="w-4 h-4" />
+                          ) : (
+                            <Eye className="w-4 h-4" />
+                          )}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDelete(story.id)}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="generated" className="space-y-4">
+            {loading ? (
+              <div className="text-center py-12 text-muted-foreground">Loading...</div>
+            ) : generatedStories.length === 0 ? (
+              <div className="gold-border bg-card rounded-xl p-12 text-center">
+                <Sparkles className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-foreground mb-2">No Generated Stories Yet</h3>
+                <p className="text-muted-foreground mb-6">
+                  Click "Create Test Stories" to generate stories from events and festivals
+                </p>
+                <Button onClick={handleGenerateTestStories} disabled={isGenerating}>
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  {isGenerating ? "Generating..." : "Create Test Stories"}
+                </Button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {generatedStories.map((story) => (
+                  <div
+                    key={story.id}
+                    className="gold-border bg-card rounded-xl overflow-hidden hover:gold-glow transition-all"
+                  >
+                    <div className="relative aspect-[9/16] bg-muted">
+                      <img
+                        src={story.poster_url}
+                        alt={story.title}
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute top-2 right-2">
+                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                          story.status === 'active' ? 'bg-green-500' : 
+                          story.status === 'preview_only' ? 'bg-yellow-500' : 'bg-gray-500'
+                        } text-white`}>
+                          {story.status === 'active' ? 'Active' : 
+                           story.status === 'preview_only' ? 'Preview' : 'Expired'}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="p-4">
+                      <h3 className="font-semibold text-foreground mb-2">{story.title}</h3>
+                      <p className="text-sm text-muted-foreground mb-2">
+                        Type: {story.source_type}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Date: {new Date(story.event_date).toLocaleDateString()}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Expires: {new Date(story.expires_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
 
         {/* Create/Edit Dialog */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
