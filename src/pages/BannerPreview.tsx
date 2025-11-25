@@ -1315,6 +1315,17 @@ export default function BannerPreview() {
         return;
       }
 
+      // Check for zero balance first
+      if (credits.balance <= 0) {
+        toast.error("Insufficient balance. Please top up your wallet to download banners.", {
+          action: {
+            label: "Top Up",
+            onClick: () => navigate("/wallet"),
+          },
+        });
+        return;
+      }
+
       const BANNER_COST = 10; // Cost per banner download
       if (credits.balance < BANNER_COST) {
         toast.error(`Insufficient balance! You need ₹${BANNER_COST} credits to download this banner.`, {
