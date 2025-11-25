@@ -181,19 +181,19 @@ export default function BannerPreview() {
       if (error && error.code !== 'PGRST116') throw error;
       return data;
     },
-    enabled: !!bannerData?.motivationalBannerId && bannerData.categoryType === 'motivational'
+    enabled: !!bannerData?.motivationalBannerId && bannerData?.categoryType === 'motivational'
   });
 
   // Initialize profile picture position and scale from database defaults
   useEffect(() => {
-    if (profileDefaults && bannerData.categoryType === 'motivational') {
+    if (profileDefaults && bannerData?.categoryType === 'motivational') {
       setProfilePicPosition({ 
         x: Number(profileDefaults.profile_position_x) || 0, 
         y: Number(profileDefaults.profile_position_y) || 0 
       });
       setProfilePicScale(Number(profileDefaults.profile_scale) || 1);
     }
-  }, [profileDefaults, bannerData.categoryType]);
+  }, [profileDefaults, bannerData?.categoryType]);
 
   // Get template ID from bannerData (passed from rank selection) or fetch by rank_id
   const {
