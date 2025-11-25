@@ -64,7 +64,7 @@ export default function FestivalPreview() {
       state: {
         categoryType: "festival",
         rankName: "Festival Celebration",
-        name: "", // FESTIVAL: No achiever name auto-load - keep empty
+        name: profile.name, // Auto-fill from profile
         teamCity: "", // Optional
         festivalName: "", // Optional
         greeting: "", // Optional
