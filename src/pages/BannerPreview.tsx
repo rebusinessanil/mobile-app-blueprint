@@ -1670,11 +1670,11 @@ export default function BannerPreview() {
                             {profileName?.toUpperCase() || 'USER NAME'}
                           </div>
                           <div style={{
-                            fontSize: '16px',
-                            fontWeight: '600',
+                            fontSize: '28px',
+                            fontWeight: '700',
                             color: currentVariant.borderColor,
-                            letterSpacing: '0.8px',
-                            textShadow: '0 1px 3px rgba(0, 0, 0, 0.4)'
+                            letterSpacing: '1px',
+                            textShadow: '0 2px 4px rgba(0, 0, 0, 0.5)'
                           }}>
                             {displayRank || 'RANK'}
                           </div>
