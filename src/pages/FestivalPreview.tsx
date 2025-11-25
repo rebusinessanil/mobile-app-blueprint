@@ -68,7 +68,7 @@ export default function FestivalPreview() {
         teamCity: "", // Optional
         festivalName: "", // Optional
         greeting: "", // Optional
-        photo: profile.profile_photo || null, // Auto-fill primary photo
+        photo: null, // FESTIVAL: No achiever image auto-load
         uplines,
         slotStickers: {},
         templates,
