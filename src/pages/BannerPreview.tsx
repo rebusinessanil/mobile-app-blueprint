@@ -1608,10 +1608,10 @@ export default function BannerPreview() {
                 {/* BOTTOM CENTER - Profile Name & Rank - FIXED FONTS AND POSITION */}
                 <div className="absolute text-center" style={{
                     bottom: '40px',
-                    /* LOCKED */
-                    left: '50%',
-                    /* LOCKED */
-                    transform: 'translateX(-45%)',
+                    ...(bannerData.categoryType === 'motivational' 
+                      ? { left: '30%', transform: 'translateX(-50%)' }
+                      : { left: '50%', transform: 'translateX(-45%)' }
+                    ),
                     width: 'max-content',
                     maxWidth: '1080px',
                     zIndex: 3
