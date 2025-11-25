@@ -1557,13 +1557,13 @@ export default function BannerPreview() {
 
                 {/* LEFT SIDE - Profile Photo - FULL HEIGHT - Motivational Layout */}
                 {mentorPhoto && bannerData.categoryType === 'motivational' && <div className="absolute overflow-hidden shadow-2xl cursor-pointer transition-transform duration-500 ease-in-out" onClick={() => setIsMentorPhotoFlipped(!isMentorPhotoFlipped)} style={{
-                    top: '50%',
+                    top: 0,
                     left: 0,
                     width: 'auto',
-                    height: '1080px',
+                    height: '1350px',
                     aspectRatio: '3/4',
                     borderRadius: '16px',
-                    transform: isMentorPhotoFlipped ? 'translateY(-50%) scaleX(-1)' : 'translateY(-50%) scaleX(1)'
+                    transform: isMentorPhotoFlipped ? 'scaleX(-1)' : 'scaleX(1)'
                   }}>
                     <img src={mentorPhoto} alt={profileName} style={{
                       width: '100%',
