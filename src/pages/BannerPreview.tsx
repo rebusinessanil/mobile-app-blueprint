@@ -1519,148 +1519,40 @@ export default function BannerPreview() {
                 {/* Category-specific content */}
                 {renderCategoryContent()}
 
-                {/* LOWER THIRD BANNER - Dark theme with color-coded borders */}
-                {(() => {
-                  // Determine color variant based on slot (1-16): Red, Orange, Teal pattern
-                  const slotNumber = selectedTemplate + 1;
-                  const variantIndex = ((slotNumber - 1) % 3);
-                  
-                  const variants = [
-                    { borderColor: '#e63946', labelBg: '#e63946', shadowColor: 'rgba(230, 57, 70, 0.5)' }, // Red
-                    { borderColor: '#f77f00', labelBg: '#f77f00', shadowColor: 'rgba(247, 127, 0, 0.5)' }, // Orange
-                    { borderColor: '#06d6a0', labelBg: '#06d6a0', shadowColor: 'rgba(6, 214, 160, 0.5)' }, // Teal
-                  ];
-                  
-                  const variant = variants[variantIndex];
-                  
-                  return (
-                    <div className="absolute" style={{
-                      bottom: '250px',
-                      left: '50%',
-                      transform: 'translateX(-50%)',
-                      transformOrigin: 'center center',
-                      width: '920px',
-                      height: '90px',
-                      zIndex: 25
+                {/* LOWER THIRD - Contact Info - FIXED FONTS AND POSITION */}
+                <div className="absolute" style={{
+                    bottom: '40px',
+                    ...(bannerData.categoryType === 'motivational' 
+                      ? { right: '27px', textAlign: 'right' as const }
+                      : { left: '27px' }
+                    ),
+                    width: '675px',
+                    minWidth: '675px',
+                    maxWidth: '675px'
+                  }}>
+                  <p style={{
+                      fontSize: '9px !important',
+                      textShadow: '2px 2px 4px rgba(0,0,0,0.9)',
+                      marginBottom: '1px',
+                      textTransform: 'uppercase',
+                      position: 'relative',
+                      top: '13px',
+                      color: '#ffffff',
+                      fontWeight: '300',
+                      letterSpacing: '2px'
                     }}>
-                      {/* SVG Shape with border */}
-                      <svg width="920" height="90" viewBox="0 0 920 90" style={{ position: 'absolute', top: 0, left: 0 }}>
-                        <defs>
-                          <filter id={`shadow-${variantIndex}`} x="-50%" y="-50%" width="200%" height="200%">
-                            <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
-                            <feOffset dx="0" dy="2" result="offsetblur"/>
-                            <feComponentTransfer>
-                              <feFuncA type="linear" slope="0.5"/>
-                            </feComponentTransfer>
-                            <feMerge>
-                              <feMergeNode/>
-                              <feMergeNode in="SourceGraphic"/>
-                            </feMerge>
-                          </filter>
-                        </defs>
-                        
-                        {/* Border path */}
-                        <path
-                          d="M 45 4 
-                             L 810 4 
-                             L 850 45 
-                             L 810 86 
-                             L 45 86 
-                             Q 4 86 4 45 
-                             Q 4 4 45 4 Z"
-                          fill="none"
-                          stroke={variant.borderColor}
-                          strokeWidth="4"
-                          filter={`url(#shadow-${variantIndex})`}
-                        />
-                        
-                        {/* Inner dark fill */}
-                        <path
-                          d="M 45 8 
-                             L 808 8 
-                             L 846 45 
-                             L 808 82 
-                             L 45 82 
-                             Q 8 82 8 45 
-                             Q 8 8 45 8 Z"
-                          fill="#1a2332"
-                        />
-                      </svg>
-                      
-                      {/* Left side - Name and Rank */}
-                      <div style={{
-                        position: 'absolute',
-                        left: '40px',
-                        top: '50%',
-                        transform: 'translateY(-50%)',
-                        zIndex: 30
-                      }}>
-                        <p style={{
-                          fontSize: '28px',
-                          fontWeight: '700',
-                          color: '#ffffff',
-                          letterSpacing: '1px',
-                          textTransform: 'uppercase',
-                          margin: 0,
-                          lineHeight: '1.2',
-                          textShadow: '2px 2px 4px rgba(0,0,0,0.6)'
-                        }}>
-                          {truncatedProfileName}
-                        </p>
-                        <p style={{
-                          fontSize: '18px',
-                          fontWeight: '600',
-                          color: '#ffffff',
-                          letterSpacing: '0.8px',
-                          margin: '4px 0 0 0',
-                          lineHeight: '1.2',
-                          textShadow: '1px 1px 3px rgba(0,0,0,0.5)'
-                        }}>
-                          {displayRank}
-                        </p>
-                      </div>
-                      
-                      {/* Label on the right */}
-                      <div style={{
-                        position: 'absolute',
-                        right: '-100px',
-                        top: '50%',
-                        transform: 'translateY(-50%) skewX(-8deg)',
-                        background: variant.labelBg,
-                        padding: '18px 45px 18px 40px',
-                        clipPath: 'polygon(8% 0%, 100% 0%, 92% 100%, 0% 100%)',
-                        boxShadow: `0 4px 12px ${variant.shadowColor}`,
-                        zIndex: 30
-                      }}>
-                        <div style={{ transform: 'skewX(8deg)' }}>
-                          <p style={{
-                            fontSize: '12px',
-                            fontWeight: '600',
-                            color: '#ffffff',
-                            letterSpacing: '1.2px',
-                            textTransform: 'uppercase',
-                            margin: 0,
-                            lineHeight: '1.3',
-                            textShadow: '1px 1px 3px rgba(0,0,0,0.5)'
-                          }}>
-                            CALL FOR MENTORSHIP
-                          </p>
-                          <p style={{
-                            fontSize: '20px',
-                            fontWeight: '800',
-                            color: '#ffffff',
-                            margin: 0,
-                            lineHeight: '1.2',
-                            letterSpacing: '0.5px',
-                            textShadow: '1px 1px 3px rgba(0,0,0,0.5)'
-                          }}>
-                            +91 {displayContact}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })()}
+                    CALL FOR MENTORSHIP                                                                 
+                  </p>
+                  <p title={`+91 ${displayContact}`} style={{
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      color: '#ffffff',
+                      fontFamily: 'sans-serif'
+                    }} className="banner-contact px-0 py-[3px]">
+                    +91 {displayContact}
+                  </p>
+                </div>
 
                 {/* LEFT SIDE - Profile Photo - 75% HEIGHT - Motivational Layout */}
                 {mentorPhoto && bannerData.categoryType === 'motivational' && <div className="absolute overflow-hidden shadow-2xl cursor-pointer transition-transform duration-500 ease-in-out" onClick={() => setIsMentorPhotoFlipped(!isMentorPhotoFlipped)} style={{
@@ -1713,37 +1605,131 @@ export default function BannerPreview() {
                   </div>}
 
 
-                {/* BOTTOM CENTER - Profile Name & Rank - FIXED FONTS AND POSITION */}
-                <div className="absolute text-center" style={{
+                {/* MOTIVATIONAL CONTACT STRIP BANNER */}
+                {bannerData.categoryType === 'motivational' && (
+                  <div className="absolute" style={{
+                    bottom: '35px',
+                    left: '27px',
+                    right: '27px',
+                    height: '120px',
+                    background: 'linear-gradient(135deg, hsl(var(--primary) / 0.9), hsl(var(--primary) / 0.7), hsl(262 83% 45% / 0.8))',
+                    borderRadius: '20px',
+                    border: '3px solid hsl(var(--primary))',
+                    boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4), 0 4px 12px rgba(255, 215, 0, 0.3)',
+                    zIndex: 4,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '0 35px',
+                    backdropFilter: 'blur(10px)'
+                  }}>
+                    {/* Left Side - Phone Contact */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                      <div style={{
+                        width: '70px',
+                        height: '70px',
+                        borderRadius: '50%',
+                        background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(262 83% 45%))',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)'
+                      }}>
+                        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.977.977 0 0 0-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z" fill="white"/>
+                        </svg>
+                      </div>
+                      <div>
+                        <div style={{
+                          fontSize: '16px',
+                          fontWeight: '600',
+                          color: '#ffffff',
+                          marginBottom: '4px',
+                          letterSpacing: '0.5px'
+                        }}>
+                          FOR SUCCESS CALL ON
+                        </div>
+                        <div style={{
+                          fontSize: '28px',
+                          fontWeight: '800',
+                          color: 'hsl(var(--primary))',
+                          letterSpacing: '1px',
+                          textShadow: '0 2px 4px rgba(0, 0, 0, 0.4)'
+                        }}>
+                          {profile?.mobile || profile?.whatsapp || '+91 XXXXXXXXXX'}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Right Side - User Info */}
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{
+                        fontSize: '32px',
+                        fontWeight: '800',
+                        color: '#ffffff',
+                        marginBottom: '6px',
+                        letterSpacing: '1px',
+                        textShadow: '0 2px 6px rgba(0, 0, 0, 0.5)'
+                      }}>
+                        {profileName?.toUpperCase() || 'USER NAME'}
+                      </div>
+                      <div style={{
+                        fontSize: '18px',
+                        fontWeight: '600',
+                        color: 'hsl(var(--primary))',
+                        marginBottom: '4px',
+                        letterSpacing: '0.8px',
+                        textShadow: '0 1px 3px rgba(0, 0, 0, 0.3)'
+                      }}>
+                        {displayRank || 'RANK'}
+                      </div>
+                      <div style={{
+                        fontSize: '14px',
+                        fontWeight: '500',
+                        color: '#ffffff',
+                        opacity: 0.9,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'flex-end',
+                        gap: '8px'
+                      }}>
+                        <span>@{profileName?.toLowerCase().replace(/\s+/g, '') || 'username'}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* BOTTOM CENTER - Profile Name & Rank - FIXED FONTS AND POSITION (Only for non-motivational) */}
+                {bannerData.categoryType !== 'motivational' && (
+                  <div className="absolute text-center" style={{
                     bottom: '40px',
-                    ...(bannerData.categoryType === 'motivational' 
-                      ? { left: '30%', transform: 'translateX(-50%)' }
-                      : { left: '50%', transform: 'translateX(-45%)' }
-                    ),
+                    left: '50%',
+                    transform: 'translateX(-45%)',
                     width: 'max-content',
                     maxWidth: '1080px',
                     zIndex: 3
                   }}>
-                  <p title={profileName} style={{
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      marginBottom: '1px',
-                      position: 'relative',
-                      top: '20px',
-                      color: '#ffffff',
-                      textAlign: 'center'
-                    }} className="banner-profile-name px-[4px] py-0 my-0">
-                    {truncatedProfileName.toUpperCase()}
-                  </p>
-                  <p className="banner-profile-rank" style={{
-                      textTransform: 'uppercase',
-                      color: '#eab308',
-                      textAlign: 'center'
-                    }}>
-                    {displayRank}
-                  </p>
-                </div>
+                    <p title={profileName} style={{
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        marginBottom: '1px',
+                        position: 'relative',
+                        top: '20px',
+                        color: '#ffffff',
+                        textAlign: 'center'
+                      }} className="banner-profile-name px-[4px] py-0 my-0">
+                      {truncatedProfileName.toUpperCase()}
+                    </p>
+                    <p className="banner-profile-rank" style={{
+                        textTransform: 'uppercase',
+                        color: '#eab308',
+                        textAlign: 'center'
+                      }}>
+                      {displayRank}
+                    </p>
+                  </div>
+                )}
 
                 {/* Achievement Stickers - Right side of achiever photo, near right edge */}
                 {stickerImages[selectedTemplate + 1]?.map((sticker, index) => {
