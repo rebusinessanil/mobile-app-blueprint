@@ -41,6 +41,7 @@ interface BannerData {
   eventDate?: string;
   eventVenue?: string;
   quote?: string;
+  motivationalBannerId?: string;
 }
 export default function BannerPreview() {
   const navigate = useNavigate();
@@ -164,6 +165,36 @@ export default function BannerPreview() {
   const {
     defaults: bannerDefaults
   } = useBannerDefaults();
+
+  // Fetch motivational profile defaults (position and scale for profile picture)
+  const { data: profileDefaults, refetch: refetchProfileDefaults } = useQuery({
+    queryKey: ['motivational-profile-defaults', bannerData?.motivationalBannerId],
+    queryFn: async () => {
+      if (!bannerData?.motivationalBannerId) return null;
+      
+      const { data, error } = await supabase
+        .from('motivational_profile_defaults')
+        .select('*')
+        .eq('motivational_banner_id', bannerData.motivationalBannerId)
+        .maybeSingle();
+      
+      if (error && error.code !== 'PGRST116') throw error;
+      return data;
+    },
+    enabled: !!bannerData?.motivationalBannerId && bannerData.categoryType === 'motivational'
+  });
+
+  // Initialize profile picture position and scale from database defaults
+  useEffect(() => {
+    if (profileDefaults && bannerData.categoryType === 'motivational') {
+      setProfilePicPosition({ 
+        x: Number(profileDefaults.profile_position_x) || 0, 
+        y: Number(profileDefaults.profile_position_y) || 0 
+      });
+      setProfilePicScale(Number(profileDefaults.profile_scale) || 1);
+    }
+  }, [profileDefaults, bannerData.categoryType]);
+
   // Get template ID from bannerData (passed from rank selection) or fetch by rank_id
   const {
     data: templateData
@@ -1228,6 +1259,42 @@ export default function BannerPreview() {
     bgGradient: "linear-gradient(to bottom right, #0f172a, #111827, #1e293b)",
     border: "border-slate-500"
   }];
+
+  // Save profile picture position and scale defaults (admin only, motivational only)
+  const handleSaveProfileDefaults = async () => {
+    if (!isAdmin || bannerData.categoryType !== 'motivational' || !bannerData.motivationalBannerId) {
+      toast.error("Cannot save profile defaults");
+      return;
+    }
+
+    const savingToast = toast.loading("Saving profile picture defaults...");
+
+    try {
+      const { error } = await supabase
+        .from('motivational_profile_defaults')
+        .upsert({
+          motivational_banner_id: bannerData.motivationalBannerId,
+          profile_position_x: profilePicPosition.x,
+          profile_position_y: profilePicPosition.y,
+          profile_scale: profilePicScale
+        }, {
+          onConflict: 'motivational_banner_id'
+        });
+
+      if (error) throw error;
+
+      toast.dismiss(savingToast);
+      toast.success("Profile picture defaults saved! All users will see these settings.");
+      
+      // Refetch to confirm the save
+      refetchProfileDefaults();
+    } catch (error) {
+      console.error("Error saving profile defaults:", error);
+      toast.dismiss(savingToast);
+      toast.error("Failed to save profile defaults");
+    }
+  };
+
   const handleDownload = async () => {
     if (!bannerRef.current) {
       toast.error("Banner not ready for download");
@@ -1905,19 +1972,28 @@ export default function BannerPreview() {
               </p>
             </div>
 
-            {/* Reset Button */}
-            <Button
-              onClick={() => {
-                setProfilePicPosition({ x: 0, y: 0 });
-                setProfilePicScale(1);
-                toast.success("Profile picture reset to default");
-              }}
-              variant="outline"
-              size="sm"
-              className="w-full"
-            >
-              Reset Position & Scale
-            </Button>
+            {/* Action Buttons */}
+            <div className="flex gap-2">
+              <Button
+                onClick={handleSaveProfileDefaults}
+                size="sm"
+                className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground"
+              >
+                Save Defaults
+              </Button>
+              <Button
+                onClick={() => {
+                  setProfilePicPosition({ x: 0, y: 0 });
+                  setProfilePicScale(1);
+                  toast.success("Profile picture reset to default");
+                }}
+                variant="outline"
+                size="sm"
+                className="flex-1"
+              >
+                Reset
+              </Button>
+            </div>
           </div>
         </div>
       )}

@@ -168,6 +168,7 @@ export default function MotivationalBannerCreate() {
         slotStickers,
         templates,
         templateId: firstTemplate?.id || undefined,
+        motivationalBannerId: motivationalBannerId, // Pass motivationalBannerId for profile defaults
         rankId: undefined // Motivational doesn't use rankId
       }
     });
