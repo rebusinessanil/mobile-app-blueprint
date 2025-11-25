@@ -1605,99 +1605,144 @@ export default function BannerPreview() {
                   </div>}
 
 
-                {/* MOTIVATIONAL CONTACT STRIP BANNER */}
-                {bannerData.categoryType === 'motivational' && (
-                  <div className="absolute" style={{
-                    bottom: '35px',
-                    left: '27px',
-                    right: '27px',
-                    height: '120px',
-                    background: 'linear-gradient(135deg, hsl(var(--primary) / 0.9), hsl(var(--primary) / 0.7), hsl(262 83% 45% / 0.8))',
-                    borderRadius: '20px',
-                    border: '3px solid hsl(var(--primary))',
-                    boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4), 0 4px 12px rgba(255, 215, 0, 0.3)',
-                    zIndex: 4,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '0 35px',
-                    backdropFilter: 'blur(10px)'
-                  }}>
-                    {/* Left Side - Phone Contact */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                {/* MOTIVATIONAL CONTACT STRIP BANNER - DARK THEME LOWER-THIRD */}
+                {bannerData.categoryType === 'motivational' && (() => {
+                  // Determine variant based on slot number (1-16)
+                  const slotNumber = selectedSlot || 1;
+                  const variantIndex = ((slotNumber - 1) % 3) + 1; // 1, 2, or 3
+                  
+                  // Variant 1: Red/Crimson
+                  // Variant 2: Orange
+                  // Variant 3: Teal/Green
+                  
+                  const variantStyles = {
+                    1: {
+                      borderColor: '#e63946',
+                      tabBg: '#e63946',
+                      tabShadow: '0 4px 12px rgba(230, 57, 70, 0.5)'
+                    },
+                    2: {
+                      borderColor: '#f77f00',
+                      tabBg: '#f77f00',
+                      tabShadow: '0 4px 12px rgba(247, 127, 0, 0.5)'
+                    },
+                    3: {
+                      borderColor: '#06d6a0',
+                      tabBg: '#06d6a0',
+                      tabShadow: '0 4px 12px rgba(6, 214, 160, 0.5)'
+                    }
+                  };
+                  
+                  const variant = variantStyles[variantIndex as keyof typeof variantStyles];
+                  
+                  return (
+                    <div className="absolute" style={{
+                      bottom: '35px',
+                      left: '27px',
+                      right: '27px',
+                      height: '110px',
+                      zIndex: 4,
+                      display: 'flex',
+                      alignItems: 'center',
+                      position: 'relative'
+                    }}>
+                      {/* Main Dark Body */}
                       <div style={{
-                        width: '70px',
+                        position: 'absolute',
+                        left: 0,
+                        top: 0,
+                        bottom: 0,
+                        right: '280px',
+                        background: '#1a1d23',
+                        borderRadius: '60px 0 0 60px',
+                        border: `4px solid ${variant.borderColor}`,
+                        borderRight: 'none',
+                        boxShadow: '0 8px 24px rgba(0, 0, 0, 0.6), inset 0 2px 8px rgba(0, 0, 0, 0.4)'
+                      }} />
+                      
+                      {/* Angled Transition */}
+                      <div style={{
+                        position: 'absolute',
+                        right: '250px',
+                        top: 0,
+                        bottom: 0,
+                        width: '80px',
+                        background: '#1a1d23',
+                        clipPath: 'polygon(0 0, 100% 0, 85% 100%, 0 100%)',
+                        borderTop: `4px solid ${variant.borderColor}`,
+                        borderBottom: `4px solid ${variant.borderColor}`
+                      }} />
+                      
+                      {/* Right Tab */}
+                      <div style={{
+                        position: 'absolute',
+                        right: 0,
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        width: '320px',
                         height: '70px',
-                        borderRadius: '50%',
-                        background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(262 83% 45%))',
+                        background: variant.tabBg,
+                        clipPath: 'polygon(15% 0, 100% 0, 100% 100%, 15% 100%, 0 50%)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)'
+                        paddingLeft: '50px',
+                        boxShadow: variant.tabShadow
                       }}>
-                        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.977.977 0 0 0-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z" fill="white"/>
-                        </svg>
+                        <div style={{ textAlign: 'center' }}>
+                          <div style={{
+                            fontSize: '15px',
+                            fontWeight: '700',
+                            color: '#ffffff',
+                            letterSpacing: '1.5px',
+                            marginBottom: '2px',
+                            textTransform: 'uppercase'
+                          }}>
+                            CALL FOR MENTORSHIP
+                          </div>
+                          <div style={{
+                            fontSize: '22px',
+                            fontWeight: '800',
+                            color: '#ffffff',
+                            letterSpacing: '1px'
+                          }}>
+                            {profile?.mobile || profile?.whatsapp || '+91 XXXXXXXXXX'}
+                          </div>
+                        </div>
                       </div>
-                      <div>
+                      
+                      {/* Content - Left Side (Name & Rank) */}
+                      <div style={{
+                        position: 'relative',
+                        zIndex: 5,
+                        paddingLeft: '70px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '4px'
+                      }}>
+                        <div style={{
+                          fontSize: '36px',
+                          fontWeight: '800',
+                          color: '#ffffff',
+                          letterSpacing: '1.2px',
+                          textShadow: '0 2px 8px rgba(0, 0, 0, 0.8)',
+                          lineHeight: '1.1'
+                        }}>
+                          {profileName?.toUpperCase() || 'USER NAME'}
+                        </div>
                         <div style={{
                           fontSize: '16px',
                           fontWeight: '600',
-                          color: '#ffffff',
-                          marginBottom: '4px',
-                          letterSpacing: '0.5px'
-                        }}>
-                          FOR SUCCESS CALL ON
-                        </div>
-                        <div style={{
-                          fontSize: '28px',
-                          fontWeight: '800',
-                          color: 'hsl(var(--primary))',
+                          color: variant.borderColor,
                           letterSpacing: '1px',
-                          textShadow: '0 2px 4px rgba(0, 0, 0, 0.4)'
+                          textShadow: '0 1px 4px rgba(0, 0, 0, 0.6)'
                         }}>
-                          {profile?.mobile || profile?.whatsapp || '+91 XXXXXXXXXX'}
+                          {displayRank || 'RANK'}
                         </div>
                       </div>
                     </div>
-
-                    {/* Right Side - User Info */}
-                    <div style={{ textAlign: 'right' }}>
-                      <div style={{
-                        fontSize: '32px',
-                        fontWeight: '800',
-                        color: '#ffffff',
-                        marginBottom: '6px',
-                        letterSpacing: '1px',
-                        textShadow: '0 2px 6px rgba(0, 0, 0, 0.5)'
-                      }}>
-                        {profileName?.toUpperCase() || 'USER NAME'}
-                      </div>
-                      <div style={{
-                        fontSize: '18px',
-                        fontWeight: '600',
-                        color: 'hsl(var(--primary))',
-                        marginBottom: '4px',
-                        letterSpacing: '0.8px',
-                        textShadow: '0 1px 3px rgba(0, 0, 0, 0.3)'
-                      }}>
-                        {displayRank || 'RANK'}
-                      </div>
-                      <div style={{
-                        fontSize: '14px',
-                        fontWeight: '500',
-                        color: '#ffffff',
-                        opacity: 0.9,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'flex-end',
-                        gap: '8px'
-                      }}>
-                        <span>@{profileName?.toLowerCase().replace(/\s+/g, '') || 'username'}</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
+                  );
+                })()}
 
                 {/* BOTTOM CENTER - Profile Name & Rank - FIXED FONTS AND POSITION (Only for non-motivational) */}
                 {bannerData.categoryType !== 'motivational' && (
