@@ -383,14 +383,15 @@ export default function Dashboard() {
                   })}
                 </div>
               ) : isFestival ? (
-                /* Festival - Show festival themes navigating to Festival Selection Page */
+                /* Festival - Direct navigation to Banner Creation with festivalId */
                 <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
                   {getFestivalTemplates().map(template => {
                     const festival = festivals.find(f => f.id === template.festival_id);
                     return (
                       <Link
                         key={template.id}
-                        to="/categories/festival"
+                        to="/banner-create/festival"
+                        state={{ festivalId: template.festival_id }}
                         className="min-w-[140px] gold-border bg-card rounded-2xl overflow-hidden flex-shrink-0 hover:gold-glow transition-all"
                       >
                         {template.cover_thumbnail_url ? (
@@ -408,6 +409,9 @@ export default function Dashboard() {
                         )}
                         <div className="p-3 text-center">
                           <p className="text-sm font-semibold text-foreground leading-tight">{template.name}</p>
+                          {festival && (
+                            <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{festival.festival_name}</p>
+                          )}
                         </div>
                       </Link>
                     );
