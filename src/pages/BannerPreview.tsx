@@ -313,7 +313,10 @@ export default function BannerPreview() {
   const displayRank: string = (profile?.rank || "ROYAL AMBASSADOR").replace(/[-–—]/g, ' ');
 
   // Get primary profile photo - prioritize uploaded photo from banner creation for LEFT side
-  const primaryPhoto: string | null = bannerData?.photo || profile?.profile_photo || profilePhotos[0]?.photo_url || null;
+  // FESTIVAL CATEGORY: Skip auto-loading achiever image completely
+  const primaryPhoto: string | null = bannerData?.categoryType === 'festival' 
+    ? (bannerData?.photo || null) 
+    : (bannerData?.photo || profile?.profile_photo || profilePhotos[0]?.photo_url || null);
 
   // Get mentor/upline photo (RIGHT-BOTTOM) - ONLY use profile photos, never uploads
   const mentorPhoto: string | null = profilePhotos[selectedMentorPhotoIndex]?.photo_url || profilePhotos[0]?.photo_url || profile?.profile_photo || null;
