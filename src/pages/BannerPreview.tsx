@@ -1556,12 +1556,12 @@ export default function BannerPreview() {
                   </p>
                 </div>
 
-                {/* LEFT SIDE - Profile Photo - 75% HEIGHT - Motivational Layout */}
+                {/* LEFT SIDE - Profile Photo - FULL BODY - Motivational Layout */}
                 {mentorPhoto && bannerData.categoryType === 'motivational' && <div className="absolute overflow-hidden shadow-2xl cursor-pointer transition-transform duration-500 ease-in-out" onClick={() => setIsMentorPhotoFlipped(!isMentorPhotoFlipped)} style={{
                     top: '50%',
                     left: 0,
                     width: 'auto',
-                    height: '1026px', // 5% reduction from 1080px
+                    height: '1200px',
                     aspectRatio: '3/4',
                     borderRadius: '16px',
                     transform: isMentorPhotoFlipped ? 'translateY(-50%) scaleX(-1)' : 'translateY(-50%) scaleX(1)'
@@ -1569,12 +1569,12 @@ export default function BannerPreview() {
                     <img src={mentorPhoto} alt={profileName} style={{
                       width: '100%',
                       height: '100%',
-                      objectFit: 'cover',
-                      objectPosition: 'center'
+                      objectFit: 'contain',
+                      objectPosition: 'center bottom'
                     }} />
                     {/* Bottom feather fade overlay */}
                     <div className="absolute bottom-0 left-0 right-0 pointer-events-none" style={{
-                      height: '308px', // 30% of 1026px
+                      height: '360px',
                       background: 'linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 100%)'
                     }} />
                   </div>}
