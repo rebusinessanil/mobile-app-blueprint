@@ -769,260 +769,142 @@ export default function BannerPreview() {
       case 'motivational':
         return (
           <>
-            {/* Top Circular Avatars - Connected */}
-            <div className="absolute z-30" style={{
-              top: '20px',
-              left: '50%',
+            {/* User Photo - Left Side Full Height */}
+            {primaryPhoto && (
+              <div className="absolute overflow-hidden" style={{
+                left: '40px',
+                top: '162px',
+                width: '420px',
+                height: '1026px',
+                borderRadius: '24px'
+              }}>
+                <img src={primaryPhoto} alt="User" style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  objectPosition: 'center'
+                }} />
+                {/* Bottom feather fade overlay */}
+                <div className="absolute bottom-0 left-0 right-0 pointer-events-none" style={{
+                  height: '308px',
+                  background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%)'
+                }} />
+              </div>
+            )}
+
+            {/* Motivational Icon */}
+            <div className="absolute z-20" style={{
+              top: '140px',
+              left: '825px',
               transform: 'translateX(-50%)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0'
+              fontSize: '110px'
             }}>
-              {/* Decorative connecting line before avatars */}
-              <div style={{
-                width: '180px',
-                height: '3px',
-                background: 'linear-gradient(to right, transparent, #D4AF37)',
-                marginRight: '-10px'
-              }} />
-              
-              {/* First circular avatar */}
-              <div style={{
-                width: '140px',
-                height: '140px',
-                borderRadius: '50%',
-                border: '4px solid #ffffff',
-                overflow: 'hidden',
-                boxShadow: '0 8px 20px rgba(0,0,0,0.5)',
-                background: '#1a1a2e',
-                zIndex: 2
-              }}>
-                {profilePhotos[0]?.photo_url && (
-                  <img src={profilePhotos[0].photo_url} alt="Profile" style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover'
-                  }} />
-                )}
-              </div>
-
-              {/* Decorative connector between avatars */}
-              <div style={{
-                width: '40px',
-                height: '3px',
-                background: '#D4AF37',
-                zIndex: 1
-              }} />
-
-              {/* Second circular avatar */}
-              <div style={{
-                width: '140px',
-                height: '140px',
-                borderRadius: '50%',
-                border: '4px solid #ffffff',
-                overflow: 'hidden',
-                boxShadow: '0 8px 20px rgba(0,0,0,0.5)',
-                background: '#1a1a2e',
-                zIndex: 2
-              }}>
-                {profilePhotos[1]?.photo_url && (
-                  <img src={profilePhotos[1].photo_url} alt="Profile" style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover'
-                  }} />
-                )}
-              </div>
-
-              {/* Decorative connecting line after avatars */}
-              <div style={{
-                width: '180px',
-                height: '3px',
-                background: 'linear-gradient(to left, transparent, #D4AF37)',
-                marginLeft: '-10px'
-              }} />
+              💪
             </div>
 
-            {/* Top Right Gold Badge */}
-            <div className="absolute z-30" style={{
-              top: '30px',
-              right: '30px',
-              width: '160px',
-              height: '160px',
-              borderRadius: '50%',
-              border: '5px solid #D4AF37',
-              background: 'radial-gradient(circle, #1a1a2e 0%, #0a0a15 100%)',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 10px 30px rgba(212, 175, 55, 0.4)',
-              position: 'relative'
-            }}>
-              {/* Stars decoration */}
-              <div style={{
-                position: 'absolute',
-                top: '10px',
-                left: '50%',
-                transform: 'translateX(-50%)',
-                color: '#D4AF37',
-                fontSize: '12px',
-                letterSpacing: '8px'
-              }}>★ ★ ★</div>
-              
-              <p style={{
-                color: '#D4AF37',
-                fontSize: '14px',
-                fontWeight: '600',
-                margin: 0,
-                marginTop: '20px',
-                letterSpacing: '1px',
-                textAlign: 'center'
-              }}>YOUR NAME</p>
-              
-              <p style={{
-                color: '#ffffff',
-                fontSize: '32px',
-                fontWeight: '800',
-                margin: 0,
-                marginTop: '5px',
-                letterSpacing: '2px',
-                fontFamily: 'Impact, sans-serif'
-              }}>dRr7</p>
-              
-              {/* Bottom stars decoration */}
-              <div style={{
-                position: 'absolute',
-                bottom: '10px',
-                left: '50%',
-                transform: 'translateX(-50%)',
-                color: '#D4AF37',
-                fontSize: '12px',
-                letterSpacing: '8px'
-              }}>★ ★ ★</div>
-            </div>
-
-            {/* Left Side - Opening Quote Mark */}
+            {/* Motivational Title */}
             <div className="absolute z-20" style={{
-              top: '220px',
-              left: '80px',
-              fontSize: '140px',
-              color: '#D4AF37',
-              fontWeight: '700',
-              lineHeight: '0.8',
-              opacity: '0.3'
+              top: '270px',
+              left: '825px',
+              transform: 'translateX(-50%)',
+              width: '648px',
+              textAlign: 'center'
             }}>
-              "
-            </div>
-
-            {/* Right Side - STAY MOTIVATED with Icon */}
-            <div className="absolute z-20" style={{
-              top: '240px',
-              right: '180px',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '20px'
-            }}>
-              {/* Flexed Bicep Icon */}
-              <div style={{
-                fontSize: '100px',
-                filter: 'drop-shadow(0 6px 12px rgba(0,0,0,0.5))'
-              }}>💪</div>
-              
               <p style={{
-                fontSize: '52px',
-                fontWeight: '800',
-                color: '#D4AF37',
-                textShadow: '3px 3px 12px rgba(0,0,0,0.95)',
-                letterSpacing: '2px',
-                margin: 0,
-                textAlign: 'center'
+                fontSize: '44px',
+                fontWeight: '700',
+                color: '#FFD700',
+                textShadow: '3px 3px 10px rgba(0,0,0,0.9)',
+                letterSpacing: '1px'
               }}>
                 STAY MOTIVATED
               </p>
             </div>
 
-            {/* Right Side - Motivational Quote */}
-            <div className="absolute z-20" style={{
-              top: '480px',
-              right: '80px',
-              width: '520px',
-              textAlign: 'left'
+            {/* Quote/Message */}
+            {bannerData.quote && (
+              <div className="absolute" style={{
+                top: '360px',
+                left: '825px',
+                transform: 'translateX(-50%)',
+                width: '648px',
+                padding: '0 50px'
+              }}>
+                <p style={{
+                  color: '#ffffff',
+                  textAlign: 'center',
+                  fontSize: '32px',
+                  fontWeight: '500',
+                  fontStyle: 'italic',
+                  textShadow: '2px 2px 8px rgba(0,0,0,0.9)',
+                  lineHeight: '1.5',
+                  quotes: '"\"""\""'
+                }}>
+                  "{bannerData.quote}"
+                </p>
+              </div>
+            )}
+
+            {/* Name Attribution - Center Bottom */}
+            {truncatedMainName && (
+              <div className="absolute" style={{
+                bottom: '180px',
+                left: '675px',
+                transform: 'translateX(-50%)',
+                width: '648px',
+                padding: '0 27px'
+              }}>
+                <p style={{
+                  color: '#FFD700',
+                  textAlign: 'center',
+                  fontSize: '30px',
+                  fontWeight: '600',
+                  textShadow: '2px 2px 6px rgba(0,0,0,0.9)',
+                  margin: 0
+                }}>
+                  - {truncatedMainName.toUpperCase()}
+                </p>
+                {profile?.rank && (
+                  <p style={{
+                    color: '#ffffff',
+                    textAlign: 'center',
+                    fontSize: '24px',
+                    fontWeight: '500',
+                    textShadow: '2px 2px 6px rgba(0,0,0,0.9)',
+                    marginTop: '8px'
+                  }}>
+                    {profile.rank.toUpperCase()}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Contact Info - Right Bottom */}
+            <div className="absolute" style={{
+              bottom: '40px',
+              right: '40px',
+              textAlign: 'right'
             }}>
               <p style={{
+                fontSize: '11px',
+                textShadow: '2px 2px 4px rgba(0,0,0,0.9)',
+                marginBottom: '4px',
+                textTransform: 'uppercase',
                 color: '#ffffff',
-                fontSize: '38px',
-                fontWeight: '600',
-                textShadow: '2px 2px 8px rgba(0,0,0,0.9)',
-                lineHeight: '1.5',
-                margin: 0
+                fontWeight: '300',
+                letterSpacing: '2px'
               }}>
-                Keep moving forward,
-                <br />
-                <span style={{ color: '#D4AF37' }}>success is closer</span>
-                <br />
-                than you think...
+                CALL FOR MENTORSHIP
               </p>
-            </div>
-
-            {/* Right Side - Climbing Steps Visual */}
-            <div className="absolute z-20" style={{
-              bottom: '280px',
-              right: '120px',
-              display: 'flex',
-              alignItems: 'flex-end',
-              gap: '0'
-            }}>
-              {/* Step 1 */}
-              <div style={{
-                width: '120px',
-                height: '40px',
-                background: 'linear-gradient(135deg, #D4AF37 0%, #C9A961 100%)',
-                borderRadius: '4px',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.4)'
-              }} />
-              
-              {/* Step 2 */}
-              <div style={{
-                width: '120px',
-                height: '70px',
-                background: 'linear-gradient(135deg, #D4AF37 0%, #C9A961 100%)',
-                borderRadius: '4px',
-                marginLeft: '-10px',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.4)'
-              }} />
-              
-              {/* Step 3 */}
-              <div style={{
-                width: '120px',
-                height: '100px',
-                background: 'linear-gradient(135deg, #D4AF37 0%, #C9A961 100%)',
-                borderRadius: '4px',
-                marginLeft: '-10px',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
-                position: 'relative'
+              <p style={{
+                color: '#ffffff',
+                fontFamily: 'sans-serif',
+                fontSize: '28px',
+                fontWeight: '600',
+                textShadow: '2px 2px 4px rgba(0,0,0,0.9)'
               }}>
-                {/* Climbing figure silhouette */}
-                <div style={{
-                  position: 'absolute',
-                  top: '-80px',
-                  right: '10px',
-                  fontSize: '80px',
-                  filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.6))'
-                }}>🚶</div>
-              </div>
-            </div>
-
-            {/* Bottom Right - Hand Supporting Element */}
-            <div className="absolute z-20" style={{
-              bottom: '220px',
-              right: '40px',
-              fontSize: '120px',
-              transform: 'rotate(-15deg)',
-              filter: 'drop-shadow(0 6px 12px rgba(0,0,0,0.5))'
-            }}>
-              ✋
+                +91 {displayContact}
+              </p>
             </div>
           </>
         );
@@ -1700,182 +1582,52 @@ export default function BannerPreview() {
                 {/* Category-specific content */}
                 {renderCategoryContent()}
 
-                {/* LOWER THIRD BANNER - Dark theme with name and rank inside */}
-                {(() => {
-                  // Determine color variant based on slot (1-16): Red, Orange, Teal pattern
-                  const slotNumber = selectedTemplate + 1;
-                  const variantIndex = ((slotNumber - 1) % 3);
-                  
-                  const variants = [
-                    { borderColor: '#e63946', labelBg: '#e63946', shadowColor: 'rgba(230, 57, 70, 0.5)' }, // Red
-                    { borderColor: '#f77f00', labelBg: '#f77f00', shadowColor: 'rgba(247, 127, 0, 0.5)' }, // Orange
-                    { borderColor: '#06d6a0', labelBg: '#06d6a0', shadowColor: 'rgba(6, 214, 160, 0.5)' }, // Teal
-                  ];
-                  
-                  const variant = variants[variantIndex];
-                  
-                  return (
-                    <div className="absolute" style={{
-                      bottom: '180px',
-                      left: '50%',
-                      transform: 'translateX(-50%)',
-                      width: '1200px',
-                      height: '120px',
-                      zIndex: 25
-                    }}>
-                      {/* SVG Shape with border */}
-                      <svg width="1200" height="120" viewBox="0 0 1200 120" style={{ position: 'absolute', top: 0, left: 0 }}>
-                        <defs>
-                          <filter id={`shadow-${variantIndex}`} x="-50%" y="-50%" width="200%" height="200%">
-                            <feGaussianBlur in="SourceAlpha" stdDeviation="4"/>
-                            <feOffset dx="0" dy="3" result="offsetblur"/>
-                            <feComponentTransfer>
-                              <feFuncA type="linear" slope="0.6"/>
-                            </feComponentTransfer>
-                            <feMerge>
-                              <feMergeNode/>
-                              <feMergeNode in="SourceGraphic"/>
-                            </feMerge>
-                          </filter>
-                        </defs>
-                        
-                        {/* Border path */}
-                        <path
-                          d="M 50 5 
-                             L 1050 5 
-                             L 1100 60 
-                             L 1050 115 
-                             L 50 115 
-                             Q 5 115 5 60 
-                             Q 5 5 50 5 Z"
-                          fill="none"
-                          stroke={variant.borderColor}
-                          strokeWidth="5"
-                          filter={`url(#shadow-${variantIndex})`}
-                        />
-                        
-                        {/* Inner dark fill */}
-                        <path
-                          d="M 50 10 
-                             L 1048 10 
-                             L 1095 60 
-                             L 1048 110 
-                             L 50 110 
-                             Q 10 110 10 60 
-                             Q 10 10 50 10 Z"
-                          fill="#1a2332"
-                          fillOpacity="0.95"
-                        />
-                      </svg>
-                      
-                      {/* Name and Rank Text inside banner */}
-                      <div style={{
-                        position: 'absolute',
-                        left: '60px',
-                        top: '50%',
-                        transform: 'translateY(-50%)',
-                        maxWidth: '700px',
-                        zIndex: 26
-                      }}>
-                        <p title={profileName} style={{
-                          color: '#ffffff',
-                          fontSize: '28px',
-                          fontWeight: '700',
-                          margin: 0,
-                          marginBottom: '4px',
-                          textTransform: 'uppercase',
-                          letterSpacing: '1px',
-                          textShadow: '2px 2px 6px rgba(0,0,0,0.8)',
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis'
-                        }}>
-                          {truncatedProfileName.toUpperCase()}
-                        </p>
-                        <p style={{
-                          color: '#eab308',
-                          fontSize: '18px',
-                          fontWeight: '600',
-                          margin: 0,
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.8px',
-                          textShadow: '1px 1px 4px rgba(0,0,0,0.7)'
-                        }}>
-                          {displayRank}
-                        </p>
-                      </div>
-                      
-                      {/* Contact Label on the right */}
-                      <div style={{
-                        position: 'absolute',
-                        right: '-130px',
-                        top: '50%',
-                        transform: 'translateY(-50%) skewX(-8deg)',
-                        background: variant.labelBg,
-                        padding: '20px 50px 20px 45px',
-                        clipPath: 'polygon(8% 0%, 100% 0%, 92% 100%, 0% 100%)',
-                        boxShadow: `0 4px 16px ${variant.shadowColor}`,
-                        zIndex: 30
-                      }}>
-                        <div style={{ transform: 'skewX(8deg)' }}>
-                          <p style={{
-                            fontSize: '13px',
-                            fontWeight: '600',
-                            color: '#ffffff',
-                            letterSpacing: '1.3px',
-                            textTransform: 'uppercase',
-                            margin: 0,
-                            lineHeight: '1.3',
-                            textShadow: '1px 1px 3px rgba(0,0,0,0.5)'
-                          }}>
-                            CALL FOR MENTORSHIP
-                          </p>
-                          <p style={{
-                            fontSize: '22px',
-                            fontWeight: '800',
-                            color: '#ffffff',
-                            margin: 0,
-                            lineHeight: '1.2',
-                            letterSpacing: '0.5px',
-                            textShadow: '1px 1px 3px rgba(0,0,0,0.5)'
-                          }}>
-                            +91 {displayContact}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })()}
-
-                {/* LEFT SIDE - Profile Photo - 75% HEIGHT - Motivational Layout */}
-                {mentorPhoto && bannerData.categoryType === 'motivational' && <div className="absolute overflow-hidden shadow-2xl cursor-pointer transition-transform duration-500 ease-in-out" onClick={() => setIsMentorPhotoFlipped(!isMentorPhotoFlipped)} style={{
-                    top: '50%',
-                    left: 0,
-                    width: 'auto',
-                    height: '1026px', // 5% reduction from 1080px
-                    aspectRatio: '3/4',
-                    borderRadius: '16px',
-                    transform: isMentorPhotoFlipped ? 'translateY(-50%) scaleX(-1)' : 'translateY(-50%) scaleX(1)'
+                {/* LOWER THIRD - Contact Info - FIXED FONTS AND POSITION */}
+                <div className="absolute" style={{
+                    bottom: '40px',
+                    /* LOCKED */
+                    left: '27px',
+                    /* LOCKED */
+                    width: '675px',
+                    /* LOCKED */
+                    minWidth: '675px',
+                    maxWidth: '675px'
                   }}>
-                    <img src={mentorPhoto} alt={profileName} style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover',
-                      objectPosition: 'center'
-                    }} />
-                    {/* Bottom feather fade overlay */}
-                    <div className="absolute bottom-0 left-0 right-0 pointer-events-none" style={{
-                      height: '308px', // 30% of 1026px
-                      background: 'linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 100%)'
-                    }} />
-                  </div>}
+                  <p style={{
+                      fontSize: '9px !important',
+                      /* LOCKED */
+                      textShadow: '2px 2px 4px rgba(0,0,0,0.9)',
+                      marginBottom: '1px',
+                      textTransform: 'uppercase',
+                      position: 'relative',
+                      top: '13px',
+                      color: '#ffffff',
+                      fontWeight: '300',
+                      letterSpacing: '2px'
+                    }}>
+                    CALL FOR MENTORSHIP                                                                 
+                  </p>
+                  <p title={`+91 ${displayContact}`} style={{
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      color: '#ffffff',
+                      fontFamily: 'sans-serif'
+                    }} className="banner-contact px-0 py-[3px]">
+                    +91 {displayContact}
+                  </p>
+                </div>
 
-                {/* BOTTOM RIGHT - Mentor Photo - FIXED SIZE AND POSITION - SQUARE 1:1 RATIO - Other Categories */}
-                {mentorPhoto && bannerData.categoryType !== 'motivational' && <div className="absolute overflow-hidden shadow-2xl cursor-pointer transition-transform duration-500 ease-in-out" onClick={() => setIsMentorPhotoFlipped(!isMentorPhotoFlipped)} style={{
+                {/* BOTTOM RIGHT - Mentor Photo - FIXED SIZE AND POSITION - SQUARE 1:1 RATIO */}
+                {mentorPhoto && <div className="absolute overflow-hidden shadow-2xl cursor-pointer transition-transform duration-500 ease-in-out" onClick={() => setIsMentorPhotoFlipped(!isMentorPhotoFlipped)} style={{
                     bottom: 0,
+                    /* LOCKED */
                     right: 0,
+                    /* LOCKED */
                     width: '540px',
+                    /* LOCKED - Square 1:1 */
                     height: '540px',
+                    /* LOCKED - Square 1:1 */
                     minWidth: '540px',
                     minHeight: '540px',
                     maxWidth: '540px',
@@ -1898,15 +1650,13 @@ export default function BannerPreview() {
                   </div>}
 
 
-
-                {/* BOTTOM CENTER - Profile Name & Rank - HIDDEN (now inside lower-third banner) */}
+                {/* BOTTOM CENTER - Profile Name & Rank - FIXED FONTS AND POSITION */}
                 <div className="absolute text-center" style={{
-                    display: 'none', // Hidden - name and rank now inside lower-third banner
                     bottom: '40px',
-                    ...(bannerData.categoryType === 'motivational' 
-                      ? { left: '30%', transform: 'translateX(-50%)' }
-                      : { left: '50%', transform: 'translateX(-45%)' }
-                    ),
+                    /* LOCKED */
+                    left: '50%',
+                    /* LOCKED */
+                    transform: 'translateX(-45%)',
                     width: 'max-content',
                     maxWidth: '1080px',
                     zIndex: 3
