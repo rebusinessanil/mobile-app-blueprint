@@ -769,80 +769,261 @@ export default function BannerPreview() {
       case 'motivational':
         return (
           <>
-            {/* Motivational Icon */}
-            <div className="absolute z-20" style={{
-              top: '140px',
-              left: '978px',
+            {/* Top Circular Avatars - Connected */}
+            <div className="absolute z-30" style={{
+              top: '20px',
+              left: '50%',
               transform: 'translateX(-50%)',
-              fontSize: '110px'
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0'
             }}>
-              💪
+              {/* Decorative connecting line before avatars */}
+              <div style={{
+                width: '180px',
+                height: '3px',
+                background: 'linear-gradient(to right, transparent, #D4AF37)',
+                marginRight: '-10px'
+              }} />
+              
+              {/* First circular avatar */}
+              <div style={{
+                width: '140px',
+                height: '140px',
+                borderRadius: '50%',
+                border: '4px solid #ffffff',
+                overflow: 'hidden',
+                boxShadow: '0 8px 20px rgba(0,0,0,0.5)',
+                background: '#1a1a2e',
+                zIndex: 2
+              }}>
+                {profilePhotos[0]?.photo_url && (
+                  <img src={profilePhotos[0].photo_url} alt="Profile" style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover'
+                  }} />
+                )}
+              </div>
+
+              {/* Decorative connector between avatars */}
+              <div style={{
+                width: '40px',
+                height: '3px',
+                background: '#D4AF37',
+                zIndex: 1
+              }} />
+
+              {/* Second circular avatar */}
+              <div style={{
+                width: '140px',
+                height: '140px',
+                borderRadius: '50%',
+                border: '4px solid #ffffff',
+                overflow: 'hidden',
+                boxShadow: '0 8px 20px rgba(0,0,0,0.5)',
+                background: '#1a1a2e',
+                zIndex: 2
+              }}>
+                {profilePhotos[1]?.photo_url && (
+                  <img src={profilePhotos[1].photo_url} alt="Profile" style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover'
+                  }} />
+                )}
+              </div>
+
+              {/* Decorative connecting line after avatars */}
+              <div style={{
+                width: '180px',
+                height: '3px',
+                background: 'linear-gradient(to left, transparent, #D4AF37)',
+                marginLeft: '-10px'
+              }} />
             </div>
 
-            {/* Motivational Title */}
-            <div className="absolute z-20" style={{
-              top: '270px',
-              left: '978px',
-              transform: 'translateX(-50%)',
-              width: '648px',
-              textAlign: 'center'
+            {/* Top Right Gold Badge */}
+            <div className="absolute z-30" style={{
+              top: '30px',
+              right: '30px',
+              width: '160px',
+              height: '160px',
+              borderRadius: '50%',
+              border: '5px solid #D4AF37',
+              background: 'radial-gradient(circle, #1a1a2e 0%, #0a0a15 100%)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 10px 30px rgba(212, 175, 55, 0.4)',
+              position: 'relative'
             }}>
+              {/* Stars decoration */}
+              <div style={{
+                position: 'absolute',
+                top: '10px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                color: '#D4AF37',
+                fontSize: '12px',
+                letterSpacing: '8px'
+              }}>★ ★ ★</div>
+              
               <p style={{
-                fontSize: '44px',
-                fontWeight: '700',
-                color: '#FFD700',
-                textShadow: '3px 3px 10px rgba(0,0,0,0.9)',
-                letterSpacing: '1px'
+                color: '#D4AF37',
+                fontSize: '14px',
+                fontWeight: '600',
+                margin: 0,
+                marginTop: '20px',
+                letterSpacing: '1px',
+                textAlign: 'center'
+              }}>YOUR NAME</p>
+              
+              <p style={{
+                color: '#ffffff',
+                fontSize: '32px',
+                fontWeight: '800',
+                margin: 0,
+                marginTop: '5px',
+                letterSpacing: '2px',
+                fontFamily: 'Impact, sans-serif'
+              }}>dRr7</p>
+              
+              {/* Bottom stars decoration */}
+              <div style={{
+                position: 'absolute',
+                bottom: '10px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                color: '#D4AF37',
+                fontSize: '12px',
+                letterSpacing: '8px'
+              }}>★ ★ ★</div>
+            </div>
+
+            {/* Left Side - Opening Quote Mark */}
+            <div className="absolute z-20" style={{
+              top: '220px',
+              left: '80px',
+              fontSize: '140px',
+              color: '#D4AF37',
+              fontWeight: '700',
+              lineHeight: '0.8',
+              opacity: '0.3'
+            }}>
+              "
+            </div>
+
+            {/* Right Side - STAY MOTIVATED with Icon */}
+            <div className="absolute z-20" style={{
+              top: '240px',
+              right: '180px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '20px'
+            }}>
+              {/* Flexed Bicep Icon */}
+              <div style={{
+                fontSize: '100px',
+                filter: 'drop-shadow(0 6px 12px rgba(0,0,0,0.5))'
+              }}>💪</div>
+              
+              <p style={{
+                fontSize: '52px',
+                fontWeight: '800',
+                color: '#D4AF37',
+                textShadow: '3px 3px 12px rgba(0,0,0,0.95)',
+                letterSpacing: '2px',
+                margin: 0,
+                textAlign: 'center'
               }}>
                 STAY MOTIVATED
               </p>
             </div>
 
-            {/* Quote/Message */}
-            {bannerData.quote && (
-              <div className="absolute" style={{
-                top: '360px',
-                left: '978px',
-                transform: 'translateX(-50%)',
-                width: '648px',
-                padding: '0 50px'
+            {/* Right Side - Motivational Quote */}
+            <div className="absolute z-20" style={{
+              top: '480px',
+              right: '80px',
+              width: '520px',
+              textAlign: 'left'
+            }}>
+              <p style={{
+                color: '#ffffff',
+                fontSize: '38px',
+                fontWeight: '600',
+                textShadow: '2px 2px 8px rgba(0,0,0,0.9)',
+                lineHeight: '1.5',
+                margin: 0
               }}>
-                <p style={{
-                  color: '#ffffff',
-                  textAlign: 'center',
-                  fontSize: '32px',
-                  fontWeight: '500',
-                  fontStyle: 'italic',
-                  textShadow: '2px 2px 8px rgba(0,0,0,0.9)',
-                  lineHeight: '1.5',
-                  quotes: '"\"""\""'
-                }}>
-                  "{bannerData.quote}"
-                </p>
-              </div>
-            )}
+                Keep moving forward,
+                <br />
+                <span style={{ color: '#D4AF37' }}>success is closer</span>
+                <br />
+                than you think...
+              </p>
+            </div>
 
-            {/* Name Attribution - Only show if name exists */}
-            {truncatedMainName && (
-              <div className="absolute" style={{
-                top: '520px',
-                left: '978px',
-                transform: 'translateX(-50%)',
-                width: '648px',
-                padding: '0 27px'
+            {/* Right Side - Climbing Steps Visual */}
+            <div className="absolute z-20" style={{
+              bottom: '280px',
+              right: '120px',
+              display: 'flex',
+              alignItems: 'flex-end',
+              gap: '0'
+            }}>
+              {/* Step 1 */}
+              <div style={{
+                width: '120px',
+                height: '40px',
+                background: 'linear-gradient(135deg, #D4AF37 0%, #C9A961 100%)',
+                borderRadius: '4px',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.4)'
+              }} />
+              
+              {/* Step 2 */}
+              <div style={{
+                width: '120px',
+                height: '70px',
+                background: 'linear-gradient(135deg, #D4AF37 0%, #C9A961 100%)',
+                borderRadius: '4px',
+                marginLeft: '-10px',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.4)'
+              }} />
+              
+              {/* Step 3 */}
+              <div style={{
+                width: '120px',
+                height: '100px',
+                background: 'linear-gradient(135deg, #D4AF37 0%, #C9A961 100%)',
+                borderRadius: '4px',
+                marginLeft: '-10px',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
+                position: 'relative'
               }}>
-                <p style={{
-                  color: '#FFD700',
-                  textAlign: 'center',
-                  fontSize: '30px',
-                  fontWeight: '600',
-                  textShadow: '2px 2px 6px rgba(0,0,0,0.9)',
-                  margin: 0
-                }}>
-                  - {truncatedMainName.toUpperCase()}
-                </p>
+                {/* Climbing figure silhouette */}
+                <div style={{
+                  position: 'absolute',
+                  top: '-80px',
+                  right: '10px',
+                  fontSize: '80px',
+                  filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.6))'
+                }}>🚶</div>
               </div>
-            )}
+            </div>
+
+            {/* Bottom Right - Hand Supporting Element */}
+            <div className="absolute z-20" style={{
+              bottom: '220px',
+              right: '40px',
+              fontSize: '120px',
+              transform: 'rotate(-15deg)',
+              filter: 'drop-shadow(0 6px 12px rgba(0,0,0,0.5))'
+            }}>
+              ✋
+            </div>
           </>
         );
 
