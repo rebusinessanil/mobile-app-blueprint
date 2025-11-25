@@ -1504,36 +1504,6 @@ export default function BannerPreview() {
                       /* Fixed 30% of 792px */
                       background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%)'
                     }} />
-                    
-                    {/* User Name and Rank - Centered on Photo */}
-                    <div style={{
-                      position: 'absolute',
-                      top: '50%',
-                      left: '50%',
-                      transform: 'translate(-50%, -50%)',
-                      textAlign: 'center',
-                      zIndex: 10
-                    }}>
-                      <div style={{
-                        fontSize: '30px',
-                        fontWeight: '800',
-                        color: '#ffffff',
-                        marginBottom: '4px',
-                        letterSpacing: '1px',
-                        textShadow: '0 2px 6px rgba(0, 0, 0, 0.8)'
-                      }}>
-                        {profileName?.toUpperCase() || 'USER NAME'}
-                      </div>
-                      <div style={{
-                        fontSize: '20px',
-                        fontWeight: '600',
-                        color: '#FFD34E',
-                        letterSpacing: '0.8px',
-                        textShadow: '0 1px 3px rgba(0, 0, 0, 0.6)'
-                      }}>
-                        {profileName?.toUpperCase() || 'USER NAME'}
-                      </div>
-                    </div>
                   </div>}
 
                 {/* Golden Crown below user photo */}
@@ -1687,6 +1657,28 @@ export default function BannerPreview() {
                         alignItems: 'center',
                         padding: '0 40px'
                       }}>
+                        {/* User Info on Left */}
+                        <div style={{ flex: 1 }}>
+                          <div style={{
+                            fontSize: '30px',
+                            fontWeight: '800',
+                            color: '#ffffff',
+                            marginBottom: '4px',
+                            letterSpacing: '1px',
+                            textShadow: '0 2px 6px rgba(0, 0, 0, 0.6)'
+                          }}>
+                            {profileName?.toUpperCase() || 'USER NAME'}
+                          </div>
+                          <div style={{
+                            fontSize: '20px',
+                            fontWeight: '600',
+                            color: currentVariant.borderColor,
+                            letterSpacing: '0.8px',
+                            textShadow: '0 1px 3px rgba(0, 0, 0, 0.4)'
+                          }}>
+                            {profileName?.toUpperCase() || 'USER NAME'}
+                          </div>
+                        </div>
                       </div>
 
                       {/* Right Tab with Angled Edge */}
