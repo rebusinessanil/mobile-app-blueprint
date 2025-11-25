@@ -1643,22 +1643,40 @@ export default function BannerPreview() {
                       justifyContent: 'space-between',
                       zIndex: 4
                     }}>
-                      {/* Left Section - User Info */}
+                      {/* Main Dark Banner with Colored Border */}
                       <div style={{
                         position: 'absolute',
                         left: 0,
-                        width: '620px',
+                        right: '280px',
                         height: '100%',
                         background: '#1a1f2e',
-                        borderRadius: '8px 50px 50px 8px',
+                        borderRadius: '50px 8px 8px 50px',
                         border: `4px solid ${currentVariant.borderColor}`,
                         boxShadow: `0 6px 20px rgba(0, 0, 0, 0.5), 0 0 20px ${currentVariant.shadowColor}`,
-                        clipPath: 'polygon(0 0, 85% 0, 100% 50%, 85% 100%, 0 100%)',
                         display: 'flex',
                         alignItems: 'center',
-                        padding: '0 60px 0 40px'
+                        padding: '0 40px'
                       }}>
-                        <div style={{ textAlign: 'left' }}>
+                        {/* Phone Icon */}
+                        <div style={{
+                          width: '65px',
+                          height: '65px',
+                          borderRadius: '50%',
+                          background: `linear-gradient(135deg, ${currentVariant.borderColor}, ${currentVariant.tabColor})`,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)',
+                          marginRight: '25px',
+                          flexShrink: 0
+                        }}>
+                          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.977.977 0 0 0-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z" fill="white"/>
+                          </svg>
+                        </div>
+
+                        {/* User Info on Left */}
+                        <div style={{ flex: 1 }}>
                           <div style={{
                             fontSize: '30px',
                             fontWeight: '800',
@@ -1681,23 +1699,21 @@ export default function BannerPreview() {
                         </div>
                       </div>
 
-                      {/* Right Section - Contact Info with Icon */}
+                      {/* Right Tab with Angled Edge */}
                       <div style={{
                         position: 'absolute',
                         right: 0,
                         height: '100%',
-                        width: '650px',
+                        width: '320px',
                         background: currentVariant.tabColor,
-                        borderRadius: '50px 8px 8px 50px',
-                        boxShadow: `0 6px 20px ${currentVariant.shadowColor}`,
+                        clipPath: 'polygon(15% 0, 100% 0, 100% 100%, 15% 100%, 0% 50%)',
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'flex-end',
-                        padding: '0 40px 0 60px',
-                        gap: '25px'
+                        justifyContent: 'center',
+                        paddingLeft: '60px',
+                        boxShadow: `0 6px 20px ${currentVariant.shadowColor}`
                       }}>
-                        {/* Contact Text */}
-                        <div style={{ textAlign: 'right' }}>
+                        <div style={{ textAlign: 'center' }}>
                           <div style={{
                             fontSize: '15px',
                             fontWeight: '600',
@@ -1717,23 +1733,6 @@ export default function BannerPreview() {
                           }}>
                             {profile?.mobile || profile?.whatsapp || '+91 7734990035'}
                           </div>
-                        </div>
-
-                        {/* Phone Icon */}
-                        <div style={{
-                          width: '65px',
-                          height: '65px',
-                          borderRadius: '50%',
-                          background: '#1a1f2e',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)',
-                          flexShrink: 0
-                        }}>
-                          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.977.977 0 0 0-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z" fill="white"/>
-                          </svg>
                         </div>
                       </div>
                     </div>
