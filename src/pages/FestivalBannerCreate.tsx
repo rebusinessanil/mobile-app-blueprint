@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft, ImagePlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,13 +21,26 @@ interface Upline {
 
 export default function FestivalBannerCreate() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const festivalId = location.state?.festivalId; // Get festivalId if passed from festival selection
+  
   const [mode, setMode] = useState<"myPhoto" | "others">("myPhoto");
   const [userId, setUserId] = useState<string | null>(null);
   const { profile } = useProfile(userId || undefined);
   const { settings: bannerSettings } = useBannerSettings(userId || undefined);
   const { categories } = useTemplateCategories();
   const festivalCategory = categories?.find(cat => cat.slug === 'festival');
-  const { templates } = useTemplates(festivalCategory?.id);
+  
+  // Fetch templates by festivalId if available, otherwise by category
+  const { templates } = useTemplates(
+    festivalId ? undefined : festivalCategory?.id, 
+    undefined, 
+    undefined, 
+    undefined, 
+    undefined, 
+    undefined, 
+    festivalId
+  );
   
   const [uplines, setUplines] = useState<Upline[]>([]);
   const [formData, setFormData] = useState({
@@ -127,8 +140,13 @@ export default function FestivalBannerCreate() {
       return;
     }
 
-    // Get the first template for festival category if available
+    // Get the first template for festival (linked to selected festival or category)
     const firstTemplate = templates && templates.length > 0 ? templates[0] : null;
+
+    if (!firstTemplate) {
+      toast.error("No templates available for this festival");
+      return;
+    }
 
     navigate("/banner-preview", {
       state: {
@@ -142,7 +160,7 @@ export default function FestivalBannerCreate() {
         uplines,
         slotStickers,
         templates,
-        templateId: firstTemplate?.id || undefined,
+        templateId: firstTemplate.id, // Pass templateId for 16-slot background system
         rankId: undefined // Festival doesn't use rankId
       }
     });

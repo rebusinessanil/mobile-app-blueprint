@@ -34,6 +34,7 @@ export interface Template {
   birthday_id: string | null;
   anniversary_id: string | null;
   motivational_banner_id: string | null;
+  festival_id: string | null;
   name: string;
   description: string | null;
   cover_thumbnail_url: string;
@@ -114,7 +115,7 @@ export const useTemplateCategories = () => {
   return { categories, loading, error };
 };
 
-export const useTemplates = (categoryId?: string, tripId?: string, rankId?: string, birthdayId?: string, anniversaryId?: string, motivationalBannerId?: string) => {
+export const useTemplates = (categoryId?: string, tripId?: string, rankId?: string, birthdayId?: string, anniversaryId?: string, motivationalBannerId?: string, festivalId?: string) => {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -153,6 +154,10 @@ export const useTemplates = (categoryId?: string, tripId?: string, rankId?: stri
         query = query.eq('motivational_banner_id', motivationalBannerId);
       }
 
+      if (festivalId) {
+        query = query.eq('festival_id', festivalId);
+      }
+
       const { data, error } = await query;
 
         if (error) throw error;
@@ -179,11 +184,13 @@ export const useTemplates = (categoryId?: string, tripId?: string, rankId?: stri
       ? `anniversary_id=eq.${anniversaryId}`
       : motivationalBannerId
       ? `motivational_banner_id=eq.${motivationalBannerId}`
+      : festivalId
+      ? `festival_id=eq.${festivalId}`
       : categoryId 
       ? `category_id=eq.${categoryId}` 
       : undefined;
     const channel = supabase
-      .channel(`templates-changes-${categoryId || tripId || rankId || birthdayId || anniversaryId || motivationalBannerId || 'all'}-${Math.random()}`)
+      .channel(`templates-changes-${categoryId || tripId || rankId || birthdayId || anniversaryId || motivationalBannerId || festivalId || 'all'}-${Math.random()}`)
       .on(
         'postgres_changes',
         {
@@ -202,7 +209,7 @@ export const useTemplates = (categoryId?: string, tripId?: string, rankId?: stri
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [categoryId, tripId, rankId, birthdayId, anniversaryId, motivationalBannerId]);
+  }, [categoryId, tripId, rankId, birthdayId, anniversaryId, motivationalBannerId, festivalId]);
 
   return { templates, loading, error };
 };
