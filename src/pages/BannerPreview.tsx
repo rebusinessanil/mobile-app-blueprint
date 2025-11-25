@@ -87,6 +87,7 @@ export default function BannerPreview() {
   const [isDraggingProfile, setIsDraggingProfile] = useState(false);
   const [profileDragStart, setProfileDragStart] = useState<{ x: number; y: number } | null>(null);
   const [isProfileControlMinimized, setIsProfileControlMinimized] = useState(false);
+  const [showBalanceModal, setShowBalanceModal] = useState(false);
 
   // Handle profile picture drag (admin only, motivational only)
   useEffect(() => {
@@ -1317,12 +1318,7 @@ export default function BannerPreview() {
 
       // Check for zero balance first
       if (credits.balance <= 0) {
-        toast.error("Insufficient balance. Please top up your wallet to download banners.", {
-          action: {
-            label: "Top Up",
-            onClick: () => navigate("/wallet"),
-          },
-        });
+        setShowBalanceModal(true);
         return;
       }
 
@@ -2037,6 +2033,52 @@ export default function BannerPreview() {
             </div>
           )}
         </>
+      )}
+
+      {/* Balance Modal - Shows when balance is zero */}
+      {showBalanceModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md animate-fade-in">
+          <div className="bg-[#0f1720] rounded-3xl p-8 shadow-2xl border-2 border-primary/30 w-[90%] max-w-[420px] animate-scale-in">
+            {/* Icon */}
+            <div className="flex justify-center mb-6">
+              <div className="w-20 h-20 rounded-full bg-primary/10 border-2 border-primary flex items-center justify-center">
+                <svg className="w-10 h-10 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+            </div>
+
+            {/* Title */}
+            <h3 className="text-2xl font-bold text-foreground text-center mb-3">
+              Insufficient Balance
+            </h3>
+
+            {/* Message */}
+            <p className="text-muted-foreground text-center text-base mb-8 leading-relaxed">
+              Please recharge your wallet to download banners.
+            </p>
+
+            {/* Buttons */}
+            <div className="flex flex-col gap-3">
+              <Button
+                onClick={() => {
+                  setShowBalanceModal(false);
+                  navigate("/wallet");
+                }}
+                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-6 text-lg rounded-xl shadow-lg"
+              >
+                Recharge Wallet
+              </Button>
+              <Button
+                onClick={() => setShowBalanceModal(false)}
+                variant="outline"
+                className="w-full border-border/50 text-muted-foreground hover:bg-secondary/30 py-6 text-base rounded-xl"
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Loading Overlay - Shows during banner export */}
