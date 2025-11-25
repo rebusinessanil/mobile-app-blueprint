@@ -900,6 +900,7 @@ export type Database = {
           created_at: string | null
           description: string | null
           display_order: number | null
+          festival_id: string | null
           gradient_colors: string[] | null
           id: string
           is_active: boolean | null
@@ -919,6 +920,7 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           display_order?: number | null
+          festival_id?: string | null
           gradient_colors?: string[] | null
           id?: string
           is_active?: boolean | null
@@ -938,6 +940,7 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           display_order?: number | null
+          festival_id?: string | null
           gradient_colors?: string[] | null
           id?: string
           is_active?: boolean | null
@@ -969,6 +972,13 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "template_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "templates_festival_id_fkey"
+            columns: ["festival_id"]
+            isOneToOne: false
+            referencedRelation: "stories_festivals"
             referencedColumns: ["id"]
           },
           {
