@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
 import { useBannerSettings } from "@/hooks/useBannerSettings";
 import { useTemplates } from "@/hooks/useTemplates";
+import { useProfilePhotos } from "@/hooks/useProfilePhotos";
 
 interface Upline {
   id: string;
@@ -18,6 +19,7 @@ export default function MotivationalPreview() {
   const [userId, setUserId] = useState<string | null>(null);
   const { profile } = useProfile(userId ?? undefined);
   const { settings: bannerSettings } = useBannerSettings(userId ?? undefined);
+  const { photos } = useProfilePhotos(userId ?? undefined);
   
   // Fetch templates for this specific motivational banner
   const { templates } = useTemplates(
@@ -45,7 +47,7 @@ export default function MotivationalPreview() {
       return;
     }
 
-    if (!profile || !templates || templates.length === 0) {
+    if (!profile || !templates || templates.length === 0 || !photos) {
       return; // Wait for data to load
     }
 
@@ -59,6 +61,10 @@ export default function MotivationalPreview() {
       avatar: upline.avatar_url
     })) || [];
 
+    // Auto-fill achiever photo from user's profile photos (primary or first available)
+    const primaryPhoto = photos.find(p => p.is_primary);
+    const achieverPhoto = primaryPhoto?.photo_url || photos[0]?.photo_url || profile.profile_photo || null;
+
     // Auto-navigate to banner preview with pre-filled motivational data
     navigate("/banner-preview", {
       state: {
@@ -67,7 +73,7 @@ export default function MotivationalPreview() {
         name: profile.name, // Auto-fill from profile
         teamCity: "", // Optional
         quote: "", // Optional motivational quote
-        photo: profile.profile_photo || null, // Auto-fill primary photo
+        photo: achieverPhoto, // Auto-fill achiever photo from profile photos
         uplines,
         slotStickers: {},
         templates,
@@ -77,7 +83,7 @@ export default function MotivationalPreview() {
       },
       replace: true // Replace history entry to prevent back button issues
     });
-  }, [motivationalBannerId, profile, templates, bannerSettings, navigate]);
+  }, [motivationalBannerId, profile, templates, bannerSettings, photos, navigate]);
 
   // Loading state
   return (
