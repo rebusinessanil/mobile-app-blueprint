@@ -1332,6 +1332,19 @@ export default function BannerPreview() {
         });
         return;
       }
+
+      // Request storage permission on supported browsers
+      if ('permissions' in navigator) {
+        try {
+          const permission = await navigator.permissions.query({ name: 'persistent-storage' as PermissionName });
+          if (permission.state === 'prompt') {
+            toast.info("This app needs storage access to save banners to your device.");
+          }
+        } catch (e) {
+          // Permission API not fully supported, continue with download
+          console.log('Storage permission check not supported');
+        }
+      }
     }
 
     setIsDownloading(true);
@@ -1406,19 +1419,26 @@ export default function BannerPreview() {
               });
 
             toast.success(
-              `Banner downloaded! (${sizeMB} MB) • ₹${BANNER_COST} deducted`,
+              `Banner saved to your device! (${sizeMB} MB) • ₹${BANNER_COST} deducted`,
               {
-                description: `Remaining balance: ₹${newBalance}`,
+                description: `Remaining balance: ₹${newBalance}. Check your Downloads or Gallery app to access your banner.`,
+                duration: 6000,
               }
             );
           }
         } catch (error) {
           console.error("Credit deduction error:", error);
           // Still show success for download even if credit deduction fails
-          toast.success(`Ultra HD banner downloaded! (~${sizeMB} MB PNG)`);
+          toast.success(`Banner saved successfully! (~${sizeMB} MB)`, {
+            description: "Your banner has been saved. Check your Downloads folder or Gallery app.",
+            duration: 5000,
+          });
         }
       } else {
-        toast.success(`Ultra HD banner downloaded! (~${sizeMB} MB PNG)`);
+        toast.success(`Banner saved successfully! (~${sizeMB} MB)`, {
+          description: "Your banner has been saved. Check your Downloads folder or Gallery app.",
+          duration: 5000,
+        });
       }
     } catch (error) {
       console.error("Banner download failed:", error);
