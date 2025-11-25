@@ -1676,7 +1676,7 @@ export default function BannerPreview() {
                             letterSpacing: '0.8px',
                             textShadow: '0 1px 3px rgba(0, 0, 0, 0.4)'
                           }}>
-                            {displayRank || 'RANK'} • @{profileName?.toLowerCase().replace(/\s+/g, '') || 'username'}
+                            {displayRank || 'RANK'}
                           </div>
                         </div>
                       </div>
