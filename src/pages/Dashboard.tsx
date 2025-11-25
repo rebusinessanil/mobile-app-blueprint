@@ -78,23 +78,19 @@ export default function Dashboard() {
   const quickActions = [{
     icon: Calendar,
     label: "Festival Banner",
-    color: "bg-icon-purple",
-    path: "/categories/festival"
+    color: "bg-icon-purple"
   }, {
     icon: Zap,
     label: "Motivational Quote",
-    color: "bg-icon-orange",
-    path: "/create/motivational-quote"
+    color: "bg-icon-orange"
   }, {
     icon: Award,
     label: "Achievements",
-    color: "bg-icon-purple",
-    path: "/create/achievements"
+    color: "bg-icon-purple"
   }, {
     label: "Special Offer Today",
     color: "bg-secondary",
-    special: true,
-    path: "/create/special-offer-today"
+    special: true
   }];
 
   // Get templates for each category
@@ -187,7 +183,7 @@ export default function Dashboard() {
 
         {/* Quick Actions */}
         <div className="grid grid-cols-4 gap-3">
-          {quickActions.map((action, index) => <Link key={index} to={action.path || `/create/${action.label.toLowerCase().replace(/\s+/g, "-")}`} className="gold-border bg-card p-4 rounded-2xl flex flex-col items-center justify-center text-center gap-2 hover:gold-glow transition-all">
+          {quickActions.map((action, index) => <Link key={index} to={`/create/${action.label.toLowerCase().replace(/\s+/g, "-")}`} className="gold-border bg-card p-4 rounded-2xl flex flex-col items-center justify-center text-center gap-2 hover:gold-glow transition-all">
               {action.special ? <div className="text-xs font-semibold text-foreground leading-tight">
                   {action.label}
                 </div> : <>
