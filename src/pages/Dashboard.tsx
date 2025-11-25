@@ -10,6 +10,7 @@ import { useBonanzaTrips } from "@/hooks/useBonanzaTrips";
 import { useBirthdays } from "@/hooks/useBirthdays";
 import { useAnniversaries } from "@/hooks/useAnniversaries";
 import { useMotivationalBanners } from "@/hooks/useMotivationalBanners";
+import { useFestivals } from "@/hooks/useFestivals";
 import { useGeneratedStories } from "@/hooks/useAutoStories";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import Profile from "./Profile";
@@ -26,6 +27,7 @@ export default function Dashboard() {
   const { birthdays } = useBirthdays();
   const { anniversaries } = useAnniversaries();
   const { motivationalBanners } = useMotivationalBanners();
+  const { festivals } = useFestivals();
   const { stories: generatedStories } = useGeneratedStories();
   const [userId, setUserId] = useState<string | null>(null);
   const {
@@ -56,6 +58,11 @@ export default function Dashboard() {
   // Get motivational banner templates with covers
   const getMotivationalBannerTemplates = () => {
     return allTemplates.filter(t => t.motivational_banner_id && motivationalBanners.some(mb => mb.id === t.motivational_banner_id));
+  };
+
+  // Get festival templates with covers
+  const getFestivalTemplates = () => {
+    return allTemplates.filter(t => t.festival_id && festivals.some(f => f.id === t.festival_id));
   };
 
   // Get authenticated user
@@ -196,6 +203,7 @@ export default function Dashboard() {
         const isBirthday = category.slug === 'birthday';
         const isAnniversary = category.slug === 'anniversary';
         const isMotivational = category.slug === 'motivational';
+        const isFestival = category.slug === 'festival';
         
         return <div key={category.id} className="space-y-3">
               <div className="flex items-center justify-between">
@@ -210,6 +218,7 @@ export default function Dashboard() {
                     isBirthday ? '/categories/birthdays' :
                     isAnniversary ? '/categories/anniversaries' :
                     isMotivational ? '/categories/motivational' :
+                    isFestival ? '/categories/festival' :
                     `/categories/${category.slug}`
                   }
                   className="text-primary text-sm font-semibold hover:underline"
@@ -370,6 +379,43 @@ export default function Dashboard() {
                           <p className="text-sm font-semibold text-foreground leading-tight">{template.name}</p>
                         </div>
                       </Link>
+                    );
+                  })}
+                </div>
+              ) : isFestival ? (
+                /* Festival - Show festival themes with Cover Images */
+                <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                  {getFestivalTemplates().map(template => {
+                    const festival = festivals.find(f => f.id === template.festival_id);
+                    return (
+                      <button
+                        key={template.id}
+                        onClick={() => {
+                          window.location.href = `/banner-create/festival`;
+                          // Pass festivalId via navigation state
+                          setTimeout(() => {
+                            window.history.replaceState({ festivalId: template.festival_id }, '');
+                          }, 0);
+                        }}
+                        className="min-w-[140px] gold-border bg-card rounded-2xl overflow-hidden flex-shrink-0 hover:gold-glow transition-all"
+                      >
+                        {template.cover_thumbnail_url ? (
+                          <div className="h-24 relative">
+                            <img 
+                              src={template.cover_thumbnail_url} 
+                              alt={template.name} 
+                              className="w-full h-full object-cover" 
+                            />
+                          </div>
+                        ) : (
+                          <div className="h-24 bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center text-4xl">
+                            {festival?.festival_name.slice(0, 2) || '🎉'}
+                          </div>
+                        )}
+                        <div className="p-3 text-center">
+                          <p className="text-sm font-semibold text-foreground leading-tight">{template.name}</p>
+                        </div>
+                      </button>
                     );
                   })}
                 </div>

@@ -22,7 +22,16 @@ interface Upline {
 export default function FestivalBannerCreate() {
   const navigate = useNavigate();
   const location = useLocation();
-  const festivalId = location.state?.festivalId; // Get festivalId if passed from festival selection
+  const festivalId = location.state?.festivalId; // Get festivalId from navigation state
+  
+  // CRITICAL: Redirect if no festivalId - prevents template isolation issues
+  useEffect(() => {
+    if (!festivalId) {
+      console.error('❌ No festivalId provided - redirecting to festival selection');
+      toast.error("Please select a festival first");
+      navigate('/categories/festival');
+    }
+  }, [festivalId, navigate]);
   
   const [mode, setMode] = useState<"myPhoto" | "others">("myPhoto");
   const [userId, setUserId] = useState<string | null>(null);
