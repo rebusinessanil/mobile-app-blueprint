@@ -1657,8 +1657,15 @@ export default function BannerPreview() {
                         alignItems: 'center',
                         padding: '0 40px'
                       }}>
-                        {/* User Info on Left */}
-                        <div style={{ flex: 1 }}>
+                        {/* User Info on Left - Centered */}
+                        <div style={{ 
+                          flex: 1,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          textAlign: 'center'
+                        }}>
                           <div style={{
                             fontSize: '30px',
                             fontWeight: '800',
