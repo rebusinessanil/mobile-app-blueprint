@@ -16,6 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Sticker } from "@/hooks/useStickers";
 import html2canvas from "html2canvas";
 import { useRealtimeStickerSync } from "@/hooks/useRealtimeStickerSync";
+import LowerThirdBanner from "@/components/LowerThirdBanner";
 interface Upline {
   id: string;
   name: string;
@@ -769,33 +770,10 @@ export default function BannerPreview() {
       case 'motivational':
         return (
           <>
-            {/* User Photo - Left Side Full Height */}
-            {primaryPhoto && (
-              <div className="absolute overflow-hidden" style={{
-                left: '40px',
-                top: '162px',
-                width: '420px',
-                height: '1026px',
-                borderRadius: '24px'
-              }}>
-                <img src={primaryPhoto} alt="User" style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover',
-                  objectPosition: 'center'
-                }} />
-                {/* Bottom feather fade overlay */}
-                <div className="absolute bottom-0 left-0 right-0 pointer-events-none" style={{
-                  height: '308px',
-                  background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%)'
-                }} />
-              </div>
-            )}
-
             {/* Motivational Icon */}
             <div className="absolute z-20" style={{
               top: '140px',
-              left: '825px',
+              left: '978px',
               transform: 'translateX(-50%)',
               fontSize: '110px'
             }}>
@@ -805,7 +783,7 @@ export default function BannerPreview() {
             {/* Motivational Title */}
             <div className="absolute z-20" style={{
               top: '270px',
-              left: '825px',
+              left: '978px',
               transform: 'translateX(-50%)',
               width: '648px',
               textAlign: 'center'
@@ -825,7 +803,7 @@ export default function BannerPreview() {
             {bannerData.quote && (
               <div className="absolute" style={{
                 top: '360px',
-                left: '825px',
+                left: '978px',
                 transform: 'translateX(-50%)',
                 width: '648px',
                 padding: '0 50px'
@@ -845,11 +823,11 @@ export default function BannerPreview() {
               </div>
             )}
 
-            {/* Name Attribution - Center Bottom */}
+            {/* Name Attribution - Only show if name exists */}
             {truncatedMainName && (
               <div className="absolute" style={{
-                bottom: '180px',
-                left: '675px',
+                top: '520px',
+                left: '978px',
                 transform: 'translateX(-50%)',
                 width: '648px',
                 padding: '0 27px'
@@ -864,48 +842,8 @@ export default function BannerPreview() {
                 }}>
                   - {truncatedMainName.toUpperCase()}
                 </p>
-                {profile?.rank && (
-                  <p style={{
-                    color: '#ffffff',
-                    textAlign: 'center',
-                    fontSize: '24px',
-                    fontWeight: '500',
-                    textShadow: '2px 2px 6px rgba(0,0,0,0.9)',
-                    marginTop: '8px'
-                  }}>
-                    {profile.rank.toUpperCase()}
-                  </p>
-                )}
               </div>
             )}
-
-            {/* Contact Info - Right Bottom */}
-            <div className="absolute" style={{
-              bottom: '40px',
-              right: '40px',
-              textAlign: 'right'
-            }}>
-              <p style={{
-                fontSize: '11px',
-                textShadow: '2px 2px 4px rgba(0,0,0,0.9)',
-                marginBottom: '4px',
-                textTransform: 'uppercase',
-                color: '#ffffff',
-                fontWeight: '300',
-                letterSpacing: '2px'
-              }}>
-                CALL FOR MENTORSHIP
-              </p>
-              <p style={{
-                color: '#ffffff',
-                fontFamily: 'sans-serif',
-                fontSize: '28px',
-                fontWeight: '600',
-                textShadow: '2px 2px 4px rgba(0,0,0,0.9)'
-              }}>
-                +91 {displayContact}
-              </p>
-            </div>
           </>
         );
 
@@ -1582,52 +1520,53 @@ export default function BannerPreview() {
                 {/* Category-specific content */}
                 {renderCategoryContent()}
 
-                {/* LOWER THIRD - Contact Info - FIXED FONTS AND POSITION */}
+                {/* LOWER THIRD - Contact Info with Dark Theme Banner Variants */}
                 <div className="absolute" style={{
-                    bottom: '40px',
-                    /* LOCKED */
-                    left: '27px',
-                    /* LOCKED */
-                    width: '675px',
-                    /* LOCKED */
-                    minWidth: '675px',
-                    maxWidth: '675px'
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    ...(bannerData.categoryType === 'motivational' 
+                      ? { right: '150px' }
+                      : { left: '150px' }
+                    ),
                   }}>
-                  <p style={{
-                      fontSize: '9px !important',
-                      /* LOCKED */
-                      textShadow: '2px 2px 4px rgba(0,0,0,0.9)',
-                      marginBottom: '1px',
-                      textTransform: 'uppercase',
-                      position: 'relative',
-                      top: '13px',
-                      color: '#ffffff',
-                      fontWeight: '300',
-                      letterSpacing: '2px'
-                    }}>
-                    CALL FOR MENTORSHIP                                                                 
-                  </p>
-                  <p title={`+91 ${displayContact}`} style={{
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      color: '#ffffff',
-                      fontFamily: 'sans-serif'
-                    }} className="banner-contact px-0 py-[3px]">
-                    +91 {displayContact}
-                  </p>
+                  <LowerThirdBanner
+                    slotNumber={selectedTemplate + 1}
+                    name={profileName}
+                    rank={bannerData.rankName}
+                    contactNumber={displayContact}
+                    position={bannerData.categoryType === 'motivational' ? 'right' : 'left'}
+                  />
                 </div>
 
-                {/* BOTTOM RIGHT - Mentor Photo - FIXED SIZE AND POSITION - SQUARE 1:1 RATIO */}
-                {mentorPhoto && <div className="absolute overflow-hidden shadow-2xl cursor-pointer transition-transform duration-500 ease-in-out" onClick={() => setIsMentorPhotoFlipped(!isMentorPhotoFlipped)} style={{
+                {/* LEFT SIDE - Profile Photo - 75% HEIGHT - Motivational Layout */}
+                {mentorPhoto && bannerData.categoryType === 'motivational' && <div className="absolute overflow-hidden shadow-2xl cursor-pointer transition-transform duration-500 ease-in-out" onClick={() => setIsMentorPhotoFlipped(!isMentorPhotoFlipped)} style={{
+                    top: '50%',
+                    left: 0,
+                    width: 'auto',
+                    height: '1026px', // 5% reduction from 1080px
+                    aspectRatio: '3/4',
+                    borderRadius: '16px',
+                    transform: isMentorPhotoFlipped ? 'translateY(-50%) scaleX(-1)' : 'translateY(-50%) scaleX(1)'
+                  }}>
+                    <img src={mentorPhoto} alt={profileName} style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      objectPosition: 'center'
+                    }} />
+                    {/* Bottom feather fade overlay */}
+                    <div className="absolute bottom-0 left-0 right-0 pointer-events-none" style={{
+                      height: '308px', // 30% of 1026px
+                      background: 'linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 100%)'
+                    }} />
+                  </div>}
+
+                {/* BOTTOM RIGHT - Mentor Photo - FIXED SIZE AND POSITION - SQUARE 1:1 RATIO - Other Categories */}
+                {mentorPhoto && bannerData.categoryType !== 'motivational' && <div className="absolute overflow-hidden shadow-2xl cursor-pointer transition-transform duration-500 ease-in-out" onClick={() => setIsMentorPhotoFlipped(!isMentorPhotoFlipped)} style={{
                     bottom: 0,
-                    /* LOCKED */
                     right: 0,
-                    /* LOCKED */
                     width: '540px',
-                    /* LOCKED - Square 1:1 */
                     height: '540px',
-                    /* LOCKED - Square 1:1 */
                     minWidth: '540px',
                     minHeight: '540px',
                     maxWidth: '540px',
@@ -1653,10 +1592,10 @@ export default function BannerPreview() {
                 {/* BOTTOM CENTER - Profile Name & Rank - FIXED FONTS AND POSITION */}
                 <div className="absolute text-center" style={{
                     bottom: '40px',
-                    /* LOCKED */
-                    left: '50%',
-                    /* LOCKED */
-                    transform: 'translateX(-45%)',
+                    ...(bannerData.categoryType === 'motivational' 
+                      ? { left: '30%', transform: 'translateX(-50%)' }
+                      : { left: '50%', transform: 'translateX(-45%)' }
+                    ),
                     width: 'max-content',
                     maxWidth: '1080px',
                     zIndex: 3
