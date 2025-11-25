@@ -1663,7 +1663,7 @@ export default function BannerPreview() {
                             fontSize: '30px',
                             fontWeight: '800',
                             color: '#ffffff',
-                            marginBottom: '4px',
+                            marginBottom: '10px',
                             letterSpacing: '1px',
                             textShadow: '0 2px 6px rgba(0, 0, 0, 0.6)'
                           }}>
