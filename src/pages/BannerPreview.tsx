@@ -313,7 +313,10 @@ export default function BannerPreview() {
   const displayRank: string = (profile?.rank || "ROYAL AMBASSADOR").replace(/[-–—]/g, ' ');
 
   // Get primary profile photo - prioritize uploaded photo from banner creation for LEFT side
-  const primaryPhoto: string | null = bannerData?.photo || profile?.profile_photo || profilePhotos[0]?.photo_url || null;
+  // FESTIVAL & MOTIVATIONAL CATEGORIES: Skip auto-loading achiever image completely
+  const primaryPhoto: string | null = (bannerData?.categoryType === 'festival' || bannerData?.categoryType === 'motivational')
+    ? (bannerData?.photo || null) 
+    : (bannerData?.photo || profile?.profile_photo || profilePhotos[0]?.photo_url || null);
 
   // Get mentor/upline photo (RIGHT-BOTTOM) - ONLY use profile photos, never uploads
   const mentorPhoto: string | null = profilePhotos[selectedMentorPhotoIndex]?.photo_url || profilePhotos[0]?.photo_url || profile?.profile_photo || null;
@@ -706,36 +709,38 @@ export default function BannerPreview() {
               </p>
             </div>
 
-            {/* Name */}
-            <div className="absolute" style={{
-              top: '370px',
-              left: '978px',
-              transform: 'translateX(-50%)',
-              width: '648px',
-              padding: '0 27px'
-            }}>
-              <h2 style={{
-                color: '#ffffff',
-                textAlign: 'center',
-                fontSize: '44px',
-                fontWeight: '600',
-                textShadow: '2px 2px 8px rgba(0,0,0,0.9)',
-                margin: 0
+            {/* Name - Only show if name exists */}
+            {truncatedMainName && (
+              <div className="absolute" style={{
+                top: '370px',
+                left: '978px',
+                transform: 'translateX(-50%)',
+                width: '648px',
+                padding: '0 27px'
               }}>
-                {truncatedMainName.toUpperCase()}
-              </h2>
-              {bannerData.teamCity && (
-                <p style={{
-                  marginTop: '13px',
+                <h2 style={{
                   color: '#ffffff',
                   textAlign: 'center',
-                  fontSize: '28px',
-                  textShadow: '2px 2px 4px rgba(0,0,0,0.9)'
+                  fontSize: '44px',
+                  fontWeight: '600',
+                  textShadow: '2px 2px 8px rgba(0,0,0,0.9)',
+                  margin: 0
                 }}>
-                  {bannerData.teamCity.toUpperCase()}
-                </p>
-              )}
-            </div>
+                  {truncatedMainName.toUpperCase()}
+                </h2>
+                {bannerData.teamCity && (
+                  <p style={{
+                    marginTop: '13px',
+                    color: '#ffffff',
+                    textAlign: 'center',
+                    fontSize: '28px',
+                    textShadow: '2px 2px 4px rgba(0,0,0,0.9)'
+                  }}>
+                    {bannerData.teamCity.toUpperCase()}
+                  </p>
+                )}
+              </div>
+            )}
 
             {/* Festival Message */}
             {bannerData.message && (
@@ -817,25 +822,27 @@ export default function BannerPreview() {
               </div>
             )}
 
-            {/* Name Attribution */}
-            <div className="absolute" style={{
-              top: '520px',
-              left: '978px',
-              transform: 'translateX(-50%)',
-              width: '648px',
-              padding: '0 27px'
-            }}>
-              <p style={{
-                color: '#FFD700',
-                textAlign: 'center',
-                fontSize: '30px',
-                fontWeight: '600',
-                textShadow: '2px 2px 6px rgba(0,0,0,0.9)',
-                margin: 0
+            {/* Name Attribution - Only show if name exists */}
+            {truncatedMainName && (
+              <div className="absolute" style={{
+                top: '520px',
+                left: '978px',
+                transform: 'translateX(-50%)',
+                width: '648px',
+                padding: '0 27px'
               }}>
-                - {truncatedMainName.toUpperCase()}
-              </p>
-            </div>
+                <p style={{
+                  color: '#FFD700',
+                  textAlign: 'center',
+                  fontSize: '30px',
+                  fontWeight: '600',
+                  textShadow: '2px 2px 6px rgba(0,0,0,0.9)',
+                  margin: 0
+                }}>
+                  - {truncatedMainName.toUpperCase()}
+                </p>
+              </div>
+            )}
           </>
         );
 
@@ -1515,17 +1522,16 @@ export default function BannerPreview() {
                 {/* LOWER THIRD - Contact Info - FIXED FONTS AND POSITION */}
                 <div className="absolute" style={{
                     bottom: '40px',
-                    /* LOCKED */
-                    left: '27px',
-                    /* LOCKED */
+                    ...(bannerData.categoryType === 'motivational' 
+                      ? { right: '27px', textAlign: 'right' as const }
+                      : { left: '27px' }
+                    ),
                     width: '675px',
-                    /* LOCKED */
                     minWidth: '675px',
                     maxWidth: '675px'
                   }}>
                   <p style={{
                       fontSize: '9px !important',
-                      /* LOCKED */
                       textShadow: '2px 2px 4px rgba(0,0,0,0.9)',
                       marginBottom: '1px',
                       textTransform: 'uppercase',
@@ -1548,16 +1554,35 @@ export default function BannerPreview() {
                   </p>
                 </div>
 
-                {/* BOTTOM RIGHT - Mentor Photo - FIXED SIZE AND POSITION - SQUARE 1:1 RATIO */}
-                {mentorPhoto && <div className="absolute overflow-hidden shadow-2xl cursor-pointer transition-transform duration-500 ease-in-out" onClick={() => setIsMentorPhotoFlipped(!isMentorPhotoFlipped)} style={{
+                {/* LEFT SIDE - Profile Photo - 75% HEIGHT - Motivational Layout */}
+                {mentorPhoto && bannerData.categoryType === 'motivational' && <div className="absolute overflow-hidden shadow-2xl cursor-pointer transition-transform duration-500 ease-in-out" onClick={() => setIsMentorPhotoFlipped(!isMentorPhotoFlipped)} style={{
+                    top: '50%',
+                    left: 0,
+                    width: 'auto',
+                    height: '1026px', // 5% reduction from 1080px
+                    aspectRatio: '3/4',
+                    borderRadius: '16px',
+                    transform: isMentorPhotoFlipped ? 'translateY(-50%) scaleX(-1)' : 'translateY(-50%) scaleX(1)'
+                  }}>
+                    <img src={mentorPhoto} alt={profileName} style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      objectPosition: 'center'
+                    }} />
+                    {/* Bottom feather fade overlay */}
+                    <div className="absolute bottom-0 left-0 right-0 pointer-events-none" style={{
+                      height: '308px', // 30% of 1026px
+                      background: 'linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 100%)'
+                    }} />
+                  </div>}
+
+                {/* BOTTOM RIGHT - Mentor Photo - FIXED SIZE AND POSITION - SQUARE 1:1 RATIO - Other Categories */}
+                {mentorPhoto && bannerData.categoryType !== 'motivational' && <div className="absolute overflow-hidden shadow-2xl cursor-pointer transition-transform duration-500 ease-in-out" onClick={() => setIsMentorPhotoFlipped(!isMentorPhotoFlipped)} style={{
                     bottom: 0,
-                    /* LOCKED */
                     right: 0,
-                    /* LOCKED */
                     width: '540px',
-                    /* LOCKED - Square 1:1 */
                     height: '540px',
-                    /* LOCKED - Square 1:1 */
                     minWidth: '540px',
                     minHeight: '540px',
                     maxWidth: '540px',
@@ -1580,37 +1605,131 @@ export default function BannerPreview() {
                   </div>}
 
 
-                {/* BOTTOM CENTER - Profile Name & Rank - FIXED FONTS AND POSITION */}
-                <div className="absolute text-center" style={{
+                {/* MOTIVATIONAL CONTACT STRIP BANNER */}
+                {bannerData.categoryType === 'motivational' && (
+                  <div className="absolute" style={{
+                    bottom: '35px',
+                    left: '27px',
+                    right: '27px',
+                    height: '120px',
+                    background: 'linear-gradient(135deg, hsl(var(--primary) / 0.9), hsl(var(--primary) / 0.7), hsl(262 83% 45% / 0.8))',
+                    borderRadius: '20px',
+                    border: '3px solid hsl(var(--primary))',
+                    boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4), 0 4px 12px rgba(255, 215, 0, 0.3)',
+                    zIndex: 4,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '0 35px',
+                    backdropFilter: 'blur(10px)'
+                  }}>
+                    {/* Left Side - Phone Contact */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                      <div style={{
+                        width: '70px',
+                        height: '70px',
+                        borderRadius: '50%',
+                        background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(262 83% 45%))',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)'
+                      }}>
+                        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.977.977 0 0 0-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z" fill="white"/>
+                        </svg>
+                      </div>
+                      <div>
+                        <div style={{
+                          fontSize: '16px',
+                          fontWeight: '600',
+                          color: '#ffffff',
+                          marginBottom: '4px',
+                          letterSpacing: '0.5px'
+                        }}>
+                          FOR SUCCESS CALL ON
+                        </div>
+                        <div style={{
+                          fontSize: '28px',
+                          fontWeight: '800',
+                          color: 'hsl(var(--primary))',
+                          letterSpacing: '1px',
+                          textShadow: '0 2px 4px rgba(0, 0, 0, 0.4)'
+                        }}>
+                          {profile?.mobile || profile?.whatsapp || '+91 XXXXXXXXXX'}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Right Side - User Info */}
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{
+                        fontSize: '32px',
+                        fontWeight: '800',
+                        color: '#ffffff',
+                        marginBottom: '6px',
+                        letterSpacing: '1px',
+                        textShadow: '0 2px 6px rgba(0, 0, 0, 0.5)'
+                      }}>
+                        {profileName?.toUpperCase() || 'USER NAME'}
+                      </div>
+                      <div style={{
+                        fontSize: '18px',
+                        fontWeight: '600',
+                        color: 'hsl(var(--primary))',
+                        marginBottom: '4px',
+                        letterSpacing: '0.8px',
+                        textShadow: '0 1px 3px rgba(0, 0, 0, 0.3)'
+                      }}>
+                        {displayRank || 'RANK'}
+                      </div>
+                      <div style={{
+                        fontSize: '14px',
+                        fontWeight: '500',
+                        color: '#ffffff',
+                        opacity: 0.9,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'flex-end',
+                        gap: '8px'
+                      }}>
+                        <span>@{profileName?.toLowerCase().replace(/\s+/g, '') || 'username'}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* BOTTOM CENTER - Profile Name & Rank - FIXED FONTS AND POSITION (Only for non-motivational) */}
+                {bannerData.categoryType !== 'motivational' && (
+                  <div className="absolute text-center" style={{
                     bottom: '40px',
-                    /* LOCKED */
                     left: '50%',
-                    /* LOCKED */
                     transform: 'translateX(-45%)',
                     width: 'max-content',
                     maxWidth: '1080px',
                     zIndex: 3
                   }}>
-                  <p title={profileName} style={{
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      marginBottom: '1px',
-                      position: 'relative',
-                      top: '20px',
-                      color: '#ffffff',
-                      textAlign: 'center'
-                    }} className="banner-profile-name px-[4px] py-0 my-0">
-                    {truncatedProfileName.toUpperCase()}
-                  </p>
-                  <p className="banner-profile-rank" style={{
-                      textTransform: 'uppercase',
-                      color: '#eab308',
-                      textAlign: 'center'
-                    }}>
-                    {displayRank}
-                  </p>
-                </div>
+                    <p title={profileName} style={{
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        marginBottom: '1px',
+                        position: 'relative',
+                        top: '20px',
+                        color: '#ffffff',
+                        textAlign: 'center'
+                      }} className="banner-profile-name px-[4px] py-0 my-0">
+                      {truncatedProfileName.toUpperCase()}
+                    </p>
+                    <p className="banner-profile-rank" style={{
+                        textTransform: 'uppercase',
+                        color: '#eab308',
+                        textAlign: 'center'
+                      }}>
+                      {displayRank}
+                    </p>
+                  </div>
+                )}
 
                 {/* Achievement Stickers - Right side of achiever photo, near right edge */}
                 {stickerImages[selectedTemplate + 1]?.map((sticker, index) => {
