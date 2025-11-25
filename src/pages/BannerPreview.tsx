@@ -1443,7 +1443,10 @@ export default function BannerPreview() {
     } catch (error) {
       console.error("Banner download failed:", error);
       toast.dismiss(loadingToast);
-      toast.error("Failed to download banner. Please try again.");
+      toast.error("Download failed. Please try again later.", {
+        description: "Check your internet connection and ensure storage access is allowed. If the issue persists, contact support.",
+        duration: 7000,
+      });
     } finally {
       setIsDownloading(false);
     }
