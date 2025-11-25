@@ -897,8 +897,8 @@ export default function BannerPreview() {
                 backgroundSize: 'contain',
                 backgroundRepeat: 'no-repeat',
                 backgroundPosition: 'center',
-                padding: '12px 60px',
-                minHeight: '65px',
+                padding: '20px 40px',
+                minHeight: '80px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center'
