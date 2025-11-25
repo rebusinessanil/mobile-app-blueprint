@@ -383,7 +383,12 @@ export default function Dashboard() {
                   })}
                 </div>
               ) : isFestival ? (
-                /* Festival - Direct navigation to Banner Creation with festivalId */
+                /* Festival - DIRECT navigation to Banner Creation, skipping FestivalSelection
+                 * Flow: Dashboard Festival Card → /banner-create/festival (with festivalId) → Banner Preview
+                 * This bypasses /categories/festival (selection page) for quick banner creation.
+                 * festivalId ensures strict template/background isolation per festival.
+                 * "See All" link still goes to selection page for browsing all festivals.
+                 */
                 <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
                   {getFestivalTemplates().map(template => {
                     const festival = festivals.find(f => f.id === template.festival_id);
