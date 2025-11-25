@@ -1555,16 +1555,36 @@ export default function BannerPreview() {
                   </p>
                 </div>
 
-                {/* BOTTOM RIGHT - Mentor Photo - FIXED SIZE AND POSITION - SQUARE 1:1 RATIO */}
-                {mentorPhoto && <div className="absolute overflow-hidden shadow-2xl cursor-pointer transition-transform duration-500 ease-in-out" onClick={() => setIsMentorPhotoFlipped(!isMentorPhotoFlipped)} style={{
+                {/* LEFT SIDE - Profile Photo - FULL HEIGHT - Motivational Layout */}
+                {mentorPhoto && bannerData.categoryType === 'motivational' && <div className="absolute overflow-hidden shadow-2xl cursor-pointer transition-transform duration-500 ease-in-out" onClick={() => setIsMentorPhotoFlipped(!isMentorPhotoFlipped)} style={{
+                    top: 0,
+                    left: 0,
+                    width: 'auto',
+                    height: '1350px',
+                    aspectRatio: '3/4',
+                    borderRadius: '16px',
+                    transform: isMentorPhotoFlipped ? 'scaleX(-1)' : 'scaleX(1)'
+                  }}>
+                    <img src={mentorPhoto} alt={profileName} style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      objectPosition: 'center'
+                    }} />
+                    {/* Bottom feather fade overlay */}
+                    <div className="absolute bottom-0 left-0 right-0 pointer-events-none" style={{
+                      height: '405px',
+                      /* 30% of 1350px */
+                      background: 'linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 100%)'
+                    }} />
+                  </div>}
+
+                {/* BOTTOM RIGHT - Mentor Photo - FIXED SIZE AND POSITION - SQUARE 1:1 RATIO - Other Categories */}
+                {mentorPhoto && bannerData.categoryType !== 'motivational' && <div className="absolute overflow-hidden shadow-2xl cursor-pointer transition-transform duration-500 ease-in-out" onClick={() => setIsMentorPhotoFlipped(!isMentorPhotoFlipped)} style={{
                     bottom: 0,
-                    /* LOCKED */
                     right: 0,
-                    /* LOCKED */
                     width: '540px',
-                    /* LOCKED - Square 1:1 */
                     height: '540px',
-                    /* LOCKED - Square 1:1 */
                     minWidth: '540px',
                     minHeight: '540px',
                     maxWidth: '540px',
