@@ -20,25 +20,41 @@ export const useTemplateBackgrounds = (templateId?: string) => {
     const fetchBackgrounds = async () => {
       try {
         setLoading(true);
-        let query = supabase
+
+        // CRITICAL: If no templateId, return empty array to prevent cross-contamination
+        if (!templateId) {
+          console.warn('⚠️ useTemplateBackgrounds called without templateId - returning empty array to prevent cross-contamination');
+          setBackgrounds([]);
+          setError(null);
+          setLoading(false);
+          return;
+        }
+
+        // STRICT filtering: ONLY fetch backgrounds for this exact template_id
+        const { data, error } = await supabase
           .from('template_backgrounds')
           .select('*')
+          .eq('template_id', templateId) // REQUIRED filter - no fallback
           .eq('is_active', true)
           .order('slot_number', { ascending: true });
 
-        if (templateId) {
-          query = query.eq('template_id', templateId);
-        }
-
-        const { data, error } = await query;
-
         if (error) throw error;
+
+        console.log(`✅ Fetched ${data?.length || 0} backgrounds for template ${templateId}`);
+        
+        // Validate slot numbers are in valid range
+        if (data && data.length > 0) {
+          const invalidSlots = data.filter(bg => bg.slot_number < 1 || bg.slot_number > 16);
+          if (invalidSlots.length > 0) {
+            console.error('❌ Invalid slot numbers detected:', invalidSlots.map(bg => bg.slot_number));
+          }
+        }
 
         setBackgrounds(data || []);
         setError(null);
       } catch (err) {
         setError(err as Error);
-        console.error('Error fetching backgrounds:', err);
+        console.error('❌ Error fetching backgrounds:', err);
       } finally {
         setLoading(false);
       }
