@@ -1294,7 +1294,12 @@ export default function BannerPreview() {
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
         const timestamp = new Date().getTime();
-        link.download = `ReBusiness-Banner-${bannerData.rankName}-${timestamp}.png`;
+        
+        // Generate appropriate filename based on category
+        const categoryLabel = bannerData.categoryType === 'motivational' 
+          ? 'Motivational' 
+          : bannerData.rankName || 'Banner';
+        link.download = `ReBusiness-Banner-${categoryLabel}-${timestamp}.png`;
         link.href = url;
         link.click();
         URL.revokeObjectURL(url);
@@ -1324,14 +1329,18 @@ export default function BannerPreview() {
                 })
                 .eq("user_id", userId);
 
-              // Record transaction
+              // Record transaction with appropriate description
+              const transactionDescription = bannerData.categoryType === 'motivational'
+                ? 'Motivational Banner download'
+                : `Banner download - ${bannerData.rankName}`;
+              
               await supabase
                 .from("credit_transactions")
                 .insert({
                   user_id: userId,
                   amount: BANNER_COST,
                   transaction_type: "spent",
-                  description: `Banner download - ${bannerData.rankName}`,
+                  description: transactionDescription,
                 });
 
               toast.success(
