@@ -1465,16 +1465,25 @@ export default function BannerPreview() {
                 <div 
                   ref={bannerRef} 
                   id="banner-canvas"
-                  onMouseMove={isAdmin ? handleStickerMouseMove : undefined}
-                  onMouseUp={isAdmin ? handleStickerMouseUp : undefined}
-                  onMouseLeave={isAdmin ? handleStickerMouseUp : undefined}
+                  onMouseMove={(e) => {
+                    if (isAdmin) handleStickerMouseMove(e);
+                    handleProfilePhotoMouseMove(e);
+                  }}
+                  onMouseUp={() => {
+                    if (isAdmin) handleStickerMouseUp();
+                    handleProfilePhotoMouseUp();
+                  }}
+                  onMouseLeave={() => {
+                    if (isAdmin) handleStickerMouseUp();
+                    handleProfilePhotoMouseUp();
+                  }}
                   style={{
                     position: 'relative',
                     width: '1350px',
                     height: '1350px',
                     background: templateColors[selectedTemplate].bgGradient,
                     overflow: 'hidden',
-                    cursor: isAdmin && isDragMode ? 'crosshair' : 'default',
+                    cursor: (isAdmin && isDragMode) || isProfilePhotoDragMode ? 'crosshair' : 'default',
                   }}
                 >
               <div className="absolute inset-0">
