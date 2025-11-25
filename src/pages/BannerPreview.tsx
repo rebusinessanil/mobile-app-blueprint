@@ -16,6 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Sticker } from "@/hooks/useStickers";
 import html2canvas from "html2canvas";
 import { useRealtimeStickerSync } from "@/hooks/useRealtimeStickerSync";
+import LowerThirdBanner from "@/components/LowerThirdBanner";
 interface Upline {
   id: string;
   name: string;
@@ -1519,39 +1520,21 @@ export default function BannerPreview() {
                 {/* Category-specific content */}
                 {renderCategoryContent()}
 
-                {/* LOWER THIRD - Contact Info - FIXED FONTS AND POSITION */}
+                {/* LOWER THIRD - Contact Info with Dark Theme Banner Variants */}
                 <div className="absolute" style={{
-                    bottom: '40px',
+                    bottom: '20px',
                     ...(bannerData.categoryType === 'motivational' 
-                      ? { right: '27px', textAlign: 'right' as const }
-                      : { left: '27px' }
+                      ? { right: '150px', transform: 'translateX(50%)' }
+                      : { left: '150px', transform: 'translateX(-50%)' }
                     ),
-                    width: '675px',
-                    minWidth: '675px',
-                    maxWidth: '675px'
                   }}>
-                  <p style={{
-                      fontSize: '9px !important',
-                      textShadow: '2px 2px 4px rgba(0,0,0,0.9)',
-                      marginBottom: '1px',
-                      textTransform: 'uppercase',
-                      position: 'relative',
-                      top: '13px',
-                      color: '#ffffff',
-                      fontWeight: '300',
-                      letterSpacing: '2px'
-                    }}>
-                    CALL FOR MENTORSHIP                                                                 
-                  </p>
-                  <p title={`+91 ${displayContact}`} style={{
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      color: '#ffffff',
-                      fontFamily: 'sans-serif'
-                    }} className="banner-contact px-0 py-[3px]">
-                    +91 {displayContact}
-                  </p>
+                  <LowerThirdBanner
+                    slotNumber={selectedTemplate + 1}
+                    name={profileName}
+                    rank={bannerData.rankName}
+                    contactNumber={displayContact}
+                    position={bannerData.categoryType === 'motivational' ? 'right' : 'left'}
+                  />
                 </div>
 
                 {/* LEFT SIDE - Profile Photo - 75% HEIGHT - Motivational Layout */}
