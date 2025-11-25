@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import RanksStickersPanel from "@/components/RanksStickersPanel";
 import StickerControl from "@/components/StickerControl";
 import downloadIcon from "@/assets/download-icon.png";
+import nameBackground from "@/assets/name-background.png";
 import { useProfile } from "@/hooks/useProfile";
 import { useProfilePhotos } from "@/hooks/useProfilePhotos";
 import { useBannerSettings } from "@/hooks/useBannerSettings";
@@ -891,7 +892,16 @@ export default function BannerPreview() {
               <h2 title={mainBannerName.toUpperCase()} style={{
                 color: '#ffffff',
                 textAlign: 'center',
-                margin: '0 auto'
+                margin: '0 auto',
+                backgroundImage: `url(${nameBackground})`,
+                backgroundSize: 'contain',
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'center',
+                padding: '20px 40px',
+                minHeight: '80px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
               }} className="banner-preview-name text-center px-0 py-[2px] mx-[26px]">
                 {truncatedMainName.toUpperCase()}
               </h2>
