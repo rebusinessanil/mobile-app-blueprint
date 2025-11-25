@@ -80,6 +80,42 @@ export default function BannerPreview() {
     scale: number;
   }>>({});
 
+  // Profile picture control states (motivational only, admin only)
+  const [profilePicPosition, setProfilePicPosition] = useState({ x: 0, y: 0 }); // Offset from default position
+  const [profilePicScale, setProfilePicScale] = useState(1); // Scale multiplier (1 = 100%)
+  const [isDraggingProfile, setIsDraggingProfile] = useState(false);
+  const [profileDragStart, setProfileDragStart] = useState<{ x: number; y: number } | null>(null);
+
+  // Handle profile picture drag (admin only, motivational only)
+  useEffect(() => {
+    if (!isDraggingProfile || !profileDragStart) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const newX = e.clientX - profileDragStart.x;
+      const newY = e.clientY - profileDragStart.y;
+      
+      // Boundary constraints: keep within canvas (0 to 1350px width, -675 to 675px height offset)
+      const maxWidth = 1350 - (1026 * profilePicScale * 0.75); // 3:4 aspect ratio width
+      const constrainedX = Math.max(0, Math.min(newX, maxWidth));
+      const constrainedY = Math.max(-500, Math.min(newY, 500));
+      
+      setProfilePicPosition({ x: constrainedX, y: constrainedY });
+    };
+
+    const handleMouseUp = () => {
+      setIsDraggingProfile(false);
+      setProfileDragStart(null);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDraggingProfile, profileDragStart, profilePicScale]);
+
   // Compute scale factor for display
   useEffect(() => {
     const updateScale = () => {
@@ -1514,20 +1550,33 @@ export default function BannerPreview() {
                 </div>
 
                 {/* LEFT SIDE - Profile Photo - 75% HEIGHT - Motivational Layout */}
-                {mentorPhoto && bannerData.categoryType === 'motivational' && <div className="absolute overflow-hidden shadow-2xl cursor-pointer transition-transform duration-500 ease-in-out" onClick={() => setIsMentorPhotoFlipped(!isMentorPhotoFlipped)} style={{
-                    top: '50%',
-                    left: 0,
+                {mentorPhoto && bannerData.categoryType === 'motivational' && <div 
+                  className="absolute overflow-hidden shadow-2xl transition-transform duration-500 ease-in-out" 
+                  onClick={() => !isDraggingProfile && setIsMentorPhotoFlipped(!isMentorPhotoFlipped)}
+                  onMouseDown={(e) => {
+                    if (isAdmin) {
+                      e.stopPropagation();
+                      setIsDraggingProfile(true);
+                      setProfileDragStart({ x: e.clientX - profilePicPosition.x, y: e.clientY - profilePicPosition.y });
+                    }
+                  }}
+                  style={{
+                    top: `calc(50% + ${profilePicPosition.y}px)`,
+                    left: `${profilePicPosition.x}px`,
                     width: 'auto',
-                    height: '1026px', // 5% reduction from 1080px
+                    height: `${1026 * profilePicScale}px`,
                     aspectRatio: '3/4',
                     borderRadius: '16px',
-                    transform: isMentorPhotoFlipped ? 'translateY(-50%) scaleX(-1)' : 'translateY(-50%) scaleX(1)'
+                    transform: isMentorPhotoFlipped ? 'translateY(-50%) scaleX(-1)' : 'translateY(-50%) scaleX(1)',
+                    cursor: isAdmin ? 'move' : 'pointer',
+                    border: isAdmin ? '2px dashed #FFD700' : 'none'
                   }}>
                     <img src={mentorPhoto} alt={profileName} style={{
                       width: '100%',
                       height: '100%',
                       objectFit: 'cover',
-                      objectPosition: 'center'
+                      objectPosition: 'center',
+                      pointerEvents: 'none'
                     }} />
                     {/* Bottom feather fade overlay */}
                     <div className="absolute bottom-0 left-0 right-0 pointer-events-none" style={{
@@ -1821,6 +1870,56 @@ export default function BannerPreview() {
           isSaving={isSavingSticker}
           isAdmin={true}
         />
+      )}
+
+      {/* Profile Picture Control Panel - Admin Only - Motivational Only */}
+      {isAdmin && bannerData.categoryType === 'motivational' && mentorPhoto && (
+        <div className="fixed bottom-6 right-6 z-40 bg-[#0f1720] rounded-2xl p-4 shadow-2xl border border-primary/30 w-[320px]">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
+            <h3 className="text-sm font-semibold text-primary uppercase tracking-wider">Profile Picture</h3>
+          </div>
+          
+          <div className="space-y-4">
+            {/* Scale Control */}
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <label className="text-xs text-muted-foreground font-medium">Scale</label>
+                <span className="text-xs text-primary font-mono">{Math.round(profilePicScale * 100)}%</span>
+              </div>
+              <input
+                type="range"
+                min="0.5"
+                max="1.5"
+                step="0.05"
+                value={profilePicScale}
+                onChange={(e) => setProfilePicScale(parseFloat(e.target.value))}
+                className="w-full h-2 bg-secondary rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:cursor-pointer"
+              />
+            </div>
+
+            {/* Instructions */}
+            <div className="bg-secondary/30 rounded-lg p-3 border border-border/50">
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                <span className="text-primary font-semibold">Drag</span> the profile picture to reposition it within the banner.
+              </p>
+            </div>
+
+            {/* Reset Button */}
+            <Button
+              onClick={() => {
+                setProfilePicPosition({ x: 0, y: 0 });
+                setProfilePicScale(1);
+                toast.success("Profile picture reset to default");
+              }}
+              variant="outline"
+              size="sm"
+              className="w-full"
+            >
+              Reset Position & Scale
+            </Button>
+          </div>
+        </div>
       )}
 
       {/* Loading Overlay - Shows during banner export */}
