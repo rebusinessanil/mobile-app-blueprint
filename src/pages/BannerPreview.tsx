@@ -14,7 +14,8 @@ import { useBannerDefaults } from "@/hooks/useBannerDefaults";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Sticker } from "@/hooks/useStickers";
-import html2canvas from "html2canvas";
+import { toPng } from "html-to-image";
+import download from "downloadjs";
 import { useRealtimeStickerSync } from "@/hooks/useRealtimeStickerSync";
 interface Upline {
   id: string;
@@ -1223,135 +1224,93 @@ export default function BannerPreview() {
     }
 
     setIsDownloading(true);
-    const loadingToast = toast.loading("Generating pixel-perfect banner...");
+    const loadingToast = toast.loading("Generating ultra HD banner...");
+    
     try {
-      // Wait for all images to fully load
-      const images = bannerRef.current.querySelectorAll('img');
-      await Promise.all(Array.from(images).map(img => {
-        if (img.complete) return Promise.resolve();
-        return new Promise((resolve, reject) => {
-          img.onload = resolve;
-          img.onerror = reject;
-          setTimeout(resolve, 5000);
-        });
-      }));
-
-      // Small delay to ensure rendering is complete
-      await new Promise(resolve => setTimeout(resolve, 100));
-
-      // Store original parent styles to restore later
-      const scaleContainer = bannerRef.current.closest('.banner-scale-container') as HTMLElement;
-      const originalTransform = scaleContainer ? scaleContainer.style.transform : '';
-      const originalWidth = scaleContainer ? scaleContainer.style.width : '';
-      const originalHeight = scaleContainer ? scaleContainer.style.height : '';
-
-      // Temporarily remove scale transform for capture
-      if (scaleContainer) {
-        scaleContainer.style.transform = 'none';
-        scaleContainer.style.width = '1350px';
-        scaleContainer.style.height = '1350px';
-      }
-
-      // Capture the banner at exact 1350×1350 size with no scaling
-      const canvas = await html2canvas(bannerRef.current, {
-        width: 1350,
-        height: 1350,
-        scale: 1,
-        // scale: 1 for exact 1350×1350 output
-        backgroundColor: null,
-        logging: false,
-        useCORS: true,
-        allowTaint: true,
-        imageTimeout: 15000,
-        foreignObjectRendering: false,
-        windowWidth: 1350,
-        windowHeight: 1350,
-        x: 0,
-        y: 0,
-        scrollX: 0,
-        scrollY: 0
+      // High quality export settings
+      const dataUrl = await toPng(bannerRef.current, {
+        cacheBust: true,
+        pixelRatio: 3,             // Ultra HD Export
+        quality: 1,                
+        backgroundColor: null,     // Transparent safe
+        style: {
+          transform: "scale(1)",   // No scaling issue
+          transformOrigin: "top left",
+        },
+        filter: (node) => {
+          // WhatsApp button, controls, slots, UI elements hide
+          if (
+            node.classList?.contains("slot-selector") ||
+            node.classList?.contains("control-buttons") ||
+            node.classList?.contains("whatsapp-float") ||
+            node.id === "ignore-download"
+          ) {
+            return false;
+          }
+          return true;
+        },
       });
 
-      // Restore original transform immediately after capture
-      if (scaleContainer) {
-        scaleContainer.style.transform = originalTransform;
-        scaleContainer.style.width = originalWidth;
-        scaleContainer.style.height = originalHeight;
-      }
+      toast.dismiss(loadingToast);
 
-      // Verify canvas dimensions
-      if (canvas.width !== 1350 || canvas.height !== 1350) {
-        console.warn(`Canvas size mismatch: ${canvas.width}×${canvas.height}, expected 1350×1350`);
-      }
+      // Download the banner
+      const timestamp = new Date().getTime();
+      download(dataUrl, `ReBusiness-Banner-${bannerData.rankName}-${timestamp}.png`);
 
-      // Convert to PNG blob with maximum quality
-      canvas.toBlob(async (blob) => {
-        toast.dismiss(loadingToast);
-        if (!blob) {
-          toast.error("Failed to generate image");
-          return;
-        }
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        const timestamp = new Date().getTime();
-        link.download = `ReBusiness-Banner-${bannerData.rankName}-${timestamp}.png`;
-        link.href = url;
-        link.click();
-        URL.revokeObjectURL(url);
-        const sizeMB = (blob.size / 1024 / 1024).toFixed(2);
+      // Calculate approximate size (base64 size estimation)
+      const sizeMB = ((dataUrl.length * 0.75) / (1024 * 1024)).toFixed(2);
 
-        // Deduct credits after successful download
-        if (userId) {
-          const BANNER_COST = 10;
-          try {
-            // Get current balance
-            const { data: currentCredits } = await supabase
+      // Deduct credits after successful download
+      if (userId) {
+        const BANNER_COST = 10;
+        try {
+          // Get current balance
+          const { data: currentCredits } = await supabase
+            .from("user_credits")
+            .select("balance, total_spent")
+            .eq("user_id", userId)
+            .single();
+
+          if (currentCredits) {
+            const newBalance = currentCredits.balance - BANNER_COST;
+            const newTotalSpent = currentCredits.total_spent + BANNER_COST;
+
+            // Update balance
+            await supabase
               .from("user_credits")
-              .select("balance, total_spent")
-              .eq("user_id", userId)
-              .single();
+              .update({
+                balance: newBalance,
+                total_spent: newTotalSpent,
+              })
+              .eq("user_id", userId);
 
-            if (currentCredits) {
-              const newBalance = currentCredits.balance - BANNER_COST;
-              const newTotalSpent = currentCredits.total_spent + BANNER_COST;
+            // Record transaction
+            await supabase
+              .from("credit_transactions")
+              .insert({
+                user_id: userId,
+                amount: BANNER_COST,
+                transaction_type: "spent",
+                description: `Banner download - ${bannerData.rankName}`,
+              });
 
-              // Update balance
-              await supabase
-                .from("user_credits")
-                .update({
-                  balance: newBalance,
-                  total_spent: newTotalSpent,
-                })
-                .eq("user_id", userId);
-
-              // Record transaction
-              await supabase
-                .from("credit_transactions")
-                .insert({
-                  user_id: userId,
-                  amount: BANNER_COST,
-                  transaction_type: "spent",
-                  description: `Banner download - ${bannerData.rankName}`,
-                });
-
-              toast.success(
-                `Banner downloaded! (${sizeMB} MB) • ₹${BANNER_COST} deducted`,
-                {
-                  description: `Remaining balance: ₹${newBalance}`,
-                }
-              );
-            }
-          } catch (error) {
-            console.error("Credit deduction error:", error);
-            // Still show success for download even if credit deduction fails
-            toast.success(`Pixel-perfect banner downloaded! (${sizeMB} MB, 1350×1350 PNG)`);
+            toast.success(
+              `Banner downloaded! (${sizeMB} MB) • ₹${BANNER_COST} deducted`,
+              {
+                description: `Remaining balance: ₹${newBalance}`,
+              }
+            );
           }
-        } else {
-          toast.success(`Pixel-perfect banner downloaded! (${sizeMB} MB, 1350×1350 PNG)`);
+        } catch (error) {
+          console.error("Credit deduction error:", error);
+          // Still show success for download even if credit deduction fails
+          toast.success(`Ultra HD banner downloaded! (~${sizeMB} MB PNG)`);
         }
-      }, "image/png", 1.0);
+      } else {
+        toast.success(`Ultra HD banner downloaded! (~${sizeMB} MB PNG)`);
+      }
     } catch (error) {
-      console.error("Download error:", error);
+      console.error("Banner download failed:", error);
       toast.dismiss(loadingToast);
       toast.error("Failed to download banner. Please try again.");
     } finally {
