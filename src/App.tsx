@@ -86,6 +86,7 @@ const App = () => (
           <Route path="/banner-create/anniversary" element={<AuthGuard><AnniversaryBannerCreate /></AuthGuard>} />
           <Route path="/banner-create/motivational" element={<AuthGuard><MotivationalBannerCreate /></AuthGuard>} />
           <Route path="/banner-create/festival" element={<AuthGuard><FestivalBannerCreate /></AuthGuard>} />
+          <Route path="/create/festival-banner" element={<AuthGuard><FestivalSelection /></AuthGuard>} />
           <Route path="/story/:storyId" element={<AuthGuard><StoryBannerCreate /></AuthGuard>} />
           
           {/* Admin routes - auth required */}
