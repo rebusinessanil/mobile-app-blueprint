@@ -86,6 +86,7 @@ export default function BannerPreview() {
   const [profilePicScale, setProfilePicScale] = useState(1); // Scale multiplier (1 = 100%)
   const [isDraggingProfile, setIsDraggingProfile] = useState(false);
   const [profileDragStart, setProfileDragStart] = useState<{ x: number; y: number } | null>(null);
+  const [isProfileControlMinimized, setIsProfileControlMinimized] = useState(false);
 
   // Handle profile picture drag (admin only, motivational only)
   useEffect(() => {
@@ -1941,61 +1942,90 @@ export default function BannerPreview() {
 
       {/* Profile Picture Control Panel - Admin Only - Motivational Only */}
       {isAdmin && bannerData.categoryType === 'motivational' && mentorPhoto && (
-        <div className="fixed bottom-6 right-6 z-40 bg-[#0f1720] rounded-2xl p-4 shadow-2xl border border-primary/30 w-[320px]">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
-            <h3 className="text-sm font-semibold text-primary uppercase tracking-wider">Profile Picture</h3>
-          </div>
-          
-          <div className="space-y-4">
-            {/* Scale Control */}
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <label className="text-xs text-muted-foreground font-medium">Scale</label>
-                <span className="text-xs text-primary font-mono">{Math.round(profilePicScale * 100)}%</span>
+        <>
+          {/* Minimized State - Floating Icon */}
+          {isProfileControlMinimized && (
+            <button
+              onClick={() => setIsProfileControlMinimized(false)}
+              className="fixed bottom-6 right-6 z-40 bg-[#0f1720] rounded-full p-4 shadow-2xl border border-primary/30 hover:bg-[#1a1f2e] transition-colors"
+              title="Expand Profile Controls"
+            >
+              <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+              </svg>
+            </button>
+          )}
+
+          {/* Expanded State - Full Control Panel */}
+          {!isProfileControlMinimized && (
+            <div className="fixed bottom-6 right-6 z-40 bg-[#0f1720] rounded-2xl p-4 shadow-2xl border border-primary/30 w-[320px]">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
+                  <h3 className="text-sm font-semibold text-primary uppercase tracking-wider">Profile Picture</h3>
+                </div>
+                <button
+                  onClick={() => setIsProfileControlMinimized(true)}
+                  className="text-muted-foreground hover:text-primary transition-colors p-1 rounded hover:bg-secondary/30"
+                  title="Minimize"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
               </div>
-              <input
-                type="range"
-                min="0.5"
-                max="1.5"
-                step="0.05"
-                value={profilePicScale}
-                onChange={(e) => setProfilePicScale(parseFloat(e.target.value))}
-                className="w-full h-2 bg-secondary rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:cursor-pointer"
-              />
-            </div>
+              
+              <div className="space-y-4">
+                {/* Scale Control */}
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <label className="text-xs text-muted-foreground font-medium">Scale</label>
+                    <span className="text-xs text-primary font-mono">{Math.round(profilePicScale * 100)}%</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0.5"
+                    max="1.5"
+                    step="0.05"
+                    value={profilePicScale}
+                    onChange={(e) => setProfilePicScale(parseFloat(e.target.value))}
+                    className="w-full h-2 bg-secondary rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:cursor-pointer"
+                  />
+                </div>
 
-            {/* Instructions */}
-            <div className="bg-secondary/30 rounded-lg p-3 border border-border/50">
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                <span className="text-primary font-semibold">Drag</span> the profile picture to reposition it within the banner.
-              </p>
-            </div>
+                {/* Instructions */}
+                <div className="bg-secondary/30 rounded-lg p-3 border border-border/50">
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    <span className="text-primary font-semibold">Drag</span> the profile picture to reposition it within the banner.
+                  </p>
+                </div>
 
-            {/* Action Buttons */}
-            <div className="flex gap-2">
-              <Button
-                onClick={handleSaveProfileDefaults}
-                size="sm"
-                className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground"
-              >
-                Save Defaults
-              </Button>
-              <Button
-                onClick={() => {
-                  setProfilePicPosition({ x: 0, y: 0 });
-                  setProfilePicScale(1);
-                  toast.success("Profile picture reset to default");
-                }}
-                variant="outline"
-                size="sm"
-                className="flex-1"
-              >
-                Reset
-              </Button>
+                {/* Action Buttons */}
+                <div className="flex gap-2">
+                  <Button
+                    onClick={handleSaveProfileDefaults}
+                    size="sm"
+                    className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground"
+                  >
+                    Save Defaults
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      setProfilePicPosition({ x: 0, y: 0 });
+                      setProfilePicScale(1);
+                      toast.success("Profile picture reset to default");
+                    }}
+                    variant="outline"
+                    size="sm"
+                    className="flex-1"
+                  >
+                    Reset
+                  </Button>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
+          )}
+        </>
       )}
 
       {/* Loading Overlay - Shows during banner export */}
