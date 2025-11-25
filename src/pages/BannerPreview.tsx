@@ -1519,7 +1519,7 @@ export default function BannerPreview() {
                 {/* Category-specific content */}
                 {renderCategoryContent()}
 
-                {/* LOWER THIRD BANNER - Dark theme with color-coded borders */}
+                {/* LOWER THIRD BANNER - Dark theme with name and rank inside */}
                 {(() => {
                   // Determine color variant based on slot (1-16): Red, Orange, Teal pattern
                   const slotNumber = selectedTemplate + 1;
@@ -1535,20 +1535,21 @@ export default function BannerPreview() {
                   
                   return (
                     <div className="absolute" style={{
-                      bottom: '35px',
-                      left: '67px',
-                      width: '920px',
-                      height: '90px',
+                      bottom: '20px',
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      width: '1200px',
+                      height: '120px',
                       zIndex: 25
                     }}>
                       {/* SVG Shape with border */}
-                      <svg width="920" height="90" viewBox="0 0 920 90" style={{ position: 'absolute', top: 0, left: 0 }}>
+                      <svg width="1200" height="120" viewBox="0 0 1200 120" style={{ position: 'absolute', top: 0, left: 0 }}>
                         <defs>
                           <filter id={`shadow-${variantIndex}`} x="-50%" y="-50%" width="200%" height="200%">
-                            <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
-                            <feOffset dx="0" dy="2" result="offsetblur"/>
+                            <feGaussianBlur in="SourceAlpha" stdDeviation="4"/>
+                            <feOffset dx="0" dy="3" result="offsetblur"/>
                             <feComponentTransfer>
-                              <feFuncA type="linear" slope="0.5"/>
+                              <feFuncA type="linear" slope="0.6"/>
                             </feComponentTransfer>
                             <feMerge>
                               <feMergeNode/>
@@ -1559,50 +1560,88 @@ export default function BannerPreview() {
                         
                         {/* Border path */}
                         <path
-                          d="M 45 4 
-                             L 810 4 
-                             L 850 45 
-                             L 810 86 
-                             L 45 86 
-                             Q 4 86 4 45 
-                             Q 4 4 45 4 Z"
+                          d="M 50 5 
+                             L 1050 5 
+                             L 1100 60 
+                             L 1050 115 
+                             L 50 115 
+                             Q 5 115 5 60 
+                             Q 5 5 50 5 Z"
                           fill="none"
                           stroke={variant.borderColor}
-                          strokeWidth="4"
+                          strokeWidth="5"
                           filter={`url(#shadow-${variantIndex})`}
                         />
                         
                         {/* Inner dark fill */}
                         <path
-                          d="M 45 8 
-                             L 808 8 
-                             L 846 45 
-                             L 808 82 
-                             L 45 82 
-                             Q 8 82 8 45 
-                             Q 8 8 45 8 Z"
+                          d="M 50 10 
+                             L 1048 10 
+                             L 1095 60 
+                             L 1048 110 
+                             L 50 110 
+                             Q 10 110 10 60 
+                             Q 10 10 50 10 Z"
                           fill="#1a2332"
+                          fillOpacity="0.95"
                         />
                       </svg>
                       
-                      {/* Label on the right */}
+                      {/* Name and Rank Text inside banner */}
                       <div style={{
                         position: 'absolute',
-                        right: '-100px',
+                        left: '60px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        maxWidth: '700px',
+                        zIndex: 26
+                      }}>
+                        <p title={profileName} style={{
+                          color: '#ffffff',
+                          fontSize: '28px',
+                          fontWeight: '700',
+                          margin: 0,
+                          marginBottom: '4px',
+                          textTransform: 'uppercase',
+                          letterSpacing: '1px',
+                          textShadow: '2px 2px 6px rgba(0,0,0,0.8)',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
+                        }}>
+                          {truncatedProfileName.toUpperCase()}
+                        </p>
+                        <p style={{
+                          color: '#eab308',
+                          fontSize: '18px',
+                          fontWeight: '600',
+                          margin: 0,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.8px',
+                          textShadow: '1px 1px 4px rgba(0,0,0,0.7)'
+                        }}>
+                          {displayRank}
+                        </p>
+                      </div>
+                      
+                      {/* Contact Label on the right */}
+                      <div style={{
+                        position: 'absolute',
+                        right: '-130px',
                         top: '50%',
                         transform: 'translateY(-50%) skewX(-8deg)',
                         background: variant.labelBg,
-                        padding: '18px 45px 18px 40px',
+                        padding: '20px 50px 20px 45px',
                         clipPath: 'polygon(8% 0%, 100% 0%, 92% 100%, 0% 100%)',
-                        boxShadow: `0 4px 12px ${variant.shadowColor}`,
+                        boxShadow: `0 4px 16px ${variant.shadowColor}`,
                         zIndex: 30
                       }}>
                         <div style={{ transform: 'skewX(8deg)' }}>
                           <p style={{
-                            fontSize: '12px',
+                            fontSize: '13px',
                             fontWeight: '600',
                             color: '#ffffff',
-                            letterSpacing: '1.2px',
+                            letterSpacing: '1.3px',
                             textTransform: 'uppercase',
                             margin: 0,
                             lineHeight: '1.3',
@@ -1611,7 +1650,7 @@ export default function BannerPreview() {
                             CALL FOR MENTORSHIP
                           </p>
                           <p style={{
-                            fontSize: '20px',
+                            fontSize: '22px',
                             fontWeight: '800',
                             color: '#ffffff',
                             margin: 0,
@@ -1678,8 +1717,10 @@ export default function BannerPreview() {
                   </div>}
 
 
-                {/* BOTTOM CENTER - Profile Name & Rank - FIXED FONTS AND POSITION */}
+
+                {/* BOTTOM CENTER - Profile Name & Rank - HIDDEN (now inside lower-third banner) */}
                 <div className="absolute text-center" style={{
+                    display: 'none', // Hidden - name and rank now inside lower-third banner
                     bottom: '40px',
                     ...(bannerData.categoryType === 'motivational' 
                       ? { left: '30%', transform: 'translateX(-50%)' }
