@@ -1637,7 +1637,7 @@ export default function BannerPreview() {
                     borderRadius: '16px',
                     transform: isMentorPhotoFlipped ? 'translateY(-50%) scaleX(-1)' : 'translateY(-50%) scaleX(1)',
                     cursor: isAdmin ? 'move' : 'pointer',
-                    border: isAdmin ? '2px dashed #FFD700' : 'none'
+                    border: 'none'
                   }}>
                     <img src={mentorPhoto} alt={profileName} style={{
                       width: '100%',
