@@ -1605,139 +1605,134 @@ export default function BannerPreview() {
                   </div>}
 
 
-                {/* MOTIVATIONAL CONTACT STRIP BANNER - DARK THEME LOWER-THIRD */}
+                {/* MOTIVATIONAL CONTACT STRIP BANNER - Three Variant Sequencing */}
                 {bannerData.categoryType === 'motivational' && (() => {
-                  // Determine variant based on slot number (1-16)
-                  const slotNumber = selectedSlot || 1;
+                  // Calculate variant based on slot number (1-16) in repeating sequence
+                  const slotNumber = selectedTemplate + 1; // selectedTemplate is 0-indexed, slots are 1-16
                   const variantIndex = ((slotNumber - 1) % 3) + 1; // 1, 2, or 3
                   
-                  // Variant 1: Red/Crimson
-                  // Variant 2: Orange
-                  // Variant 3: Teal/Green
-                  
-                  const variantStyles = {
-                    1: {
-                      borderColor: '#e63946',
-                      tabBg: '#e63946',
-                      tabShadow: '0 4px 12px rgba(230, 57, 70, 0.5)'
+                  // Define three variants with strict color isolation
+                  const variants = {
+                    1: { 
+                      borderColor: '#e63946', // Red/Crimson
+                      tabColor: '#e63946',
+                      shadowColor: 'rgba(230, 57, 70, 0.4)'
                     },
-                    2: {
-                      borderColor: '#f77f00',
-                      tabBg: '#f77f00',
-                      tabShadow: '0 4px 12px rgba(247, 127, 0, 0.5)'
+                    2: { 
+                      borderColor: '#f77f00', // Orange
+                      tabColor: '#f77f00',
+                      shadowColor: 'rgba(247, 127, 0, 0.4)'
                     },
-                    3: {
-                      borderColor: '#06d6a0',
-                      tabBg: '#06d6a0',
-                      tabShadow: '0 4px 12px rgba(6, 214, 160, 0.5)'
+                    3: { 
+                      borderColor: '#06d6a0', // Teal/Cyan
+                      tabColor: '#06d6a0',
+                      shadowColor: 'rgba(6, 214, 160, 0.4)'
                     }
                   };
-                  
-                  const variant = variantStyles[variantIndex as keyof typeof variantStyles];
-                  
+
+                  const currentVariant = variants[variantIndex as keyof typeof variants];
+
                   return (
                     <div className="absolute" style={{
                       bottom: '35px',
                       left: '27px',
                       right: '27px',
-                      height: '110px',
-                      zIndex: 4,
+                      height: '105px',
                       display: 'flex',
                       alignItems: 'center',
-                      position: 'relative'
+                      justifyContent: 'space-between',
+                      zIndex: 4
                     }}>
-                      {/* Main Dark Body */}
+                      {/* Main Dark Banner with Colored Border */}
                       <div style={{
                         position: 'absolute',
                         left: 0,
-                        top: 0,
-                        bottom: 0,
                         right: '280px',
-                        background: '#1a1d23',
-                        borderRadius: '60px 0 0 60px',
-                        border: `4px solid ${variant.borderColor}`,
-                        borderRight: 'none',
-                        boxShadow: '0 8px 24px rgba(0, 0, 0, 0.6), inset 0 2px 8px rgba(0, 0, 0, 0.4)'
-                      }} />
-                      
-                      {/* Angled Transition */}
-                      <div style={{
-                        position: 'absolute',
-                        right: '250px',
-                        top: 0,
-                        bottom: 0,
-                        width: '80px',
-                        background: '#1a1d23',
-                        clipPath: 'polygon(0 0, 100% 0, 85% 100%, 0 100%)',
-                        borderTop: `4px solid ${variant.borderColor}`,
-                        borderBottom: `4px solid ${variant.borderColor}`
-                      }} />
-                      
-                      {/* Right Tab */}
+                        height: '100%',
+                        background: '#1a1f2e',
+                        borderRadius: '50px 8px 8px 50px',
+                        border: `4px solid ${currentVariant.borderColor}`,
+                        boxShadow: `0 6px 20px rgba(0, 0, 0, 0.5), 0 0 20px ${currentVariant.shadowColor}`,
+                        display: 'flex',
+                        alignItems: 'center',
+                        padding: '0 40px'
+                      }}>
+                        {/* Phone Icon */}
+                        <div style={{
+                          width: '65px',
+                          height: '65px',
+                          borderRadius: '50%',
+                          background: `linear-gradient(135deg, ${currentVariant.borderColor}, ${currentVariant.tabColor})`,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)',
+                          marginRight: '25px',
+                          flexShrink: 0
+                        }}>
+                          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.977.977 0 0 0-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z" fill="white"/>
+                          </svg>
+                        </div>
+
+                        {/* User Info on Left */}
+                        <div style={{ flex: 1 }}>
+                          <div style={{
+                            fontSize: '30px',
+                            fontWeight: '800',
+                            color: '#ffffff',
+                            marginBottom: '4px',
+                            letterSpacing: '1px',
+                            textShadow: '0 2px 6px rgba(0, 0, 0, 0.6)'
+                          }}>
+                            {profileName?.toUpperCase() || 'USER NAME'}
+                          </div>
+                          <div style={{
+                            fontSize: '16px',
+                            fontWeight: '600',
+                            color: currentVariant.borderColor,
+                            letterSpacing: '0.8px',
+                            textShadow: '0 1px 3px rgba(0, 0, 0, 0.4)'
+                          }}>
+                            {displayRank || 'RANK'} • @{profileName?.toLowerCase().replace(/\s+/g, '') || 'username'}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Right Tab with Angled Edge */}
                       <div style={{
                         position: 'absolute',
                         right: 0,
-                        top: '50%',
-                        transform: 'translateY(-50%)',
+                        height: '100%',
                         width: '320px',
-                        height: '70px',
-                        background: variant.tabBg,
-                        clipPath: 'polygon(15% 0, 100% 0, 100% 100%, 15% 100%, 0 50%)',
+                        background: currentVariant.tabColor,
+                        clipPath: 'polygon(15% 0, 100% 0, 100% 100%, 15% 100%, 0% 50%)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        paddingLeft: '50px',
-                        boxShadow: variant.tabShadow
+                        paddingLeft: '60px',
+                        boxShadow: `0 6px 20px ${currentVariant.shadowColor}`
                       }}>
                         <div style={{ textAlign: 'center' }}>
                           <div style={{
                             fontSize: '15px',
-                            fontWeight: '700',
+                            fontWeight: '600',
                             color: '#ffffff',
-                            letterSpacing: '1.5px',
                             marginBottom: '2px',
-                            textTransform: 'uppercase'
+                            letterSpacing: '1.5px',
+                            textShadow: '0 2px 4px rgba(0, 0, 0, 0.4)'
                           }}>
                             CALL FOR MENTORSHIP
                           </div>
                           <div style={{
-                            fontSize: '22px',
+                            fontSize: '26px',
                             fontWeight: '800',
                             color: '#ffffff',
-                            letterSpacing: '1px'
+                            letterSpacing: '1px',
+                            textShadow: '0 2px 6px rgba(0, 0, 0, 0.5)'
                           }}>
-                            {profile?.mobile || profile?.whatsapp || '+91 XXXXXXXXXX'}
+                            {profile?.mobile || profile?.whatsapp || '+91 7734990035'}
                           </div>
-                        </div>
-                      </div>
-                      
-                      {/* Content - Left Side (Name & Rank) */}
-                      <div style={{
-                        position: 'relative',
-                        zIndex: 5,
-                        paddingLeft: '70px',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '4px'
-                      }}>
-                        <div style={{
-                          fontSize: '36px',
-                          fontWeight: '800',
-                          color: '#ffffff',
-                          letterSpacing: '1.2px',
-                          textShadow: '0 2px 8px rgba(0, 0, 0, 0.8)',
-                          lineHeight: '1.1'
-                        }}>
-                          {profileName?.toUpperCase() || 'USER NAME'}
-                        </div>
-                        <div style={{
-                          fontSize: '16px',
-                          fontWeight: '600',
-                          color: variant.borderColor,
-                          letterSpacing: '1px',
-                          textShadow: '0 1px 4px rgba(0, 0, 0, 0.6)'
-                        }}>
-                          {displayRank || 'RANK'}
                         </div>
                       </div>
                     </div>
