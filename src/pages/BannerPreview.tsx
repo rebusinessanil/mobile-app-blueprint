@@ -1575,6 +1575,37 @@ export default function BannerPreview() {
                       height: '308px', // 30% of 1026px
                       background: 'linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 100%)'
                     }} />
+                    
+                    {/* User Name and Rank Overlay - Centered */}
+                    <div style={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      textAlign: 'center',
+                      zIndex: 2,
+                      pointerEvents: 'none'
+                    }}>
+                      <div style={{
+                        fontSize: '30px',
+                        fontWeight: '800',
+                        color: '#ffffff',
+                        marginBottom: '4px',
+                        letterSpacing: '1px',
+                        textShadow: '0 2px 6px rgba(0, 0, 0, 0.9), 0 4px 12px rgba(0, 0, 0, 0.6)'
+                      }}>
+                        {profileName?.toUpperCase() || 'USER NAME'}
+                      </div>
+                      <div style={{
+                        fontSize: '20px',
+                        fontWeight: '600',
+                        color: '#FFD700',
+                        letterSpacing: '0.8px',
+                        textShadow: '0 1px 3px rgba(0, 0, 0, 0.9), 0 2px 6px rgba(0, 0, 0, 0.6)'
+                      }}>
+                        {displayRank || 'RANK'}
+                      </div>
+                    </div>
                   </div>}
 
                 {/* BOTTOM RIGHT - Mentor Photo - FIXED SIZE AND POSITION - SQUARE 1:1 RATIO - Other Categories */}
@@ -1657,7 +1688,7 @@ export default function BannerPreview() {
                         alignItems: 'center',
                         padding: '0 40px'
                       }}>
-                        {/* User Info on Left - Centered */}
+                        {/* Left Box - Now Empty */}
                         <div style={{ 
                           flex: 1,
                           display: 'flex',
@@ -1666,25 +1697,6 @@ export default function BannerPreview() {
                           justifyContent: 'center',
                           textAlign: 'center'
                         }}>
-                          <div style={{
-                            fontSize: '30px',
-                            fontWeight: '800',
-                            color: '#ffffff',
-                            marginBottom: '4px',
-                            letterSpacing: '1px',
-                            textShadow: '0 2px 6px rgba(0, 0, 0, 0.6)'
-                          }}>
-                            {profileName?.toUpperCase() || 'USER NAME'}
-                          </div>
-                          <div style={{
-                            fontSize: '20px',
-                            fontWeight: '600',
-                            color: currentVariant.borderColor,
-                            letterSpacing: '0.8px',
-                            textShadow: '0 1px 3px rgba(0, 0, 0, 0.4)'
-                          }}>
-                            {profileName?.toUpperCase() || 'USER NAME'}
-                          </div>
                         </div>
                       </div>
 
