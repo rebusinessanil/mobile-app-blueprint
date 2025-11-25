@@ -1670,13 +1670,13 @@ export default function BannerPreview() {
                             {profileName?.toUpperCase() || 'USER NAME'}
                           </div>
                           <div style={{
-                            fontSize: '16px',
+                            fontSize: '20px',
                             fontWeight: '600',
                             color: currentVariant.borderColor,
                             letterSpacing: '0.8px',
                             textShadow: '0 1px 3px rgba(0, 0, 0, 0.4)'
                           }}>
-                            {displayRank || 'RANK'} • @{profileName?.toLowerCase().replace(/\s+/g, '') || 'username'}
+                            {profileName?.toUpperCase() || 'USER NAME'}
                           </div>
                         </div>
                       </div>
