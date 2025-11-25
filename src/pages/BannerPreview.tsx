@@ -6,7 +6,6 @@ import { toast } from "sonner";
 import RanksStickersPanel from "@/components/RanksStickersPanel";
 import StickerControl from "@/components/StickerControl";
 import downloadIcon from "@/assets/download-icon.png";
-import nameScrollBackground from "@/assets/name-scroll-background.jpg";
 import { useProfile } from "@/hooks/useProfile";
 import { useProfilePhotos } from "@/hooks/useProfilePhotos";
 import { useBannerSettings } from "@/hooks/useBannerSettings";
@@ -887,11 +886,7 @@ export default function BannerPreview() {
               width: '648px',
               minWidth: '648px',
               maxWidth: '648px',
-              padding: '0 27px',
-              backgroundImage: `url(${nameScrollBackground})`,
-              backgroundSize: 'contain',
-              backgroundPosition: 'center',
-              backgroundRepeat: 'no-repeat'
+              padding: '0 27px'
             }}>
               <h2 title={mainBannerName.toUpperCase()} style={{
                 color: '#ffffff',
