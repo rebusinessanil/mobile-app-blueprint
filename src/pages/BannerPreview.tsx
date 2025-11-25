@@ -1631,38 +1631,34 @@ export default function BannerPreview() {
                   };
 
                   const currentVariant = variants[variantIndex as keyof typeof variants];
-                  const baseHeight = 105;
-                  const scaledHeight = baseHeight * 1.15; // 15% scale up
 
                   return (
                     <div className="absolute" style={{
                       bottom: '35px',
                       left: '27px',
                       right: '27px',
-                      height: `${scaledHeight}px`,
+                      height: '105px',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
                       zIndex: 4
                     }}>
-                      {/* Left Square Box - Full Height */}
+                      {/* Main Dark Banner with Colored Border */}
                       <div style={{
                         position: 'absolute',
                         left: 0,
-                        top: 0,
-                        bottom: 0,
-                        width: `${scaledHeight}px`, // Square: width = height
+                        right: '280px',
+                        height: '100%',
                         background: '#1a1f2e',
-                        borderRadius: '16px',
+                        borderRadius: '50px 8px 8px 50px',
                         border: `4px solid ${currentVariant.borderColor}`,
                         boxShadow: `0 6px 20px rgba(0, 0, 0, 0.5), 0 0 20px ${currentVariant.shadowColor}`,
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'center',
-                        padding: '0 20px'
+                        padding: '0 40px'
                       }}>
-                        {/* User Info Centered */}
-                        <div style={{ textAlign: 'center' }}>
+                        {/* User Info on Left */}
+                        <div style={{ flex: 1 }}>
                           <div style={{
                             fontSize: '30px',
                             fontWeight: '800',
@@ -1689,9 +1685,8 @@ export default function BannerPreview() {
                       <div style={{
                         position: 'absolute',
                         right: 0,
-                        top: 0,
-                        bottom: 0,
-                        left: `${scaledHeight + 20}px`, // Start after left box + gap
+                        height: '100%',
+                        width: '320px',
                         background: currentVariant.tabColor,
                         clipPath: 'polygon(15% 0, 100% 0, 100% 100%, 15% 100%, 0% 50%)',
                         display: 'flex',
