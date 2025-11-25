@@ -1522,10 +1522,11 @@ export default function BannerPreview() {
 
                 {/* LOWER THIRD - Contact Info with Dark Theme Banner Variants */}
                 <div className="absolute" style={{
-                    bottom: '20px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
                     ...(bannerData.categoryType === 'motivational' 
-                      ? { right: '150px', transform: 'translateX(50%)' }
-                      : { left: '150px', transform: 'translateX(-50%)' }
+                      ? { right: '150px' }
+                      : { left: '150px' }
                     ),
                   }}>
                   <LowerThirdBanner
