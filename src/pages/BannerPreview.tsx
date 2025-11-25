@@ -1717,11 +1717,11 @@ export default function BannerPreview() {
                           </div>
                         </div>
                         
-                        {/* Phone Icon - Bottom Right */}
+                        {/* Phone Icon - Bottom Left */}
                         <div style={{
                           position: 'absolute',
                           bottom: '12px',
-                          right: '12px',
+                          left: '12px',
                           width: '50px',
                           height: '50px',
                           borderRadius: '50%',
