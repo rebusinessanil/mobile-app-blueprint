@@ -1605,139 +1605,99 @@ export default function BannerPreview() {
                   </div>}
 
 
-                {/* MOTIVATIONAL CONTACT STRIP BANNER - Three Variant Sequencing */}
-                {bannerData.categoryType === 'motivational' && (() => {
-                  // Calculate variant based on slot number (1-16) in repeating sequence
-                  const slotNumber = selectedTemplate + 1; // selectedTemplate is 0-indexed, slots are 1-16
-                  const variantIndex = ((slotNumber - 1) % 3) + 1; // 1, 2, or 3
-                  
-                  // Define three variants with strict color isolation
-                  const variants = {
-                    1: { 
-                      borderColor: '#e63946', // Red/Crimson
-                      tabColor: '#e63946',
-                      shadowColor: 'rgba(230, 57, 70, 0.4)'
-                    },
-                    2: { 
-                      borderColor: '#f77f00', // Orange
-                      tabColor: '#f77f00',
-                      shadowColor: 'rgba(247, 127, 0, 0.4)'
-                    },
-                    3: { 
-                      borderColor: '#06d6a0', // Teal/Cyan
-                      tabColor: '#06d6a0',
-                      shadowColor: 'rgba(6, 214, 160, 0.4)'
-                    }
-                  };
-
-                  const currentVariant = variants[variantIndex as keyof typeof variants];
-
-                  return (
-                    <div className="absolute" style={{
-                      bottom: '35px',
-                      left: '27px',
-                      right: '27px',
-                      height: '105px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      zIndex: 4
-                    }}>
-                      {/* Main Dark Banner with Colored Border */}
+                {/* MOTIVATIONAL CONTACT STRIP BANNER */}
+                {bannerData.categoryType === 'motivational' && (
+                  <div className="absolute" style={{
+                    bottom: '35px',
+                    left: '27px',
+                    right: '27px',
+                    height: '120px',
+                    background: 'linear-gradient(135deg, hsl(var(--primary) / 0.9), hsl(var(--primary) / 0.7), hsl(262 83% 45% / 0.8))',
+                    borderRadius: '20px',
+                    border: '3px solid hsl(var(--primary))',
+                    boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4), 0 4px 12px rgba(255, 215, 0, 0.3)',
+                    zIndex: 4,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '0 35px',
+                    backdropFilter: 'blur(10px)'
+                  }}>
+                    {/* Left Side - Phone Contact */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
                       <div style={{
-                        position: 'absolute',
-                        left: 0,
-                        right: '280px',
-                        height: '100%',
-                        background: '#1a1f2e',
-                        borderRadius: '50px 8px 8px 50px',
-                        border: `4px solid ${currentVariant.borderColor}`,
-                        boxShadow: `0 6px 20px rgba(0, 0, 0, 0.5), 0 0 20px ${currentVariant.shadowColor}`,
-                        display: 'flex',
-                        alignItems: 'center',
-                        padding: '0 40px'
-                      }}>
-                        {/* Phone Icon */}
-                        <div style={{
-                          width: '65px',
-                          height: '65px',
-                          borderRadius: '50%',
-                          background: `linear-gradient(135deg, ${currentVariant.borderColor}, ${currentVariant.tabColor})`,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)',
-                          marginRight: '25px',
-                          flexShrink: 0
-                        }}>
-                          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.977.977 0 0 0-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z" fill="white"/>
-                          </svg>
-                        </div>
-
-                        {/* User Info on Left */}
-                        <div style={{ flex: 1 }}>
-                          <div style={{
-                            fontSize: '30px',
-                            fontWeight: '800',
-                            color: '#ffffff',
-                            marginBottom: '4px',
-                            letterSpacing: '1px',
-                            textShadow: '0 2px 6px rgba(0, 0, 0, 0.6)'
-                          }}>
-                            {profileName?.toUpperCase() || 'USER NAME'}
-                          </div>
-                          <div style={{
-                            fontSize: '16px',
-                            fontWeight: '600',
-                            color: currentVariant.borderColor,
-                            letterSpacing: '0.8px',
-                            textShadow: '0 1px 3px rgba(0, 0, 0, 0.4)'
-                          }}>
-                            {displayRank || 'RANK'} • @{profileName?.toLowerCase().replace(/\s+/g, '') || 'username'}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Right Tab with Angled Edge */}
-                      <div style={{
-                        position: 'absolute',
-                        right: 0,
-                        height: '100%',
-                        width: '320px',
-                        background: currentVariant.tabColor,
-                        clipPath: 'polygon(15% 0, 100% 0, 100% 100%, 15% 100%, 0% 50%)',
+                        width: '70px',
+                        height: '70px',
+                        borderRadius: '50%',
+                        background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(262 83% 45%))',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        paddingLeft: '60px',
-                        boxShadow: `0 6px 20px ${currentVariant.shadowColor}`
+                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)'
                       }}>
-                        <div style={{ textAlign: 'center' }}>
-                          <div style={{
-                            fontSize: '15px',
-                            fontWeight: '600',
-                            color: '#ffffff',
-                            marginBottom: '2px',
-                            letterSpacing: '1.5px',
-                            textShadow: '0 2px 4px rgba(0, 0, 0, 0.4)'
-                          }}>
-                            CALL FOR MENTORSHIP
-                          </div>
-                          <div style={{
-                            fontSize: '26px',
-                            fontWeight: '800',
-                            color: '#ffffff',
-                            letterSpacing: '1px',
-                            textShadow: '0 2px 6px rgba(0, 0, 0, 0.5)'
-                          }}>
-                            {profile?.mobile || profile?.whatsapp || '+91 7734990035'}
-                          </div>
+                        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.977.977 0 0 0-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z" fill="white"/>
+                        </svg>
+                      </div>
+                      <div>
+                        <div style={{
+                          fontSize: '16px',
+                          fontWeight: '600',
+                          color: '#ffffff',
+                          marginBottom: '4px',
+                          letterSpacing: '0.5px'
+                        }}>
+                          FOR SUCCESS CALL ON
+                        </div>
+                        <div style={{
+                          fontSize: '28px',
+                          fontWeight: '800',
+                          color: 'hsl(var(--primary))',
+                          letterSpacing: '1px',
+                          textShadow: '0 2px 4px rgba(0, 0, 0, 0.4)'
+                        }}>
+                          {profile?.mobile || profile?.whatsapp || '+91 XXXXXXXXXX'}
                         </div>
                       </div>
                     </div>
-                  );
-                })()}
+
+                    {/* Right Side - User Info */}
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{
+                        fontSize: '32px',
+                        fontWeight: '800',
+                        color: '#ffffff',
+                        marginBottom: '6px',
+                        letterSpacing: '1px',
+                        textShadow: '0 2px 6px rgba(0, 0, 0, 0.5)'
+                      }}>
+                        {profileName?.toUpperCase() || 'USER NAME'}
+                      </div>
+                      <div style={{
+                        fontSize: '18px',
+                        fontWeight: '600',
+                        color: 'hsl(var(--primary))',
+                        marginBottom: '4px',
+                        letterSpacing: '0.8px',
+                        textShadow: '0 1px 3px rgba(0, 0, 0, 0.3)'
+                      }}>
+                        {displayRank || 'RANK'}
+                      </div>
+                      <div style={{
+                        fontSize: '14px',
+                        fontWeight: '500',
+                        color: '#ffffff',
+                        opacity: 0.9,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'flex-end',
+                        gap: '8px'
+                      }}>
+                        <span>@{profileName?.toLowerCase().replace(/\s+/g, '') || 'username'}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* BOTTOM CENTER - Profile Name & Rank - FIXED FONTS AND POSITION (Only for non-motivational) */}
                 {bannerData.categoryType !== 'motivational' && (
