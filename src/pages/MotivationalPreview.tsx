@@ -67,7 +67,7 @@ export default function MotivationalPreview() {
         name: profile.name, // Auto-fill from profile
         teamCity: "", // Optional
         quote: "", // Optional motivational quote
-        photo: profile.profile_photo || null, // Auto-fill primary photo
+        photo: null, // MOTIVATIONAL: No achiever image auto-load
         uplines,
         slotStickers: {},
         templates,
