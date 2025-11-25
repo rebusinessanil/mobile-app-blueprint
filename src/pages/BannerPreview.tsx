@@ -1535,8 +1535,10 @@ export default function BannerPreview() {
                   
                   return (
                     <div className="absolute" style={{
-                      bottom: '35px',
-                      left: '67px',
+                      bottom: '350px',
+                      left: '50%',
+                      transform: 'translateX(-50%) scale(0.3)',
+                      transformOrigin: 'center center',
                       width: '920px',
                       height: '90px',
                       zIndex: 25
