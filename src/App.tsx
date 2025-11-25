@@ -29,6 +29,7 @@ import MotivationalBannersSelection from "./pages/MotivationalBannersSelection";
 import MotivationalBannerCreate from "./pages/MotivationalBannerCreate";
 import FestivalSelection from "./pages/FestivalSelection";
 import FestivalBannerCreate from "./pages/FestivalBannerCreate";
+import StoryBannerCreate from "./pages/StoryBannerCreate";
 import BannerSettings from "./pages/BannerSettings";
 import BannerPreview from "./pages/BannerPreview";
 import AdminStickers from "./pages/AdminStickers";
@@ -85,6 +86,7 @@ const App = () => (
           <Route path="/banner-create/anniversary" element={<AuthGuard><AnniversaryBannerCreate /></AuthGuard>} />
           <Route path="/banner-create/motivational" element={<AuthGuard><MotivationalBannerCreate /></AuthGuard>} />
           <Route path="/banner-create/festival" element={<AuthGuard><FestivalBannerCreate /></AuthGuard>} />
+          <Route path="/story/:storyId" element={<AuthGuard><StoryBannerCreate /></AuthGuard>} />
           
           {/* Admin routes - auth required */}
           <Route path="/admin" element={<AuthGuard><AdminDashboard /></AuthGuard>} />
