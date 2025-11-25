@@ -22,10 +22,7 @@ interface Upline {
 export default function FestivalBannerCreate() {
   const navigate = useNavigate();
   const location = useLocation();
-  
-  // Support both state and query params for festivalId (Dashboard uses state)
-  const searchParams = new URLSearchParams(location.search);
-  const festivalId = location.state?.festivalId || searchParams.get('festivalId');
+  const festivalId = location.state?.festivalId; // Get festivalId from navigation state
   
   // CRITICAL: Redirect if no festivalId - prevents template isolation issues
   useEffect(() => {
@@ -43,8 +40,7 @@ export default function FestivalBannerCreate() {
   const { categories } = useTemplateCategories();
   const festivalCategory = categories?.find(cat => cat.slug === 'festival');
   
-  // CRITICAL: Fetch templates ONLY by festivalId - strict isolation per festival
-  // Dashboard passes festivalId directly, skipping FestivalSelection page
+  // CRITICAL: Fetch templates ONLY by festivalId - strict isolation, no category fallback
   const { templates } = useTemplates(
     undefined, // categoryId - not used for festival
     undefined, // tripId
@@ -52,7 +48,7 @@ export default function FestivalBannerCreate() {
     undefined, // birthdayId
     undefined, // anniversaryId
     undefined, // motivationalBannerId
-    festivalId // MUST have festivalId - direct from Dashboard, ensures per-festival template isolation
+    festivalId // MUST have festivalId - no fallback to prevent cross-contamination
   );
 
   // Debug logging
