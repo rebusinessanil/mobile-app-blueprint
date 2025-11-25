@@ -151,8 +151,18 @@ export default function BannerPreview() {
     enabled: !!(bannerData?.templateId || bannerData?.rankId)
   });
 
-  // Fetch backgrounds for the current template - ONLY for this template_id
+  // CRITICAL: Fetch backgrounds for the current template - STRICT template_id filtering
   const currentTemplateId = bannerData?.templateId || templateData?.id;
+  
+  // Validate templateId exists before fetching backgrounds
+  useEffect(() => {
+    if (!currentTemplateId) {
+      console.error('❌ No templateId - backgrounds cannot be fetched. This will cause cross-contamination!');
+    } else {
+      console.log('✅ Fetching backgrounds for templateId:', currentTemplateId);
+    }
+  }, [currentTemplateId]);
+
   const {
     backgrounds
   } = useTemplateBackgrounds(currentTemplateId);
@@ -270,9 +280,26 @@ export default function BannerPreview() {
   }, [stickerImages, selectedTemplate, selectedStickerId, stickerScale, isAdmin]);
 
   // Map selectedTemplate (0-15) to slot_number (1-16) and fetch correct background
-  // CRITICAL: Only show background if it exists for this exact slot - NO fallbacks
+  // CRITICAL: Only show background if it exists for this exact slot - NO fallbacks, NO cross-contamination
   const selectedSlot = selectedTemplate + 1;
   const backgroundImage = backgrounds.find(bg => bg.slot_number === selectedSlot)?.background_image_url || null;
+
+  // Debug background selection
+  useEffect(() => {
+    console.log('🎨 Background selection:', {
+      selectedSlot,
+      totalBackgrounds: backgrounds.length,
+      currentTemplateId,
+      foundBackground: !!backgroundImage,
+      backgroundUrl: backgroundImage ? backgroundImage.substring(0, 60) + '...' : 'none'
+    });
+    
+    // Warn if backgrounds exist but none match current slot
+    if (backgrounds.length > 0 && !backgroundImage) {
+      console.warn('⚠️ Backgrounds exist but none for slot', selectedSlot);
+      console.log('Available slots:', backgrounds.map(bg => bg.slot_number));
+    }
+  }, [selectedSlot, backgrounds, currentTemplateId, backgroundImage]);
 
   // Main banner name - ALWAYS from user input in form (bannerData.name)
   const mainBannerName: string = bannerData?.name || "";

@@ -31,16 +31,30 @@ export default function FestivalBannerCreate() {
   const { categories } = useTemplateCategories();
   const festivalCategory = categories?.find(cat => cat.slug === 'festival');
   
-  // Fetch templates by festivalId if available, otherwise by category
+  // CRITICAL: Fetch templates ONLY by festivalId - strict isolation, no category fallback
   const { templates } = useTemplates(
-    festivalId ? undefined : festivalCategory?.id, 
-    undefined, 
-    undefined, 
-    undefined, 
-    undefined, 
-    undefined, 
-    festivalId
+    undefined, // categoryId - not used for festival
+    undefined, // tripId
+    undefined, // rankId
+    undefined, // birthdayId
+    undefined, // anniversaryId
+    undefined, // motivationalBannerId
+    festivalId // MUST have festivalId - no fallback to prevent cross-contamination
   );
+
+  // Debug logging
+  useEffect(() => {
+    if (festivalId) {
+      console.log('🎉 Festival ID:', festivalId);
+      console.log('📋 Templates fetched:', templates?.length || 0);
+      if (templates && templates.length > 0) {
+        console.log('✅ First template ID:', templates[0].id);
+        console.log('✅ Template festival_id:', templates[0].festival_id);
+      }
+    } else {
+      console.warn('⚠️ No festivalId provided - templates may not load correctly');
+    }
+  }, [festivalId, templates]);
   
   const [uplines, setUplines] = useState<Upline[]>([]);
   const [formData, setFormData] = useState({
@@ -140,13 +154,37 @@ export default function FestivalBannerCreate() {
       return;
     }
 
-    // Get the first template for festival (linked to selected festival or category)
+    // CRITICAL: Validate festivalId exists for proper slot isolation
+    if (!festivalId) {
+      toast.error("Festival selection is required");
+      console.error('❌ No festivalId - cannot proceed without strict festival isolation');
+      return;
+    }
+
+    // Get the first template for this specific festival
     const firstTemplate = templates && templates.length > 0 ? templates[0] : null;
 
     if (!firstTemplate) {
       toast.error("No templates available for this festival");
+      console.error('❌ No templates found for festivalId:', festivalId);
       return;
     }
+
+    // Validate template belongs to this festival
+    if (firstTemplate.festival_id !== festivalId) {
+      toast.error("Template mismatch - please try again");
+      console.error('❌ Template festival_id mismatch:', {
+        templateFestivalId: firstTemplate.festival_id,
+        expectedFestivalId: festivalId
+      });
+      return;
+    }
+
+    console.log('✅ Creating banner with strict festival isolation:', {
+      festivalId,
+      templateId: firstTemplate.id,
+      templateFestivalId: firstTemplate.festival_id
+    });
 
     navigate("/banner-preview", {
       state: {
@@ -160,8 +198,9 @@ export default function FestivalBannerCreate() {
         uplines,
         slotStickers,
         templates,
-        templateId: firstTemplate.id, // Pass templateId for 16-slot background system
-        rankId: undefined // Festival doesn't use rankId
+        templateId: firstTemplate.id, // CRITICAL: Pass correct templateId for 16-slot background isolation
+        festivalId: festivalId, // Pass festivalId for additional validation
+        rankId: undefined // Festival doesn't use rankId - prevents rank background bleed
       }
     });
   };
