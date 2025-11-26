@@ -48,6 +48,7 @@ import AdminAutoStories from "./pages/AdminAutoStories";
 import AdminStickerLibrary from "./pages/AdminStickerLibrary";
 import Wallet from "./pages/Wallet";
 import MyDownloads from "./pages/MyDownloads";
+import Transactions from "./pages/Transactions";
 import UniversalBannerCreate from "./pages/UniversalBannerCreate";
 
 const queryClient = new QueryClient();
@@ -83,6 +84,7 @@ const App = () => (
           <Route path="/banner-settings" element={<AuthGuard><BannerSettings /></AuthGuard>} />
           <Route path="/banner-preview" element={<AuthGuard><BannerPreview /></AuthGuard>} />
           <Route path="/wallet" element={<AuthGuard><Wallet /></AuthGuard>} />
+          <Route path="/transactions" element={<AuthGuard><Transactions /></AuthGuard>} />
           <Route path="/my-downloads" element={<AuthGuard><MyDownloads /></AuthGuard>} />
           <Route path="/banner-create/:category" element={<AuthGuard><UniversalBannerCreate /></AuthGuard>} />
           <Route path="/banner-create/bonanza" element={<AuthGuard><BonanzaBannerCreate /></AuthGuard>} />
