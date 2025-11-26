@@ -158,9 +158,9 @@ export default function Dashboard() {
               </div>
             </div>
             <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-              {festivals.slice(0, 16).map(festival => <Link key={festival.id} to={`/festival-preview/${festival.id}`} className="min-w-[84px] relative flex-shrink-0 transition-all hover:scale-105">
+              {festivals.slice(0, 16).map(festival => <Link key={festival.id} to={`/festival-preview/${festival.id}`} className="min-w-[120px] relative flex-shrink-0 transition-all hover:scale-105">
                   <div className="gold-border bg-card rounded-2xl overflow-hidden">
-                    <div className="w-[84px] h-[84px] relative">
+                    <div className="w-[120px] h-[120px] relative">
                       <img src={festival.poster_url} alt={festival.festival_name} className="w-full h-full object-cover" />
                       {/* Green Active Indicator */}
                       <div className="absolute top-2 right-2 w-3 h-3 bg-green-500 rounded-full border-2 border-white shadow-lg" />
