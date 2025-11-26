@@ -135,35 +135,31 @@ export default function Dashboard() {
 
       {/* Content */}
       <div className="px-6 py-6 space-y-6">
-        {/* Stories Section - Instagram Style */}
+        {/* Stories Section - Square Cards */}
         {festivals.length > 0 && (
           <div className="space-y-3">
             <h2 className="text-lg font-bold text-foreground">Stories</h2>
-            <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
               {festivals.slice(0, 16).map((festival) => (
                 <Link
                   key={festival.id}
                   to={`/create/festival-banner?festivalId=${festival.id}`}
-                  className="flex flex-col items-center gap-2 flex-shrink-0 group"
+                  className="min-w-[100px] flex-shrink-0 group"
                 >
-                  {/* Circular Story Image with Active Ring */}
+                  {/* Square Story Card with Active Indicator */}
                   <div className="relative">
-                    <div className="w-20 h-20 rounded-full p-[3px] bg-gradient-to-tr from-primary via-primary to-secondary">
-                      <div className="w-full h-full rounded-full border-[3px] border-navy-dark overflow-hidden">
-                        <img
-                          src={festival.poster_url}
-                          alt={festival.festival_name}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
+                    <div className="w-[100px] h-[100px] rounded-2xl overflow-hidden border-2 border-primary/40 group-hover:border-primary transition-colors">
+                      <img
+                        src={festival.poster_url}
+                        alt={festival.festival_name}
+                        className="w-full h-full object-cover"
+                      />
                     </div>
                     {/* Green Active Indicator */}
-                    <div className="absolute bottom-0 right-0 w-5 h-5 bg-green-500 rounded-full border-3 border-navy-dark flex items-center justify-center">
-                      <div className="w-2 h-2 bg-white rounded-full"></div>
-                    </div>
+                    <div className="absolute top-2 right-2 w-3 h-3 bg-green-500 rounded-full border-2 border-navy-dark"></div>
                   </div>
                   {/* Festival Title */}
-                  <p className="text-xs text-foreground text-center max-w-[80px] truncate">
+                  <p className="text-xs text-foreground text-center mt-2 truncate">
                     {festival.festival_name}
                   </p>
                 </Link>
