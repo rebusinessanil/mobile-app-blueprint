@@ -29,12 +29,18 @@ interface Transaction {
   created_at: string;
 }
 
+interface LastRecharge {
+  amount: number;
+  date: string;
+}
+
 export default function Wallet() {
   const navigate = useNavigate();
   const [userId, setUserId] = useState<string | null>(null);
   const [customerCode, setCustomerCode] = useState<string>("");
   const [balance, setBalance] = useState<CreditBalance | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [lastRecharge, setLastRecharge] = useState<LastRecharge | null>(null);
   const [loading, setLoading] = useState(true);
   const [showTopUpModal, setShowTopUpModal] = useState(false);
 
@@ -114,16 +120,32 @@ export default function Wallet() {
       if (creditsError) throw creditsError;
       setBalance(credits || { balance: 0, total_earned: 0, total_spent: 0 });
 
-      // Fetch recent transactions (last 5)
+      // Fetch all transactions
       const { data: txns, error: txnsError } = await supabase
         .from("credit_transactions")
         .select("*")
         .eq("user_id", uid)
-        .order("created_at", { ascending: false })
-        .limit(5);
+        .order("created_at", { ascending: false });
 
       if (txnsError) throw txnsError;
       setTransactions(txns || []);
+
+      // Fetch last recharge (earned or admin_credit)
+      const { data: rechargeData } = await supabase
+        .from("credit_transactions")
+        .select("amount, created_at")
+        .eq("user_id", uid)
+        .in("transaction_type", ["earned", "admin_credit"])
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (rechargeData) {
+        setLastRecharge({
+          amount: rechargeData.amount,
+          date: rechargeData.created_at,
+        });
+      }
     } catch (error) {
       console.error("Error fetching wallet data:", error);
       toast.error("Failed to load wallet data");
@@ -222,10 +244,21 @@ export default function Wallet() {
           <Card className="border-primary/20 bg-card">
             <CardContent className="pt-6">
               <div className="text-center space-y-1">
-                <p className="text-sm text-muted-foreground">Total Earned</p>
-                <p className="text-2xl font-bold text-green-500">
-                  ₹{balance?.total_earned || 0}
-                </p>
+                <p className="text-sm text-muted-foreground">Last Recharge</p>
+                {lastRecharge ? (
+                  <>
+                    <p className="text-2xl font-bold text-green-500">
+                      ₹{lastRecharge.amount}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {format(new Date(lastRecharge.date), "MMM dd, yyyy")}
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-2xl font-bold text-muted-foreground">
+                    ₹0
+                  </p>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -241,24 +274,14 @@ export default function Wallet() {
           </Card>
         </div>
 
-        {/* Recents Section */}
+        {/* All Transactions Section */}
         <Card className="border-primary/20 bg-card">
           <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-lg font-semibold text-foreground">
-                Recent Transactions
-              </CardTitle>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-primary hover:text-primary/80"
-                onClick={() => navigate("/transactions")}
-              >
-                View All
-              </Button>
-            </div>
+            <CardTitle className="text-lg font-semibold text-foreground">
+              All Transactions
+            </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="max-h-[500px] overflow-y-auto">
             {transactions.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <Clock className="w-12 h-12 mx-auto mb-2 opacity-50" />
