@@ -1636,7 +1636,10 @@ export default function BannerPreview() {
                       <img src={upline.avatar || primaryPhoto || "/placeholder.svg"} alt={upline.name} style={{
                         width: '120px',
                         height: '120px',
-                        objectFit: 'cover'
+                        objectFit: 'cover',
+                        imageRendering: 'crisp-edges',
+                        border: 'none',
+                        outline: 'none'
                       }} />
                     </div>)}
                 </div>
@@ -1656,19 +1659,17 @@ export default function BannerPreview() {
                     maxWidth: '594px',
                     maxHeight: '792px',
                     borderRadius: '24px',
-                    transform: isPhotoFlipped ? 'scaleX(-1)' : 'scaleX(1)'
+                    transform: isPhotoFlipped ? 'scaleX(-1)' : 'scaleX(1)',
+                    border: 'none'
                   }}>
                     <img src={primaryPhoto} alt={mainBannerName} style={{
                       width: '594px',
                       height: '792px',
                       objectFit: 'cover',
-                      objectPosition: 'center'
-                    }} />
-                    {/* Bottom feather fade overlay */}
-                    <div className="absolute bottom-0 left-0 right-0 pointer-events-none" style={{
-                      height: '238px',
-                      /* Fixed 30% of 792px */
-                      background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%)'
+                      objectPosition: 'center',
+                      imageRendering: 'crisp-edges',
+                      border: 'none',
+                      outline: 'none'
                     }} />
                   </div>}
 
@@ -1747,12 +1748,10 @@ export default function BannerPreview() {
                       height: '100%',
                       objectFit: 'cover',
                       objectPosition: 'center',
-                      pointerEvents: 'none'
-                    }} />
-                    {/* Bottom feather fade overlay */}
-                    <div className="absolute bottom-0 left-0 right-0 pointer-events-none" style={{
-                      height: '308px', // 30% of 1026px
-                      background: 'linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 100%)'
+                      pointerEvents: 'none',
+                      imageRendering: 'crisp-edges',
+                      border: 'none',
+                      outline: 'none'
                     }} />
                   </div>}
 
@@ -1767,19 +1766,17 @@ export default function BannerPreview() {
                     maxWidth: '540px',
                     maxHeight: '540px',
                     borderRadius: '16px',
-                    transform: isMentorPhotoFlipped ? 'scaleX(-1)' : 'scaleX(1)'
+                    transform: isMentorPhotoFlipped ? 'scaleX(-1)' : 'scaleX(1)',
+                    border: 'none'
                   }}>
                     <img src={mentorPhoto} alt={profileName} style={{
                       width: '540px',
                       height: '540px',
                       objectFit: 'cover',
-                      objectPosition: 'center'
-                    }} />
-                    {/* Bottom feather fade overlay */}
-                    <div className="absolute bottom-0 left-0 right-0 pointer-events-none" style={{
-                      height: '162px',
-                      /* Fixed 30% of 540px */
-                      background: 'linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 100%)'
+                      objectPosition: 'center',
+                      imageRendering: 'crisp-edges',
+                      border: 'none',
+                      outline: 'none'
                     }} />
                   </div>}
 
