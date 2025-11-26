@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { toast } from "sonner";
 import { useRanks } from "@/hooks/useTemplates";
 import { supabase } from "@/integrations/supabase/client";
+import { AdminGuard } from "@/components/AdminGuard";
 
 export default function AdminRanks() {
   const navigate = useNavigate();
@@ -114,6 +115,7 @@ export default function AdminRanks() {
   };
 
   return (
+    <AdminGuard>
     <div className="min-h-screen bg-navy-dark pb-6">
       <header className="sticky top-0 bg-navy-dark/95 backdrop-blur-sm z-40 px-6 py-4 border-b border-primary/20">
         <div className="flex items-center justify-between">
@@ -250,5 +252,6 @@ export default function AdminRanks() {
         </div>
       </div>
     </div>
+    </AdminGuard>
   );
 }

@@ -17,6 +17,7 @@ import { Switch } from "@/components/ui/switch";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { useStories, useTemplateCategories } from "@/hooks/useTemplates";
 import { useGeneratedStories } from "@/hooks/useAutoStories";
+import { AdminGuard } from "@/components/AdminGuard";
 import {
   Select,
   SelectContent,

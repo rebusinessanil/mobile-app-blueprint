@@ -17,6 +17,7 @@ import AdminLayout from "@/components/admin/AdminLayout";
 import { useStoriesEvents, useStoriesFestivals, useGeneratedStories } from "@/hooks/useAutoStories";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AdminGuard } from "@/components/AdminGuard";
 
 export default function AdminAutoStories() {
   const { events, loading: eventsLoading, refetch: refetchEvents } = useStoriesEvents();
