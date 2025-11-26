@@ -90,10 +90,6 @@ export default function BannerPreview() {
   const [profileDragStart, setProfileDragStart] = useState<{ x: number; y: number } | null>(null);
   const [isProfileControlMinimized, setIsProfileControlMinimized] = useState(false);
   const [showInsufficientBalanceModal, setShowInsufficientBalanceModal] = useState(false);
-  const [downloadSuccess, setDownloadSuccess] = useState<{
-    fileSize: string;
-    remainingBalance: number;
-  } | null>(null);
 
   // Wallet deduction hook
   const { checkAndDeductBalance, isProcessing: isProcessingWallet } = useWalletDeduction();
@@ -1400,11 +1396,13 @@ export default function BannerPreview() {
 
       const remainingBalance = updatedCredits?.balance || 0;
 
-      // Show inline success message
-      setDownloadSuccess({
-        fileSize: `${sizeMB} MB`,
-        remainingBalance,
-      });
+      toast.success(
+        `Banner saved to your device! (${sizeMB} MB) • ₹10 deducted`,
+        {
+          description: `Remaining balance: ₹${remainingBalance}. Check your Downloads or Gallery app to access your banner.`,
+          duration: 6000,
+        }
+      );
     } catch (error) {
       console.error("Banner download failed:", error);
       toast.dismiss(loadingToast);
@@ -2052,37 +2050,6 @@ export default function BannerPreview() {
             <p className="text-muted-foreground text-xs text-center mt-3 pt-3 border-t border-border">
               Preparing your banner — this may take a few seconds.
             </p>
-          </div>
-        </div>
-      )}
-
-      {/* Download Success Message */}
-      {downloadSuccess && (
-        <div className="fixed inset-x-0 bottom-20 mx-4 z-50 animate-in fade-in slide-in-from-bottom-4">
-          <div className="bg-card/95 backdrop-blur-sm border border-primary/20 rounded-2xl p-6 shadow-xl max-w-[600px] mx-auto">
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-full bg-green-500/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                <svg className="w-5 h-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              <div className="flex-1">
-                <p className="text-foreground font-semibold text-base leading-snug">
-                  Banner saved to your device! ({downloadSuccess.fileSize}) • ₹10 deducted
-                </p>
-                <p className="text-muted-foreground text-sm mt-1.5 leading-relaxed">
-                  Remaining balance: ₹{downloadSuccess.remainingBalance}. Check your Downloads or Gallery app to access your banner.
-                </p>
-              </div>
-              <button
-                onClick={() => setDownloadSuccess(null)}
-                className="text-muted-foreground hover:text-foreground transition-colors flex-shrink-0 ml-2"
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
           </div>
         </div>
       )}
