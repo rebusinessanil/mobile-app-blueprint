@@ -9,7 +9,9 @@ export function useWalletDeduction() {
 
   const checkAndDeductBalance = async (
     userId: string,
-    categoryName: string
+    categoryName: string,
+    bannerUrl?: string,
+    templateId?: string
   ): Promise<{ success: boolean; insufficientBalance: boolean }> => {
     try {
       setIsProcessing(true);
@@ -63,6 +65,21 @@ export function useWalletDeduction() {
       if (transactionError) {
         console.error("Failed to record transaction:", transactionError);
         // Don't block download if transaction fails, but log it
+      }
+
+      // 5. Add download history record
+      const { error: downloadError } = await supabase
+        .from("banner_downloads")
+        .insert({
+          user_id: userId,
+          category_name: categoryName,
+          banner_url: bannerUrl,
+          template_id: templateId,
+        });
+
+      if (downloadError) {
+        console.error("Failed to record download:", downloadError);
+        // Don't block download if history recording fails
       }
 
       return { success: true, insufficientBalance: false };

@@ -1313,25 +1313,23 @@ export default function BannerPreview() {
       return;
     }
 
-    // Step 1: Check wallet balance and deduct BEFORE download
     const categoryName = bannerData?.categoryType 
       ? bannerData.categoryType.charAt(0).toUpperCase() + bannerData.categoryType.slice(1)
       : bannerData?.rankName || "Banner";
 
-    const { success, insufficientBalance } = await checkAndDeductBalance(userId, categoryName);
+    // Step 1: Quick balance check first (before generation)
+    const { data: credits } = await supabase
+      .from("user_credits")
+      .select("balance")
+      .eq("user_id", userId)
+      .single();
 
-    // Step 2: If insufficient balance, show modal and block download
-    if (insufficientBalance) {
+    if ((credits?.balance || 0) < 10) {
       setShowInsufficientBalanceModal(true);
       return;
     }
 
-    // Step 3: If wallet deduction failed for other reasons, show error
-    if (!success) {
-      return; // Error toast already shown by hook
-    }
-
-    // Step 4: Proceed with download after successful wallet deduction
+    // Step 2: Generate banner
     setIsDownloading(true);
     const loadingToast = toast.loading("Generating ultra HD banner...");
     
@@ -1362,7 +1360,27 @@ export default function BannerPreview() {
 
       toast.dismiss(loadingToast);
 
-      // Download the banner
+      // Step 3: Deduct wallet balance and save download record with banner URL
+      const templateId = currentTemplateId || bannerData?.templateId;
+      const { success, insufficientBalance } = await checkAndDeductBalance(
+        userId, 
+        categoryName,
+        dataUrl,
+        templateId
+      );
+
+      // Step 4: If insufficient balance (race condition), show modal
+      if (insufficientBalance) {
+        setShowInsufficientBalanceModal(true);
+        return;
+      }
+
+      // Step 5: If wallet deduction failed for other reasons, show error
+      if (!success) {
+        return; // Error toast already shown by hook
+      }
+
+      // Step 6: Download the banner after successful deduction
       const timestamp = new Date().getTime();
       download(dataUrl, `ReBusiness-Banner-${categoryName}-${timestamp}.png`);
 
