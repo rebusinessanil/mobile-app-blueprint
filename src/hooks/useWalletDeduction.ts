@@ -33,7 +33,7 @@ export function useWalletDeduction() {
         return { success: false, insufficientBalance: true };
       }
 
-      // 3. Deduct ₹10 from wallet and update total spent
+      // 3. Deduct ₹10 from wallet
       const newBalance = currentBalance - BANNER_DOWNLOAD_COST;
       const newTotalSpent = (credits?.total_spent || 0) + BANNER_DOWNLOAD_COST;
 
@@ -50,7 +50,7 @@ export function useWalletDeduction() {
         return { success: false, insufficientBalance: false };
       }
 
-      // 4. Add transaction record instantly
+      // 4. Add transaction record
       const { error: transactionError } = await supabase
         .from("credit_transactions")
         .insert({
@@ -65,7 +65,6 @@ export function useWalletDeduction() {
         // Don't block download if transaction fails, but log it
       }
 
-      toast.success(`₹${BANNER_DOWNLOAD_COST} deducted from wallet`);
       return { success: true, insufficientBalance: false };
     } catch (error) {
       console.error("Wallet deduction error:", error);

@@ -12,7 +12,7 @@ export default function InsufficientBalanceModal({
   onClose,
 }: InsufficientBalanceModalProps) {
   const handleRecharge = () => {
-    window.open("https://wa.me/919549477444", "_blank", "noopener,noreferrer");
+    window.open("https://wa.me/917734990035", "_blank", "noopener,noreferrer");
     onClose();
   };
 
