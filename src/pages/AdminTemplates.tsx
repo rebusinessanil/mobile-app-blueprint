@@ -52,18 +52,18 @@ export default function AdminTemplates() {
   };
 
   const handleCreateTemplate = async () => {
-    if (!uploadForm.name || !uploadForm.categoryId) {
+    if (!uploadForm.name || !uploadForm.categoryId || !uploadForm.file) {
       toast.error("Please fill in all required fields");
       return;
     }
 
-    const { error } = await createTemplate({
-      name: uploadForm.name,
-      categoryId: uploadForm.categoryId,
-      rankId: uploadForm.rankId,
-      description: uploadForm.description || undefined,
-      coverFile: uploadForm.file || undefined,
-    });
+    const { error } = await createTemplate(
+      uploadForm.categoryId,
+      uploadForm.name,
+      uploadForm.file,
+      uploadForm.description || undefined,
+      uploadForm.rankId
+    );
 
     if (error) {
       toast.error("Failed to create template");
