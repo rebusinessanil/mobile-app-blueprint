@@ -19,6 +19,8 @@ import download from "downloadjs";
 import { useRealtimeStickerSync } from "@/hooks/useRealtimeStickerSync";
 import { useWalletDeduction } from "@/hooks/useWalletDeduction";
 import InsufficientBalanceModal from "@/components/InsufficientBalanceModal";
+import StoryUpperBars from "@/components/StoryUpperBars";
+import StoryLowerThird from "@/components/StoryLowerThird";
 interface Upline {
   id: string;
   name: string;
@@ -36,7 +38,7 @@ interface BannerData {
   slotStickers?: Record<number, string[]>;
   templateId?: string;
   rankId?: string;
-  categoryType?: 'rank' | 'bonanza' | 'birthday' | 'anniversary' | 'meeting' | 'festival' | 'motivational';
+  categoryType?: 'rank' | 'bonanza' | 'birthday' | 'anniversary' | 'meeting' | 'festival' | 'motivational' | 'story';
   message?: string;
   tripName?: string;
   eventTitle?: string;
@@ -921,6 +923,93 @@ export default function BannerPreview() {
           </>
         );
 
+      case 'story':
+        return (
+          <>
+            {/* Story Event Icon */}
+            <div className="absolute z-20" style={{
+              top: '200px',
+              left: '978px',
+              transform: 'translateX(-50%)',
+              fontSize: '110px'
+            }}>
+              📖
+            </div>
+
+            {/* Story Title */}
+            <div className="absolute z-20" style={{
+              top: '330px',
+              left: '978px',
+              transform: 'translateX(-50%)',
+              width: '648px',
+              textAlign: 'center'
+            }}>
+              <p style={{
+                fontSize: '46px',
+                fontWeight: '700',
+                color: '#FFD700',
+                textShadow: '3px 3px 10px rgba(0,0,0,0.9)',
+                letterSpacing: '1px'
+              }}>
+                TODAY'S STORY
+              </p>
+            </div>
+
+            {/* Name */}
+            <div className="absolute" style={{
+              top: '420px',
+              left: '978px',
+              transform: 'translateX(-50%)',
+              width: '648px',
+              padding: '0 27px'
+            }}>
+              <h2 style={{
+                color: '#ffffff',
+                textAlign: 'center',
+                fontSize: '42px',
+                fontWeight: '600',
+                textShadow: '2px 2px 8px rgba(0,0,0,0.9)',
+                margin: 0
+              }}>
+                {truncatedMainName.toUpperCase()}
+              </h2>
+              {bannerData.teamCity && (
+                <p style={{
+                  marginTop: '13px',
+                  color: '#ffffff',
+                  textAlign: 'center',
+                  fontSize: '28px',
+                  textShadow: '2px 2px 4px rgba(0,0,0,0.9)'
+                }}>
+                  {bannerData.teamCity.toUpperCase()}
+                </p>
+              )}
+            </div>
+
+            {/* Story Message */}
+            {bannerData.message && (
+              <div className="absolute" style={{
+                top: '540px',
+                left: '978px',
+                transform: 'translateX(-50%)',
+                width: '648px',
+                padding: '0 40px'
+              }}>
+                <p style={{
+                  color: '#ffffff',
+                  textAlign: 'center',
+                  fontSize: '24px',
+                  fontStyle: 'italic',
+                  textShadow: '2px 2px 6px rgba(0,0,0,0.9)',
+                  lineHeight: '1.4'
+                }}>
+                  {bannerData.message}
+                </p>
+              </div>
+            )}
+          </>
+        );
+
       default: // 'rank' category - original rank banner layout
         return (
           <>
@@ -1468,6 +1557,9 @@ export default function BannerPreview() {
                 {/* Background Image (if uploaded) or Gradient Background */}
                 {backgroundImage ? <img src={backgroundImage} alt="Template background" className="absolute inset-0 w-full h-full object-cover" /> : null}
 
+                {/* Story Upper Bars - Only for story category */}
+                {bannerData.categoryType === 'story' && <StoryUpperBars />}
+
                 {/* Top-Left Logo */}
                 {bannerSettings?.logo_left && <div className="absolute z-30" style={{
                     top: '10px',
@@ -1546,7 +1638,8 @@ export default function BannerPreview() {
                     maxWidth: '594px',
                     maxHeight: '792px',
                     borderRadius: '24px',
-                    transform: isPhotoFlipped ? 'scaleX(-1)' : 'scaleX(1)'
+                    transform: isPhotoFlipped ? 'scaleX(-1)' : 'scaleX(1)',
+                    zIndex: 15
                   }}>
                     <img src={primaryPhoto} alt={mainBannerName} style={{
                       width: '594px',
@@ -1574,6 +1667,17 @@ export default function BannerPreview() {
 
                 {/* Category-specific content */}
                 {renderCategoryContent()}
+
+                {/* Story Lower-Third Variant - Cycles based on slot index (0→Yellow, 1→Blue, 2→Teal) */}
+                {bannerData.categoryType === 'story' && (
+                  <StoryLowerThird 
+                    variant={
+                      selectedTemplate % 3 === 0 ? 'yellow' : 
+                      selectedTemplate % 3 === 1 ? 'blue' : 
+                      'teal'
+                    } 
+                  />
+                )}
 
                 {/* LOWER THIRD - Contact Info - FIXED FONTS AND POSITION */}
                 <div className="absolute" style={{
@@ -1630,7 +1734,8 @@ export default function BannerPreview() {
                     borderRadius: '16px',
                     transform: isMentorPhotoFlipped ? 'translateY(-50%) scaleX(-1)' : 'translateY(-50%) scaleX(1)',
                     cursor: isAdmin ? 'move' : 'pointer',
-                    border: 'none'
+                    border: 'none',
+                    zIndex: 15
                   }}>
                     <img src={mentorPhoto} alt={profileName} style={{
                       width: '100%',
@@ -1657,7 +1762,8 @@ export default function BannerPreview() {
                     maxWidth: '540px',
                     maxHeight: '540px',
                     borderRadius: '16px',
-                    transform: isMentorPhotoFlipped ? 'scaleX(-1)' : 'scaleX(1)'
+                    transform: isMentorPhotoFlipped ? 'scaleX(-1)' : 'scaleX(1)',
+                    zIndex: 15
                   }}>
                     <img src={mentorPhoto} alt={profileName} style={{
                       width: '540px',
