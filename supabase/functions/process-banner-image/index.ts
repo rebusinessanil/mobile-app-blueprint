@@ -52,7 +52,7 @@ serve(async (req) => {
     // Import Sharp dynamically
     const sharp = (await import('https://esm.sh/sharp@0.33.0')).default;
 
-    // Process user photo with Sharp - NO FEATHERING, SHARP EDGES
+    // Process user photo with Sharp - NO FEATHERING, SHARP EDGES, ZERO HALO
     const processedPhoto = await sharp(new Uint8Array(photoBuffer))
       .resize(photoPosition.width, photoPosition.height, {
         fit: 'cover',
@@ -60,7 +60,17 @@ serve(async (req) => {
         kernel: 'lanczos3', // High-quality resampling for sharp edges
         withoutEnlargement: false
       })
-      .sharpen() // Ensure crisp edges
+      .sharpen({
+        sigma: 1.5, // Aggressive edge sharpening
+        m1: 1.0,    // Mild threshold
+        m2: 2.0,    // Strong edge enhancement
+        x1: 2.0,    // Flatten low contrast
+        y2: 10.0,   // Amplify high contrast
+        y3: 20.0    // Maximum edge boost
+      })
+      .trim({        // Remove any transparent edge pixels
+        threshold: 10
+      })
       .toBuffer();
 
     // Overlay photo on template with precise positioning

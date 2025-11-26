@@ -1542,7 +1542,11 @@ export default function BannerPreview() {
                         objectFit: 'cover',
                         imageRendering: 'crisp-edges',
                         border: 'none',
-                        outline: 'none'
+                        outline: 'none',
+                        WebkitBackfaceVisibility: 'hidden',
+                        backfaceVisibility: 'hidden',
+                        transform: 'translateZ(0)',
+                        WebkitFontSmoothing: 'antialiased'
                       }} />
                     </div>)}
                 </div>
@@ -1572,7 +1576,11 @@ export default function BannerPreview() {
                       objectPosition: 'center',
                       imageRendering: 'crisp-edges',
                       border: 'none',
-                      outline: 'none'
+                      outline: 'none',
+                      WebkitBackfaceVisibility: 'hidden',
+                      backfaceVisibility: 'hidden',
+                      transform: 'translateZ(0)',
+                      WebkitFontSmoothing: 'antialiased'
                     }} />
                   </div>}
 
@@ -1655,7 +1663,11 @@ export default function BannerPreview() {
                       pointerEvents: 'none',
                       imageRendering: 'crisp-edges',
                       border: 'none',
-                      outline: 'none'
+                      outline: 'none',
+                      WebkitBackfaceVisibility: 'hidden',
+                      backfaceVisibility: 'hidden',
+                      transform: 'translateZ(0)',
+                      WebkitFontSmoothing: 'antialiased'
                     }} />
                   </div>}
 
@@ -1680,7 +1692,11 @@ export default function BannerPreview() {
                       objectPosition: 'center',
                       imageRendering: 'crisp-edges',
                       border: 'none',
-                      outline: 'none'
+                      outline: 'none',
+                      WebkitBackfaceVisibility: 'hidden',
+                      backfaceVisibility: 'hidden',
+                      transform: 'translateZ(0)',
+                      WebkitFontSmoothing: 'antialiased'
                     }} />
                   </div>}
 
