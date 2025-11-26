@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Wallet as WalletIcon, ArrowUp, ArrowDown, Clock, ChevronLeft } from "lucide-react";
+import { Wallet as WalletIcon, ArrowUp, ArrowDown, Clock, ChevronLeft, Download } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import BottomNav from "@/components/BottomNav";
@@ -197,13 +197,23 @@ export default function Wallet() {
                 </span>
               </div>
             )}
-            <Button
-              onClick={handleTopUp}
-              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-xl"
-            >
-              <ArrowUp className="w-4 h-4 mr-2" />
-              Top Up
-            </Button>
+            <div className="flex gap-3">
+              <Button
+                onClick={() => navigate("/my-downloads")}
+                variant="outline"
+                className="flex-1 border-primary/30 text-foreground hover:bg-primary/10 rounded-xl"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                My Downloads
+              </Button>
+              <Button
+                onClick={handleTopUp}
+                className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-xl"
+              >
+                <ArrowUp className="w-4 h-4 mr-2" />
+                Top Up
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
