@@ -70,9 +70,43 @@ export const removeBackground = async (imageElement: HTMLImageElement): Promise<
     const outputImageData = outputCtx.getImageData(0, 0, outputCanvas.width, outputCanvas.height);
     const data = outputImageData.data;
     
+    // Apply mask with edge refinement
     for (let i = 0; i < result[0].mask.data.length; i++) {
-      const alpha = Math.round((1 - result[0].mask.data[i]) * 255);
+      const maskValue = 1 - result[0].mask.data[i];
+      // Sharp threshold to eliminate fringe pixels
+      const alpha = maskValue > 0.95 ? 255 : maskValue < 0.05 ? 0 : Math.round(maskValue * 255);
       data[i * 4 + 3] = alpha;
+    }
+    
+    // Edge refinement: Remove color bleed by processing edge pixels
+    const width = outputCanvas.width;
+    const height = outputCanvas.height;
+    
+    for (let y = 1; y < height - 1; y++) {
+      for (let x = 1; x < width - 1; x++) {
+        const idx = (y * width + x) * 4;
+        const alpha = data[idx + 3];
+        
+        // Only process semi-transparent edge pixels
+        if (alpha > 0 && alpha < 255) {
+          // Check if this is an edge pixel by examining neighbors
+          const neighbors = [
+            data[((y-1) * width + x) * 4 + 3],     // top
+            data[((y+1) * width + x) * 4 + 3],     // bottom
+            data[(y * width + (x-1)) * 4 + 3],     // left
+            data[(y * width + (x+1)) * 4 + 3],     // right
+          ];
+          
+          const hasTransparentNeighbor = neighbors.some(a => a < 128);
+          
+          // Aggressive edge cleanup - remove semi-transparent edge pixels
+          if (hasTransparentNeighbor && alpha < 200) {
+            data[idx + 3] = 0; // Make fully transparent
+          } else if (alpha > 200) {
+            data[idx + 3] = 255; // Make fully opaque
+          }
+        }
+      }
     }
     
     outputCtx.putImageData(outputImageData, 0, 0);
