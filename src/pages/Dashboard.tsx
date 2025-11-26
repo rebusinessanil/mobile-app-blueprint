@@ -22,13 +22,27 @@ export default function Dashboard() {
   const {
     templates: allTemplates
   } = useTemplates();
-  const { ranks } = useRanks();
-  const { trips } = useBonanzaTrips();
-  const { birthdays } = useBirthdays();
-  const { anniversaries } = useAnniversaries();
-  const { motivationalBanners } = useMotivationalBanners();
-  const { festivals } = useFestivals();
-  const { stories: generatedStories } = useGeneratedStories();
+  const {
+    ranks
+  } = useRanks();
+  const {
+    trips
+  } = useBonanzaTrips();
+  const {
+    birthdays
+  } = useBirthdays();
+  const {
+    anniversaries
+  } = useAnniversaries();
+  const {
+    motivationalBanners
+  } = useMotivationalBanners();
+  const {
+    festivals
+  } = useFestivals();
+  const {
+    stories: generatedStories
+  } = useGeneratedStories();
   const [userId, setUserId] = useState<string | null>(null);
   const {
     profile
@@ -136,8 +150,7 @@ export default function Dashboard() {
       {/* Content */}
       <div className="px-6 py-6 space-y-6">
         {/* Stories Section - Square Festival Cards */}
-        {festivals.length > 0 && (
-          <div className="space-y-3">
+        {festivals.length > 0 && <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="text-2xl">📖</span>
@@ -145,19 +158,10 @@ export default function Dashboard() {
               </div>
             </div>
             <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-              {festivals.slice(0, 16).map((festival) => (
-                <Link
-                  key={festival.id}
-                  to={`/festival-preview/${festival.id}`}
-                  className="min-w-[120px] relative flex-shrink-0 transition-all hover:scale-105"
-                >
+              {festivals.slice(0, 16).map(festival => <Link key={festival.id} to={`/festival-preview/${festival.id}`} className="min-w-[120px] relative flex-shrink-0 transition-all hover:scale-105">
                   <div className="gold-border bg-card rounded-2xl overflow-hidden">
                     <div className="w-[120px] h-[120px] relative">
-                      <img
-                        src={festival.poster_url}
-                        alt={festival.festival_name}
-                        className="w-full h-full object-cover"
-                      />
+                      <img src={festival.poster_url} alt={festival.festival_name} className="w-full h-full object-cover" />
                       {/* Green Active Indicator */}
                       <div className="absolute top-2 right-2 w-3 h-3 bg-green-500 rounded-full border-2 border-white shadow-lg" />
                     </div>
@@ -167,15 +171,12 @@ export default function Dashboard() {
                       </p>
                     </div>
                   </div>
-                </Link>
-              ))}
+                </Link>)}
             </div>
-          </div>
-        )}
+          </div>}
 
         {/* Auto-Generated Stories Section */}
-        {generatedStories.length > 0 && (
-          <div className="space-y-3">
+        {generatedStories.length > 0 && <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="text-2xl">✨</span>
@@ -183,55 +184,27 @@ export default function Dashboard() {
               </div>
             </div>
             <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-              {generatedStories.map((story) => (
-                <Link
-                  key={story.id}
-                  to={story.status === 'active' ? `/story/${story.id}` : '#'}
-                  className={`min-w-[140px] gold-border bg-card rounded-2xl overflow-hidden flex-shrink-0 transition-all ${
-                    story.status === 'active' ? 'hover:gold-glow' : 'opacity-75'
-                  }`}
-                >
+              {generatedStories.map(story => <Link key={story.id} to={story.status === 'active' ? `/story/${story.id}` : '#'} className={`min-w-[140px] gold-border bg-card rounded-2xl overflow-hidden flex-shrink-0 transition-all ${story.status === 'active' ? 'hover:gold-glow' : 'opacity-75'}`}>
                   <div className="h-24 relative">
-                    <img
-                      src={story.poster_url}
-                      alt={story.title}
-                      className="w-full h-full object-cover"
-                    />
-                    {story.status === 'preview_only' && (
-                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                    <img src={story.poster_url} alt={story.title} className="w-full h-full object-cover" />
+                    {story.status === 'preview_only' && <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                         <Badge variant="secondary" className="text-xs">
                           Coming Tomorrow
                         </Badge>
-                      </div>
-                    )}
+                      </div>}
                   </div>
                   <div className="p-3 text-center">
                     <p className="text-sm font-semibold text-foreground leading-tight">
                       {story.title}
                     </p>
-                    {story.status === 'preview_only' && (
-                      <p className="text-xs text-muted-foreground mt-1">Preview Only</p>
-                    )}
+                    {story.status === 'preview_only' && <p className="text-xs text-muted-foreground mt-1">Preview Only</p>}
                   </div>
-                </Link>
-              ))}
+                </Link>)}
             </div>
-          </div>
-        )}
+          </div>}
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-4 gap-3">
-          {quickActions.map((action, index) => <Link key={index} to={`/create/${action.label.toLowerCase().replace(/\s+/g, "-")}`} className="gold-border bg-card p-4 rounded-2xl flex flex-col items-center justify-center text-center gap-2 hover:gold-glow transition-all">
-              {action.special ? <div className="text-xs font-semibold text-foreground leading-tight">
-                  {action.label}
-                </div> : <>
-                  <div className={`w-12 h-12 ${action.color} rounded-2xl flex items-center justify-center`}>
-                    {action.icon && <action.icon className="w-6 h-6 text-white" />}
-                  </div>
-                  <span className="text-xs font-semibold text-foreground">{action.label}</span>
-                </>}
-            </Link>)}
-        </div>
+        
 
         {/* Category Sections - Backend Integrated */}
         {categories.map(category => {
@@ -242,241 +215,124 @@ export default function Dashboard() {
         const isAnniversary = category.slug === 'anniversary';
         const isMotivational = category.slug === 'motivational';
         const isFestival = category.slug === 'festival';
-        
         return <div key={category.id} className="space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="text-2xl">{category.icon}</span>
                   <h2 className="text-lg font-bold text-foreground">{category.name}</h2>
                 </div>
-                <Link 
-                  to={
-                    isRankPromotion ? '/rank-selection' : 
-                    isBonanzaPromotion ? '/categories/bonanza-trips' :
-                    isBirthday ? '/categories/birthdays' :
-                    isAnniversary ? '/categories/anniversaries' :
-                    isMotivational ? '/categories/motivational' :
-                    isFestival ? '/categories/festival' :
-                    `/categories/${category.slug}`
-                  }
-                  className="text-primary text-sm font-semibold hover:underline"
-                >
+                <Link to={isRankPromotion ? '/rank-selection' : isBonanzaPromotion ? '/categories/bonanza-trips' : isBirthday ? '/categories/birthdays' : isAnniversary ? '/categories/anniversaries' : isMotivational ? '/categories/motivational' : isFestival ? '/categories/festival' : `/categories/${category.slug}`} className="text-primary text-sm font-semibold hover:underline">
                   See All →
                 </Link>
               </div>
 
               {/* Rank Promotion - Show Ranks with Cover Images */}
-              {isRankPromotion ? (
-                <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+              {isRankPromotion ? <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
                   {getRankTemplates().map(template => {
-                    const rank = ranks.find(r => r.id === template.rank_id);
-                    return (
-                      <Link 
-                        key={template.id} 
-                        to={`/rank-banner-create/${template.rank_id}`}
-                        className="min-w-[140px] gold-border bg-card rounded-2xl overflow-hidden flex-shrink-0 hover:gold-glow transition-all"
-                      >
-                        {template.cover_thumbnail_url ? (
-                          <div className="h-24 relative">
-                            <img 
-                              src={template.cover_thumbnail_url} 
-                              alt={template.name} 
-                              className="w-full h-full object-cover" 
-                            />
-                          </div>
-                        ) : (
-                          <div className={`h-24 ${rank?.gradient || 'bg-gradient-to-br from-secondary to-card'} flex items-center justify-center text-4xl`}>
+              const rank = ranks.find(r => r.id === template.rank_id);
+              return <Link key={template.id} to={`/rank-banner-create/${template.rank_id}`} className="min-w-[140px] gold-border bg-card rounded-2xl overflow-hidden flex-shrink-0 hover:gold-glow transition-all">
+                        {template.cover_thumbnail_url ? <div className="h-24 relative">
+                            <img src={template.cover_thumbnail_url} alt={template.name} className="w-full h-full object-cover" />
+                          </div> : <div className={`h-24 ${rank?.gradient || 'bg-gradient-to-br from-secondary to-card'} flex items-center justify-center text-4xl`}>
                             {rank?.icon || '🏆'}
-                          </div>
-                        )}
+                          </div>}
                         <div className="p-3 text-center">
                           <p className="text-sm font-semibold text-foreground leading-tight">{template.name}</p>
                         </div>
-                      </Link>
-                    );
-                  })}
-                </div>
-              ) : isBonanzaPromotion ? (
-                /* Bonanza Trips - Show Trips with Cover Images */
-                <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                      </Link>;
+            })}
+                </div> : isBonanzaPromotion ? (/* Bonanza Trips - Show Trips with Cover Images */
+          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
                   {getTripTemplates().map(template => {
-                    const trip = trips.find(t => t.id === template.trip_id);
-                    return (
-                      <Link 
-                        key={template.id} 
-                        to={`/banner-create/bonanza?tripId=${template.trip_id}`}
-                        className="min-w-[140px] gold-border bg-card rounded-2xl overflow-hidden flex-shrink-0 hover:gold-glow transition-all"
-                      >
-                        {template.cover_thumbnail_url ? (
-                          <div className="h-24 relative">
-                            <img 
-                              src={template.cover_thumbnail_url} 
-                              alt={template.name} 
-                              className="w-full h-full object-cover" 
-                            />
-                          </div>
-                        ) : (
-                          <div className="h-24 bg-gradient-to-br from-red-600 to-orange-600 flex items-center justify-center text-4xl">
+              const trip = trips.find(t => t.id === template.trip_id);
+              return <Link key={template.id} to={`/banner-create/bonanza?tripId=${template.trip_id}`} className="min-w-[140px] gold-border bg-card rounded-2xl overflow-hidden flex-shrink-0 hover:gold-glow transition-all">
+                        {template.cover_thumbnail_url ? <div className="h-24 relative">
+                            <img src={template.cover_thumbnail_url} alt={template.name} className="w-full h-full object-cover" />
+                          </div> : <div className="h-24 bg-gradient-to-br from-red-600 to-orange-600 flex items-center justify-center text-4xl">
                             {trip?.short_title || '🎁'}
-                          </div>
-                        )}
+                          </div>}
                         <div className="p-3 text-center">
                           <p className="text-sm font-semibold text-foreground leading-tight">{template.name}</p>
                         </div>
-                      </Link>
-                    );
-                  })}
-                </div>
-              ) : isBirthday ? (
-                /* Birthday - Show Birthday themes with Cover Images */
-                <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                      </Link>;
+            })}
+                </div>) : isBirthday ? (/* Birthday - Show Birthday themes with Cover Images */
+          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
                   {getBirthdayTemplates().map(template => {
-                    const birthday = birthdays.find(b => b.id === template.birthday_id);
-                    return (
-                      <Link 
-                        key={template.id} 
-                        to={`/banner-create/birthday?birthdayId=${template.birthday_id}`}
-                        className="min-w-[140px] gold-border bg-card rounded-2xl overflow-hidden flex-shrink-0 hover:gold-glow transition-all"
-                      >
-                        {template.cover_thumbnail_url ? (
-                          <div className="h-24 relative">
-                            <img 
-                              src={template.cover_thumbnail_url} 
-                              alt={template.name} 
-                              className="w-full h-full object-cover" 
-                            />
-                          </div>
-                        ) : (
-                          <div className="h-24 bg-gradient-to-br from-pink-600 to-purple-600 flex items-center justify-center text-4xl">
+              const birthday = birthdays.find(b => b.id === template.birthday_id);
+              return <Link key={template.id} to={`/banner-create/birthday?birthdayId=${template.birthday_id}`} className="min-w-[140px] gold-border bg-card rounded-2xl overflow-hidden flex-shrink-0 hover:gold-glow transition-all">
+                        {template.cover_thumbnail_url ? <div className="h-24 relative">
+                            <img src={template.cover_thumbnail_url} alt={template.name} className="w-full h-full object-cover" />
+                          </div> : <div className="h-24 bg-gradient-to-br from-pink-600 to-purple-600 flex items-center justify-center text-4xl">
                             {birthday?.short_title || '🎂'}
-                          </div>
-                        )}
+                          </div>}
                         <div className="p-3 text-center">
                           <p className="text-sm font-semibold text-foreground leading-tight">{template.name}</p>
                         </div>
-                      </Link>
-                    );
-                  })}
-                </div>
-              ) : isAnniversary ? (
-                /* Anniversary - Show Anniversary themes with Cover Images */
-                <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                      </Link>;
+            })}
+                </div>) : isAnniversary ? (/* Anniversary - Show Anniversary themes with Cover Images */
+          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
                   {getAnniversaryTemplates().map(template => {
-                    const anniversary = anniversaries.find(a => a.id === template.anniversary_id);
-                    return (
-                      <Link 
-                        key={template.id} 
-                        to={`/banner-create/anniversary?anniversaryId=${template.anniversary_id}`}
-                        className="min-w-[140px] gold-border bg-card rounded-2xl overflow-hidden flex-shrink-0 hover:gold-glow transition-all"
-                      >
-                        {template.cover_thumbnail_url ? (
-                          <div className="h-24 relative">
-                            <img 
-                              src={template.cover_thumbnail_url} 
-                              alt={template.name} 
-                              className="w-full h-full object-cover" 
-                            />
-                          </div>
-                        ) : (
-                          <div className="h-24 bg-gradient-to-br from-rose-600 to-pink-600 flex items-center justify-center text-4xl">
+              const anniversary = anniversaries.find(a => a.id === template.anniversary_id);
+              return <Link key={template.id} to={`/banner-create/anniversary?anniversaryId=${template.anniversary_id}`} className="min-w-[140px] gold-border bg-card rounded-2xl overflow-hidden flex-shrink-0 hover:gold-glow transition-all">
+                        {template.cover_thumbnail_url ? <div className="h-24 relative">
+                            <img src={template.cover_thumbnail_url} alt={template.name} className="w-full h-full object-cover" />
+                          </div> : <div className="h-24 bg-gradient-to-br from-rose-600 to-pink-600 flex items-center justify-center text-4xl">
                             {anniversary?.short_title || '💞'}
-                          </div>
-                        )}
+                          </div>}
                         <div className="p-3 text-center">
                           <p className="text-sm font-semibold text-foreground leading-tight">{template.name}</p>
                         </div>
-                      </Link>
-                    );
-                  })}
-                </div>
-              ) : isMotivational ? (
-                /* Motivational - Direct navigation to Banner Preview with motivationalBannerId */
-                <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                      </Link>;
+            })}
+                </div>) : isMotivational ? (/* Motivational - Direct navigation to Banner Preview with motivationalBannerId */
+          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
                   {getMotivationalBannerTemplates().map(template => {
-                    const motivationalBanner = motivationalBanners.find(mb => mb.id === template.motivational_banner_id);
-                    return (
-                      <Link 
-                        key={template.id} 
-                        to={`/motivational-preview/${template.motivational_banner_id}`}
-                        className="min-w-[140px] gold-border bg-card rounded-2xl overflow-hidden flex-shrink-0 hover:gold-glow transition-all"
-                      >
-                        {template.cover_thumbnail_url ? (
-                          <div className="h-24 relative">
-                            <img 
-                              src={template.cover_thumbnail_url} 
-                              alt={template.name} 
-                              className="w-full h-full object-cover" 
-                            />
-                          </div>
-                        ) : (
-                          <div className="h-24 bg-gradient-to-br from-yellow-600 to-orange-600 flex items-center justify-center text-4xl">
+              const motivationalBanner = motivationalBanners.find(mb => mb.id === template.motivational_banner_id);
+              return <Link key={template.id} to={`/motivational-preview/${template.motivational_banner_id}`} className="min-w-[140px] gold-border bg-card rounded-2xl overflow-hidden flex-shrink-0 hover:gold-glow transition-all">
+                        {template.cover_thumbnail_url ? <div className="h-24 relative">
+                            <img src={template.cover_thumbnail_url} alt={template.name} className="w-full h-full object-cover" />
+                          </div> : <div className="h-24 bg-gradient-to-br from-yellow-600 to-orange-600 flex items-center justify-center text-4xl">
                             {motivationalBanner?.short_title || '⚡'}
-                          </div>
-                        )}
+                          </div>}
                         <div className="p-3 text-center">
                           <p className="text-sm font-semibold text-foreground leading-tight">{template.name}</p>
                         </div>
-                      </Link>
-                    );
-                  })}
-                </div>
-              ) : isFestival ? (
-                /* Festival - Direct navigation to Banner Preview with festivalId */
-                <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                      </Link>;
+            })}
+                </div>) : isFestival ? (/* Festival - Direct navigation to Banner Preview with festivalId */
+          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
                   {getFestivalTemplates().map(template => {
-                    const festival = festivals.find(f => f.id === template.festival_id);
-                    return (
-                      <Link
-                        key={template.id}
-                        to={`/festival-preview/${template.festival_id}`}
-                        className="min-w-[140px] gold-border bg-card rounded-2xl overflow-hidden flex-shrink-0 hover:gold-glow transition-all"
-                      >
-                        {template.cover_thumbnail_url ? (
-                          <div className="h-24 relative">
-                            <img 
-                              src={template.cover_thumbnail_url} 
-                              alt={template.name} 
-                              className="w-full h-full object-cover" 
-                            />
-                          </div>
-                        ) : (
-                          <div className="h-24 bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center text-4xl">
+              const festival = festivals.find(f => f.id === template.festival_id);
+              return <Link key={template.id} to={`/festival-preview/${template.festival_id}`} className="min-w-[140px] gold-border bg-card rounded-2xl overflow-hidden flex-shrink-0 hover:gold-glow transition-all">
+                        {template.cover_thumbnail_url ? <div className="h-24 relative">
+                            <img src={template.cover_thumbnail_url} alt={template.name} className="w-full h-full object-cover" />
+                          </div> : <div className="h-24 bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center text-4xl">
                             🎉
-                          </div>
-                        )}
+                          </div>}
                         <div className="p-3 text-center">
                           <p className="text-sm font-semibold text-foreground leading-tight">{template.name}</p>
-                          {festival && (
-                            <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{festival.festival_name}</p>
-                          )}
+                          {festival && <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{festival.festival_name}</p>}
                         </div>
-                      </Link>
-                    );
-                  })}
-                </div>
-              ) : (
-                /* Template Scroll - Dynamic from Backend */
-                <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                      </Link>;
+            })}
+                </div>) : (/* Template Scroll - Dynamic from Backend */
+          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
                   {categoryTemplates.length > 0 ? categoryTemplates.map(template => {
-                    // Map category slugs to unified banner routes
-                    const getCategoryRoute = () => {
-                      const routeMap: Record<string, string> = {
-                        'bonanza-promotion': '/banner-create/bonanza',
-                        'birthday': '/banner-create/birthday',
-                        'anniversary': '/banner-create/anniversary',
-                        'meeting': '/banner-create/meeting',
-                        'festival': '/banner-create/festival',
-                        'motivational': '/banner-create/motivational'
-                      };
-                      return routeMap[category.slug] || `/template/${template.id}`;
-                    };
-                    
-                    return (
-                      <Link 
-                        key={template.id} 
-                        to={getCategoryRoute()} 
-                        className="min-w-[140px] gold-border bg-card rounded-2xl overflow-hidden flex-shrink-0 hover:gold-glow transition-all mx-0 my-0 py-0 px-0"
-                      >
+              // Map category slugs to unified banner routes
+              const getCategoryRoute = () => {
+                const routeMap: Record<string, string> = {
+                  'bonanza-promotion': '/banner-create/bonanza',
+                  'birthday': '/banner-create/birthday',
+                  'anniversary': '/banner-create/anniversary',
+                  'meeting': '/banner-create/meeting',
+                  'festival': '/banner-create/festival',
+                  'motivational': '/banner-create/motivational'
+                };
+                return routeMap[category.slug] || `/template/${template.id}`;
+              };
+              return <Link key={template.id} to={getCategoryRoute()} className="min-w-[140px] gold-border bg-card rounded-2xl overflow-hidden flex-shrink-0 hover:gold-glow transition-all mx-0 my-0 py-0 px-0">
                         {template.cover_thumbnail_url ? <div className="h-32 relative">
                             <img src={template.cover_thumbnail_url} alt={template.name} className="w-full h-full object-cover" />
                           </div> : <div className="h-32 bg-gradient-to-br from-secondary to-card flex items-center justify-center">
@@ -485,13 +341,11 @@ export default function Dashboard() {
                               <p className="text-primary text-xs mt-1">{"{ BACKEND }"}</p>
                             </div>
                           </div>}
-                      </Link>
-                    );
-                  }) : <div className="min-w-[140px] gold-border bg-card rounded-2xl overflow-hidden flex-shrink-0 p-4">
+                      </Link>;
+            }) : <div className="min-w-[140px] gold-border bg-card rounded-2xl overflow-hidden flex-shrink-0 p-4">
                       <p className="text-xs text-muted-foreground text-center">No templates yet</p>
                     </div>}
-                </div>
-              )}
+                </div>)}
             </div>;
       })}
       </div>
