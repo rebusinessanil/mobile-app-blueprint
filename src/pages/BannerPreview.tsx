@@ -1578,6 +1578,116 @@ export default function BannerPreview() {
                   </>
                 )}
 
+                {/* Festival Category: Three Dark-Theme Upper Bars */}
+                {bannerData.categoryType === 'festival' && (
+                  <>
+                    {/* Upper Bar 1 - Top */}
+                    <div className="absolute z-10" style={{
+                      top: '40px',
+                      left: 0,
+                      right: 0,
+                      height: '50px'
+                    }}>
+                      <div style={{
+                        position: 'absolute',
+                        left: '80px',
+                        top: 0,
+                        width: '400px',
+                        height: '50px',
+                        background: '#06d6a0',
+                        clipPath: 'polygon(0 0, 90% 0, 100% 100%, 10% 100%)'
+                      }} />
+                      <div style={{
+                        position: 'absolute',
+                        left: '390px',
+                        top: 0,
+                        width: '900px',
+                        height: '50px',
+                        background: '#1a1f2e'
+                      }} />
+                      <div style={{
+                        position: 'absolute',
+                        right: '50px',
+                        top: 0,
+                        width: '350px',
+                        height: '50px',
+                        background: '#06d6a0',
+                        clipPath: 'polygon(10% 0, 100% 0, 90% 100%, 0% 100%)'
+                      }} />
+                    </div>
+
+                    {/* Upper Bar 2 - Mid */}
+                    <div className="absolute z-10" style={{
+                      top: '110px',
+                      left: 0,
+                      right: 0,
+                      height: '50px'
+                    }}>
+                      <div style={{
+                        position: 'absolute',
+                        left: 0,
+                        top: 0,
+                        width: '280px',
+                        height: '50px',
+                        background: '#00a8e8',
+                        clipPath: 'polygon(0 0, 90% 0, 100% 100%, 0% 100%)'
+                      }} />
+                      <div style={{
+                        position: 'absolute',
+                        left: '230px',
+                        top: 0,
+                        width: '950px',
+                        height: '50px',
+                        background: '#1a1f2e'
+                      }} />
+                      <div style={{
+                        position: 'absolute',
+                        right: 0,
+                        top: 0,
+                        width: '280px',
+                        height: '50px',
+                        background: '#00a8e8',
+                        clipPath: 'polygon(0 0, 100% 0, 100% 100%, 10% 100%)'
+                      }} />
+                    </div>
+
+                    {/* Upper Bar 3 - Lower */}
+                    <div className="absolute z-10" style={{
+                      top: '180px',
+                      left: 0,
+                      right: 0,
+                      height: '50px'
+                    }}>
+                      <div style={{
+                        position: 'absolute',
+                        left: '50px',
+                        top: 0,
+                        width: '350px',
+                        height: '50px',
+                        background: '#ffd700',
+                        clipPath: 'polygon(0 0, 90% 0, 100% 100%, 10% 100%)'
+                      }} />
+                      <div style={{
+                        position: 'absolute',
+                        left: '340px',
+                        top: 0,
+                        width: '900px',
+                        height: '50px',
+                        background: '#1a1f2e'
+                      }} />
+                      <div style={{
+                        position: 'absolute',
+                        right: '100px',
+                        top: 0,
+                        width: '300px',
+                        height: '50px',
+                        background: '#ffd700',
+                        clipPath: 'polygon(10% 0, 100% 0, 90% 100%, 0% 100%)'
+                      }} />
+                    </div>
+                  </>
+                )}
+
                 {/* Top-Left Logo */}
                 {bannerSettings?.logo_left && <div className="absolute z-30" style={{
                     top: '10px',
@@ -1806,6 +1916,125 @@ export default function BannerPreview() {
                       tabColor: '#06d6a0',
                       shadowColor: 'rgba(6, 214, 160, 0.4)',
                       name: 'Teal'
+                    }
+                  };
+
+                  const currentVariant = variants[variantIndex as keyof typeof variants];
+
+                  return (
+                    <div className="absolute" style={{
+                      bottom: '35px',
+                      left: '27px',
+                      right: '27px',
+                      height: '105px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      zIndex: 4
+                    }}>
+                      {/* Main Dark Banner with Colored Border */}
+                      <div style={{
+                        position: 'absolute',
+                        left: 0,
+                        right: '280px',
+                        height: '100%',
+                        background: '#1a1f2e',
+                        borderRadius: '50px 8px 8px 50px',
+                        border: `4px solid ${currentVariant.borderColor}`,
+                        boxShadow: `0 6px 20px rgba(0, 0, 0, 0.5), 0 0 20px ${currentVariant.shadowColor}`,
+                        display: 'flex',
+                        alignItems: 'center',
+                        padding: '0 40px'
+                      }}>
+                        {/* User Info on Left */}
+                        <div style={{ flex: 1 }}>
+                          <div style={{
+                            fontSize: '30px',
+                            fontWeight: '800',
+                            color: '#ffffff',
+                            marginBottom: '4px',
+                            letterSpacing: '1px',
+                            textShadow: '0 2px 6px rgba(0, 0, 0, 0.6)'
+                          }}>
+                            {profileName?.toUpperCase() || 'USER NAME'}
+                          </div>
+                          <div style={{
+                            fontSize: '28px',
+                            fontWeight: '700',
+                            color: currentVariant.borderColor,
+                            letterSpacing: '1px',
+                            textShadow: '0 2px 4px rgba(0, 0, 0, 0.5)'
+                          }}>
+                            {displayRank || 'RANK'}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Right Tab with Angled Edge */}
+                      <div style={{
+                        position: 'absolute',
+                        right: 0,
+                        height: '100%',
+                        width: '320px',
+                        background: currentVariant.tabColor,
+                        clipPath: 'polygon(15% 0, 100% 0, 100% 100%, 15% 100%, 0% 50%)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        paddingLeft: '60px',
+                        boxShadow: `0 6px 20px ${currentVariant.shadowColor}`
+                      }}>
+                        <div style={{ textAlign: 'center' }}>
+                          <div style={{
+                            fontSize: '15px',
+                            fontWeight: '600',
+                            color: '#ffffff',
+                            marginBottom: '2px',
+                            letterSpacing: '1.5px',
+                            textShadow: '0 2px 4px rgba(0, 0, 0, 0.4)'
+                          }}>
+                            CALL FOR MENTORSHIP
+                          </div>
+                          <div style={{
+                            fontSize: '26px',
+                            fontWeight: '800',
+                            color: '#ffffff',
+                            letterSpacing: '1px',
+                            textShadow: '0 2px 6px rgba(0, 0, 0, 0.5)'
+                          }}>
+                            {profile?.mobile || profile?.whatsapp || '+91 7734990035'}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* FESTIVAL CATEGORY: Lower-Third Cycling Variants - Three Variant Sequencing */}
+                {bannerData.categoryType === 'festival' && (() => {
+                  // Calculate variant based on slot number (0-15) in repeating sequence
+                  const slotNumber = selectedTemplate; // selectedTemplate is 0-indexed
+                  const variantIndex = (slotNumber % 3) + 1; // 1, 2, or 3
+                  
+                  // Define three variants with strict color isolation - Teal, Blue, Yellow sequence
+                  const variants = {
+                    1: { 
+                      borderColor: '#06d6a0', // Teal/Cyan
+                      tabColor: '#06d6a0',
+                      shadowColor: 'rgba(6, 214, 160, 0.4)',
+                      name: 'Teal'
+                    },
+                    2: { 
+                      borderColor: '#00a8e8', // Blue
+                      tabColor: '#00a8e8',
+                      shadowColor: 'rgba(0, 168, 232, 0.4)',
+                      name: 'Blue'
+                    },
+                    3: { 
+                      borderColor: '#ffd700', // Yellow/Gold
+                      tabColor: '#ffd700',
+                      shadowColor: 'rgba(255, 215, 0, 0.4)',
+                      name: 'Yellow'
                     }
                   };
 
