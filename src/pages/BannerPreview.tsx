@@ -815,14 +815,7 @@ export default function BannerPreview() {
       case 'motivational':
         return <>
             {/* Motivational Icon */}
-            <div className="absolute z-20" style={{
-            top: '140px',
-            left: '978px',
-            transform: 'translateX(-50%)',
-            fontSize: '110px'
-          }}>
-              💪
-            </div>
+            
 
             {/* Motivational Title */}
             <div className="absolute z-20" style={{
