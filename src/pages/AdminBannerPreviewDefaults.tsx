@@ -472,8 +472,6 @@ export default function AdminBannerPreviewDefaults() {
                 <div className="w-full h-full bg-muted-foreground/20 flex items-center justify-center">
                   <span className="text-xs text-white/60">Achiever</span>
                 </div>
-                {/* Bottom feather fade overlay */}
-                <div className="absolute bottom-0 left-0 right-0 h-1/3 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
               </div>
 
               {/* RIGHT TOP - Name Display (moved higher + rightward) */}
@@ -501,8 +499,6 @@ export default function AdminBannerPreviewDefaults() {
                 <div className="w-full h-full bg-muted-foreground/20 object-cover object-top flex items-center justify-center">
                   <span className="text-xs text-white/60">Profile</span>
                 </div>
-                {/* Bottom feather fade */}
-                <div className="absolute bottom-0 left-0 right-0 h-1/3 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
               </div>
 
               {/* BOTTOM LEFT - Contact Section */}
