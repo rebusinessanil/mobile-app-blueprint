@@ -98,6 +98,36 @@ export type Database = {
         }
         Relationships: []
       }
+      banner_downloads: {
+        Row: {
+          banner_url: string | null
+          category_name: string
+          created_at: string | null
+          downloaded_at: string | null
+          id: string
+          template_id: string | null
+          user_id: string
+        }
+        Insert: {
+          banner_url?: string | null
+          category_name: string
+          created_at?: string | null
+          downloaded_at?: string | null
+          id?: string
+          template_id?: string | null
+          user_id: string
+        }
+        Update: {
+          banner_url?: string | null
+          category_name?: string
+          created_at?: string | null
+          downloaded_at?: string | null
+          id?: string
+          template_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       banner_stickers: {
         Row: {
           banner_id: string | null
