@@ -36,7 +36,7 @@ interface BannerData {
   slotStickers?: Record<number, string[]>;
   templateId?: string;
   rankId?: string;
-  categoryType?: 'rank' | 'bonanza' | 'birthday' | 'anniversary' | 'meeting' | 'festival' | 'motivational';
+  categoryType?: 'rank' | 'bonanza' | 'birthday' | 'anniversary' | 'meeting' | 'festival' | 'motivational' | 'story';
   message?: string;
   tripName?: string;
   eventTitle?: string;
@@ -841,6 +841,70 @@ export default function BannerPreview() {
           </>
         );
 
+      case 'story':
+        return (
+          <>
+            {/* Story Content - Three Dark Upper Bars (decorative only) */}
+            {/* Upper bars are rendered separately below in the main banner structure */}
+            
+            {/* Story Title/Name */}
+            {truncatedMainName && (
+              <div className="absolute z-20" style={{
+                top: '350px',
+                left: '978px',
+                transform: 'translateX(-50%)',
+                width: '648px',
+                padding: '0 27px'
+              }}>
+                <h2 style={{
+                  color: '#ffffff',
+                  textAlign: 'center',
+                  fontSize: '44px',
+                  fontWeight: '700',
+                  textShadow: '3px 3px 10px rgba(0,0,0,0.9)',
+                  margin: 0
+                }}>
+                  {truncatedMainName.toUpperCase()}
+                </h2>
+                {bannerData.teamCity && (
+                  <p style={{
+                    marginTop: '13px',
+                    color: '#FFD700',
+                    textAlign: 'center',
+                    fontSize: '28px',
+                    fontWeight: '600',
+                    textShadow: '2px 2px 6px rgba(0,0,0,0.9)'
+                  }}>
+                    {bannerData.teamCity.toUpperCase()}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Story Message/Quote */}
+            {(bannerData.message || bannerData.quote) && (
+              <div className="absolute" style={{
+                top: '480px',
+                left: '978px',
+                transform: 'translateX(-50%)',
+                width: '648px',
+                padding: '0 40px'
+              }}>
+                <p style={{
+                  color: '#ffffff',
+                  textAlign: 'center',
+                  fontSize: '26px',
+                  fontStyle: 'italic',
+                  textShadow: '2px 2px 6px rgba(0,0,0,0.9)',
+                  lineHeight: '1.5'
+                }}>
+                  {bannerData.message || bannerData.quote}
+                </p>
+              </div>
+            )}
+          </>
+        );
+
       case 'motivational':
         return (
           <>
@@ -1572,6 +1636,125 @@ export default function BannerPreview() {
                   
                 </div>
 
+                {/* THREE DARK-THEME UPPER BARS - Story Banners Only */}
+                {bannerData.categoryType === 'story' && (() => {
+                  // Calculate variant based on slot number (1-16) in repeating sequence
+                  const slotNumber = selectedTemplate + 1;
+                  const variantIndex = ((slotNumber - 1) % 3); // 0, 1, or 2
+                  
+                  // Define three variants: Teal, Blue, Yellow
+                  const variants = [
+                    { color: '#00d4aa', name: 'Teal' },    // Slot 1, 4, 7, 10, 13, 16
+                    { color: '#0ea5e9', name: 'Blue' },    // Slot 2, 5, 8, 11, 14
+                    { color: '#f59e0b', name: 'Yellow' }   // Slot 3, 6, 9, 12, 15
+                  ];
+
+                  const currentVariant = variants[variantIndex];
+
+                  return (
+                    <div className="absolute top-0 left-0 right-0 z-5" style={{ height: '300px' }}>
+                      {/* Bar 1 - Top */}
+                      <div style={{
+                        position: 'absolute',
+                        top: '40px',
+                        left: 0,
+                        right: 0,
+                        height: '28px',
+                        display: 'flex'
+                      }}>
+                        {/* Colored section - left */}
+                        <div style={{
+                          width: '36%',
+                          height: '100%',
+                          background: currentVariant.color,
+                          clipPath: 'polygon(0 0, 100% 0, 88% 100%, 0 100%)'
+                        }} />
+                        {/* Black section - middle */}
+                        <div style={{
+                          width: '42%',
+                          height: '100%',
+                          background: '#1a1f2e',
+                          marginLeft: '-5%'
+                        }} />
+                        {/* Colored section - right */}
+                        <div style={{
+                          width: '32%',
+                          height: '100%',
+                          background: currentVariant.color,
+                          clipPath: 'polygon(12% 0, 100% 0, 100% 100%, 0 100%)',
+                          marginLeft: '-5%'
+                        }} />
+                      </div>
+
+                      {/* Bar 2 - Middle */}
+                      <div style={{
+                        position: 'absolute',
+                        top: '105px',
+                        left: 0,
+                        right: 0,
+                        height: '32px',
+                        display: 'flex'
+                      }}>
+                        {/* Colored section - left */}
+                        <div style={{
+                          width: '26%',
+                          height: '100%',
+                          background: currentVariant.color,
+                          clipPath: 'polygon(0 0, 100% 0, 82% 100%, 0 100%)'
+                        }} />
+                        {/* Black section - middle */}
+                        <div style={{
+                          width: '56%',
+                          height: '100%',
+                          background: '#1a1f2e',
+                          marginLeft: '-4%'
+                        }} />
+                        {/* Colored section - right */}
+                        <div style={{
+                          width: '28%',
+                          height: '100%',
+                          background: currentVariant.color,
+                          clipPath: 'polygon(18% 0, 100% 0, 100% 100%, 0 100%)',
+                          marginLeft: '-4%'
+                        }} />
+                      </div>
+
+                      {/* Bar 3 - Bottom */}
+                      <div style={{
+                        position: 'absolute',
+                        top: '170px',
+                        left: 0,
+                        right: 0,
+                        height: '28px',
+                        display: 'flex'
+                      }}>
+                        {/* Colored section - left */}
+                        <div style={{
+                          width: '32%',
+                          height: '100%',
+                          background: currentVariant.color,
+                          clipPath: 'polygon(0 0, 100% 0, 85% 100%, 0 100%)'
+                        }} />
+                        {/* Black section - middle */}
+                        <div style={{
+                          width: '46%',
+                          height: '100%',
+                          background: '#1a1f2e',
+                          marginLeft: '-4%'
+                        }} />
+                        {/* Colored section - right */}
+                        <div style={{
+                          width: '30%',
+                          height: '100%',
+                          background: currentVariant.color,
+                          clipPath: 'polygon(15% 0, 100% 0, 100% 100%, 0 100%)',
+                          marginLeft: '-4%'
+                        }} />
+                      </div>
+                    </div>
+                  );
+                })()}
+
                 {/* Category-specific content */}
                 {renderCategoryContent()}
 
@@ -1673,6 +1856,125 @@ export default function BannerPreview() {
                     }} />
                   </div>}
 
+
+                {/* STORY LOWER-THIRD BANNER - Three Variant Cycling (Yellow, Blue, Teal) */}
+                {bannerData.categoryType === 'story' && (() => {
+                  // Calculate variant based on slot number (1-16) in repeating sequence
+                  const slotNumber = selectedTemplate + 1;
+                  const variantIndex = ((slotNumber - 1) % 3); // 0, 1, or 2
+                  
+                  // Define three variants: Yellow, Blue, Teal
+                  const variants = [
+                    { 
+                      borderColor: '#f59e0b', // Yellow
+                      tabColor: '#f59e0b',
+                      shadowColor: 'rgba(245, 158, 11, 0.4)',
+                      name: 'Yellow'
+                    },
+                    { 
+                      borderColor: '#0ea5e9', // Blue
+                      tabColor: '#0ea5e9',
+                      shadowColor: 'rgba(14, 165, 233, 0.4)',
+                      name: 'Blue'
+                    },
+                    { 
+                      borderColor: '#00d4aa', // Teal
+                      tabColor: '#00d4aa',
+                      shadowColor: 'rgba(0, 212, 170, 0.4)',
+                      name: 'Teal'
+                    }
+                  ];
+
+                  const currentVariant = variants[variantIndex];
+
+                  return (
+                    <div className="absolute" style={{
+                      bottom: '35px',
+                      left: '27px',
+                      right: '27px',
+                      height: '105px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      zIndex: 3 // Behind user photos (z-index 10+)
+                    }}>
+                      {/* Main Dark Banner with Colored Border */}
+                      <div style={{
+                        position: 'absolute',
+                        left: 0,
+                        right: '280px',
+                        height: '100%',
+                        background: '#1a1f2e',
+                        borderRadius: '50px 8px 8px 50px',
+                        border: `4px solid ${currentVariant.borderColor}`,
+                        boxShadow: `0 6px 20px rgba(0, 0, 0, 0.5), 0 0 20px ${currentVariant.shadowColor}`,
+                        display: 'flex',
+                        alignItems: 'center',
+                        padding: '0 40px'
+                      }}>
+                        {/* User Info on Left */}
+                        <div style={{ flex: 1 }}>
+                          <div style={{
+                            fontSize: '30px',
+                            fontWeight: '800',
+                            color: '#ffffff',
+                            marginBottom: '4px',
+                            letterSpacing: '1px',
+                            textShadow: '0 2px 6px rgba(0, 0, 0, 0.6)'
+                          }}>
+                            {profileName?.toUpperCase() || 'USER NAME'}
+                          </div>
+                          <div style={{
+                            fontSize: '28px',
+                            fontWeight: '700',
+                            color: currentVariant.borderColor,
+                            letterSpacing: '1px',
+                            textShadow: '0 2px 4px rgba(0, 0, 0, 0.5)'
+                          }}>
+                            {displayRank || 'RANK'}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Right Tab with Angled Edge */}
+                      <div style={{
+                        position: 'absolute',
+                        right: 0,
+                        height: '100%',
+                        width: '320px',
+                        background: currentVariant.tabColor,
+                        clipPath: 'polygon(15% 0, 100% 0, 100% 100%, 15% 100%, 0% 50%)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        paddingLeft: '60px',
+                        boxShadow: `0 6px 20px ${currentVariant.shadowColor}`
+                      }}>
+                        <div style={{ textAlign: 'center' }}>
+                          <div style={{
+                            fontSize: '15px',
+                            fontWeight: '600',
+                            color: '#1a1f2e',
+                            letterSpacing: '1px',
+                            marginBottom: '6px',
+                            textShadow: '0 1px 2px rgba(255, 255, 255, 0.2)'
+                          }}>
+                            CALL FOR MENTORSHIP
+                          </div>
+                          <div style={{
+                            fontSize: '26px',
+                            fontWeight: '800',
+                            color: '#1a1f2e',
+                            letterSpacing: '0.5px',
+                            textShadow: '0 1px 3px rgba(255, 255, 255, 0.2)'
+                          }}>
+                            +91 {displayContact}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 {/* MOTIVATIONAL CONTACT STRIP BANNER - Three Variant Sequencing */}
                 {bannerData.categoryType === 'motivational' && (() => {
