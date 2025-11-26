@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Download, Calendar } from "lucide-react";
+import { ArrowLeft, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useDownloadHistory } from "@/hooks/useDownloadHistory";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { format } from "date-fns";
 
 export default function MyDownloads() {
@@ -71,50 +70,38 @@ export default function MyDownloads() {
             </Button>
           </div>
         ) : (
-          <div className="grid gap-4">
-            {downloads.map((download) => (
-              <Card
-                key={download.id}
-                className="p-4 bg-card border-border/40 hover:border-primary/30 transition-colors"
-              >
-                <div className="flex items-start gap-4">
-                  {/* Category Badge */}
-                  <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <Download className="w-6 h-6 text-primary" />
+          <div className="space-y-0">
+            {downloads.map((download, index) => (
+              <div key={download.id}>
+                <div className="flex items-start gap-4 py-5">
+                  {/* Download Icon - Circular Red Background */}
+                  <div className="flex-shrink-0 w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center">
+                    <Download className="w-5 h-5 text-destructive" />
                   </div>
 
                   {/* Download Info */}
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-foreground mb-1">
-                      {download.category_name}
+                    <h3 className="font-semibold text-foreground text-base mb-1">
+                      Banner download - {download.category_name}
                     </h3>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Calendar className="w-4 h-4" />
-                      <span>
-                        {format(new Date(download.downloaded_at), "MMM dd, yyyy 'at' hh:mm a")}
-                      </span>
-                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      {format(new Date(download.downloaded_at), "MMM dd, yyyy • hh:mm a")}
+                    </p>
                   </div>
 
-                  {/* Re-download Button */}
-                  {download.banner_url && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="border-primary/30 hover:bg-primary/10"
-                      onClick={() => {
-                        const link = document.createElement("a");
-                        link.href = download.banner_url!;
-                        link.download = `${download.category_name}-banner.png`;
-                        link.click();
-                      }}
-                    >
-                      <Download className="w-4 h-4 mr-2" />
-                      Re-download
-                    </Button>
-                  )}
+                  {/* Amount - Red Color */}
+                  <div className="flex-shrink-0 text-right">
+                    <span className="text-destructive font-semibold text-lg">
+                      - ₹10
+                    </span>
+                  </div>
                 </div>
-              </Card>
+                
+                {/* Separator Line - except for last item */}
+                {index < downloads.length - 1 && (
+                  <div className="h-px bg-border/40" />
+                )}
+              </div>
             ))}
           </div>
         )}
