@@ -4,10 +4,12 @@ import UserManagement from "@/components/admin/UserManagement";
 import AnalyticsDashboard from "@/components/admin/AnalyticsDashboard";
 import TokenManagement from "@/components/admin/TokenManagement";
 import AdminLayout from "@/components/admin/AdminLayout";
+import { AdminGuard } from "@/components/AdminGuard";
 
 export default function AdminDashboard() {
   return (
-    <AdminLayout>
+    <AdminGuard>
+      <AdminLayout>
       <div className="space-y-6">
         {/* Tabs for different sections */}
         <Tabs defaultValue="analytics" className="space-y-6">
@@ -49,5 +51,6 @@ export default function AdminDashboard() {
         </Tabs>
       </div>
     </AdminLayout>
+    </AdminGuard>
   );
 }

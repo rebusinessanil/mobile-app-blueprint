@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { useStickers, useStickerCategories, useAdminStickers } from "@/hooks/useStickers";
+import { AdminGuard } from "@/components/AdminGuard";
 
 export default function AdminStickers() {
   const navigate = useNavigate();

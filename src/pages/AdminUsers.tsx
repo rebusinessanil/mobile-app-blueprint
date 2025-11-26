@@ -23,6 +23,7 @@ import { Label } from "@/components/ui/label";
 import { Search, UserPlus, Trash2, Edit, RefreshCw } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import AdminLayout from "@/components/admin/AdminLayout";
+import { AdminGuard } from "@/components/AdminGuard";
 
 interface User {
   id: string;
@@ -190,7 +191,8 @@ export default function AdminUsers() {
   );
 
   return (
-    <AdminLayout>
+    <AdminGuard>
+      <AdminLayout>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -364,5 +366,6 @@ export default function AdminUsers() {
         </Dialog>
       </div>
     </AdminLayout>
+    </AdminGuard>
   );
 }

@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { Loader2, Upload, Trash2, Eye, EyeOff } from 'lucide-react';
 import { useTemplateBackgrounds, uploadTemplateBackground, removeTemplateBackground, toggleBackgroundActive } from '@/hooks/useTemplateBackgrounds';
+import { AdminGuard } from "@/components/AdminGuard";
 
 export default function AdminTemplateBackgrounds() {
   const [selectedCategory, setSelectedCategory] = useState<string>('');
