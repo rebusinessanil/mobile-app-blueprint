@@ -179,9 +179,9 @@ export default function Wallet() {
   }
 
   return (
-    <div className="min-h-screen bg-navy-dark pb-24">
+    <div className="h-screen bg-navy-dark flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="relative px-6 pt-8 pb-4">
+      <div className="relative px-6 pt-8 pb-4 flex-shrink-0">
         <Button
           variant="ghost"
           size="icon"
@@ -196,7 +196,7 @@ export default function Wallet() {
         </div>
       </div>
 
-      <div className="px-6 space-y-6">
+      <div className="px-6 space-y-6 flex-shrink-0">
         {/* Balance Card */}
         <Card className="gold-border bg-gradient-to-br from-primary/10 to-primary/5">
           <CardHeader className="pb-3">
@@ -273,15 +273,22 @@ export default function Wallet() {
             </CardContent>
           </Card>
         </div>
+      </div>
 
-        {/* All Transactions Section */}
-        <Card className="border-primary/20 bg-card">
-          <CardHeader className="pb-3">
+      {/* All Transactions Section - Scrollable */}
+      <div className="px-6 flex-1 flex flex-col min-h-0 pb-20">
+        <Card className="border-primary/20 bg-card flex-1 flex flex-col min-h-0">
+          <CardHeader className="pb-3 flex-shrink-0">
             <CardTitle className="text-lg font-semibold text-foreground">
               All Transactions
             </CardTitle>
           </CardHeader>
-          <CardContent className="max-h-[500px] overflow-y-auto">
+          <CardContent className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent"
+            style={{ 
+              scrollBehavior: 'smooth',
+              WebkitOverflowScrolling: 'touch'
+            }}
+          >
             {transactions.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <Clock className="w-12 h-12 mx-auto mb-2 opacity-50" />
