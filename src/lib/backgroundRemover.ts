@@ -70,49 +70,13 @@ export const removeBackground = async (imageElement: HTMLImageElement): Promise<
     const outputImageData = outputCtx.getImageData(0, 0, outputCanvas.width, outputCanvas.height);
     const data = outputImageData.data;
     
-    // STEP 1: Create refined mask with edge cleanup
-    const maskData = new Uint8Array(result[0].mask.data.length);
-    
-    // Apply aggressive threshold to eliminate semi-transparent halos
     for (let i = 0; i < result[0].mask.data.length; i++) {
-      const rawAlpha = 1 - result[0].mask.data[i];
-      // Hard threshold: only keep pixels with >70% confidence
-      maskData[i] = rawAlpha > 0.7 ? 255 : 0;
-    }
-    
-    // STEP 2: Morphological erosion to remove edge fringing
-    const width = outputCanvas.width;
-    const height = outputCanvas.height;
-    const erodedMask = new Uint8Array(maskData.length);
-    const erosionRadius = 1; // Remove 1px edge fringe
-    
-    for (let y = 0; y < height; y++) {
-      for (let x = 0; x < width; x++) {
-        const idx = y * width + x;
-        let minVal = 255;
-        
-        // Check neighborhood for erosion
-        for (let dy = -erosionRadius; dy <= erosionRadius; dy++) {
-          for (let dx = -erosionRadius; dx <= erosionRadius; dx++) {
-            const nx = x + dx;
-            const ny = y + dy;
-            if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
-              const nIdx = ny * width + nx;
-              minVal = Math.min(minVal, maskData[nIdx]);
-            }
-          }
-        }
-        erodedMask[idx] = minVal;
-      }
-    }
-    
-    // STEP 3: Apply cleaned mask with zero semi-transparency
-    for (let i = 0; i < erodedMask.length; i++) {
-      data[i * 4 + 3] = erodedMask[i]; // Pure 0 or 255, no in-between
+      const alpha = Math.round((1 - result[0].mask.data[i]) * 255);
+      data[i * 4 + 3] = alpha;
     }
     
     outputCtx.putImageData(outputImageData, 0, 0);
-    console.log('Mask applied with edge refinement - zero halo');
+    console.log('Mask applied successfully');
     
     return new Promise((resolve, reject) => {
       outputCanvas.toBlob(
