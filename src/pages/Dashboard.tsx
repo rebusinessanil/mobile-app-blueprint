@@ -383,38 +383,35 @@ export default function Dashboard() {
                   })}
                 </div>
               ) : isFestival ? (
-                /* Festival - Direct navigation to Banner Preview with festivalId */
+                /* Festival - Show Active Festivals with Poster Images */
                 <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-                  {getFestivalTemplates().map(template => {
-                    const festival = festivals.find(f => f.id === template.festival_id);
-                    return (
-                      <Link
-                        key={template.id}
-                        to={`/festival-preview/${template.festival_id}`}
-                        className="min-w-[140px] gold-border bg-card rounded-2xl overflow-hidden flex-shrink-0 hover:gold-glow transition-all"
-                      >
-                        {template.cover_thumbnail_url ? (
-                          <div className="h-24 relative">
-                            <img 
-                              src={template.cover_thumbnail_url} 
-                              alt={template.name} 
-                              className="w-full h-full object-cover" 
-                            />
-                          </div>
-                        ) : (
-                          <div className="h-24 bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center text-4xl">
-                            🎉
-                          </div>
-                        )}
-                        <div className="p-3 text-center">
-                          <p className="text-sm font-semibold text-foreground leading-tight">{template.name}</p>
-                          {festival && (
-                            <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{festival.festival_name}</p>
-                          )}
+                  {festivals.map(festival => (
+                    <Link
+                      key={festival.id}
+                      to={`/create/festival-banner?festivalId=${festival.id}`}
+                      className="min-w-[140px] gold-border bg-card rounded-2xl overflow-hidden flex-shrink-0 hover:gold-glow transition-all"
+                    >
+                      {festival.poster_url ? (
+                        <div className="h-24 relative">
+                          <img 
+                            src={festival.poster_url} 
+                            alt={festival.festival_name} 
+                            className="w-full h-full object-cover" 
+                          />
                         </div>
-                      </Link>
-                    );
-                  })}
+                      ) : (
+                        <div className="h-24 bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center text-4xl">
+                          🎉
+                        </div>
+                      )}
+                      <div className="p-3 text-center">
+                        <p className="text-sm font-semibold text-foreground leading-tight capitalize">{festival.festival_name}</p>
+                        {festival.description && (
+                          <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{festival.description}</p>
+                        )}
+                      </div>
+                    </Link>
+                  ))}
                 </div>
               ) : (
                 /* Template Scroll - Dynamic from Backend */
