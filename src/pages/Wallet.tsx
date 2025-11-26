@@ -118,7 +118,6 @@ export default function Wallet() {
         .maybeSingle();
 
       if (creditsError) throw creditsError;
-      setBalance(credits || { balance: 0, total_earned: 0, total_spent: 0 });
 
       // Fetch all transactions
       const { data: txns, error: txnsError } = await supabase
@@ -146,6 +145,20 @@ export default function Wallet() {
           date: rechargeData.created_at,
         });
       }
+
+      // Calculate Total Spent: All debits - Last Recharge amount
+      const totalDebits = txns
+        ?.filter(t => t.transaction_type === "spent" || t.transaction_type === "debit")
+        .reduce((sum, t) => sum + Math.abs(t.amount), 0) || 0;
+      
+      const lastRechargeAmount = rechargeData?.amount || 0;
+      const calculatedTotalSpent = Math.max(0, totalDebits - lastRechargeAmount);
+
+      setBalance({
+        balance: credits?.balance || 0,
+        total_earned: credits?.total_earned || 0,
+        total_spent: calculatedTotalSpent,
+      });
     } catch (error) {
       console.error("Error fetching wallet data:", error);
       toast.error("Failed to load wallet data");
@@ -181,12 +194,12 @@ export default function Wallet() {
   return (
     <div className="h-screen bg-navy-dark flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="relative px-6 pt-8 pb-4 flex-shrink-0">
+      <div className="relative px-6 pt-6 pb-3 flex-shrink-0">
         <Button
           variant="ghost"
           size="icon"
           onClick={() => navigate(-1)}
-          className="absolute left-4 top-8 text-foreground hover:text-primary"
+          className="absolute left-4 top-6 text-foreground hover:text-primary"
         >
           <ChevronLeft className="w-6 h-6" />
         </Button>
@@ -196,43 +209,45 @@ export default function Wallet() {
         </div>
       </div>
 
-      <div className="px-6 space-y-6 flex-shrink-0">
+      <div className="px-6 space-y-4 flex-shrink-0">
         {/* Balance Card */}
         <Card className="gold-border bg-gradient-to-br from-primary/10 to-primary/5">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm text-muted-foreground">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xs text-muted-foreground font-medium">
               Available Balance
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-baseline gap-2">
-              <span className="text-4xl font-bold text-primary">
+          <CardContent className="space-y-3">
+            <div className="flex items-baseline gap-1">
+              <span className="text-3xl font-bold text-primary">
                 ₹{balance?.balance || 0}
               </span>
-              <span className="text-sm text-muted-foreground">.00</span>
+              <span className="text-xs text-muted-foreground">.00</span>
             </div>
             {customerCode && (
-              <div className="flex items-center gap-2 text-sm">
+              <div className="flex items-center gap-2 text-xs">
                 <span className="text-muted-foreground">Customer Code:</span>
                 <span className="font-mono font-semibold text-foreground">
                   {customerCode}
                 </span>
               </div>
             )}
-            <div className="flex gap-3">
+            <div className="flex gap-2">
               <Button
                 onClick={() => navigate("/my-downloads")}
                 variant="outline"
-                className="flex-1 border-primary/30 text-foreground hover:bg-primary/10 rounded-xl"
+                size="sm"
+                className="flex-1 border-primary/30 text-foreground hover:bg-primary/10 rounded-lg text-xs h-9"
               >
-                <Download className="w-4 h-4 mr-2" />
+                <Download className="w-3.5 h-3.5 mr-1.5" />
                 My Downloads
               </Button>
               <Button
                 onClick={handleTopUp}
-                className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-xl"
+                size="sm"
+                className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-lg text-xs h-9"
               >
-                <ArrowUp className="w-4 h-4 mr-2" />
+                <ArrowUp className="w-3.5 h-3.5 mr-1.5" />
                 Top Up
               </Button>
             </div>
@@ -240,22 +255,22 @@ export default function Wallet() {
         </Card>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-3">
           <Card className="border-primary/20 bg-card">
-            <CardContent className="pt-6">
-              <div className="text-center space-y-1">
-                <p className="text-sm text-muted-foreground">Last Recharge</p>
+            <CardContent className="pt-5 pb-5">
+              <div className="text-center space-y-0.5">
+                <p className="text-xs text-muted-foreground font-medium">Last Recharge</p>
                 {lastRecharge ? (
                   <>
-                    <p className="text-2xl font-bold text-green-500">
+                    <p className="text-xl font-bold text-green-500">
                       ₹{lastRecharge.amount}
                     </p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-[10px] text-muted-foreground mt-1">
                       {format(new Date(lastRecharge.date), "MMM dd, yyyy")}
                     </p>
                   </>
                 ) : (
-                  <p className="text-2xl font-bold text-muted-foreground">
+                  <p className="text-xl font-bold text-muted-foreground">
                     ₹0
                   </p>
                 )}
@@ -263,10 +278,10 @@ export default function Wallet() {
             </CardContent>
           </Card>
           <Card className="border-primary/20 bg-card">
-            <CardContent className="pt-6">
-              <div className="text-center space-y-1">
-                <p className="text-sm text-muted-foreground">Total Spent</p>
-                <p className="text-2xl font-bold text-red-500">
+            <CardContent className="pt-5 pb-5">
+              <div className="text-center space-y-0.5">
+                <p className="text-xs text-muted-foreground font-medium">Total Spent</p>
+                <p className="text-xl font-bold text-red-500">
                   ₹{balance?.total_spent || 0}
                 </p>
               </div>
@@ -276,34 +291,34 @@ export default function Wallet() {
       </div>
 
       {/* All Transactions Section - Scrollable */}
-      <div className="px-6 flex-1 flex flex-col min-h-0 pb-20">
+      <div className="px-6 flex-1 flex flex-col min-h-0 pb-20 mt-2">
         <Card className="border-primary/20 bg-card flex-1 flex flex-col min-h-0">
-          <CardHeader className="pb-3 flex-shrink-0">
-            <CardTitle className="text-lg font-semibold text-foreground">
+          <CardHeader className="pb-2 flex-shrink-0">
+            <CardTitle className="text-base font-semibold text-foreground">
               All Transactions
             </CardTitle>
           </CardHeader>
-          <CardContent className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent"
+          <CardContent className="flex-1 overflow-y-auto pr-2"
             style={{ 
               scrollBehavior: 'smooth',
               WebkitOverflowScrolling: 'touch'
             }}
           >
             {transactions.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <Clock className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                <p>No transactions yet</p>
+              <div className="text-center py-12 text-muted-foreground">
+                <Clock className="w-10 h-10 mx-auto mb-2 opacity-40" />
+                <p className="text-sm">No transactions yet</p>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-0">
                 {transactions.map((txn) => (
                   <div
                     key={txn.id}
-                    className="flex items-center justify-between py-3 border-b border-border last:border-0"
+                    className="flex items-center justify-between py-3 border-b border-border/50 last:border-0"
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2.5">
                       <div
-                        className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                        className={`w-9 h-9 rounded-full flex items-center justify-center ${
                           txn.transaction_type === "earned" ||
                           txn.transaction_type === "admin_credit"
                             ? "bg-green-500/10"
@@ -317,16 +332,16 @@ export default function Wallet() {
                         </span>
                       </div>
                       <div>
-                        <p className="font-medium text-foreground text-sm">
+                        <p className="font-medium text-foreground text-xs leading-tight">
                           {txn.description || "Transaction"}
                         </p>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-[10px] text-muted-foreground mt-0.5">
                           {format(new Date(txn.created_at), "MMM dd, yyyy • hh:mm a")}
                         </p>
                       </div>
                     </div>
                     <span
-                      className={`font-bold ${getTransactionColor(
+                      className={`font-bold text-sm ${getTransactionColor(
                         txn.transaction_type
                       )}`}
                     >
