@@ -1259,26 +1259,84 @@ export default function BannerPreview() {
     const loadingToast = toast.loading("Generating ultra HD banner...");
     try {
       // High quality export settings
-      const dataUrl = await toPng(bannerRef.current, {
+      let dataUrl = await toPng(bannerRef.current, {
         cacheBust: true,
         pixelRatio: 3,
-        // Ultra HD Export
         quality: 1,
         backgroundColor: null,
-        // Transparent safe
         style: {
           transform: "scale(1)",
-          // No scaling issue
           transformOrigin: "top left"
         },
         filter: node => {
-          // WhatsApp button, controls, slots, UI elements hide
           if (node.classList?.contains("slot-selector") || node.classList?.contains("control-buttons") || node.classList?.contains("whatsapp-float") || node.id === "ignore-download") {
             return false;
           }
           return true;
         }
       });
+
+      // Step 2.5: Validate and compress if needed (4 MB limit)
+      const MAX_SIZE_MB = 4;
+      const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024;
+      let sizeMB = (dataUrl.length * 0.75) / (1024 * 1024);
+
+      if (sizeMB > MAX_SIZE_MB) {
+        toast.dismiss(loadingToast);
+        const compressingToast = toast.loading("Image size exceeds 4 MB. Compressing...");
+        
+        try {
+          // Try compression with reduced quality
+          let quality = 0.85;
+          let attempts = 0;
+          const maxAttempts = 3;
+
+          while (sizeMB > MAX_SIZE_MB && attempts < maxAttempts) {
+            dataUrl = await toPng(bannerRef.current, {
+              cacheBust: true,
+              pixelRatio: 3,
+              quality: quality,
+              backgroundColor: null,
+              style: {
+                transform: "scale(1)",
+                transformOrigin: "top left"
+              },
+              filter: node => {
+                if (node.classList?.contains("slot-selector") || node.classList?.contains("control-buttons") || node.classList?.contains("whatsapp-float") || node.id === "ignore-download") {
+                  return false;
+                }
+                return true;
+              }
+            });
+            sizeMB = (dataUrl.length * 0.75) / (1024 * 1024);
+            quality -= 0.15;
+            attempts++;
+          }
+
+          toast.dismiss(compressingToast);
+
+          // If still exceeds limit after compression, block download
+          if (sizeMB > MAX_SIZE_MB) {
+            toast.error("Maximum download size allowed is 4 MB", {
+              description: "Please optimize your banner settings or contact support.",
+              duration: 6000
+            });
+            setIsDownloading(false);
+            return;
+          }
+
+          toast.success(`Image compressed to ${sizeMB.toFixed(2)} MB`);
+        } catch (compressError) {
+          console.error("Compression failed:", compressError);
+          toast.dismiss(compressingToast);
+          toast.error("Failed to compress banner. Please try again.", {
+            duration: 5000
+          });
+          setIsDownloading(false);
+          return;
+        }
+      }
+
       toast.dismiss(loadingToast);
 
       // Step 3: Deduct wallet balance and save download record with banner URL
@@ -1296,22 +1354,19 @@ export default function BannerPreview() {
 
       // Step 5: If wallet deduction failed for other reasons, show error
       if (!success) {
-        return; // Error toast already shown by hook
+        return;
       }
 
       // Step 6: Download the banner after successful deduction
       const timestamp = new Date().getTime();
       download(dataUrl, `ReBusiness-Banner-${categoryName}-${timestamp}.png`);
 
-      // Calculate approximate size (base64 size estimation)
-      const sizeMB = (dataUrl.length * 0.75 / (1024 * 1024)).toFixed(2);
-
       // Get updated balance to show in success message
       const {
         data: updatedCredits
       } = await supabase.from("user_credits").select("balance").eq("user_id", userId).single();
       const remainingBalance = updatedCredits?.balance || 0;
-      toast.success(`Banner saved to your device! (${sizeMB} MB) • ₹10 deducted`, {
+      toast.success(`Banner saved to your device! (${sizeMB.toFixed(2)} MB) • ₹10 deducted`, {
         description: `Remaining balance: ₹${remainingBalance}. Check your Downloads or Gallery app to access your banner.`,
         duration: 6000
       });
