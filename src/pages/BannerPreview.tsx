@@ -70,11 +70,14 @@ export default function BannerPreview() {
   }[]>>({});
   const bannerRef = useRef<HTMLDivElement>(null);
   const [isAdmin, setIsAdmin] = useState(false);
-  
+
   // Sticker control states
   const [isDragMode, setIsDragMode] = useState(false);
   const [selectedStickerId, setSelectedStickerId] = useState<string | null>(null);
-  const [dragStartPos, setDragStartPos] = useState<{ x: number; y: number } | null>(null);
+  const [dragStartPos, setDragStartPos] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
   const [stickerScale, setStickerScale] = useState<Record<string, number>>({});
   const [isSavingSticker, setIsSavingSticker] = useState(false);
   const [originalStickerStates, setOriginalStickerStates] = useState<Record<string, {
@@ -84,40 +87,47 @@ export default function BannerPreview() {
   }>>({});
 
   // Profile picture control states (motivational only, admin only)
-  const [profilePicPosition, setProfilePicPosition] = useState({ x: 0, y: 0 }); // Offset from default position
+  const [profilePicPosition, setProfilePicPosition] = useState({
+    x: 0,
+    y: 0
+  }); // Offset from default position
   const [profilePicScale, setProfilePicScale] = useState(1); // Scale multiplier (1 = 100%)
   const [isDraggingProfile, setIsDraggingProfile] = useState(false);
-  const [profileDragStart, setProfileDragStart] = useState<{ x: number; y: number } | null>(null);
+  const [profileDragStart, setProfileDragStart] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
   const [isProfileControlMinimized, setIsProfileControlMinimized] = useState(false);
   const [showInsufficientBalanceModal, setShowInsufficientBalanceModal] = useState(false);
 
   // Wallet deduction hook
-  const { checkAndDeductBalance, isProcessing: isProcessingWallet } = useWalletDeduction();
+  const {
+    checkAndDeductBalance,
+    isProcessing: isProcessingWallet
+  } = useWalletDeduction();
 
   // Handle profile picture drag (admin only, motivational only)
   useEffect(() => {
     if (!isDraggingProfile || !profileDragStart) return;
-
     const handleMouseMove = (e: MouseEvent) => {
       const newX = e.clientX - profileDragStart.x;
       const newY = e.clientY - profileDragStart.y;
-      
+
       // Boundary constraints: keep within canvas (0 to 1350px width, -675 to 675px height offset)
-      const maxWidth = 1350 - (1026 * profilePicScale * 0.75); // 3:4 aspect ratio width
+      const maxWidth = 1350 - 1026 * profilePicScale * 0.75; // 3:4 aspect ratio width
       const constrainedX = Math.max(0, Math.min(newX, maxWidth));
       const constrainedY = Math.max(-500, Math.min(newY, 500));
-      
-      setProfilePicPosition({ x: constrainedX, y: constrainedY });
+      setProfilePicPosition({
+        x: constrainedX,
+        y: constrainedY
+      });
     };
-
     const handleMouseUp = () => {
       setIsDraggingProfile(false);
       setProfileDragStart(null);
     };
-
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
-
     return () => {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
@@ -174,17 +184,17 @@ export default function BannerPreview() {
   } = useBannerDefaults();
 
   // Fetch motivational profile defaults (position and scale for profile picture)
-  const { data: profileDefaults, refetch: refetchProfileDefaults } = useQuery({
+  const {
+    data: profileDefaults,
+    refetch: refetchProfileDefaults
+  } = useQuery({
     queryKey: ['motivational-profile-defaults', bannerData?.motivationalBannerId],
     queryFn: async () => {
       if (!bannerData?.motivationalBannerId) return null;
-      
-      const { data, error } = await supabase
-        .from('motivational_profile_defaults')
-        .select('*')
-        .eq('motivational_banner_id', bannerData.motivationalBannerId)
-        .maybeSingle();
-      
+      const {
+        data,
+        error
+      } = await supabase.from('motivational_profile_defaults').select('*').eq('motivational_banner_id', bannerData.motivationalBannerId).maybeSingle();
       if (error && error.code !== 'PGRST116') throw error;
       return data;
     },
@@ -194,9 +204,9 @@ export default function BannerPreview() {
   // Initialize profile picture position and scale from database defaults
   useEffect(() => {
     if (profileDefaults && bannerData?.categoryType === 'motivational') {
-      setProfilePicPosition({ 
-        x: Number(profileDefaults.profile_position_x) || 0, 
-        y: Number(profileDefaults.profile_position_y) || 0 
+      setProfilePicPosition({
+        x: Number(profileDefaults.profile_position_x) || 0,
+        y: Number(profileDefaults.profile_position_y) || 0
       });
       setProfilePicScale(Number(profileDefaults.profile_scale) || 1);
     }
@@ -228,7 +238,7 @@ export default function BannerPreview() {
 
   // CRITICAL: Fetch backgrounds for the current template - STRICT template_id filtering
   const currentTemplateId = bannerData?.templateId || templateData?.id;
-  
+
   // Validate templateId exists before fetching backgrounds
   useEffect(() => {
     if (!currentTemplateId) {
@@ -237,7 +247,6 @@ export default function BannerPreview() {
       console.log('✅ Fetching backgrounds for templateId:', currentTemplateId);
     }
   }, [currentTemplateId]);
-
   const {
     backgrounds
   } = useTemplateBackgrounds(currentTemplateId);
@@ -326,12 +335,12 @@ export default function BannerPreview() {
   useEffect(() => {
     const currentSlot = selectedTemplate + 1;
     const stickersInSlot = stickerImages[currentSlot] || [];
-    
+
     // Auto-select if there's exactly one sticker and none is selected
     if (stickersInSlot.length === 1 && !selectedStickerId) {
       const sticker = stickersInSlot[0];
       setSelectedStickerId(sticker.id);
-      
+
       // Initialize scale from database defaults (admin-defined)
       if (!stickerScale[sticker.id]) {
         setStickerScale(prev => ({
@@ -339,7 +348,7 @@ export default function BannerPreview() {
           [sticker.id]: sticker.scale || 2.5
         }));
       }
-      
+
       // Store original state for admin reset functionality
       if (isAdmin) {
         setOriginalStickerStates(prev => ({
@@ -368,7 +377,7 @@ export default function BannerPreview() {
       foundBackground: !!backgroundImage,
       backgroundUrl: backgroundImage ? backgroundImage.substring(0, 60) + '...' : 'none'
     });
-    
+
     // Warn if backgrounds exist but none match current slot
     if (backgrounds.length > 0 && !backgroundImage) {
       console.warn('⚠️ Backgrounds exist but none for slot', selectedSlot);
@@ -389,9 +398,7 @@ export default function BannerPreview() {
 
   // Get primary profile photo - prioritize uploaded photo from banner creation for LEFT side
   // FESTIVAL & MOTIVATIONAL CATEGORIES: Skip auto-loading achiever image completely
-  const primaryPhoto: string | null = (bannerData?.categoryType === 'festival' || bannerData?.categoryType === 'motivational')
-    ? (bannerData?.photo || null) 
-    : (bannerData?.photo || profile?.profile_photo || profilePhotos[0]?.photo_url || null);
+  const primaryPhoto: string | null = bannerData?.categoryType === 'festival' || bannerData?.categoryType === 'motivational' ? bannerData?.photo || null : bannerData?.photo || profile?.profile_photo || profilePhotos[0]?.photo_url || null;
 
   // Get mentor/upline photo (RIGHT-BOTTOM) - ONLY use profile photos, never uploads
   const mentorPhoto: string | null = profilePhotos[selectedMentorPhotoIndex]?.photo_url || profilePhotos[0]?.photo_url || profile?.profile_photo || null;
@@ -408,618 +415,560 @@ export default function BannerPreview() {
   // Category-specific content render function
   const renderCategoryContent = () => {
     const category = bannerData.categoryType || 'rank';
-
     switch (category) {
       case 'bonanza':
-        return (
-          <>
+        return <>
             {/* Congratulations Image */}
-            {bannerDefaults?.congratulations_image && (
-              <div className="absolute z-20" style={{
-                top: '162px',
-                left: '978px',
-                transform: 'translateX(-50%)',
-                width: '648px',
-                height: '162px'
-              }}>
+            {bannerDefaults?.congratulations_image && <div className="absolute z-20" style={{
+            top: '162px',
+            left: '978px',
+            transform: 'translateX(-50%)',
+            width: '648px',
+            height: '162px'
+          }}>
                 <img src={bannerDefaults.congratulations_image} alt="Congratulations" style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover',
-                  filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.7))'
-                }} />
-              </div>
-            )}
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.7))'
+            }} />
+              </div>}
 
             {/* Trip Achievement Title */}
             <div className="absolute z-20" style={{
-              top: '236px',
-              left: '978px',
-              transform: 'translateX(-50%)',
-              width: '648px',
-              textAlign: 'center'
-            }}>
+            top: '236px',
+            left: '978px',
+            transform: 'translateX(-50%)',
+            width: '648px',
+            textAlign: 'center'
+          }}>
               <p style={{
-                fontSize: '42px',
-                fontWeight: '600',
-                color: '#ffffff',
-                textShadow: '2px 2px 8px rgba(0,0,0,0.9)',
-                letterSpacing: '1px'
-              }}>
+              fontSize: '42px',
+              fontWeight: '600',
+              color: '#ffffff',
+              textShadow: '2px 2px 8px rgba(0,0,0,0.9)',
+              letterSpacing: '1px'
+            }}>
                 BONANZA TRIP WINNER
               </p>
             </div>
 
             {/* Trip Name */}
             <div className="absolute" style={{
-              top: '337px',
-              left: '978px',
-              transform: 'translateX(-50%)',
-              width: '648px',
-              padding: '0 27px'
-            }}>
+            top: '337px',
+            left: '978px',
+            transform: 'translateX(-50%)',
+            width: '648px',
+            padding: '0 27px'
+          }}>
               <h2 style={{
-                color: '#FFD700',
-                textAlign: 'center',
-                fontSize: '48px',
-                fontWeight: '700',
-                textShadow: '3px 3px 10px rgba(0,0,0,0.95)',
-                margin: 0
-              }}>
+              color: '#FFD700',
+              textAlign: 'center',
+              fontSize: '48px',
+              fontWeight: '700',
+              textShadow: '3px 3px 10px rgba(0,0,0,0.95)',
+              margin: 0
+            }}>
                 {bannerData.tripName?.toUpperCase() || 'TRIP DESTINATION'}
               </h2>
             </div>
 
             {/* Achiever Name & Team */}
             <div className="absolute" style={{
-              top: '420px',
-              left: '978px',
-              transform: 'translateX(-50%)',
-              width: '648px',
-              padding: '0 27px'
-            }}>
+            top: '420px',
+            left: '978px',
+            transform: 'translateX(-50%)',
+            width: '648px',
+            padding: '0 27px'
+          }}>
               <h3 style={{
-                color: '#ffffff',
-                textAlign: 'center',
-                fontSize: '36px',
-                fontWeight: '600',
-                textShadow: '2px 2px 6px rgba(0,0,0,0.9)',
-                margin: 0
-              }}>
+              color: '#ffffff',
+              textAlign: 'center',
+              fontSize: '36px',
+              fontWeight: '600',
+              textShadow: '2px 2px 6px rgba(0,0,0,0.9)',
+              margin: 0
+            }}>
                 {truncatedMainName.toUpperCase()}
               </h3>
-              {bannerData.teamCity && (
-                <p style={{
-                  marginTop: '13px',
-                  color: '#ffffff',
-                  textAlign: 'center',
-                  fontSize: '28px',
-                  textShadow: '2px 2px 4px rgba(0,0,0,0.9)'
-                }}>
+              {bannerData.teamCity && <p style={{
+              marginTop: '13px',
+              color: '#ffffff',
+              textAlign: 'center',
+              fontSize: '28px',
+              textShadow: '2px 2px 4px rgba(0,0,0,0.9)'
+            }}>
                   {bannerData.teamCity.toUpperCase()}
-                </p>
-              )}
+                </p>}
             </div>
-          </>
-        );
-
+          </>;
       case 'birthday':
-        return (
-          <>
+        return <>
             {/* Birthday Emoji/Icon */}
             <div className="absolute z-20" style={{
-              top: '140px',
-              left: '978px',
-              transform: 'translateX(-50%)',
-              fontSize: '120px'
-            }}>
+            top: '140px',
+            left: '978px',
+            transform: 'translateX(-50%)',
+            fontSize: '120px'
+          }}>
               🎂
             </div>
 
             {/* Happy Birthday Text */}
             <div className="absolute z-20" style={{
-              top: '280px',
-              left: '978px',
-              transform: 'translateX(-50%)',
-              width: '648px',
-              textAlign: 'center'
-            }}>
+            top: '280px',
+            left: '978px',
+            transform: 'translateX(-50%)',
+            width: '648px',
+            textAlign: 'center'
+          }}>
               <p style={{
-                fontSize: '52px',
-                fontWeight: '700',
-                color: '#FFD700',
-                textShadow: '3px 3px 10px rgba(0,0,0,0.9)',
-                letterSpacing: '2px'
-              }}>
+              fontSize: '52px',
+              fontWeight: '700',
+              color: '#FFD700',
+              textShadow: '3px 3px 10px rgba(0,0,0,0.9)',
+              letterSpacing: '2px'
+            }}>
                 HAPPY BIRTHDAY
               </p>
             </div>
 
             {/* Name */}
             <div className="absolute" style={{
-              top: '370px',
-              left: '978px',
-              transform: 'translateX(-50%)',
-              width: '648px',
-              padding: '0 27px'
-            }}>
+            top: '370px',
+            left: '978px',
+            transform: 'translateX(-50%)',
+            width: '648px',
+            padding: '0 27px'
+          }}>
               <h2 style={{
-                color: '#ffffff',
-                textAlign: 'center',
-                fontSize: '44px',
-                fontWeight: '600',
-                textShadow: '2px 2px 8px rgba(0,0,0,0.9)',
-                margin: 0
-              }}>
+              color: '#ffffff',
+              textAlign: 'center',
+              fontSize: '44px',
+              fontWeight: '600',
+              textShadow: '2px 2px 8px rgba(0,0,0,0.9)',
+              margin: 0
+            }}>
                 {truncatedMainName.toUpperCase()}
               </h2>
             </div>
 
             {/* Birthday Message */}
-            {bannerData.message && (
-              <div className="absolute" style={{
-                top: '450px',
-                left: '978px',
-                transform: 'translateX(-50%)',
-                width: '648px',
-                padding: '0 40px'
-              }}>
+            {bannerData.message && <div className="absolute" style={{
+            top: '450px',
+            left: '978px',
+            transform: 'translateX(-50%)',
+            width: '648px',
+            padding: '0 40px'
+          }}>
                 <p style={{
-                  color: '#ffffff',
-                  textAlign: 'center',
-                  fontSize: '24px',
-                  fontStyle: 'italic',
-                  textShadow: '2px 2px 6px rgba(0,0,0,0.9)',
-                  lineHeight: '1.4'
-                }}>
+              color: '#ffffff',
+              textAlign: 'center',
+              fontSize: '24px',
+              fontStyle: 'italic',
+              textShadow: '2px 2px 6px rgba(0,0,0,0.9)',
+              lineHeight: '1.4'
+            }}>
                   {bannerData.message}
                 </p>
-              </div>
-            )}
-          </>
-        );
-
+              </div>}
+          </>;
       case 'anniversary':
-        return (
-          <>
+        return <>
             {/* Anniversary Icon */}
             <div className="absolute z-20" style={{
-              top: '140px',
-              left: '978px',
-              transform: 'translateX(-50%)',
-              fontSize: '120px'
-            }}>
+            top: '140px',
+            left: '978px',
+            transform: 'translateX(-50%)',
+            fontSize: '120px'
+          }}>
               💞
             </div>
 
             {/* Happy Anniversary Text */}
             <div className="absolute z-20" style={{
-              top: '280px',
-              left: '978px',
-              transform: 'translateX(-50%)',
-              width: '648px',
-              textAlign: 'center'
-            }}>
+            top: '280px',
+            left: '978px',
+            transform: 'translateX(-50%)',
+            width: '648px',
+            textAlign: 'center'
+          }}>
               <p style={{
-                fontSize: '48px',
-                fontWeight: '700',
-                color: '#FFD700',
-                textShadow: '3px 3px 10px rgba(0,0,0,0.9)',
-                letterSpacing: '1px'
-              }}>
+              fontSize: '48px',
+              fontWeight: '700',
+              color: '#FFD700',
+              textShadow: '3px 3px 10px rgba(0,0,0,0.9)',
+              letterSpacing: '1px'
+            }}>
                 HAPPY ANNIVERSARY
               </p>
             </div>
 
             {/* Name */}
             <div className="absolute" style={{
-              top: '370px',
-              left: '978px',
-              transform: 'translateX(-50%)',
-              width: '648px',
-              padding: '0 27px'
-            }}>
+            top: '370px',
+            left: '978px',
+            transform: 'translateX(-50%)',
+            width: '648px',
+            padding: '0 27px'
+          }}>
               <h2 style={{
-                color: '#ffffff',
-                textAlign: 'center',
-                fontSize: '44px',
-                fontWeight: '600',
-                textShadow: '2px 2px 8px rgba(0,0,0,0.9)',
-                margin: 0
-              }}>
+              color: '#ffffff',
+              textAlign: 'center',
+              fontSize: '44px',
+              fontWeight: '600',
+              textShadow: '2px 2px 8px rgba(0,0,0,0.9)',
+              margin: 0
+            }}>
                 {truncatedMainName.toUpperCase()}
               </h2>
-              {bannerData.teamCity && (
-                <p style={{
-                  marginTop: '13px',
-                  color: '#ffffff',
-                  textAlign: 'center',
-                  fontSize: '28px',
-                  textShadow: '2px 2px 4px rgba(0,0,0,0.9)'
-                }}>
+              {bannerData.teamCity && <p style={{
+              marginTop: '13px',
+              color: '#ffffff',
+              textAlign: 'center',
+              fontSize: '28px',
+              textShadow: '2px 2px 4px rgba(0,0,0,0.9)'
+            }}>
                   {bannerData.teamCity.toUpperCase()}
-                </p>
-              )}
+                </p>}
             </div>
 
             {/* Anniversary Message */}
-            {bannerData.message && (
-              <div className="absolute" style={{
-                top: '480px',
-                left: '978px',
-                transform: 'translateX(-50%)',
-                width: '648px',
-                padding: '0 40px'
-              }}>
+            {bannerData.message && <div className="absolute" style={{
+            top: '480px',
+            left: '978px',
+            transform: 'translateX(-50%)',
+            width: '648px',
+            padding: '0 40px'
+          }}>
                 <p style={{
-                  color: '#ffffff',
-                  textAlign: 'center',
-                  fontSize: '22px',
-                  fontStyle: 'italic',
-                  textShadow: '2px 2px 6px rgba(0,0,0,0.9)',
-                  lineHeight: '1.4'
-                }}>
+              color: '#ffffff',
+              textAlign: 'center',
+              fontSize: '22px',
+              fontStyle: 'italic',
+              textShadow: '2px 2px 6px rgba(0,0,0,0.9)',
+              lineHeight: '1.4'
+            }}>
                   {bannerData.message}
                 </p>
-              </div>
-            )}
-          </>
-        );
-
+              </div>}
+          </>;
       case 'meeting':
-        return (
-          <>
+        return <>
             {/* Event Icon */}
             <div className="absolute z-20" style={{
-              top: '140px',
-              left: '978px',
-              transform: 'translateX(-50%)',
-              fontSize: '110px'
-            }}>
+            top: '140px',
+            left: '978px',
+            transform: 'translateX(-50%)',
+            fontSize: '110px'
+          }}>
               📅
             </div>
 
             {/* Event Type */}
             <div className="absolute z-20" style={{
-              top: '270px',
-              left: '978px',
-              transform: 'translateX(-50%)',
-              width: '648px',
-              textAlign: 'center'
-            }}>
+            top: '270px',
+            left: '978px',
+            transform: 'translateX(-50%)',
+            width: '648px',
+            textAlign: 'center'
+          }}>
               <p style={{
-                fontSize: '42px',
-                fontWeight: '700',
-                color: '#FFD700',
-                textShadow: '3px 3px 10px rgba(0,0,0,0.9)',
-                letterSpacing: '1px'
-              }}>
+              fontSize: '42px',
+              fontWeight: '700',
+              color: '#FFD700',
+              textShadow: '3px 3px 10px rgba(0,0,0,0.9)',
+              letterSpacing: '1px'
+            }}>
                 TEAM MEETING
               </p>
             </div>
 
             {/* Event Title */}
             <div className="absolute" style={{
-              top: '350px',
-              left: '978px',
-              transform: 'translateX(-50%)',
-              width: '648px',
-              padding: '0 27px'
-            }}>
+            top: '350px',
+            left: '978px',
+            transform: 'translateX(-50%)',
+            width: '648px',
+            padding: '0 27px'
+          }}>
               <h2 style={{
-                color: '#ffffff',
-                textAlign: 'center',
-                fontSize: '38px',
-                fontWeight: '600',
-                textShadow: '2px 2px 8px rgba(0,0,0,0.9)',
-                margin: 0
-              }}>
+              color: '#ffffff',
+              textAlign: 'center',
+              fontSize: '38px',
+              fontWeight: '600',
+              textShadow: '2px 2px 8px rgba(0,0,0,0.9)',
+              margin: 0
+            }}>
                 {bannerData.eventTitle?.toUpperCase() || truncatedMainName.toUpperCase()}
               </h2>
             </div>
 
             {/* Event Details */}
             <div className="absolute" style={{
-              top: '430px',
-              left: '978px',
-              transform: 'translateX(-50%)',
-              width: '648px',
-              padding: '0 40px'
+            top: '430px',
+            left: '978px',
+            transform: 'translateX(-50%)',
+            width: '648px',
+            padding: '0 40px'
+          }}>
+              {bannerData.eventDate && <p style={{
+              color: '#ffffff',
+              textAlign: 'center',
+              fontSize: '26px',
+              textShadow: '2px 2px 6px rgba(0,0,0,0.9)',
+              margin: '8px 0'
             }}>
-              {bannerData.eventDate && (
-                <p style={{
-                  color: '#ffffff',
-                  textAlign: 'center',
-                  fontSize: '26px',
-                  textShadow: '2px 2px 6px rgba(0,0,0,0.9)',
-                  margin: '8px 0'
-                }}>
                   📆 {bannerData.eventDate}
-                </p>
-              )}
-              {bannerData.eventVenue && (
-                <p style={{
-                  color: '#ffffff',
-                  textAlign: 'center',
-                  fontSize: '24px',
-                  textShadow: '2px 2px 6px rgba(0,0,0,0.9)',
-                  margin: '8px 0'
-                }}>
+                </p>}
+              {bannerData.eventVenue && <p style={{
+              color: '#ffffff',
+              textAlign: 'center',
+              fontSize: '24px',
+              textShadow: '2px 2px 6px rgba(0,0,0,0.9)',
+              margin: '8px 0'
+            }}>
                   📍 {bannerData.eventVenue}
-                </p>
-              )}
+                </p>}
             </div>
-          </>
-        );
-
+          </>;
       case 'festival':
-        return (
-          <>
+        return <>
             {/* Festival Icon */}
             <div className="absolute z-20" style={{
-              top: '140px',
-              left: '978px',
-              transform: 'translateX(-50%)',
-              fontSize: '120px'
-            }}>
+            top: '140px',
+            left: '978px',
+            transform: 'translateX(-50%)',
+            fontSize: '120px'
+          }}>
               🎉
             </div>
 
             {/* Festival Greeting */}
             <div className="absolute z-20" style={{
-              top: '280px',
-              left: '978px',
-              transform: 'translateX(-50%)',
-              width: '648px',
-              textAlign: 'center'
-            }}>
+            top: '280px',
+            left: '978px',
+            transform: 'translateX(-50%)',
+            width: '648px',
+            textAlign: 'center'
+          }}>
               <p style={{
-                fontSize: '48px',
-                fontWeight: '700',
-                color: '#FFD700',
-                textShadow: '3px 3px 10px rgba(0,0,0,0.9)',
-                letterSpacing: '1px'
-              }}>
+              fontSize: '48px',
+              fontWeight: '700',
+              color: '#FFD700',
+              textShadow: '3px 3px 10px rgba(0,0,0,0.9)',
+              letterSpacing: '1px'
+            }}>
                 FESTIVAL GREETINGS
               </p>
             </div>
 
             {/* Name - Only show if name exists */}
-            {truncatedMainName && (
-              <div className="absolute" style={{
-                top: '370px',
-                left: '978px',
-                transform: 'translateX(-50%)',
-                width: '648px',
-                padding: '0 27px'
-              }}>
+            {truncatedMainName && <div className="absolute" style={{
+            top: '370px',
+            left: '978px',
+            transform: 'translateX(-50%)',
+            width: '648px',
+            padding: '0 27px'
+          }}>
                 <h2 style={{
-                  color: '#ffffff',
-                  textAlign: 'center',
-                  fontSize: '44px',
-                  fontWeight: '600',
-                  textShadow: '2px 2px 8px rgba(0,0,0,0.9)',
-                  margin: 0
-                }}>
+              color: '#ffffff',
+              textAlign: 'center',
+              fontSize: '44px',
+              fontWeight: '600',
+              textShadow: '2px 2px 8px rgba(0,0,0,0.9)',
+              margin: 0
+            }}>
                   {truncatedMainName.toUpperCase()}
                 </h2>
-                {bannerData.teamCity && (
-                  <p style={{
-                    marginTop: '13px',
-                    color: '#ffffff',
-                    textAlign: 'center',
-                    fontSize: '28px',
-                    textShadow: '2px 2px 4px rgba(0,0,0,0.9)'
-                  }}>
+                {bannerData.teamCity && <p style={{
+              marginTop: '13px',
+              color: '#ffffff',
+              textAlign: 'center',
+              fontSize: '28px',
+              textShadow: '2px 2px 4px rgba(0,0,0,0.9)'
+            }}>
                     {bannerData.teamCity.toUpperCase()}
-                  </p>
-                )}
-              </div>
-            )}
+                  </p>}
+              </div>}
 
             {/* Festival Message */}
-            {bannerData.message && (
-              <div className="absolute" style={{
-                top: '480px',
-                left: '978px',
-                transform: 'translateX(-50%)',
-                width: '648px',
-                padding: '0 40px'
-              }}>
+            {bannerData.message && <div className="absolute" style={{
+            top: '480px',
+            left: '978px',
+            transform: 'translateX(-50%)',
+            width: '648px',
+            padding: '0 40px'
+          }}>
                 <p style={{
-                  color: '#ffffff',
-                  textAlign: 'center',
-                  fontSize: '24px',
-                  fontStyle: 'italic',
-                  textShadow: '2px 2px 6px rgba(0,0,0,0.9)',
-                  lineHeight: '1.4'
-                }}>
+              color: '#ffffff',
+              textAlign: 'center',
+              fontSize: '24px',
+              fontStyle: 'italic',
+              textShadow: '2px 2px 6px rgba(0,0,0,0.9)',
+              lineHeight: '1.4'
+            }}>
                   {bannerData.message}
                 </p>
-              </div>
-            )}
-          </>
-        );
-
+              </div>}
+          </>;
       case 'motivational':
-        return (
-          <>
+        return <>
             {/* Motivational Icon */}
             <div className="absolute z-20" style={{
-              top: '140px',
-              left: '978px',
-              transform: 'translateX(-50%)',
-              fontSize: '110px'
-            }}>
+            top: '140px',
+            left: '978px',
+            transform: 'translateX(-50%)',
+            fontSize: '110px'
+          }}>
               💪
             </div>
 
             {/* Motivational Title */}
             <div className="absolute z-20" style={{
-              top: '270px',
-              left: '978px',
-              transform: 'translateX(-50%)',
-              width: '648px',
-              textAlign: 'center'
-            }}>
-              <p style={{
-                fontSize: '44px',
-                fontWeight: '700',
-                color: '#FFD700',
-                textShadow: '3px 3px 10px rgba(0,0,0,0.9)',
-                letterSpacing: '1px'
-              }}>
-                STAY MOTIVATED
-              </p>
+            top: '270px',
+            left: '978px',
+            transform: 'translateX(-50%)',
+            width: '648px',
+            textAlign: 'center'
+          }}>
+              
             </div>
 
             {/* Quote/Message */}
-            {bannerData.quote && (
-              <div className="absolute" style={{
-                top: '360px',
-                left: '978px',
-                transform: 'translateX(-50%)',
-                width: '648px',
-                padding: '0 50px'
-              }}>
+            {bannerData.quote && <div className="absolute" style={{
+            top: '360px',
+            left: '978px',
+            transform: 'translateX(-50%)',
+            width: '648px',
+            padding: '0 50px'
+          }}>
                 <p style={{
-                  color: '#ffffff',
-                  textAlign: 'center',
-                  fontSize: '32px',
-                  fontWeight: '500',
-                  fontStyle: 'italic',
-                  textShadow: '2px 2px 8px rgba(0,0,0,0.9)',
-                  lineHeight: '1.5',
-                  quotes: '"\"""\""'
-                }}>
+              color: '#ffffff',
+              textAlign: 'center',
+              fontSize: '32px',
+              fontWeight: '500',
+              fontStyle: 'italic',
+              textShadow: '2px 2px 8px rgba(0,0,0,0.9)',
+              lineHeight: '1.5',
+              quotes: '"\"""\""'
+            }}>
                   "{bannerData.quote}"
                 </p>
-              </div>
-            )}
+              </div>}
 
             {/* Name Attribution - Only show if name exists */}
-            {truncatedMainName && (
-              <div className="absolute" style={{
-                top: '520px',
-                left: '978px',
-                transform: 'translateX(-50%)',
-                width: '648px',
-                padding: '0 27px'
-              }}>
+            {truncatedMainName && <div className="absolute" style={{
+            top: '520px',
+            left: '978px',
+            transform: 'translateX(-50%)',
+            width: '648px',
+            padding: '0 27px'
+          }}>
                 <p style={{
-                  color: '#FFD700',
-                  textAlign: 'center',
-                  fontSize: '30px',
-                  fontWeight: '600',
-                  textShadow: '2px 2px 6px rgba(0,0,0,0.9)',
-                  margin: 0
-                }}>
+              color: '#FFD700',
+              textAlign: 'center',
+              fontSize: '30px',
+              fontWeight: '600',
+              textShadow: '2px 2px 6px rgba(0,0,0,0.9)',
+              margin: 0
+            }}>
                   - {truncatedMainName.toUpperCase()}
                 </p>
-              </div>
-            )}
-          </>
-        );
-
-      default: // 'rank' category - original rank banner layout
-        return (
-          <>
+              </div>}
+          </>;
+      default:
+        // 'rank' category - original rank banner layout
+        return <>
             {/* Congratulations Image - Admin controlled, always displayed */}
-            {bannerDefaults?.congratulations_image && (
-              <div className="absolute z-20" style={{
-                top: '162px',
-                left: '978px',
-                transform: 'translateX(-50%)',
-                width: '648px',
-                height: '162px'
-              }}>
+            {bannerDefaults?.congratulations_image && <div className="absolute z-20" style={{
+            top: '162px',
+            left: '978px',
+            transform: 'translateX(-50%)',
+            width: '648px',
+            height: '162px'
+          }}>
                 <img src={bannerDefaults.congratulations_image} alt="Congratulations" style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover',
-                  filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.7))'
-                }} />
-              </div>
-            )}
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.7))'
+            }} />
+              </div>}
 
             {/* Text Below Congratulations Image */}
             <div className="absolute z-20" style={{
-              top: '236px',
-              left: '978px',
-              transform: 'translateX(-50%)',
-              width: '648px',
-              textAlign: 'center'
-            }}>
+            top: '236px',
+            left: '978px',
+            transform: 'translateX(-50%)',
+            width: '648px',
+            textAlign: 'center'
+          }}>
               {/* Placeholder for future content */}
             </div>
 
             {/* CENTER-RIGHT - Name - FIXED SIZE, POSITION, FONTS */}
             <div className="banner-text-content absolute" style={{
-              top: '337px',
-              left: '978px',
-              transform: 'translateX(-50%)',
-              width: '648px',
-              minWidth: '648px',
-              maxWidth: '648px',
-              padding: '0 27px'
-            }}>
+            top: '337px',
+            left: '978px',
+            transform: 'translateX(-50%)',
+            width: '648px',
+            minWidth: '648px',
+            maxWidth: '648px',
+            padding: '0 27px'
+          }}>
               <h2 title={mainBannerName.toUpperCase()} style={{
-                color: '#ffffff',
-                textAlign: 'center',
-                margin: '0 auto'
-              }} className="banner-preview-name text-center px-0 py-[2px] mx-[26px]">
+              color: '#ffffff',
+              textAlign: 'center',
+              margin: '0 auto'
+            }} className="banner-preview-name text-center px-0 py-[2px] mx-[26px]">
                 {truncatedMainName.toUpperCase()}
               </h2>
               
-              {bannerData.teamCity && (
-                <p title={bannerData.teamCity.toUpperCase()} style={{
-                  marginTop: '13px',
-                  color: '#ffffff',
-                  textAlign: 'center'
-                }} className="banner-team text-center px-[5px] py-[6px]">
+              {bannerData.teamCity && <p title={bannerData.teamCity.toUpperCase()} style={{
+              marginTop: '13px',
+              color: '#ffffff',
+              textAlign: 'center'
+            }} className="banner-team text-center px-[5px] py-[6px]">
                   {bannerData.teamCity.toUpperCase()}
-                </p>
-              )}
+                </p>}
             </div>
 
             {/* BOTTOM CENTER - Income - FIXED FONTS AND POSITION */}
-            {bannerData.chequeAmount && (
-              <div className="absolute" style={{
-                bottom: '202px',
-                left: '67px',
-                width: '743px',
-                minWidth: '743px',
-                maxWidth: '743px'
-              }}>
+            {bannerData.chequeAmount && <div className="absolute" style={{
+            bottom: '202px',
+            left: '67px',
+            width: '743px',
+            minWidth: '743px',
+            maxWidth: '743px'
+          }}>
                 <p style={{
-                  fontSize: '36px',
-                  textShadow: '2px 2px 4px rgba(0,0,0,0.9)',
-                  color: '#ffffff',
-                  fontWeight: '500',
-                  letterSpacing: '1px',
-                  textAlign: 'left',
-                  margin: 0,
-                  marginBottom: '28px'
-                }}>
+              fontSize: '36px',
+              textShadow: '2px 2px 4px rgba(0,0,0,0.9)',
+              color: '#ffffff',
+              fontWeight: '500',
+              letterSpacing: '1px',
+              textAlign: 'left',
+              margin: 0,
+              marginBottom: '28px'
+            }}>
                   THIS WEEK INCOME 
                 </p>
                 <p style={{
-                  fontSize: '62px',
-                  textShadow: '4px 4px 12px rgba(0,0,0,0.95)',
-                  lineHeight: '1',
-                  fontWeight: '800',
-                  letterSpacing: '2px',
-                  textAlign: 'left',
-                  margin: 0,
-                  color: '#FFD600',
-                  fontFamily: 'sans-serif'
-                }}>
+              fontSize: '62px',
+              textShadow: '4px 4px 12px rgba(0,0,0,0.95)',
+              lineHeight: '1',
+              fontWeight: '800',
+              letterSpacing: '2px',
+              textAlign: 'left',
+              margin: 0,
+              color: '#FFD600',
+              fontFamily: 'sans-serif'
+            }}>
                   {Number(bannerData.chequeAmount).toLocaleString('en-IN')}
                 </p>
-              </div>
-            )}
-          </>
-        );
+              </div>}
+          </>;
     }
   };
 
@@ -1029,23 +978,26 @@ export default function BannerPreview() {
     e.preventDefault();
     e.stopPropagation();
     setSelectedStickerId(stickerId);
-    setDragStartPos({ x: e.clientX, y: e.clientY });
+    setDragStartPos({
+      x: e.clientX,
+      y: e.clientY
+    });
   };
-
   const handleStickerMouseMove = (e: React.MouseEvent) => {
     if (!isAdmin || !isDragMode || !selectedStickerId || !dragStartPos || !bannerRef.current) return;
-    
     const banner = bannerRef.current;
     const rect = banner.getBoundingClientRect();
     const scale = rect.width / 1350; // Account for display scaling
-    
+
     // Calculate new position relative to banner
     const deltaX = (e.clientX - dragStartPos.x) / scale;
     const deltaY = (e.clientY - dragStartPos.y) / scale;
-    
+
     // Update sticker position
     setStickerImages(prev => {
-      const newImages = { ...prev };
+      const newImages = {
+        ...prev
+      };
       Object.keys(newImages).forEach(slot => {
         newImages[parseInt(slot)] = newImages[parseInt(slot)].map(sticker => {
           if (sticker.id === selectedStickerId) {
@@ -1053,11 +1005,10 @@ export default function BannerPreview() {
             const currentY = (sticker.position_y ?? 62) / 100 * 1350;
             const newX = Math.max(0, Math.min(1350, currentX + deltaX));
             const newY = Math.max(0, Math.min(1350, currentY + deltaY));
-            
             return {
               ...sticker,
-              position_x: (newX / 1350) * 100,
-              position_y: (newY / 1350) * 100,
+              position_x: newX / 1350 * 100,
+              position_y: newY / 1350 * 100
             };
           }
           return sticker;
@@ -1065,58 +1016,57 @@ export default function BannerPreview() {
       });
       return newImages;
     });
-    
-    setDragStartPos({ x: e.clientX, y: e.clientY });
+    setDragStartPos({
+      x: e.clientX,
+      y: e.clientY
+    });
   };
-
   const handleStickerMouseUp = () => {
     setSelectedStickerId(null);
     setDragStartPos(null);
   };
-
   const handleAddSticker = () => {
     toast.info("Add sticker functionality coming soon!");
   };
-
   const handleResizeSticker = (scale: number) => {
     if (!selectedStickerId) {
       // Apply to all stickers in current slot
       const currentSlot = selectedTemplate + 1;
       const stickers = stickerImages[currentSlot] || [];
       stickers.forEach(sticker => {
-        setStickerScale(prev => ({ ...prev, [sticker.id]: scale }));
+        setStickerScale(prev => ({
+          ...prev,
+          [sticker.id]: scale
+        }));
       });
     } else {
-      setStickerScale(prev => ({ ...prev, [selectedStickerId]: scale }));
+      setStickerScale(prev => ({
+        ...prev,
+        [selectedStickerId]: scale
+      }));
     }
   };
-
   const handleSaveSticker = async () => {
     if (!selectedStickerId) {
       toast.error("Please select a sticker first");
       return;
     }
-
     const currentSlot = selectedTemplate + 1;
     const stickers = stickerImages[currentSlot] || [];
     const selectedSticker = stickers.find(s => s.id === selectedStickerId);
-    
     if (!selectedSticker) {
       toast.error("Sticker not found");
       return;
     }
-
     setIsSavingSticker(true);
     try {
-      const { error } = await supabase
-        .from("stickers")
-        .update({
-          position_x: selectedSticker.position_x || 0,
-          position_y: selectedSticker.position_y || 0,
-          scale: stickerScale[selectedStickerId] || 2.5,
-        })
-        .eq("id", selectedStickerId);
-
+      const {
+        error
+      } = await supabase.from("stickers").update({
+        position_x: selectedSticker.position_x || 0,
+        position_y: selectedSticker.position_y || 0,
+        scale: stickerScale[selectedStickerId] || 2.5
+      }).eq("id", selectedStickerId);
       if (error) throw error;
 
       // Store current state as original after successful save
@@ -1125,10 +1075,9 @@ export default function BannerPreview() {
         [selectedStickerId]: {
           position_x: selectedSticker.position_x || 0,
           position_y: selectedSticker.position_y || 0,
-          scale: stickerScale[selectedStickerId] || 2.5,
+          scale: stickerScale[selectedStickerId] || 2.5
         }
       }));
-
       toast.success("Sticker settings saved successfully!");
     } catch (error) {
       console.error("Error saving sticker:", error);
@@ -1137,13 +1086,11 @@ export default function BannerPreview() {
       setIsSavingSticker(false);
     }
   };
-
   const handleResetSticker = () => {
     if (!selectedStickerId) {
       toast.error("Please select a sticker first");
       return;
     }
-
     const originalState = originalStickerStates[selectedStickerId];
     if (!originalState) {
       toast.info("No saved state to reset to");
@@ -1155,7 +1102,6 @@ export default function BannerPreview() {
       ...prev,
       [selectedStickerId]: originalState.scale
     }));
-    
     const currentSlot = selectedTemplate + 1;
     setStickerImages(prev => ({
       ...prev,
@@ -1164,16 +1110,14 @@ export default function BannerPreview() {
           return {
             ...sticker,
             position_x: originalState.position_x,
-            position_y: originalState.position_y,
+            position_y: originalState.position_y
           };
         }
         return sticker;
       })
     }));
-    
     toast.success("Sticker reset to saved position");
   };
-
   const getCurrentScale = () => {
     const currentSlot = selectedTemplate + 1;
     const stickers = stickerImages[currentSlot] || [];
@@ -1273,26 +1217,22 @@ export default function BannerPreview() {
       toast.error("Cannot save profile defaults");
       return;
     }
-
     const savingToast = toast.loading("Saving profile picture defaults...");
-
     try {
-      const { error } = await supabase
-        .from('motivational_profile_defaults')
-        .upsert({
-          motivational_banner_id: bannerData.motivationalBannerId,
-          profile_position_x: profilePicPosition.x,
-          profile_position_y: profilePicPosition.y,
-          profile_scale: profilePicScale
-        }, {
-          onConflict: 'motivational_banner_id'
-        });
-
+      const {
+        error
+      } = await supabase.from('motivational_profile_defaults').upsert({
+        motivational_banner_id: bannerData.motivationalBannerId,
+        profile_position_x: profilePicPosition.x,
+        profile_position_y: profilePicPosition.y,
+        profile_scale: profilePicScale
+      }, {
+        onConflict: 'motivational_banner_id'
+      });
       if (error) throw error;
-
       toast.dismiss(savingToast);
       toast.success("Profile picture defaults saved! All users will see these settings.");
-      
+
       // Refetch to confirm the save
       refetchProfileDefaults();
     } catch (error) {
@@ -1301,29 +1241,21 @@ export default function BannerPreview() {
       toast.error("Failed to save profile defaults");
     }
   };
-
   const handleDownload = async () => {
     if (!bannerRef.current) {
       toast.error("Banner not ready for download");
       return;
     }
-
     if (!userId) {
       toast.error("Please login to download banners");
       return;
     }
-
-    const categoryName = bannerData?.categoryType 
-      ? bannerData.categoryType.charAt(0).toUpperCase() + bannerData.categoryType.slice(1)
-      : bannerData?.rankName || "Banner";
+    const categoryName = bannerData?.categoryType ? bannerData.categoryType.charAt(0).toUpperCase() + bannerData.categoryType.slice(1) : bannerData?.rankName || "Banner";
 
     // Step 1: Quick balance check first (before generation)
-    const { data: credits } = await supabase
-      .from("user_credits")
-      .select("balance")
-      .eq("user_id", userId)
-      .single();
-
+    const {
+      data: credits
+    } = await supabase.from("user_credits").select("balance").eq("user_id", userId).single();
     if ((credits?.balance || 0) < 10) {
       setShowInsufficientBalanceModal(true);
       return;
@@ -1332,42 +1264,36 @@ export default function BannerPreview() {
     // Step 2: Generate banner
     setIsDownloading(true);
     const loadingToast = toast.loading("Generating ultra HD banner...");
-    
     try {
       // High quality export settings
       const dataUrl = await toPng(bannerRef.current, {
         cacheBust: true,
-        pixelRatio: 3,             // Ultra HD Export
-        quality: 1,                
-        backgroundColor: null,     // Transparent safe
+        pixelRatio: 3,
+        // Ultra HD Export
+        quality: 1,
+        backgroundColor: null,
+        // Transparent safe
         style: {
-          transform: "scale(1)",   // No scaling issue
-          transformOrigin: "top left",
+          transform: "scale(1)",
+          // No scaling issue
+          transformOrigin: "top left"
         },
-        filter: (node) => {
+        filter: node => {
           // WhatsApp button, controls, slots, UI elements hide
-          if (
-            node.classList?.contains("slot-selector") ||
-            node.classList?.contains("control-buttons") ||
-            node.classList?.contains("whatsapp-float") ||
-            node.id === "ignore-download"
-          ) {
+          if (node.classList?.contains("slot-selector") || node.classList?.contains("control-buttons") || node.classList?.contains("whatsapp-float") || node.id === "ignore-download") {
             return false;
           }
           return true;
-        },
+        }
       });
-
       toast.dismiss(loadingToast);
 
       // Step 3: Deduct wallet balance and save download record with banner URL
       const templateId = currentTemplateId || bannerData?.templateId;
-      const { success, insufficientBalance } = await checkAndDeductBalance(
-        userId, 
-        categoryName,
-        dataUrl,
-        templateId
-      );
+      const {
+        success,
+        insufficientBalance
+      } = await checkAndDeductBalance(userId, categoryName, dataUrl, templateId);
 
       // Step 4: If insufficient balance (race condition), show modal
       if (insufficientBalance) {
@@ -1385,30 +1311,23 @@ export default function BannerPreview() {
       download(dataUrl, `ReBusiness-Banner-${categoryName}-${timestamp}.png`);
 
       // Calculate approximate size (base64 size estimation)
-      const sizeMB = ((dataUrl.length * 0.75) / (1024 * 1024)).toFixed(2);
+      const sizeMB = (dataUrl.length * 0.75 / (1024 * 1024)).toFixed(2);
 
       // Get updated balance to show in success message
-      const { data: updatedCredits } = await supabase
-        .from("user_credits")
-        .select("balance")
-        .eq("user_id", userId)
-        .single();
-
+      const {
+        data: updatedCredits
+      } = await supabase.from("user_credits").select("balance").eq("user_id", userId).single();
       const remainingBalance = updatedCredits?.balance || 0;
-
-      toast.success(
-        `Banner saved to your device! (${sizeMB} MB) • ₹10 deducted`,
-        {
-          description: `Remaining balance: ₹${remainingBalance}. Check your Downloads or Gallery app to access your banner.`,
-          duration: 6000,
-        }
-      );
+      toast.success(`Banner saved to your device! (${sizeMB} MB) • ₹10 deducted`, {
+        description: `Remaining balance: ₹${remainingBalance}. Check your Downloads or Gallery app to access your banner.`,
+        duration: 6000
+      });
     } catch (error) {
       console.error("Banner download failed:", error);
       toast.dismiss(loadingToast);
       toast.error("Download failed. Please try again later.", {
         description: "Check your internet connection and ensure storage access is allowed. If the issue persists, contact support.",
-        duration: 7000,
+        duration: 7000
       });
     } finally {
       setIsDownloading(false);
@@ -1449,28 +1368,20 @@ export default function BannerPreview() {
               width: '1350px',
               height: '1350px'
             }} className="banner-scale-container">
-                <div 
-                  ref={bannerRef} 
-                  id="banner-canvas"
-                  onMouseMove={isAdmin ? handleStickerMouseMove : undefined}
-                  onMouseUp={isAdmin ? handleStickerMouseUp : undefined}
-                  onMouseLeave={isAdmin ? handleStickerMouseUp : undefined}
-                  style={{
-                    position: 'relative',
-                    width: '1350px',
-                    height: '1350px',
-                    background: templateColors[selectedTemplate].bgGradient,
-                    overflow: 'hidden',
-                    cursor: isAdmin && isDragMode ? 'crosshair' : 'default',
-                  }}
-                >
+                <div ref={bannerRef} id="banner-canvas" onMouseMove={isAdmin ? handleStickerMouseMove : undefined} onMouseUp={isAdmin ? handleStickerMouseUp : undefined} onMouseLeave={isAdmin ? handleStickerMouseUp : undefined} style={{
+                position: 'relative',
+                width: '1350px',
+                height: '1350px',
+                background: templateColors[selectedTemplate].bgGradient,
+                overflow: 'hidden',
+                cursor: isAdmin && isDragMode ? 'crosshair' : 'default'
+              }}>
               <div className="absolute inset-0">
                 {/* Background Image (if uploaded) or Gradient Background */}
                 {backgroundImage ? <img src={backgroundImage} alt="Template background" className="absolute inset-0 w-full h-full object-cover" /> : null}
 
                 {/* Story Category: Three Dark-Theme Upper Bars */}
-                {bannerData.categoryType === 'story' && (
-                  <>
+                {bannerData.categoryType === 'story' && <>
                     {/* Upper Bar 1 - Top */}
                     <div className="absolute z-10" style={{
                       top: '40px',
@@ -1575,8 +1486,7 @@ export default function BannerPreview() {
                         clipPath: 'polygon(10% 0, 100% 0, 90% 100%, 0% 100%)'
                       }} />
                     </div>
-                  </>
-                )}
+                  </>}
 
                 {/* Top-Left Logo */}
                 {bannerSettings?.logo_left && <div className="absolute z-30" style={{
@@ -1689,10 +1599,12 @@ export default function BannerPreview() {
                 {/* LOWER THIRD - Contact Info - FIXED FONTS AND POSITION */}
                 <div className="absolute" style={{
                     bottom: '40px',
-                    ...(bannerData.categoryType === 'motivational' 
-                      ? { right: '27px', textAlign: 'right' as const }
-                      : { left: '27px' }
-                    ),
+                    ...(bannerData.categoryType === 'motivational' ? {
+                      right: '27px',
+                      textAlign: 'right' as const
+                    } : {
+                      left: '27px'
+                    }),
                     width: '675px',
                     minWidth: '675px',
                     maxWidth: '675px'
@@ -1722,17 +1634,16 @@ export default function BannerPreview() {
                 </div>
 
                 {/* LEFT SIDE - Profile Photo - 75% HEIGHT - Motivational Layout */}
-                {mentorPhoto && bannerData.categoryType === 'motivational' && <div 
-                  className="absolute overflow-hidden shadow-2xl transition-transform duration-500 ease-in-out" 
-                  onClick={() => !isDraggingProfile && setIsMentorPhotoFlipped(!isMentorPhotoFlipped)}
-                  onMouseDown={(e) => {
+                {mentorPhoto && bannerData.categoryType === 'motivational' && <div className="absolute overflow-hidden shadow-2xl transition-transform duration-500 ease-in-out" onClick={() => !isDraggingProfile && setIsMentorPhotoFlipped(!isMentorPhotoFlipped)} onMouseDown={e => {
                     if (isAdmin) {
                       e.stopPropagation();
                       setIsDraggingProfile(true);
-                      setProfileDragStart({ x: e.clientX - profilePicPosition.x, y: e.clientY - profilePicPosition.y });
+                      setProfileDragStart({
+                        x: e.clientX - profilePicPosition.x,
+                        y: e.clientY - profilePicPosition.y
+                      });
                     }
-                  }}
-                  style={{
+                  }} style={{
                     top: `calc(50% + ${profilePicPosition.y}px)`,
                     left: `${profilePicPosition.x}px`,
                     width: 'auto',
@@ -1783,36 +1694,36 @@ export default function BannerPreview() {
 
                 {/* STORY CATEGORY: Lower-Third Cycling Variants - Three Variant Sequencing */}
                 {bannerData.categoryType === 'story' && (() => {
-                  // Calculate variant based on slot number (0-15) in repeating sequence
-                  const slotNumber = selectedTemplate; // selectedTemplate is 0-indexed
-                  const variantIndex = (slotNumber % 3) + 1; // 1, 2, or 3
-                  
-                  // Define three variants with strict color isolation
-                  const variants = {
-                    1: { 
-                      borderColor: '#ffd700', // Yellow/Gold
-                      tabColor: '#ffd700',
-                      shadowColor: 'rgba(255, 215, 0, 0.4)',
-                      name: 'Yellow'
-                    },
-                    2: { 
-                      borderColor: '#00a8e8', // Blue
-                      tabColor: '#00a8e8',
-                      shadowColor: 'rgba(0, 168, 232, 0.4)',
-                      name: 'Blue'
-                    },
-                    3: { 
-                      borderColor: '#06d6a0', // Teal/Cyan
-                      tabColor: '#06d6a0',
-                      shadowColor: 'rgba(6, 214, 160, 0.4)',
-                      name: 'Teal'
-                    }
-                  };
+                    // Calculate variant based on slot number (0-15) in repeating sequence
+                    const slotNumber = selectedTemplate; // selectedTemplate is 0-indexed
+                    const variantIndex = slotNumber % 3 + 1; // 1, 2, or 3
 
-                  const currentVariant = variants[variantIndex as keyof typeof variants];
-
-                  return (
-                    <div className="absolute" style={{
+                    // Define three variants with strict color isolation
+                    const variants = {
+                      1: {
+                        borderColor: '#ffd700',
+                        // Yellow/Gold
+                        tabColor: '#ffd700',
+                        shadowColor: 'rgba(255, 215, 0, 0.4)',
+                        name: 'Yellow'
+                      },
+                      2: {
+                        borderColor: '#00a8e8',
+                        // Blue
+                        tabColor: '#00a8e8',
+                        shadowColor: 'rgba(0, 168, 232, 0.4)',
+                        name: 'Blue'
+                      },
+                      3: {
+                        borderColor: '#06d6a0',
+                        // Teal/Cyan
+                        tabColor: '#06d6a0',
+                        shadowColor: 'rgba(6, 214, 160, 0.4)',
+                        name: 'Teal'
+                      }
+                    };
+                    const currentVariant = variants[variantIndex as keyof typeof variants];
+                    return <div className="absolute" style={{
                       bottom: '35px',
                       left: '27px',
                       right: '27px',
@@ -1837,7 +1748,9 @@ export default function BannerPreview() {
                         padding: '0 40px'
                       }}>
                         {/* User Info on Left */}
-                        <div style={{ flex: 1 }}>
+                        <div style={{
+                          flex: 1
+                        }}>
                           <div style={{
                             fontSize: '30px',
                             fontWeight: '800',
@@ -1874,7 +1787,9 @@ export default function BannerPreview() {
                         paddingLeft: '60px',
                         boxShadow: `0 6px 20px ${currentVariant.shadowColor}`
                       }}>
-                        <div style={{ textAlign: 'center' }}>
+                        <div style={{
+                          textAlign: 'center'
+                        }}>
                           <div style={{
                             fontSize: '15px',
                             fontWeight: '600',
@@ -1896,39 +1811,38 @@ export default function BannerPreview() {
                           </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                })()}
+                    </div>;
+                  })()}
 
                 {/* MOTIVATIONAL CONTACT STRIP BANNER - Three Variant Sequencing */}
                 {bannerData.categoryType === 'motivational' && (() => {
-                  // Calculate variant based on slot number (1-16) in repeating sequence
-                  const slotNumber = selectedTemplate + 1; // selectedTemplate is 0-indexed, slots are 1-16
-                  const variantIndex = ((slotNumber - 1) % 3) + 1; // 1, 2, or 3
-                  
-                  // Define three variants with strict color isolation
-                  const variants = {
-                    1: { 
-                      borderColor: '#e63946', // Red/Crimson
-                      tabColor: '#e63946',
-                      shadowColor: 'rgba(230, 57, 70, 0.4)'
-                    },
-                    2: { 
-                      borderColor: '#f77f00', // Orange
-                      tabColor: '#f77f00',
-                      shadowColor: 'rgba(247, 127, 0, 0.4)'
-                    },
-                    3: { 
-                      borderColor: '#06d6a0', // Teal/Cyan
-                      tabColor: '#06d6a0',
-                      shadowColor: 'rgba(6, 214, 160, 0.4)'
-                    }
-                  };
+                    // Calculate variant based on slot number (1-16) in repeating sequence
+                    const slotNumber = selectedTemplate + 1; // selectedTemplate is 0-indexed, slots are 1-16
+                    const variantIndex = (slotNumber - 1) % 3 + 1; // 1, 2, or 3
 
-                  const currentVariant = variants[variantIndex as keyof typeof variants];
-
-                  return (
-                    <div className="absolute" style={{
+                    // Define three variants with strict color isolation
+                    const variants = {
+                      1: {
+                        borderColor: '#e63946',
+                        // Red/Crimson
+                        tabColor: '#e63946',
+                        shadowColor: 'rgba(230, 57, 70, 0.4)'
+                      },
+                      2: {
+                        borderColor: '#f77f00',
+                        // Orange
+                        tabColor: '#f77f00',
+                        shadowColor: 'rgba(247, 127, 0, 0.4)'
+                      },
+                      3: {
+                        borderColor: '#06d6a0',
+                        // Teal/Cyan
+                        tabColor: '#06d6a0',
+                        shadowColor: 'rgba(6, 214, 160, 0.4)'
+                      }
+                    };
+                    const currentVariant = variants[variantIndex as keyof typeof variants];
+                    return <div className="absolute" style={{
                       bottom: '35px',
                       left: '27px',
                       right: '27px',
@@ -1953,7 +1867,9 @@ export default function BannerPreview() {
                         padding: '0 40px'
                       }}>
                         {/* User Info on Left */}
-                        <div style={{ flex: 1 }}>
+                        <div style={{
+                          flex: 1
+                        }}>
                           <div style={{
                             fontSize: '30px',
                             fontWeight: '800',
@@ -1990,7 +1906,9 @@ export default function BannerPreview() {
                         paddingLeft: '60px',
                         boxShadow: `0 6px 20px ${currentVariant.shadowColor}`
                       }}>
-                        <div style={{ textAlign: 'center' }}>
+                        <div style={{
+                          textAlign: 'center'
+                        }}>
                           <div style={{
                             fontSize: '15px',
                             fontWeight: '600',
@@ -2012,13 +1930,11 @@ export default function BannerPreview() {
                           </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                })()}
+                    </div>;
+                  })()}
 
                 {/* BOTTOM CENTER - Profile Name & Rank - FIXED FONTS AND POSITION (Only for non-motivational) */}
-                {bannerData.categoryType !== 'motivational' && (
-                  <div className="absolute text-center" style={{
+                {bannerData.categoryType !== 'motivational' && <div className="absolute text-center" style={{
                     bottom: '40px',
                     left: '50%',
                     transform: 'translateX(-45%)',
@@ -2027,60 +1943,51 @@ export default function BannerPreview() {
                     zIndex: 3
                   }}>
                     <p title={profileName} style={{
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        marginBottom: '1px',
-                        position: 'relative',
-                        top: '20px',
-                        color: '#ffffff',
-                        textAlign: 'center'
-                      }} className="banner-profile-name px-[4px] py-0 my-0">
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      marginBottom: '1px',
+                      position: 'relative',
+                      top: '20px',
+                      color: '#ffffff',
+                      textAlign: 'center'
+                    }} className="banner-profile-name px-[4px] py-0 my-0">
                       {truncatedProfileName.toUpperCase()}
                     </p>
                     <p className="banner-profile-rank" style={{
-                        textTransform: 'uppercase',
-                        color: '#eab308',
-                        textAlign: 'center'
-                      }}>
+                      textTransform: 'uppercase',
+                      color: '#eab308',
+                      textAlign: 'center'
+                    }}>
                       {displayRank}
                     </p>
-                  </div>
-                )}
+                  </div>}
 
                 {/* Achievement Stickers - Right side of achiever photo, near right edge */}
                 {stickerImages[selectedTemplate + 1]?.map((sticker, index) => {
                     const finalScale = stickerScale[sticker.id] ?? sticker.scale ?? 0.5;
                     const isSelected = selectedStickerId === sticker.id;
-                    return <img 
-                      key={sticker.id} 
-                      src={sticker.url} 
-                      alt="Achievement Sticker" 
-                      className={`absolute animate-in fade-in zoom-in duration-300 transition-all ${isAdmin && isDragMode ? 'cursor-move' : 'pointer-events-none'} ${isAdmin && isSelected ? 'ring-4 ring-primary ring-offset-2 ring-offset-background' : ''}`}
-                      onMouseDown={isAdmin ? (e) => handleStickerMouseDown(e, sticker.id) : undefined}
-                      onClick={isAdmin ? (e) => {
-                        if (isDragMode) {
-                          e.stopPropagation();
-                          setSelectedStickerId(sticker.id);
-                        }
-                      } : undefined}
-                      style={{
-                        left: `${sticker.position_x ?? 77}%`,
-                        top: `${sticker.position_y ?? 62}%`,
-                        transform: `translate(-50%, -50%) scale(${finalScale}) rotate(${sticker.rotation ?? 0}deg)`,
-                        transformOrigin: 'center center',
-                        width: '145px',
-                        height: '145px',
-                        minWidth: '145px',
-                        minHeight: '145px',
-                        maxWidth: '145px',
-                        maxHeight: '145px',
-                        objectFit: 'contain',
-                        filter: 'drop-shadow(0 6px 9px rgba(0,0,0,0.4))',
-                        zIndex: isSelected ? 20 : 10,
-                        userSelect: 'none',
-                      }} 
-                    />;
+                    return <img key={sticker.id} src={sticker.url} alt="Achievement Sticker" className={`absolute animate-in fade-in zoom-in duration-300 transition-all ${isAdmin && isDragMode ? 'cursor-move' : 'pointer-events-none'} ${isAdmin && isSelected ? 'ring-4 ring-primary ring-offset-2 ring-offset-background' : ''}`} onMouseDown={isAdmin ? e => handleStickerMouseDown(e, sticker.id) : undefined} onClick={isAdmin ? e => {
+                      if (isDragMode) {
+                        e.stopPropagation();
+                        setSelectedStickerId(sticker.id);
+                      }
+                    } : undefined} style={{
+                      left: `${sticker.position_x ?? 77}%`,
+                      top: `${sticker.position_y ?? 62}%`,
+                      transform: `translate(-50%, -50%) scale(${finalScale}) rotate(${sticker.rotation ?? 0}deg)`,
+                      transformOrigin: 'center center',
+                      width: '145px',
+                      height: '145px',
+                      minWidth: '145px',
+                      minHeight: '145px',
+                      maxWidth: '145px',
+                      maxHeight: '145px',
+                      objectFit: 'contain',
+                      filter: 'drop-shadow(0 6px 9px rgba(0,0,0,0.4))',
+                      zIndex: isSelected ? 20 : 10,
+                      userSelect: 'none'
+                    }} />;
                   })}
 
                 {/* BOTTOM RIGHT - Mentor Name and Title (Moved to bottom-most position) */}
@@ -2145,49 +2052,25 @@ export default function BannerPreview() {
     }} />}
 
       {/* Sticker Control Panel - Admin Only */}
-      {isAdmin && stickerImages[selectedTemplate + 1]?.length > 0 && (
-        <StickerControl
-          onAddSticker={handleAddSticker}
-          onResizeSticker={handleResizeSticker}
-          onToggleDragMode={setIsDragMode}
-          onSave={handleSaveSticker}
-          onReset={handleResetSticker}
-          currentScale={getCurrentScale()}
-          isDragMode={isDragMode}
-          isSaving={isSavingSticker}
-          isAdmin={true}
-        />
-      )}
+      {isAdmin && stickerImages[selectedTemplate + 1]?.length > 0 && <StickerControl onAddSticker={handleAddSticker} onResizeSticker={handleResizeSticker} onToggleDragMode={setIsDragMode} onSave={handleSaveSticker} onReset={handleResetSticker} currentScale={getCurrentScale()} isDragMode={isDragMode} isSaving={isSavingSticker} isAdmin={true} />}
 
       {/* Profile Picture Control Panel - Admin Only - Motivational Only */}
-      {isAdmin && bannerData.categoryType === 'motivational' && mentorPhoto && (
-        <>
+      {isAdmin && bannerData.categoryType === 'motivational' && mentorPhoto && <>
           {/* Minimized State - Floating Icon */}
-          {isProfileControlMinimized && (
-            <button
-              onClick={() => setIsProfileControlMinimized(false)}
-              className="fixed bottom-6 right-6 z-40 bg-[#0f1720] rounded-full p-4 shadow-2xl border border-primary/30 hover:bg-[#1a1f2e] transition-colors"
-              title="Expand Profile Controls"
-            >
+          {isProfileControlMinimized && <button onClick={() => setIsProfileControlMinimized(false)} className="fixed bottom-6 right-6 z-40 bg-[#0f1720] rounded-full p-4 shadow-2xl border border-primary/30 hover:bg-[#1a1f2e] transition-colors" title="Expand Profile Controls">
               <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
               </svg>
-            </button>
-          )}
+            </button>}
 
           {/* Expanded State - Full Control Panel */}
-          {!isProfileControlMinimized && (
-            <div className="fixed bottom-6 right-6 z-40 bg-[#0f1720] rounded-2xl p-4 shadow-2xl border border-primary/30 w-[320px]">
+          {!isProfileControlMinimized && <div className="fixed bottom-6 right-6 z-40 bg-[#0f1720] rounded-2xl p-4 shadow-2xl border border-primary/30 w-[320px]">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
                   <h3 className="text-sm font-semibold text-primary uppercase tracking-wider">Profile Picture</h3>
                 </div>
-                <button
-                  onClick={() => setIsProfileControlMinimized(true)}
-                  className="text-muted-foreground hover:text-primary transition-colors p-1 rounded hover:bg-secondary/30"
-                  title="Minimize"
-                >
+                <button onClick={() => setIsProfileControlMinimized(true)} className="text-muted-foreground hover:text-primary transition-colors p-1 rounded hover:bg-secondary/30" title="Minimize">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
@@ -2201,15 +2084,7 @@ export default function BannerPreview() {
                     <label className="text-xs text-muted-foreground font-medium">Scale</label>
                     <span className="text-xs text-primary font-mono">{Math.round(profilePicScale * 100)}%</span>
                   </div>
-                  <input
-                    type="range"
-                    min="0.5"
-                    max="1.5"
-                    step="0.05"
-                    value={profilePicScale}
-                    onChange={(e) => setProfilePicScale(parseFloat(e.target.value))}
-                    className="w-full h-2 bg-secondary rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:cursor-pointer"
-                  />
+                  <input type="range" min="0.5" max="1.5" step="0.05" value={profilePicScale} onChange={e => setProfilePicScale(parseFloat(e.target.value))} className="w-full h-2 bg-secondary rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:cursor-pointer" />
                 </div>
 
                 {/* Instructions */}
@@ -2221,41 +2096,29 @@ export default function BannerPreview() {
 
                 {/* Action Buttons */}
                 <div className="flex gap-2">
-                  <Button
-                    onClick={handleSaveProfileDefaults}
-                    size="sm"
-                    className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground"
-                  >
+                  <Button onClick={handleSaveProfileDefaults} size="sm" className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground">
                     Save Defaults
                   </Button>
-                  <Button
-                    onClick={() => {
-                      setProfilePicPosition({ x: 0, y: 0 });
-                      setProfilePicScale(1);
-                      toast.success("Profile picture reset to default");
-                    }}
-                    variant="outline"
-                    size="sm"
-                    className="flex-1"
-                  >
+                  <Button onClick={() => {
+              setProfilePicPosition({
+                x: 0,
+                y: 0
+              });
+              setProfilePicScale(1);
+              toast.success("Profile picture reset to default");
+            }} variant="outline" size="sm" className="flex-1">
                     Reset
                   </Button>
                 </div>
               </div>
-            </div>
-          )}
-        </>
-      )}
+            </div>}
+        </>}
 
       {/* Insufficient Balance Modal */}
-      <InsufficientBalanceModal 
-        open={showInsufficientBalanceModal} 
-        onClose={() => setShowInsufficientBalanceModal(false)} 
-      />
+      <InsufficientBalanceModal open={showInsufficientBalanceModal} onClose={() => setShowInsufficientBalanceModal(false)} />
 
       {/* Loading Overlay - Shows during banner export */}
-      {isDownloading && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+      {isDownloading && <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <div className="w-[86%] max-w-[420px] bg-[#0f1720] rounded-xl p-5 shadow-2xl border border-primary/20">
             <div className="flex items-center gap-3 mb-3">
               {/* Logo placeholder - replace with actual ReBusiness logo */}
@@ -2277,7 +2140,6 @@ export default function BannerPreview() {
               Preparing your banner — this may take a few seconds.
             </p>
           </div>
-        </div>
-      )}
+        </div>}
     </div>;
 }
