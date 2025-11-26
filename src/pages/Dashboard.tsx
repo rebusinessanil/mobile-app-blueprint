@@ -153,8 +153,8 @@ export default function Dashboard() {
         {festivals.length > 0 && <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="text-xl">📖</span>
-                <h2 className="text-lg font-bold text-foreground">Stories</h2>
+                <span className="text-base">📖</span>
+                <h2 className="text-sm font-bold text-foreground">Stories</h2>
               </div>
             </div>
             <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
