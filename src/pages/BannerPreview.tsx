@@ -17,8 +17,6 @@ import type { Sticker } from "@/hooks/useStickers";
 import { toPng } from "html-to-image";
 import download from "downloadjs";
 import { useRealtimeStickerSync } from "@/hooks/useRealtimeStickerSync";
-import { useWalletDeduction } from "@/hooks/useWalletDeduction";
-import InsufficientBalanceModal from "@/components/InsufficientBalanceModal";
 interface Upline {
   id: string;
   name: string;
@@ -89,10 +87,7 @@ export default function BannerPreview() {
   const [isDraggingProfile, setIsDraggingProfile] = useState(false);
   const [profileDragStart, setProfileDragStart] = useState<{ x: number; y: number } | null>(null);
   const [isProfileControlMinimized, setIsProfileControlMinimized] = useState(false);
-  const [showInsufficientBalanceModal, setShowInsufficientBalanceModal] = useState(false);
-
-  // Wallet deduction hook
-  const { checkAndDeductBalance, isProcessing: isProcessingWallet } = useWalletDeduction();
+  const [showBalanceModal, setShowBalanceModal] = useState(false);
 
   // Handle profile picture drag (admin only, motivational only)
   useEffect(() => {
@@ -1308,30 +1303,50 @@ export default function BannerPreview() {
       return;
     }
 
-    if (!userId) {
-      toast.error("Please login to download banners");
-      return;
+    // Check credit balance before download
+    if (userId) {
+      const { data: credits, error: creditsError } = await supabase
+        .from("user_credits")
+        .select("balance")
+        .eq("user_id", userId)
+        .single();
+
+      if (creditsError || !credits) {
+        toast.error("Failed to check credit balance");
+        return;
+      }
+
+      // Check for zero balance first
+      if (credits.balance <= 0) {
+        setShowBalanceModal(true);
+        return;
+      }
+
+      const BANNER_COST = 10; // Cost per banner download
+      if (credits.balance < BANNER_COST) {
+        toast.error(`Insufficient balance! You need ₹${BANNER_COST} credits to download this banner.`, {
+          action: {
+            label: "Top Up",
+            onClick: () => navigate("/wallet"),
+          },
+        });
+        return;
+      }
+
+      // Request storage permission on supported browsers
+      if ('permissions' in navigator) {
+        try {
+          const permission = await navigator.permissions.query({ name: 'persistent-storage' as PermissionName });
+          if (permission.state === 'prompt') {
+            toast.info("This app needs storage access to save banners to your device.");
+          }
+        } catch (e) {
+          // Permission API not fully supported, continue with download
+          console.log('Storage permission check not supported');
+        }
+      }
     }
 
-    // Step 1: Check wallet balance and deduct BEFORE download
-    const categoryName = bannerData?.categoryType 
-      ? bannerData.categoryType.charAt(0).toUpperCase() + bannerData.categoryType.slice(1)
-      : bannerData?.rankName || "Banner";
-
-    const { success, insufficientBalance } = await checkAndDeductBalance(userId, categoryName);
-
-    // Step 2: If insufficient balance, show modal and block download
-    if (insufficientBalance) {
-      setShowInsufficientBalanceModal(true);
-      return;
-    }
-
-    // Step 3: If wallet deduction failed for other reasons, show error
-    if (!success) {
-      return; // Error toast already shown by hook
-    }
-
-    // Step 4: Proceed with download after successful wallet deduction
     setIsDownloading(true);
     const loadingToast = toast.loading("Generating ultra HD banner...");
     
@@ -1364,27 +1379,67 @@ export default function BannerPreview() {
 
       // Download the banner
       const timestamp = new Date().getTime();
-      download(dataUrl, `ReBusiness-Banner-${categoryName}-${timestamp}.png`);
+      download(dataUrl, `ReBusiness-Banner-${bannerData.rankName}-${timestamp}.png`);
 
       // Calculate approximate size (base64 size estimation)
       const sizeMB = ((dataUrl.length * 0.75) / (1024 * 1024)).toFixed(2);
 
-      // Get updated balance to show in success message
-      const { data: updatedCredits } = await supabase
-        .from("user_credits")
-        .select("balance")
-        .eq("user_id", userId)
-        .single();
+      // Deduct credits after successful download
+      if (userId) {
+        const BANNER_COST = 10;
+        try {
+          // Get current balance
+          const { data: currentCredits } = await supabase
+            .from("user_credits")
+            .select("balance, total_spent")
+            .eq("user_id", userId)
+            .single();
 
-      const remainingBalance = updatedCredits?.balance || 0;
+          if (currentCredits) {
+            const newBalance = currentCredits.balance - BANNER_COST;
+            const newTotalSpent = currentCredits.total_spent + BANNER_COST;
 
-      toast.success(
-        `Banner saved to your device! (${sizeMB} MB) • ₹10 deducted`,
-        {
-          description: `Remaining balance: ₹${remainingBalance}. Check your Downloads or Gallery app to access your banner.`,
-          duration: 6000,
+            // Update balance
+            await supabase
+              .from("user_credits")
+              .update({
+                balance: newBalance,
+                total_spent: newTotalSpent,
+              })
+              .eq("user_id", userId);
+
+            // Record transaction
+            await supabase
+              .from("credit_transactions")
+              .insert({
+                user_id: userId,
+                amount: BANNER_COST,
+                transaction_type: "spent",
+                description: `Banner download - ${bannerData.rankName}`,
+              });
+
+            toast.success(
+              `Banner saved to your device! (${sizeMB} MB) • ₹${BANNER_COST} deducted`,
+              {
+                description: `Remaining balance: ₹${newBalance}. Check your Downloads or Gallery app to access your banner.`,
+                duration: 6000,
+              }
+            );
+          }
+        } catch (error) {
+          console.error("Credit deduction error:", error);
+          // Still show success for download even if credit deduction fails
+          toast.success(`Banner saved successfully! (~${sizeMB} MB)`, {
+            description: "Your banner has been saved. Check your Downloads folder or Gallery app.",
+            duration: 5000,
+          });
         }
-      );
+      } else {
+        toast.success(`Banner saved successfully! (~${sizeMB} MB)`, {
+          description: "Your banner has been saved. Check your Downloads folder or Gallery app.",
+          duration: 5000,
+        });
+      }
     } catch (error) {
       console.error("Banner download failed:", error);
       toast.dismiss(loadingToast);
@@ -2003,11 +2058,51 @@ export default function BannerPreview() {
         </>
       )}
 
-      {/* Insufficient Balance Modal */}
-      <InsufficientBalanceModal 
-        open={showInsufficientBalanceModal} 
-        onClose={() => setShowInsufficientBalanceModal(false)} 
-      />
+      {/* Balance Modal - Shows when balance is zero */}
+      {showBalanceModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md animate-fade-in">
+          <div className="bg-[#0f1720] rounded-3xl p-8 shadow-2xl border-2 border-primary/30 w-[90%] max-w-[420px] animate-scale-in">
+            {/* Icon */}
+            <div className="flex justify-center mb-6">
+              <div className="w-20 h-20 rounded-full bg-primary/10 border-2 border-primary flex items-center justify-center">
+                <svg className="w-10 h-10 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+            </div>
+
+            {/* Title */}
+            <h3 className="text-2xl font-bold text-foreground text-center mb-3">
+              Insufficient Balance
+            </h3>
+
+            {/* Message */}
+            <p className="text-muted-foreground text-center text-base mb-8 leading-relaxed">
+              Please recharge your wallet to download banners.
+            </p>
+
+            {/* Buttons */}
+            <div className="flex flex-col gap-3">
+              <Button
+                onClick={() => {
+                  setShowBalanceModal(false);
+                  window.open("https://wa.me/917734990035", "_blank");
+                }}
+                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-6 text-lg rounded-xl shadow-lg"
+              >
+                Recharge Wallet
+              </Button>
+              <Button
+                onClick={() => setShowBalanceModal(false)}
+                variant="outline"
+                className="w-full border-border/50 text-muted-foreground hover:bg-secondary/30 py-6 text-base rounded-xl"
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Loading Overlay - Shows during banner export */}
       {isDownloading && (
