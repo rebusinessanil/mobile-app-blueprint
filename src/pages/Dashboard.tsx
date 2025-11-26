@@ -135,6 +135,43 @@ export default function Dashboard() {
 
       {/* Content */}
       <div className="px-6 py-6 space-y-6">
+        {/* Stories Section - Instagram Style */}
+        {festivals.length > 0 && (
+          <div className="space-y-3">
+            <h2 className="text-lg font-bold text-foreground">Stories</h2>
+            <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+              {festivals.slice(0, 16).map((festival) => (
+                <Link
+                  key={festival.id}
+                  to={`/create/festival-banner?festivalId=${festival.id}`}
+                  className="flex flex-col items-center gap-2 flex-shrink-0 group"
+                >
+                  {/* Circular Story Image with Active Ring */}
+                  <div className="relative">
+                    <div className="w-20 h-20 rounded-full p-[3px] bg-gradient-to-tr from-primary via-primary to-secondary">
+                      <div className="w-full h-full rounded-full border-[3px] border-navy-dark overflow-hidden">
+                        <img
+                          src={festival.poster_url}
+                          alt={festival.festival_name}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    </div>
+                    {/* Green Active Indicator */}
+                    <div className="absolute bottom-0 right-0 w-5 h-5 bg-green-500 rounded-full border-3 border-navy-dark flex items-center justify-center">
+                      <div className="w-2 h-2 bg-white rounded-full"></div>
+                    </div>
+                  </div>
+                  {/* Festival Title */}
+                  <p className="text-xs text-foreground text-center max-w-[80px] truncate">
+                    {festival.festival_name}
+                  </p>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Auto-Generated Stories Section */}
         {generatedStories.length > 0 && (
           <div className="space-y-3">
