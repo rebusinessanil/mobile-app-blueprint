@@ -1554,6 +1554,12 @@ export default function BannerPreview() {
                       objectFit: 'cover',
                       objectPosition: 'center'
                     }} />
+                    {/* Bottom feather fade overlay */}
+                    <div className="absolute bottom-0 left-0 right-0 pointer-events-none" style={{
+                      height: '238px',
+                      /* Fixed 30% of 792px */
+                      background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%)'
+                    }} />
                   </div>}
 
                 {/* Golden Crown below user photo */}
@@ -1633,6 +1639,11 @@ export default function BannerPreview() {
                       objectPosition: 'center',
                       pointerEvents: 'none'
                     }} />
+                    {/* Bottom feather fade overlay */}
+                    <div className="absolute bottom-0 left-0 right-0 pointer-events-none" style={{
+                      height: '308px', // 30% of 1026px
+                      background: 'linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 100%)'
+                    }} />
                   </div>}
 
                 {/* BOTTOM RIGHT - Mentor Photo - FIXED SIZE AND POSITION - SQUARE 1:1 RATIO - Other Categories */}
@@ -1653,6 +1664,12 @@ export default function BannerPreview() {
                       height: '540px',
                       objectFit: 'cover',
                       objectPosition: 'center'
+                    }} />
+                    {/* Bottom feather fade overlay */}
+                    <div className="absolute bottom-0 left-0 right-0 pointer-events-none" style={{
+                      height: '162px',
+                      /* Fixed 30% of 540px */
+                      background: 'linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 100%)'
                     }} />
                   </div>}
 
