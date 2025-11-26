@@ -2086,7 +2086,7 @@ export default function BannerPreview() {
               <Button
                 onClick={() => {
                   setShowBalanceModal(false);
-                  navigate("/wallet");
+                  window.open("https://wa.me/917734990035", "_blank");
                 }}
                 className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-6 text-lg rounded-xl shadow-lg"
               >
