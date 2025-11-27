@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowUp, ArrowDown, ChevronLeft } from "lucide-react";
-import { format } from "date-fns";
+import { formatToIST } from "@/lib/dateUtils";
 import { toast } from "sonner";
 
 interface Transaction {
@@ -127,7 +127,7 @@ export default function Transactions() {
                           {txn.description || "Transaction"}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {format(new Date(txn.created_at), "MMM dd, yyyy • hh:mm a")}
+                          {formatToIST(txn.created_at)}
                         </p>
                       </div>
                     </div>

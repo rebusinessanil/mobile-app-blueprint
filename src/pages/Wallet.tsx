@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Wallet as WalletIcon, ArrowUp, ArrowDown, Clock, ChevronLeft, Download } from "lucide-react";
 import { toast } from "sonner";
-import { format } from "date-fns";
+import { formatToIST } from "@/lib/dateUtils";
 import BottomNav from "@/components/BottomNav";
 import {
   Dialog,
@@ -266,7 +266,7 @@ export default function Wallet() {
                       ₹{lastRecharge.amount}
                     </p>
                     <p className="text-[10px] text-muted-foreground mt-1">
-                      {format(new Date(lastRecharge.date), "MMM dd, yyyy")}
+                      {formatToIST(lastRecharge.date).split(' • ')[0]}
                     </p>
                   </>
                 ) : (
@@ -336,7 +336,7 @@ export default function Wallet() {
                           {txn.description || "Transaction"}
                         </p>
                         <p className="text-[10px] text-muted-foreground mt-0.5">
-                          {format(new Date(txn.created_at), "MMM dd, yyyy • hh:mm a")}
+                          {formatToIST(txn.created_at)}
                         </p>
                       </div>
                     </div>
