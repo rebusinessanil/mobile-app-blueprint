@@ -4,7 +4,7 @@ import { ArrowLeft, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useDownloadHistory } from "@/hooks/useDownloadHistory";
 import { Button } from "@/components/ui/button";
-import { format } from "date-fns";
+import { formatToIST } from "@/lib/dateUtils";
 
 export default function MyDownloads() {
   const navigate = useNavigate();
@@ -85,7 +85,7 @@ export default function MyDownloads() {
                       Banner download - {download.category_name}
                     </h3>
                     <p className="text-sm text-muted-foreground">
-                      {format(new Date(download.downloaded_at), "MMM dd, yyyy • hh:mm a")}
+                      {formatToIST(download.downloaded_at)}
                     </p>
                   </div>
 
