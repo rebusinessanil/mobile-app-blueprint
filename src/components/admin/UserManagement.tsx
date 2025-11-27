@@ -163,8 +163,8 @@ export default function UserManagement() {
         .insert({
           user_id: selectedUser.user_id,
           amount: action === 'add' ? amount : -amount,
-          transaction_type: action === 'add' ? 'admin_grant' : 'admin_deduct',
-          description: `Admin ${action === 'add' ? 'granted' : 'deducted'} ${amount} credits`,
+          transaction_type: action === 'add' ? 'admin_credit' : 'spent',
+          description: `Admin ${action === 'add' ? 'added' : 'deducted'} ₹${amount}`,
         });
 
       if (txError) {
