@@ -74,7 +74,7 @@ export default function Wallet() {
 
     // Set up real-time subscription for credit updates
     const channel = supabase
-      .channel("wallet-updates")
+      .channel(`wallet-updates-${userId}`)
       .on(
         "postgres_changes",
         {
@@ -83,27 +83,30 @@ export default function Wallet() {
           table: "user_credits",
           filter: `user_id=eq.${userId}`,
         },
-        () => {
-          console.log("Credit balance updated");
+        (payload) => {
+          console.log("Credit balance updated:", payload);
           fetchWalletData(userId);
         }
       )
       .on(
         "postgres_changes",
         {
-          event: "INSERT",
+          event: "*",
           schema: "public",
           table: "credit_transactions",
           filter: `user_id=eq.${userId}`,
         },
-        () => {
-          console.log("New transaction detected");
+        (payload) => {
+          console.log("Transaction detected:", payload);
           fetchWalletData(userId);
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log("Wallet subscription status:", status);
+      });
 
     return () => {
+      console.log("Cleaning up wallet subscription");
       supabase.removeChannel(channel);
     };
   }, [userId]);
