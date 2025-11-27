@@ -111,7 +111,10 @@ export default function UserManagement() {
         .eq('user_id', selectedUser.user_id)
         .maybeSingle();
 
-      if (fetchError) throw fetchError;
+      if (fetchError) {
+        console.error('Error fetching user credits:', fetchError);
+        throw new Error(`Failed to fetch credits: ${fetchError.message}`);
+      }
 
       // If no record exists, create one
       if (!currentCredit) {
@@ -124,7 +127,10 @@ export default function UserManagement() {
             total_spent: 0,
           });
 
-        if (insertError) throw insertError;
+        if (insertError) {
+          console.error('Error creating user credits:', insertError);
+          throw new Error(`Failed to create credits: ${insertError.message}`);
+        }
       } else {
         const newBalance = action === 'add' 
           ? currentCredit.balance + amount 
@@ -145,7 +151,10 @@ export default function UserManagement() {
           })
           .eq('user_id', selectedUser.user_id);
 
-        if (updateError) throw updateError;
+        if (updateError) {
+          console.error('Error updating user credits:', updateError);
+          throw new Error(`Failed to update credits: ${updateError.message}`);
+        }
       }
 
       // Log transaction
@@ -158,14 +167,17 @@ export default function UserManagement() {
           description: `Admin ${action === 'add' ? 'granted' : 'deducted'} ${amount} credits`,
         });
 
-      if (txError) throw txError;
+      if (txError) {
+        console.error('Error logging transaction:', txError);
+        throw new Error(`Failed to log transaction: ${txError.message}`);
+      }
 
       toast.success(`Successfully ${action === 'add' ? 'added' : 'deducted'} ${amount} credits`);
       setIsDialogOpen(false);
       fetchUsers();
     } catch (error: any) {
       console.error('Error adjusting credits:', error);
-      toast.error("Failed to adjust credits");
+      toast.error(error.message || "Failed to adjust credits");
     }
   };
 
