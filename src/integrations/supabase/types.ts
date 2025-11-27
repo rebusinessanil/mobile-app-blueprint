@@ -516,12 +516,14 @@ export type Database = {
         Row: {
           created_at: string | null
           customer_code: string | null
+          google_uid: string | null
           id: string
           mobile: string
           name: string
           profile_photo: string | null
           rank: string | null
           role: string | null
+          signup_method: string | null
           updated_at: string | null
           user_id: string
           whatsapp: string | null
@@ -529,12 +531,14 @@ export type Database = {
         Insert: {
           created_at?: string | null
           customer_code?: string | null
+          google_uid?: string | null
           id?: string
           mobile: string
           name: string
           profile_photo?: string | null
           rank?: string | null
           role?: string | null
+          signup_method?: string | null
           updated_at?: string | null
           user_id: string
           whatsapp?: string | null
@@ -542,12 +546,14 @@ export type Database = {
         Update: {
           created_at?: string | null
           customer_code?: string | null
+          google_uid?: string | null
           id?: string
           mobile?: string
           name?: string
           profile_photo?: string | null
           rank?: string | null
           role?: string | null
+          signup_method?: string | null
           updated_at?: string | null
           user_id?: string
           whatsapp?: string | null
