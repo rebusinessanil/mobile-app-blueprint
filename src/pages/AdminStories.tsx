@@ -11,7 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Plus, Trash2, Edit, Eye, EyeOff, RefreshCw, Sparkles, Calendar } from "lucide-react";
+import { Plus, Trash2, Edit, Eye, EyeOff, RefreshCw, Sparkles, Calendar, X } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { useGeneratedStories, useStoriesEvents, useStoriesFestivals } from "@/hooks/useAutoStories";
@@ -22,7 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 
 type StoryType = "event" | "festival";
 
@@ -34,6 +34,7 @@ export default function AdminStories() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [editingStory, setEditingStory] = useState<any>(null);
   const [editingType, setEditingType] = useState<StoryType>("event");
+  const [activeTab, setActiveTab] = useState<"events" | "festivals" | "generated">("events");
   const [formData, setFormData] = useState({
     title: "",
     story_type: "event" as StoryType,
@@ -269,411 +270,558 @@ export default function AdminStories() {
     }
   };
 
+  const activeGenerated = generatedStories.filter((s) => s.status === "active").length;
+  const previewGenerated = generatedStories.filter((s) => s.status === "preview_only").length;
+  const totalStories = events.length + festivals.length + generatedStories.length;
+
   return (
     <AdminLayout>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">Stories Management</h1>
-            <p className="text-muted-foreground mt-1">
-              Create and manage manual stories & auto-generated daily stories
-            </p>
+      <div className="h-[calc(100vh-4rem)] flex flex-col overflow-hidden">
+        {/* Fixed Header */}
+        <div className="flex-shrink-0 space-y-6 px-6 py-6">
+          {/* Title and Actions */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-foreground">Stories Management</h1>
+              <p className="text-muted-foreground mt-1">
+                Create and manage manual stories & auto-generated daily stories
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <Button 
+                onClick={() => {
+                  refetchEvents();
+                  refetchFestivals();
+                  refetchGenerated();
+                }} 
+                variant="outline" 
+                size="icon"
+                className="h-10 w-10"
+              >
+                <RefreshCw className="w-4 h-4" />
+              </Button>
+              <Button 
+                onClick={handleGenerateTestStories} 
+                className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
+                disabled={isGenerating}
+              >
+                <Sparkles className="w-4 h-4 mr-2" />
+                {isGenerating ? "Generating..." : "Auto Generate"}
+              </Button>
+              <Button 
+                onClick={() => handleOpenDialog(undefined, "event")}
+                className="bg-primary hover:bg-primary/90"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add Story
+              </Button>
+            </div>
           </div>
+
+          {/* Stats Summary Bar */}
+          <div className="grid grid-cols-4 gap-4">
+            <div className="gold-border bg-card rounded-xl p-4 shadow-lg">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Total Stories</p>
+              <p className="text-3xl font-bold text-primary mt-2">{totalStories}</p>
+              <p className="text-xs text-muted-foreground mt-1">All active + preview</p>
+            </div>
+            <div className="gold-border bg-card rounded-xl p-4 shadow-lg">
+              <p className="text-xs font-semibold text-green-500 uppercase tracking-wide">Active Generated</p>
+              <p className="text-3xl font-bold text-green-500 mt-2">{activeGenerated}</p>
+              <p className="text-xs text-muted-foreground mt-1">Live now</p>
+            </div>
+            <div className="gold-border bg-card rounded-xl p-4 shadow-lg">
+              <p className="text-xs font-semibold text-yellow-500 uppercase tracking-wide">Preview Stories</p>
+              <p className="text-3xl font-bold text-yellow-500 mt-2">{previewGenerated}</p>
+              <p className="text-xs text-muted-foreground mt-1">Coming tomorrow</p>
+            </div>
+            <div className="gold-border bg-card rounded-xl p-4 shadow-lg">
+              <p className="text-xs font-semibold text-blue-400 uppercase tracking-wide">Source Data</p>
+              <p className="text-3xl font-bold text-blue-400 mt-2">{events.length + festivals.length}</p>
+              <p className="text-xs text-muted-foreground mt-1">Events & festivals</p>
+            </div>
+          </div>
+
+          {/* Filter Tabs */}
           <div className="flex gap-2">
-            <Button onClick={() => {
-              refetchEvents();
-              refetchFestivals();
-              refetchGenerated();
-            }} variant="outline" size="icon">
-              <RefreshCw className="w-4 h-4" />
+            <Button
+              onClick={() => setActiveTab("events")}
+              variant={activeTab === "events" ? "default" : "outline"}
+              className={activeTab === "events" ? "bg-blue-500 hover:bg-blue-600 text-white" : ""}
+            >
+              Events ({events.length})
             </Button>
-            <Button onClick={handleGenerateTestStories} variant="secondary" disabled={isGenerating}>
-              <Sparkles className="w-4 h-4 mr-2" />
-              {isGenerating ? "Generating..." : "Create Test Stories"}
+            <Button
+              onClick={() => setActiveTab("festivals")}
+              variant={activeTab === "festivals" ? "default" : "outline"}
+              className={activeTab === "festivals" ? "bg-purple-500 hover:bg-purple-600 text-white" : ""}
+            >
+              Festivals ({festivals.length})
             </Button>
-            <Button onClick={() => handleOpenDialog(undefined, "event")}>
-              <Plus className="w-4 h-4 mr-2" />
-              Add Event/Festival
+            <Button
+              onClick={() => setActiveTab("generated")}
+              variant={activeTab === "generated" ? "default" : "outline"}
+              className={activeTab === "generated" ? "bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600 text-white" : ""}
+            >
+              Auto-Generated ({generatedStories.length})
             </Button>
           </div>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="gold-border bg-card rounded-xl p-6">
-            <p className="text-sm text-muted-foreground">Total Stories</p>
-            <p className="text-3xl font-bold text-primary mt-2">
-              {events.length + festivals.length + generatedStories.length}
-            </p>
-            <p className="text-xs text-muted-foreground mt-1">
-              {events.length} events + {festivals.length} festivals + {generatedStories.length} auto
-            </p>
-          </div>
-          <div className="gold-border bg-card rounded-xl p-6">
-            <p className="text-sm text-muted-foreground">Active Generated</p>
-            <p className="text-3xl font-bold text-green-500 mt-2">
-              {generatedStories.filter((s) => s.status === "active").length}
-            </p>
-            <p className="text-xs text-muted-foreground mt-1">
-              Live on dashboard now
-            </p>
-          </div>
-          <div className="gold-border bg-card rounded-xl p-6">
-            <p className="text-sm text-muted-foreground">Preview Stories</p>
-            <p className="text-3xl font-bold text-yellow-500 mt-2">
-              {generatedStories.filter((s) => s.status === "preview_only").length}
-            </p>
-            <p className="text-xs text-muted-foreground mt-1">
-              Coming tomorrow
-            </p>
-          </div>
-          <div className="gold-border bg-card rounded-xl p-6">
-            <p className="text-sm text-muted-foreground">Source Data</p>
-            <p className="text-3xl font-bold text-primary mt-2">
-              {events.length + festivals.length}
-            </p>
-            <p className="text-xs text-muted-foreground mt-1">
-              Events & festivals configured
-            </p>
-          </div>
-        </div>
-
-        {/* Stories Tabs */}
-        <Tabs defaultValue="events" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="events">Events</TabsTrigger>
-            <TabsTrigger value="festivals">Festivals</TabsTrigger>
-            <TabsTrigger value="generated">Auto-Generated Stories</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="events" className="space-y-4">
-            {loading ? (
-              <div className="text-center py-12 text-muted-foreground">Loading...</div>
-            ) : events.length === 0 ? (
-              <div className="gold-border bg-card rounded-xl p-12 text-center">
-                <Calendar className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-foreground mb-2">No Events Yet</h3>
-                <p className="text-muted-foreground mb-6">
-                  Create your first event (birthday/anniversary) to generate stories
-                </p>
-                <Button onClick={() => handleOpenDialog(undefined, "event")}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Event
-                </Button>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {events.map((event) => (
-                  <div
-                    key={event.id}
-                    className="gold-border bg-card rounded-xl overflow-hidden hover:gold-glow transition-all"
-                  >
-                    <div className="relative aspect-[9/16] bg-muted">
-                      <img
-                        src={event.poster_url}
-                        alt={event.person_name}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <div className="p-4">
-                      <h3 className="font-semibold text-foreground mb-2">{event.person_name}</h3>
-                      <p className="text-sm text-muted-foreground mb-2">
-                        Type: {event.event_type}
+        {/* Scrollable Content Area */}
+        <div className="flex-1 overflow-y-auto px-6 pb-6">
+          {loading ? (
+            <div className="text-center py-12 text-muted-foreground">Loading stories...</div>
+          ) : (
+            <>
+              {/* Events Tab */}
+              {activeTab === "events" && (
+                <>
+                  {events.length === 0 ? (
+                    <div className="gold-border bg-card rounded-xl p-12 text-center">
+                      <Calendar className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                      <h3 className="text-xl font-semibold text-foreground mb-2">No Events Yet</h3>
+                      <p className="text-muted-foreground mb-6">
+                        Create your first event (birthday/anniversary) to generate stories
                       </p>
-                      <p className="text-xs text-muted-foreground mb-4">
-                        Date: {new Date(event.event_date).toLocaleDateString()}
-                      </p>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="flex-1"
-                          onClick={() => handleOpenDialog(event, "event")}
-                        >
-                          <Edit className="w-4 h-4 mr-1" />
-                          Edit
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDelete(event.id, "event")}
-                          className="text-destructive hover:text-destructive"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
+                      <Button onClick={() => handleOpenDialog(undefined, "event")}>
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Event
+                      </Button>
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </TabsContent>
-
-          <TabsContent value="festivals" className="space-y-4">
-            {loading ? (
-              <div className="text-center py-12 text-muted-foreground">Loading...</div>
-            ) : festivals.length === 0 ? (
-              <div className="gold-border bg-card rounded-xl p-12 text-center">
-                <Calendar className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-foreground mb-2">No Festivals Yet</h3>
-                <p className="text-muted-foreground mb-6">
-                  Create your first festival to generate stories
-                </p>
-                <Button onClick={() => handleOpenDialog(undefined, "festival")}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Festival
-                </Button>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {festivals.map((festival) => (
-                  <div
-                    key={festival.id}
-                    className="gold-border bg-card rounded-xl overflow-hidden hover:gold-glow transition-all"
-                  >
-                    <div className="relative aspect-[9/16] bg-muted">
-                      <img
-                        src={festival.poster_url}
-                        alt={festival.festival_name}
-                        className="w-full h-full object-cover"
-                      />
-                      {!festival.is_active && (
-                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                          <EyeOff className="w-8 h-8 text-white" />
+                  ) : (
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                      {events.map((event) => (
+                        <div
+                          key={event.id}
+                          className="gold-border bg-card rounded-2xl overflow-hidden hover:gold-glow transition-all shadow-lg group"
+                        >
+                          {/* Image */}
+                          <div className="relative w-full aspect-square bg-muted">
+                            <img
+                              src={event.poster_url}
+                              alt={event.person_name}
+                              className="w-full h-full object-cover"
+                            />
+                            {/* Status Indicator */}
+                            <div className="absolute top-2 right-2">
+                              {(event.is_active ?? true) ? (
+                                <div className="w-3 h-3 bg-green-500 rounded-full border-2 border-white shadow-lg" />
+                              ) : (
+                                <Badge variant="secondary" className="text-xs bg-gray-500/90 text-white">
+                                  Inactive
+                                </Badge>
+                              )}
+                            </div>
+                            {/* Category Label */}
+                            <Badge 
+                              className="absolute bottom-2 left-2 text-xs bg-blue-500/90 text-white"
+                            >
+                              {event.event_type}
+                            </Badge>
+                          </div>
+                          
+                          {/* Content */}
+                          <div className="p-3">
+                            <h3 className="font-semibold text-foreground text-sm mb-1 line-clamp-1">
+                              {event.person_name}
+                            </h3>
+                            <p className="text-xs text-muted-foreground mb-3">
+                              {new Date(event.event_date).toLocaleDateString('en-US', { 
+                                month: 'short', 
+                                day: 'numeric',
+                                year: 'numeric'
+                              })}
+                            </p>
+                            
+                            {/* Actions */}
+                            <div className="flex gap-1">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="flex-1 h-8 text-xs"
+                                onClick={() => handleOpenDialog(event, "event")}
+                              >
+                                <Edit className="w-3 h-3 mr-1" />
+                                Edit
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDelete(event.id, "event")}
+                                className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleToggleActive(event.id, event.is_active ?? true, "event")}
+                                className="h-8 w-8 p-0"
+                              >
+                                {(event.is_active ?? true) ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
+                              </Button>
+                            </div>
+                          </div>
                         </div>
-                      )}
+                      ))}
                     </div>
-                    <div className="p-4">
-                      <h3 className="font-semibold text-foreground mb-2">{festival.festival_name}</h3>
-                      <p className="text-sm text-muted-foreground mb-2">
-                        Status: {festival.is_active ? "Active" : "Inactive"}
-                      </p>
-                      <p className="text-xs text-muted-foreground mb-4">
-                        Date: {new Date(festival.festival_date).toLocaleDateString()}
-                      </p>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="flex-1"
-                          onClick={() => handleOpenDialog(festival, "festival")}
-                        >
-                          <Edit className="w-4 h-4 mr-1" />
-                          Edit
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleToggleActive(festival.id, festival.is_active, "festival")}
-                        >
-                          {festival.is_active ? (
-                            <EyeOff className="w-4 h-4" />
-                          ) : (
-                            <Eye className="w-4 h-4" />
-                          )}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDelete(festival.id, "festival")}
-                          className="text-destructive hover:text-destructive"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </TabsContent>
-
-          <TabsContent value="generated" className="space-y-4">
-            {loading ? (
-              <div className="text-center py-12 text-muted-foreground">Loading...</div>
-            ) : generatedStories.length === 0 ? (
-              <div className="gold-border bg-card rounded-xl p-12 text-center">
-                <Sparkles className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-foreground mb-2">No Generated Stories Yet</h3>
-                <p className="text-muted-foreground mb-6">
-                  Click "Create Test Stories" to generate stories from events and festivals
-                </p>
-                <Button onClick={handleGenerateTestStories} disabled={isGenerating}>
-                  <Sparkles className="w-4 h-4 mr-2" />
-                  {isGenerating ? "Generating..." : "Create Test Stories"}
-                </Button>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {generatedStories.map((story) => (
-                  <div
-                    key={story.id}
-                    className="gold-border bg-card rounded-xl overflow-hidden hover:gold-glow transition-all"
-                  >
-                    <div className="relative aspect-[9/16] bg-muted">
-                      <img
-                        src={story.poster_url}
-                        alt={story.title}
-                        className="w-full h-full object-cover"
-                      />
-                      <div className="absolute top-2 right-2">
-                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                          story.status === 'active' ? 'bg-green-500' : 
-                          story.status === 'preview_only' ? 'bg-yellow-500' : 'bg-gray-500'
-                        } text-white`}>
-                          {story.status === 'active' ? 'Active' : 
-                           story.status === 'preview_only' ? 'Preview' : 'Expired'}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="p-4">
-                      <h3 className="font-semibold text-foreground mb-2">{story.title}</h3>
-                      <p className="text-sm text-muted-foreground mb-2">
-                        Type: {story.source_type}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Date: {new Date(story.event_date).toLocaleDateString()}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Expires: {new Date(story.expires_at).toLocaleDateString()}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
-
-        {/* Create/Edit Dialog */}
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>
-                {editingStory ? "Edit" : "Create"} {formData.story_type === "event" ? "Event" : "Festival"}
-              </DialogTitle>
-              <DialogDescription>
-                {editingStory ? "Update" : "Add a new"} {formData.story_type === "event" ? "birthday/anniversary event" : "festival"}
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label>Story Type</Label>
-                <Select
-                  value={formData.story_type}
-                  onValueChange={(value: StoryType) =>
-                    setFormData({ ...formData, story_type: value })
-                  }
-                  disabled={!!editingStory}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="event">Event (Birthday/Anniversary)</SelectItem>
-                    <SelectItem value="festival">Festival</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {formData.story_type === "event" ? (
-                <>
-                  <div>
-                    <Label>Event Type</Label>
-                    <Select
-                      value={formData.event_type}
-                      onValueChange={(value: "birthday" | "anniversary") =>
-                        setFormData({ ...formData, event_type: value })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="birthday">Birthday</SelectItem>
-                        <SelectItem value="anniversary">Anniversary</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label>Person Name*</Label>
-                    <Input
-                      value={formData.person_name}
-                      onChange={(e) => setFormData({ ...formData, person_name: e.target.value })}
-                      placeholder="Enter person name"
-                    />
-                  </div>
-                  <div>
-                    <Label>Event Date*</Label>
-                    <Input
-                      type="date"
-                      value={formData.event_date}
-                      onChange={(e) => setFormData({ ...formData, event_date: e.target.value })}
-                    />
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div>
-                    <Label>Festival Name*</Label>
-                    <Input
-                      value={formData.festival_name}
-                      onChange={(e) => setFormData({ ...formData, festival_name: e.target.value })}
-                      placeholder="Enter festival name"
-                    />
-                  </div>
-                  <div>
-                    <Label>Festival Date*</Label>
-                    <Input
-                      type="date"
-                      value={formData.festival_date}
-                      onChange={(e) => setFormData({ ...formData, festival_date: e.target.value })}
-                    />
-                  </div>
+                  )}
                 </>
               )}
 
-              <div>
-                <Label>Description (Optional)</Label>
-                <Input
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Enter description"
-                />
-              </div>
+              {/* Festivals Tab */}
+              {activeTab === "festivals" && (
+                <>
+                  {festivals.length === 0 ? (
+                    <div className="gold-border bg-card rounded-xl p-12 text-center">
+                      <Calendar className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                      <h3 className="text-xl font-semibold text-foreground mb-2">No Festivals Yet</h3>
+                      <p className="text-muted-foreground mb-6">
+                        Create your first festival to generate stories
+                      </p>
+                      <Button onClick={() => handleOpenDialog(undefined, "festival")}>
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Festival
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                      {festivals.map((festival) => (
+                        <div
+                          key={festival.id}
+                          className="gold-border bg-card rounded-2xl overflow-hidden hover:gold-glow transition-all shadow-lg group"
+                        >
+                          {/* Image */}
+                          <div className="relative w-full aspect-square bg-muted">
+                            <img
+                              src={festival.poster_url}
+                              alt={festival.festival_name}
+                              className="w-full h-full object-cover"
+                            />
+                            {/* Status Indicator */}
+                            <div className="absolute top-2 right-2">
+                              {festival.is_active ? (
+                                <div className="w-3 h-3 bg-green-500 rounded-full border-2 border-white shadow-lg" />
+                              ) : (
+                                <Badge variant="secondary" className="text-xs bg-gray-500/90 text-white">
+                                  Inactive
+                                </Badge>
+                              )}
+                            </div>
+                            {/* Category Label */}
+                            <Badge 
+                              className="absolute bottom-2 left-2 text-xs bg-purple-500/90 text-white"
+                            >
+                              Festival
+                            </Badge>
+                          </div>
+                          
+                          {/* Content */}
+                          <div className="p-3">
+                            <h3 className="font-semibold text-foreground text-sm mb-1 line-clamp-1">
+                              {festival.festival_name}
+                            </h3>
+                            <p className="text-xs text-muted-foreground mb-3">
+                              {new Date(festival.festival_date).toLocaleDateString('en-US', { 
+                                month: 'short', 
+                                day: 'numeric',
+                                year: 'numeric'
+                              })}
+                            </p>
+                            
+                            {/* Actions */}
+                            <div className="flex gap-1">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="flex-1 h-8 text-xs"
+                                onClick={() => handleOpenDialog(festival, "festival")}
+                              >
+                                <Edit className="w-3 h-3 mr-1" />
+                                Edit
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDelete(festival.id, "festival")}
+                                className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleToggleActive(festival.id, festival.is_active ?? true, "festival")}
+                                className="h-8 w-8 p-0"
+                              >
+                                {festival.is_active ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
 
-              <div>
-                <Label>Poster Image*</Label>
-                <Input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => setPosterFile(e.target.files?.[0] || null)}
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <Label>Active</Label>
-                <Switch
-                  checked={formData.is_active}
-                  onCheckedChange={(checked) =>
-                    setFormData({ ...formData, is_active: checked })
-                  }
-                />
-              </div>
-
-              <div className="flex gap-2 justify-end">
-                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={handleSave}>
-                  {editingStory ? "Update" : "Create"}
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+              {/* Auto-Generated Tab */}
+              {activeTab === "generated" && (
+                <>
+                  {generatedStories.length === 0 ? (
+                    <div className="gold-border bg-card rounded-xl p-12 text-center">
+                      <Sparkles className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                      <h3 className="text-xl font-semibold text-foreground mb-2">No Generated Stories</h3>
+                      <p className="text-muted-foreground mb-6">
+                        Click "Auto Generate" to create stories from your events and festivals
+                      </p>
+                      <Button onClick={handleGenerateTestStories} disabled={isGenerating}>
+                        <Sparkles className="w-4 h-4 mr-2" />
+                        {isGenerating ? "Generating..." : "Auto Generate"}
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                      {generatedStories.map((story) => (
+                        <div
+                          key={story.id}
+                          className="gold-border bg-card rounded-2xl overflow-hidden hover:gold-glow transition-all shadow-lg group"
+                        >
+                          {/* Image */}
+                          <div className="relative w-full aspect-square bg-muted">
+                            <img
+                              src={story.poster_url}
+                              alt={story.title}
+                              className="w-full h-full object-cover"
+                            />
+                            {/* Status Badge Overlay */}
+                            {story.status === "preview_only" && (
+                              <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                                <Badge variant="secondary" className="text-xs px-2 py-1 bg-yellow-500/90 text-white">
+                                  Tomorrow
+                                </Badge>
+                              </div>
+                            )}
+                            {/* Status Indicator */}
+                            <div className="absolute top-2 right-2">
+                              {story.status === "active" ? (
+                                <div className="w-3 h-3 bg-green-500 rounded-full border-2 border-white shadow-lg" />
+                              ) : (
+                                <div className="w-3 h-3 bg-yellow-500 rounded-full border-2 border-white shadow-lg" />
+                              )}
+                            </div>
+                            {/* Category Label */}
+                            <Badge 
+                              className="absolute bottom-2 left-2 text-xs bg-gradient-to-r from-green-500 to-teal-500 text-white"
+                            >
+                              {story.source_type}
+                            </Badge>
+                          </div>
+                          
+                          {/* Content */}
+                          <div className="p-3">
+                            <h3 className="font-semibold text-foreground text-sm mb-1 line-clamp-2">
+                              {story.title}
+                            </h3>
+                            <p className="text-xs text-muted-foreground">
+                              {new Date(story.event_date).toLocaleDateString('en-US', { 
+                                month: 'short', 
+                                day: 'numeric',
+                                year: 'numeric'
+                              })}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+            </>
+          )}
+        </div>
       </div>
+
+      {/* Full-Screen Create/Edit Modal */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold">
+              {editingStory ? "Edit Story" : "Create New Story"}
+            </DialogTitle>
+            <DialogDescription>
+              {formData.story_type === "event" 
+                ? "Add event details to generate personalized birthday or anniversary stories"
+                : "Add festival details to generate celebratory stories"}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6 py-4">
+            {/* Story Type */}
+            <div className="space-y-2">
+              <Label>Story Type *</Label>
+              <Select
+                value={formData.story_type}
+                onValueChange={(value: StoryType) => {
+                  setFormData({ ...formData, story_type: value });
+                }}
+                disabled={!!editingStory}
+              >
+                <SelectTrigger className="bg-background">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="event">Event (Birthday/Anniversary)</SelectItem>
+                  <SelectItem value="festival">Festival</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Event Fields */}
+            {formData.story_type === "event" && (
+              <>
+                <div className="space-y-2">
+                  <Label>Event Type *</Label>
+                  <Select
+                    value={formData.event_type}
+                    onValueChange={(value: "birthday" | "anniversary") => {
+                      setFormData({ ...formData, event_type: value });
+                    }}
+                  >
+                    <SelectTrigger className="bg-background">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="birthday">Birthday</SelectItem>
+                      <SelectItem value="anniversary">Anniversary</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Person Name *</Label>
+                  <Input
+                    value={formData.person_name}
+                    onChange={(e) =>
+                      setFormData({ ...formData, person_name: e.target.value })
+                    }
+                    placeholder="Enter person's name"
+                    className="bg-background"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Event Date *</Label>
+                  <Input
+                    type="date"
+                    value={formData.event_date}
+                    onChange={(e) =>
+                      setFormData({ ...formData, event_date: e.target.value })
+                    }
+                    className="bg-background"
+                  />
+                </div>
+              </>
+            )}
+
+            {/* Festival Fields */}
+            {formData.story_type === "festival" && (
+              <>
+                <div className="space-y-2">
+                  <Label>Festival Name *</Label>
+                  <Input
+                    value={formData.festival_name}
+                    onChange={(e) =>
+                      setFormData({ ...formData, festival_name: e.target.value })
+                    }
+                    placeholder="Enter festival name"
+                    className="bg-background"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Festival Date *</Label>
+                  <Input
+                    type="date"
+                    value={formData.festival_date}
+                    onChange={(e) =>
+                      setFormData({ ...formData, festival_date: e.target.value })
+                    }
+                    className="bg-background"
+                  />
+                </div>
+              </>
+            )}
+
+            {/* Common Fields */}
+            <div className="space-y-2">
+              <Label>Title (Optional)</Label>
+              <Input
+                value={formData.title}
+                onChange={(e) =>
+                  setFormData({ ...formData, title: e.target.value })
+                }
+                placeholder="Auto-generated if left empty"
+                className="bg-background"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Description (Optional)</Label>
+              <Input
+                value={formData.description}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
+                placeholder="Additional details"
+                className="bg-background"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Poster Image *</Label>
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={(e) => setPosterFile(e.target.files?.[0] || null)}
+                className="bg-background"
+              />
+              {editingStory?.poster_url && !posterFile && (
+                <p className="text-xs text-muted-foreground">
+                  Current poster will be kept if no new file is selected
+                </p>
+              )}
+            </div>
+
+            <div className="flex items-center gap-3">
+              <Switch
+                checked={formData.is_active}
+                onCheckedChange={(checked) =>
+                  setFormData({ ...formData, is_active: checked })
+                }
+              />
+              <Label className="cursor-pointer">Active</Label>
+            </div>
+          </div>
+
+          <div className="flex gap-3 pt-4 border-t">
+            <Button
+              variant="outline"
+              onClick={() => setIsDialogOpen(false)}
+              className="flex-1"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSave}
+              className="flex-1 bg-primary hover:bg-primary/90"
+            >
+              {editingStory ? "Update Story" : "Create Story"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </AdminLayout>
   );
 }

@@ -20,6 +20,8 @@ export interface StoriesEvent {
   person_name: string;
   poster_url: string;
   description: string | null;
+  title: string | null;
+  is_active: boolean | null;
 }
 
 export interface StoriesFestival {
