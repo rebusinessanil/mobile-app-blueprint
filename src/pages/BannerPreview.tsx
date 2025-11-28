@@ -1701,13 +1701,15 @@ export default function BannerPreview() {
                         boxShadow: `0 8px 32px rgba(0, 0, 0, 0.6), 0 0 30px ${currentVariant.shadowColor}, inset 0 2px 8px rgba(0,0,0,0.3)`,
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'center',
+                        justifyContent: 'flex-start',
                         zIndex: 1
                       }}>
-                        {/* User Info - Centered */}
+                        {/* User Info - Left at 35% */}
                         <div style={{
-                          textAlign: 'center',
-                          padding: '0 20px'
+                          textAlign: 'left',
+                          padding: '0 20px',
+                          position: 'absolute',
+                          left: '35%'
                         }}>
                           <div style={{
                             fontSize: '32px',
