@@ -1699,18 +1699,20 @@ export default function BannerPreview() {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        padding: '0 40px'
+                        paddingLeft: '80px',
+                        paddingRight: '180px'
                       }}>
-                        {/* User Info Centered */}
+                        {/* User Info Centered Between Contact Box and Profile Photo */}
                         <div style={{
-                          textAlign: 'center'
+                          textAlign: 'center',
+                          width: '100%'
                         }}>
                           <div style={{
-                            fontSize: '30px',
+                            fontSize: '32px',
                             fontWeight: '800',
                             color: '#ffffff',
                             marginBottom: '4px',
-                            letterSpacing: '1px',
+                            letterSpacing: '1.5px',
                             textShadow: '0 2px 6px rgba(0, 0, 0, 0.6)'
                           }}>
                             {profileName ? capitalizeWords(profileName) : 'User Name'}
@@ -1719,10 +1721,10 @@ export default function BannerPreview() {
                             fontSize: '28px',
                             fontWeight: '700',
                             color: currentVariant.borderColor,
-                            letterSpacing: '1px',
+                            letterSpacing: '1.5px',
                             textShadow: '0 2px 4px rgba(0, 0, 0, 0.5)'
                           }}>
-                            {displayRank || 'RANK'}
+                            {displayRank ? capitalizeWords(displayRank) : 'RANK'}
                           </div>
                         </div>
                       </div>
