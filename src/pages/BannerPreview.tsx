@@ -1602,7 +1602,7 @@ export default function BannerPreview() {
                   </div>}
 
 
-                {/* STORY CATEGORY: Lower-Third Cycling Variants - Horizontally Flipped Design */}
+                {/* STORY CATEGORY: Lower-Third Redesigned - Clean Modern Layout */}
                 {bannerData.categoryType === 'story' && (() => {
                     // Calculate variant based on slot number (0-15) in repeating sequence
                     const slotNumber = selectedTemplate; // selectedTemplate is 0-indexed
@@ -1615,119 +1615,135 @@ export default function BannerPreview() {
                       ).join(' ');
                     };
 
-                    // Define three variants with strict color isolation
+                    // Define three color variants: red, orange, teal
                     const variants = {
                       1: {
-                        borderColor: '#ffd700',
-                        tabColor: '#ffd700',
-                        shadowColor: 'rgba(255, 215, 0, 0.4)',
-                        name: 'Yellow'
+                        borderColor: '#ef4444',
+                        tabColor: '#ef4444',
+                        shadowColor: 'rgba(239, 68, 68, 0.5)',
+                        name: 'Red'
                       },
                       2: {
-                        borderColor: '#00a8e8',
-                        tabColor: '#00a8e8',
-                        shadowColor: 'rgba(0, 168, 232, 0.4)',
-                        name: 'Blue'
+                        borderColor: '#f97316',
+                        tabColor: '#f97316',
+                        shadowColor: 'rgba(249, 115, 22, 0.5)',
+                        name: 'Orange'
                       },
                       3: {
-                        borderColor: '#06d6a0',
-                        tabColor: '#06d6a0',
-                        shadowColor: 'rgba(6, 214, 160, 0.4)',
+                        borderColor: '#14b8a6',
+                        tabColor: '#14b8a6',
+                        shadowColor: 'rgba(20, 184, 166, 0.5)',
                         name: 'Teal'
                       }
                     };
                     const currentVariant = variants[variantIndex as keyof typeof variants];
+                    
                     return <div className="absolute" style={{
-                      bottom: '35px',
-                      left: '27px',
-                      right: '27px',
-                      height: '105px',
+                      bottom: '30px',
+                      left: '20px',
+                      right: '20px',
+                      height: '120px',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
                       zIndex: 4
                     }}>
-                      {/* Left Tab with Angled Edge - Flipped */}
+                      {/* Left Curved Tag with Contact Info */}
                       <div style={{
                         position: 'absolute',
                         left: 0,
                         height: '100%',
-                        width: '320px',
+                        width: '300px',
                         background: currentVariant.tabColor,
-                        clipPath: 'polygon(0% 0, 85% 0, 100% 50%, 85% 100%, 0% 100%)',
+                        clipPath: 'polygon(0% 0, 85% 0, 95% 50%, 85% 100%, 0% 100%)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        paddingRight: '60px',
-                        boxShadow: `0 6px 20px ${currentVariant.shadowColor}`
+                        paddingRight: '50px',
+                        boxShadow: `0 8px 24px ${currentVariant.shadowColor}, 0 0 0 2px rgba(0,0,0,0.3)`,
+                        zIndex: 2
                       }}>
                         <div style={{
                           textAlign: 'center'
                         }}>
                           <div style={{
-                            fontSize: '15px',
-                            fontWeight: '600',
+                            fontSize: '14px',
+                            fontWeight: '700',
                             color: '#ffffff',
-                            marginBottom: '2px',
-                            letterSpacing: '1.5px',
-                            textShadow: '0 2px 4px rgba(0, 0, 0, 0.4)'
+                            marginBottom: '4px',
+                            letterSpacing: '2px',
+                            textTransform: 'uppercase',
+                            textShadow: '0 2px 4px rgba(0, 0, 0, 0.5)'
                           }}>
                             CALL FOR MENTORSHIP
                           </div>
                           <div style={{
-                            fontSize: '26px',
-                            fontWeight: '800',
+                            fontSize: '24px',
+                            fontWeight: '900',
                             color: '#ffffff',
-                            letterSpacing: '1px',
-                            textShadow: '0 2px 6px rgba(0, 0, 0, 0.5)'
+                            letterSpacing: '0.5px',
+                            textShadow: '0 2px 8px rgba(0, 0, 0, 0.6)'
                           }}>
-                            {profile?.mobile || profile?.whatsapp || '+91 7734990035'}
+                            +91 7734990035
                           </div>
                         </div>
                       </div>
 
-                      {/* Main Dark Banner with Colored Border - Flipped to Right */}
+                      {/* Main Dark Panel with Neon Border */}
                       <div style={{
                         position: 'absolute',
-                        right: 0,
-                        left: '280px',
+                        left: '270px',
+                        right: '140px',
                         height: '100%',
-                        background: '#1a1f2e',
-                        borderRadius: '8px 50px 50px 8px',
-                        border: `4px solid ${currentVariant.borderColor}`,
-                        boxShadow: `0 6px 20px rgba(0, 0, 0, 0.5), 0 0 20px ${currentVariant.shadowColor}`,
+                        background: 'linear-gradient(135deg, #0f1419 0%, #1a1f2e 100%)',
+                        borderRadius: '12px 60px 60px 12px',
+                        border: `3px solid ${currentVariant.borderColor}`,
+                        boxShadow: `0 8px 32px rgba(0, 0, 0, 0.6), 0 0 30px ${currentVariant.shadowColor}, inset 0 2px 8px rgba(0,0,0,0.3)`,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        paddingLeft: '80px',
-                        paddingRight: '180px'
+                        zIndex: 1
                       }}>
-                        {/* User Info Centered Between Contact Box and Profile Photo */}
+                        {/* User Info - Centered */}
                         <div style={{
                           textAlign: 'center',
-                          width: '100%'
+                          padding: '0 20px'
                         }}>
                           <div style={{
                             fontSize: '32px',
-                            fontWeight: '800',
+                            fontWeight: '900',
                             color: '#ffffff',
-                            marginBottom: '4px',
-                            letterSpacing: '1.5px',
-                            textShadow: '0 2px 6px rgba(0, 0, 0, 0.6)'
+                            marginBottom: '2px',
+                            letterSpacing: '0.5px',
+                            textShadow: '0 3px 8px rgba(0, 0, 0, 0.7), 0 0 20px rgba(255,255,255,0.1)'
                           }}>
-                            {profileName ? capitalizeWords(profileName) : 'User Name'}
+                            {profileName ? capitalizeWords(profileName) : 'Dilip Singh Rathore'}
                           </div>
                           <div style={{
-                            fontSize: '28px',
+                            fontSize: '22px',
                             fontWeight: '700',
-                            color: currentVariant.borderColor,
+                            color: '#ffffff',
                             letterSpacing: '1.5px',
-                            textShadow: '0 2px 4px rgba(0, 0, 0, 0.5)'
+                            textTransform: 'capitalize',
+                            textShadow: '0 2px 6px rgba(0, 0, 0, 0.6)'
                           }}>
-                            {displayRank ? capitalizeWords(displayRank) : 'RANK'}
+                            {displayRank || 'Royal Ambassador'}
                           </div>
                         </div>
                       </div>
+
+                      {/* Right Circular Profile Placeholder */}
+                      <div style={{
+                        position: 'absolute',
+                        right: 0,
+                        width: '120px',
+                        height: '120px',
+                        borderRadius: '50%',
+                        border: `4px solid ${currentVariant.borderColor}`,
+                        background: 'rgba(26, 31, 46, 0.5)',
+                        boxShadow: `0 8px 24px ${currentVariant.shadowColor}, 0 0 30px ${currentVariant.shadowColor}, inset 0 2px 8px rgba(0,0,0,0.4)`,
+                        zIndex: 2
+                      }} />
                     </div>;
                   })()}
 
