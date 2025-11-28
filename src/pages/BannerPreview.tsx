@@ -397,8 +397,8 @@ export default function BannerPreview() {
   const displayRank: string = (profile?.rank || "ROYAL AMBASSADOR").replace(/[-–—]/g, ' ');
 
   // Get primary profile photo - prioritize uploaded photo from banner creation for LEFT side
-  // FESTIVAL & MOTIVATIONAL CATEGORIES: Skip auto-loading achiever image completely
-  const primaryPhoto: string | null = bannerData?.categoryType === 'festival' || bannerData?.categoryType === 'motivational' ? bannerData?.photo || null : bannerData?.photo || profile?.profile_photo || profilePhotos[0]?.photo_url || null;
+  // FESTIVAL, MOTIVATIONAL & STORY CATEGORIES: Skip auto-loading achiever image completely
+  const primaryPhoto: string | null = bannerData?.categoryType === 'festival' || bannerData?.categoryType === 'motivational' || bannerData?.categoryType === 'story' ? bannerData?.photo || null : bannerData?.photo || profile?.profile_photo || profilePhotos[0]?.photo_url || null;
 
   // Get mentor/upline photo (RIGHT-BOTTOM) - ONLY use profile photos, never uploads
   const mentorPhoto: string | null = profilePhotos[selectedMentorPhotoIndex]?.photo_url || profilePhotos[0]?.photo_url || profile?.profile_photo || null;
@@ -1552,7 +1552,8 @@ export default function BannerPreview() {
                 </div>
 
                 {/* LEFT - Main User Photo - FIXED SIZE AND POSITION - 3:4 RATIO - REDUCED BY 12% */}
-                {primaryPhoto && <div className="absolute overflow-hidden cursor-pointer transition-transform duration-500 ease-in-out" onClick={() => setIsPhotoFlipped(!isPhotoFlipped)} style={{
+                {/* HIDE ACHIEVER PHOTO FOR STORY CATEGORY */}
+                {primaryPhoto && bannerData?.categoryType !== 'story' && <div className="absolute overflow-hidden cursor-pointer transition-transform duration-500 ease-in-out" onClick={() => setIsPhotoFlipped(!isPhotoFlipped)} style={{
                     left: '40px',
                     /* LOCKED */
                     top: '162px',
