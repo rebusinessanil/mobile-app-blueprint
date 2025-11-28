@@ -11,9 +11,7 @@ import { useGeneratedStories, useStoriesEvents, useStoriesFestivals } from "@/ho
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-
 type StoryType = "event" | "festival";
-
 export default function AdminStories() {
   const {
     stories: generatedStories,
@@ -30,13 +28,11 @@ export default function AdminStories() {
     loading: festivalsLoading,
     refetch: refetchFestivals
   } = useStoriesFestivals();
-
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [editingStory, setEditingStory] = useState<any>(null);
   const [editingType, setEditingType] = useState<StoryType>("event");
   const [activeTab, setActiveTab] = useState<"events" | "festivals" | "generated">("events");
-
   const [formData, setFormData] = useState({
     title: "",
     story_type: "event" as StoryType,
@@ -48,11 +44,8 @@ export default function AdminStories() {
     description: "",
     is_active: true
   });
-
   const [posterFile, setPosterFile] = useState<File | null>(null);
-
   const loading = generatedLoading || eventsLoading || festivalsLoading;
-
   const handleOpenDialog = (story?: any, type?: StoryType) => {
     if (story) {
       setEditingStory(story);
@@ -100,19 +93,19 @@ export default function AdminStories() {
     setPosterFile(null);
     setIsDialogOpen(true);
   };
-
   const uploadFile = async (file: File, bucket: string) => {
     const fileExt = file.name.split(".").pop();
     const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
     const filePath = `${fileName}`;
-
-    const { error: uploadError } = await supabase.storage.from(bucket).upload(filePath, file);
+    const {
+      error: uploadError
+    } = await supabase.storage.from(bucket).upload(filePath, file);
     if (uploadError) throw uploadError;
-
-    const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(filePath);
+    const {
+      data: urlData
+    } = supabase.storage.from(bucket).getPublicUrl(filePath);
     return urlData.publicUrl;
   };
-
   const handleSave = async () => {
     try {
       if (formData.story_type === "event") {
@@ -126,17 +119,14 @@ export default function AdminStories() {
           return;
         }
       }
-
       if (!editingStory && !posterFile) {
         toast.error("Poster image is required");
         return;
       }
-
       let posterUrl = editingStory?.poster_url || "";
       if (posterFile) {
         posterUrl = await uploadFile(posterFile, "template-covers");
       }
-
       if (formData.story_type === "event") {
         const eventData = {
           event_type: formData.event_type,
@@ -147,13 +137,16 @@ export default function AdminStories() {
           title: formData.title || `${formData.event_type} - ${formData.person_name}`,
           is_active: formData.is_active
         };
-
         if (editingStory) {
-          const { error } = await supabase.from("stories_events").update(eventData).eq("id", editingStory.id);
+          const {
+            error
+          } = await supabase.from("stories_events").update(eventData).eq("id", editingStory.id);
           if (error) throw error;
           toast.success("Event updated");
         } else {
-          const { error } = await supabase.from("stories_events").insert([eventData]);
+          const {
+            error
+          } = await supabase.from("stories_events").insert([eventData]);
           if (error) throw error;
           toast.success("Event created");
         }
@@ -166,36 +159,36 @@ export default function AdminStories() {
           description: formData.description || null,
           is_active: formData.is_active
         };
-
         if (editingStory) {
-          const { error } = await supabase.from("stories_festivals").update(festivalData).eq("id", editingStory.id);
+          const {
+            error
+          } = await supabase.from("stories_festivals").update(festivalData).eq("id", editingStory.id);
           if (error) throw error;
           toast.success("Festival updated");
         } else {
-          const { error } = await supabase.from("stories_festivals").insert([festivalData]);
+          const {
+            error
+          } = await supabase.from("stories_festivals").insert([festivalData]);
           if (error) throw error;
           toast.success("Festival created");
         }
         refetchFestivals();
       }
-
       setIsDialogOpen(false);
       refetchGenerated();
     } catch (error: any) {
       toast.error("Failed to save: " + error.message);
     }
   };
-
   const handleDelete = async (id: string, type: StoryType) => {
     if (!confirm("Delete this story?")) return;
-    
     try {
       const table = type === "event" ? "stories_events" : "stories_festivals";
-      const { error } = await supabase.from(table).delete().eq("id", id);
-
+      const {
+        error
+      } = await supabase.from(table).delete().eq("id", id);
       if (error) throw error;
       toast.success("Deleted");
-
       if (type === "event") {
         refetchEvents();
       } else {
@@ -206,15 +199,16 @@ export default function AdminStories() {
       toast.error("Delete failed: " + error.message);
     }
   };
-
   const handleToggleActive = async (id: string, currentStatus: boolean, type: StoryType) => {
     try {
       const table = type === "event" ? "stories_events" : "stories_festivals";
-      const { error } = await supabase.from(table).update({ is_active: !currentStatus }).eq("id", id);
-
+      const {
+        error
+      } = await supabase.from(table).update({
+        is_active: !currentStatus
+      }).eq("id", id);
       if (error) throw error;
       toast.success("Status updated");
-
       if (type === "event") {
         refetchEvents();
       } else {
@@ -225,16 +219,16 @@ export default function AdminStories() {
       toast.error("Update failed: " + error.message);
     }
   };
-
   const handleGenerateTestStories = async () => {
     try {
       setIsGenerating(true);
       toast.info("Generating stories...");
-
-      const { data, error } = await supabase.functions.invoke('auto-story-generator', {
+      const {
+        data,
+        error
+      } = await supabase.functions.invoke('auto-story-generator', {
         body: {}
       });
-
       if (error) throw error;
       toast.success(`Generated ${data?.stats?.tomorrowEvents || 0} events, ${data?.stats?.tomorrowFestivals || 0} festivals`);
       refetchGenerated();
@@ -244,13 +238,10 @@ export default function AdminStories() {
       setIsGenerating(false);
     }
   };
-
   const activeGenerated = generatedStories.filter(s => s.status === "active").length;
   const previewGenerated = generatedStories.filter(s => s.status === "preview_only").length;
   const totalStories = events.length + festivals.length + generatedStories.length;
-
-  return (
-    <AdminLayout>
+  return <AdminLayout>
       <div className="h-screen flex flex-col bg-background overflow-hidden">
         {/* Fixed Header */}
         <div className="flex-shrink-0 bg-background/95 backdrop-blur-sm border-b border-primary/20 px-4 py-2.5">
@@ -304,26 +295,18 @@ export default function AdminStories() {
 
         {/* Scrollable Story Cards Grid */}
         <div className="flex-1 overflow-y-auto px-4 py-3">
-          {loading ? (
-            <div className="text-center py-12 text-muted-foreground">Loading...</div>
-          ) : (
-            <>
+          {loading ? <div className="text-center py-12 text-muted-foreground">Loading...</div> : <>
               {/* Events Tab */}
-              {activeTab === "events" && (
-                <>
-                  {events.length === 0 ? (
-                    <div className="text-center py-12">
+              {activeTab === "events" && <>
+                  {events.length === 0 ? <div className="text-center py-12">
                       <Calendar className="w-12 h-12 text-muted-foreground mx-auto mb-3 opacity-50" />
                       <p className="text-sm text-muted-foreground mb-4">No events yet</p>
                       <Button onClick={() => handleOpenDialog(undefined, "event")} size="sm" className="bg-blue-500 hover:bg-blue-600">
                         <Plus className="w-4 h-4 mr-2" />
                         Add Event
                       </Button>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-2 gap-3">
-                      {events.map(event => (
-                        <div key={event.id} className="bg-card border border-primary/20 rounded-2xl overflow-hidden hover:border-primary/40 transition-all animate-fade-in">
+                    </div> : <div className="grid grid-cols-2 gap-3">
+                      {events.map(event => <div key={event.id} className="bg-card border border-primary/20 rounded-2xl overflow-hidden hover:border-primary/40 transition-all animate-fade-in">
                           <div className="relative aspect-square bg-muted">
                             <img src={event.poster_url} alt={event.person_name} className="w-full h-full object-cover" />
                             <Badge className="absolute top-2 left-2 text-[9px] px-1.5 py-0.5 bg-blue-500/90 text-white border-0">
@@ -338,7 +321,10 @@ export default function AdminStories() {
                               {event.person_name}
                             </h3>
                             <p className="text-[10px] text-muted-foreground mb-2">
-                              {new Date(event.event_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                              {new Date(event.event_date).toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric'
+                    })}
                             </p>
                             <div className="flex gap-1">
                               <DropdownMenu>
@@ -363,29 +349,21 @@ export default function AdminStories() {
                               </DropdownMenu>
                             </div>
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </>
-              )}
+                        </div>)}
+                    </div>}
+                </>}
 
               {/* Festivals Tab */}
-              {activeTab === "festivals" && (
-                <>
-                  {festivals.length === 0 ? (
-                    <div className="text-center py-12">
+              {activeTab === "festivals" && <>
+                  {festivals.length === 0 ? <div className="text-center py-12">
                       <Calendar className="w-12 h-12 text-muted-foreground mx-auto mb-3 opacity-50" />
                       <p className="text-sm text-muted-foreground mb-4">No festivals yet</p>
                       <Button onClick={() => handleOpenDialog(undefined, "festival")} size="sm" className="bg-purple-500 hover:bg-purple-600">
                         <Plus className="w-4 h-4 mr-2" />
                         Add Festival
                       </Button>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-2 gap-3">
-                      {festivals.map(festival => (
-                        <div key={festival.id} className="bg-card border border-primary/20 rounded-2xl overflow-hidden hover:border-primary/40 transition-all animate-fade-in">
+                    </div> : <div className="grid grid-cols-2 gap-3">
+                      {festivals.map(festival => <div key={festival.id} className="bg-card border border-primary/20 rounded-2xl overflow-hidden hover:border-primary/40 transition-all animate-fade-in">
                           <div className="relative aspect-square bg-muted">
                             <img src={festival.poster_url} alt={festival.festival_name} className="w-full h-full object-cover" />
                             <Badge className="absolute top-2 left-2 text-[9px] px-1.5 py-0.5 bg-purple-500/90 text-white border-0">
@@ -400,7 +378,10 @@ export default function AdminStories() {
                               {festival.festival_name}
                             </h3>
                             <p className="text-[10px] text-muted-foreground mb-2">
-                              {new Date(festival.festival_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                              {new Date(festival.festival_date).toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric'
+                    })}
                             </p>
                             <div className="flex gap-1">
                               <DropdownMenu>
@@ -425,35 +406,23 @@ export default function AdminStories() {
                               </DropdownMenu>
                             </div>
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </>
-              )}
+                        </div>)}
+                    </div>}
+                </>}
 
               {/* Auto-Generated Tab */}
-              {activeTab === "generated" && (
-                <>
-                  {generatedStories.length === 0 ? (
-                    <div className="text-center py-12">
+              {activeTab === "generated" && <>
+                  {generatedStories.length === 0 ? <div className="text-center py-12">
                       <Sparkles className="w-12 h-12 text-muted-foreground mx-auto mb-3 opacity-50" />
                       <p className="text-sm text-muted-foreground">No auto-generated stories</p>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-2 gap-3">
-                      {generatedStories.map(story => (
-                        <div key={story.id} className="bg-card border border-primary/20 rounded-2xl overflow-hidden hover:border-primary/40 transition-all animate-fade-in">
+                    </div> : <div className="grid grid-cols-2 gap-3">
+                      {generatedStories.map(story => <div key={story.id} className="bg-card border border-primary/20 rounded-2xl overflow-hidden hover:border-primary/40 transition-all animate-fade-in">
                           <div className="relative aspect-square bg-muted">
                             <img src={story.poster_url} alt={story.title} className="w-full h-full object-cover" />
-                            <Badge className={`absolute top-2 left-2 text-[9px] px-1.5 py-0.5 border-0 text-white ${
-                              story.status === "active" ? "bg-green-500/90" : "bg-yellow-500/90"
-                            }`}>
+                            <Badge className={`absolute top-2 left-2 text-[9px] px-1.5 py-0.5 border-0 text-white ${story.status === "active" ? "bg-green-500/90" : "bg-yellow-500/90"}`}>
                               {story.status === "active" ? "Active" : "Preview"}
                             </Badge>
-                            <Badge className={`absolute top-2 right-2 text-[9px] px-1.5 py-0.5 border-0 text-white ${
-                              story.source_type === "event" ? "bg-blue-500/90" : "bg-purple-500/90"
-                            }`}>
+                            <Badge className={`absolute top-2 right-2 text-[9px] px-1.5 py-0.5 border-0 text-white ${story.source_type === "event" ? "bg-blue-500/90" : "bg-purple-500/90"}`}>
                               {story.source_type}
                             </Badge>
                           </div>
@@ -462,25 +431,21 @@ export default function AdminStories() {
                               {story.title}
                             </h3>
                             <p className="text-[10px] text-muted-foreground">
-                              {new Date(story.event_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                              {new Date(story.event_date).toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric'
+                    })}
                             </p>
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </>
-              )}
-            </>
-          )}
+                        </div>)}
+                    </div>}
+                </>}
+            </>}
         </div>
 
         {/* Fixed Floating Add Button */}
         <div className="absolute bottom-4 right-4 z-40">
-          <Button
-            onClick={() => handleOpenDialog(undefined, activeTab === "festivals" ? "festival" : "event")}
-            className="h-14 w-14 rounded-full bg-primary hover:bg-primary/90 shadow-lg"
-          >
+          <Button onClick={() => handleOpenDialog(undefined, activeTab === "festivals" ? "festival" : "event")} className="h-14 w-14 rounded-full bg-primary hover:bg-primary/90 shadow-lg">
             <Plus className="h-6 w-6" />
           </Button>
         </div>
@@ -497,11 +462,10 @@ export default function AdminStories() {
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label>Story Type</Label>
-              <Select
-                value={formData.story_type}
-                onValueChange={(value: StoryType) => setFormData({ ...formData, story_type: value })}
-                disabled={!!editingStory}
-              >
+              <Select value={formData.story_type} onValueChange={(value: StoryType) => setFormData({
+              ...formData,
+              story_type: value
+            })} disabled={!!editingStory}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -512,14 +476,13 @@ export default function AdminStories() {
               </Select>
             </div>
 
-            {formData.story_type === "event" ? (
-              <>
+            {formData.story_type === "event" ? <>
                 <div className="space-y-2">
                   <Label>Event Type</Label>
-                  <Select
-                    value={formData.event_type}
-                    onValueChange={(value: "birthday" | "anniversary") => setFormData({ ...formData, event_type: value })}
-                  >
+                  <Select value={formData.event_type} onValueChange={(value: "birthday" | "anniversary") => setFormData({
+                ...formData,
+                event_type: value
+              })}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -532,73 +495,50 @@ export default function AdminStories() {
 
                 <div className="space-y-2">
                   <Label>Person Name</Label>
-                  <Input
-                    value={formData.person_name}
-                    onChange={(e) => setFormData({ ...formData, person_name: e.target.value })}
-                    placeholder="Enter person name"
-                  />
+                  <Input value={formData.person_name} onChange={e => setFormData({
+                ...formData,
+                person_name: e.target.value
+              })} placeholder="Enter person name" />
                 </div>
 
                 <div className="space-y-2">
                   <Label>Event Date</Label>
-                  <Input
-                    type="date"
-                    value={formData.event_date}
-                    onChange={(e) => setFormData({ ...formData, event_date: e.target.value })}
-                  />
+                  <Input type="date" value={formData.event_date} onChange={e => setFormData({
+                ...formData,
+                event_date: e.target.value
+              })} />
                 </div>
-              </>
-            ) : (
-              <>
+              </> : <>
                 <div className="space-y-2">
                   <Label>Festival Name</Label>
-                  <Input
-                    value={formData.festival_name}
-                    onChange={(e) => setFormData({ ...formData, festival_name: e.target.value })}
-                    placeholder="Enter festival name"
-                  />
+                  <Input value={formData.festival_name} onChange={e => setFormData({
+                ...formData,
+                festival_name: e.target.value
+              })} placeholder="Enter festival name" />
                 </div>
 
                 <div className="space-y-2">
                   <Label>Festival Date</Label>
-                  <Input
-                    type="date"
-                    value={formData.festival_date}
-                    onChange={(e) => setFormData({ ...formData, festival_date: e.target.value })}
-                  />
+                  <Input type="date" value={formData.festival_date} onChange={e => setFormData({
+                ...formData,
+                festival_date: e.target.value
+              })} />
                 </div>
-              </>
-            )}
+              </>}
 
             <div className="space-y-2">
               <Label>Poster Image</Label>
-              <Input
-                type="file"
-                accept="image/*"
-                onChange={(e) => setPosterFile(e.target.files?.[0] || null)}
-              />
-              {editingStory && !posterFile && (
-                <p className="text-xs text-muted-foreground">Leave empty to keep existing image</p>
-              )}
+              <Input type="file" accept="image/*" onChange={e => setPosterFile(e.target.files?.[0] || null)} />
+              {editingStory && !posterFile && <p className="text-xs text-muted-foreground">Leave empty to keep existing image</p>}
             </div>
 
-            <div className="space-y-2">
-              <Label>Description (Optional)</Label>
-              <Input
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="Enter description"
-              />
-            </div>
+            
 
             <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="is_active"
-                checked={formData.is_active}
-                onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-                className="h-4 w-4"
-              />
+              <input type="checkbox" id="is_active" checked={formData.is_active} onChange={e => setFormData({
+              ...formData,
+              is_active: e.target.checked
+            })} className="h-4 w-4" />
               <Label htmlFor="is_active">Active</Label>
             </div>
           </div>
@@ -613,6 +553,5 @@ export default function AdminStories() {
           </div>
         </DialogContent>
       </Dialog>
-    </AdminLayout>
-  );
+    </AdminLayout>;
 }
