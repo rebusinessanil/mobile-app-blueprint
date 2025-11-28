@@ -887,12 +887,7 @@ export default function BannerPreview() {
             width: '648px',
             height: '162px'
           }} className="absolute z-20 my-0">
-                <img src={bannerDefaults.congratulations_image} alt="Congratulations" style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.7))'
-            }} />
+                
               </div>}
 
             {/* Text Below Congratulations Image */}
