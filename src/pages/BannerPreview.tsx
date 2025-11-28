@@ -1693,7 +1693,7 @@ export default function BannerPreview() {
                       <div style={{
                         position: 'absolute',
                         left: '270px',
-                        right: '140px',
+                        right: '0',
                         height: '100%',
                         background: 'linear-gradient(135deg, #0f1419 0%, #1a1f2e 100%)',
                         borderRadius: '12px 60px 60px 12px',
@@ -1731,19 +1731,6 @@ export default function BannerPreview() {
                           </div>
                         </div>
                       </div>
-
-                      {/* Right Circular Profile Placeholder */}
-                      <div style={{
-                        position: 'absolute',
-                        right: 0,
-                        width: '120px',
-                        height: '120px',
-                        borderRadius: '50%',
-                        border: `4px solid ${currentVariant.borderColor}`,
-                        background: 'rgba(26, 31, 46, 0.5)',
-                        boxShadow: `0 8px 24px ${currentVariant.shadowColor}, 0 0 30px ${currentVariant.shadowColor}, inset 0 2px 8px rgba(0,0,0,0.4)`,
-                        zIndex: 2
-                      }} />
                     </div>;
                   })()}
 
