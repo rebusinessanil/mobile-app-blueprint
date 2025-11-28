@@ -149,20 +149,89 @@ export default function Dashboard() {
 
       {/* Content */}
       <div className="px-6 py-6 space-y-6">
-        {/* Stories Section - Square Festival Cards */}
-        {festivals.length > 0 && <div className="space-y-3">
+        {/* Unified Stories Section */}
+        {(festivals.length > 0 || generatedStories.length > 0) && (
+          <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="text-base">📖</span>
-                <h2 className="text-sm font-bold text-foreground">Stories</h2>
+                <span className="text-2xl">📖</span>
+                <h2 className="text-lg font-bold text-foreground">Stories</h2>
               </div>
             </div>
             <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-              {festivals.slice(0, 16).map(festival => <Link key={festival.id} to={`/festival-preview/${festival.id}`} className="min-w-[84px] relative flex-shrink-0 transition-all hover:scale-105">
+              {/* Active Generated Stories */}
+              {generatedStories
+                .filter((story) => story.status === "active")
+                .slice(0, 8)
+                .map((story) => (
+                  <Link
+                    key={story.id}
+                    to={`/story/${story.id}`}
+                    className="min-w-[84px] relative flex-shrink-0 transition-all hover:scale-105"
+                  >
+                    <div className="gold-border bg-card rounded-2xl overflow-hidden">
+                      <div className="w-[84px] h-[84px] relative">
+                        <img
+                          src={story.poster_url}
+                          alt={story.title}
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute top-2 right-2 w-3 h-3 bg-green-500 rounded-full border-2 border-white shadow-lg" />
+                      </div>
+                      <div className="p-2 text-center">
+                        <p className="text-xs font-semibold text-foreground leading-tight line-clamp-2">
+                          {story.title}
+                        </p>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+
+              {/* Preview Stories */}
+              {generatedStories
+                .filter((story) => story.status === "preview_only")
+                .slice(0, 8)
+                .map((story) => (
+                  <div
+                    key={story.id}
+                    className="min-w-[84px] relative flex-shrink-0 opacity-75"
+                  >
+                    <div className="gold-border bg-card rounded-2xl overflow-hidden">
+                      <div className="w-[84px] h-[84px] relative">
+                        <img
+                          src={story.poster_url}
+                          alt={story.title}
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                          <Badge variant="secondary" className="text-[10px] px-1 py-0">
+                            Tomorrow
+                          </Badge>
+                        </div>
+                      </div>
+                      <div className="p-2 text-center">
+                        <p className="text-xs font-semibold text-muted-foreground leading-tight line-clamp-2">
+                          {story.title}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+
+              {/* Festival Stories */}
+              {festivals.slice(0, 8).map((festival) => (
+                <Link
+                  key={festival.id}
+                  to={`/festival-preview/${festival.id}`}
+                  className="min-w-[84px] relative flex-shrink-0 transition-all hover:scale-105"
+                >
                   <div className="gold-border bg-card rounded-2xl overflow-hidden">
                     <div className="w-[84px] h-[84px] relative">
-                      <img src={festival.poster_url} alt={festival.festival_name} className="w-full h-full object-cover" />
-                      {/* Green Active Indicator */}
+                      <img
+                        src={festival.poster_url}
+                        alt={festival.festival_name}
+                        className="w-full h-full object-cover"
+                      />
                       <div className="absolute top-2 right-2 w-3 h-3 bg-green-500 rounded-full border-2 border-white shadow-lg" />
                     </div>
                     <div className="p-2 text-center">
@@ -171,37 +240,11 @@ export default function Dashboard() {
                       </p>
                     </div>
                   </div>
-                </Link>)}
+                </Link>
+              ))}
             </div>
-          </div>}
-
-        {/* Auto-Generated Stories Section */}
-        {generatedStories.length > 0 && <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-2xl">✨</span>
-                <h2 className="text-lg font-bold text-foreground">Today's Stories</h2>
-              </div>
-            </div>
-            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-              {generatedStories.map(story => <Link key={story.id} to={story.status === 'active' ? `/story/${story.id}` : '#'} className={`min-w-[140px] gold-border bg-card rounded-2xl overflow-hidden flex-shrink-0 transition-all ${story.status === 'active' ? 'hover:gold-glow' : 'opacity-75'}`}>
-                  <div className="h-24 relative">
-                    <img src={story.poster_url} alt={story.title} className="w-full h-full object-cover" />
-                    {story.status === 'preview_only' && <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                        <Badge variant="secondary" className="text-xs">
-                          Coming Tomorrow
-                        </Badge>
-                      </div>}
-                  </div>
-                  <div className="p-3 text-center">
-                    <p className="text-sm font-semibold text-foreground leading-tight">
-                      {story.title}
-                    </p>
-                    {story.status === 'preview_only' && <p className="text-xs text-muted-foreground mt-1">Preview Only</p>}
-                  </div>
-                </Link>)}
-            </div>
-          </div>}
+          </div>
+        )}
 
         {/* Quick Actions */}
         

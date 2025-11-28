@@ -752,36 +752,81 @@ export type Database = {
       }
       stories_events: {
         Row: {
+          category_id: string | null
           created_at: string | null
+          created_by: string | null
           description: string | null
+          end_date: string | null
           event_date: string
           event_type: string
+          festival_id: string | null
           id: string
+          image_url: string | null
+          is_active: boolean | null
           person_name: string
           poster_url: string
+          priority: number | null
+          start_date: string | null
+          story_type: string | null
+          title: string | null
           updated_at: string | null
         }
         Insert: {
+          category_id?: string | null
           created_at?: string | null
+          created_by?: string | null
           description?: string | null
+          end_date?: string | null
           event_date: string
           event_type: string
+          festival_id?: string | null
           id?: string
+          image_url?: string | null
+          is_active?: boolean | null
           person_name: string
           poster_url: string
+          priority?: number | null
+          start_date?: string | null
+          story_type?: string | null
+          title?: string | null
           updated_at?: string | null
         }
         Update: {
+          category_id?: string | null
           created_at?: string | null
+          created_by?: string | null
           description?: string | null
+          end_date?: string | null
           event_date?: string
           event_type?: string
+          festival_id?: string | null
           id?: string
+          image_url?: string | null
+          is_active?: boolean | null
           person_name?: string
           poster_url?: string
+          priority?: number | null
+          start_date?: string | null
+          story_type?: string | null
+          title?: string | null
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "stories_events_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "template_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stories_events_festival_id_fkey"
+            columns: ["festival_id"]
+            isOneToOne: false
+            referencedRelation: "stories_festivals"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       stories_festivals: {
         Row: {

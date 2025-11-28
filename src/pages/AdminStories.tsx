@@ -223,25 +223,40 @@ export default function AdminStories() {
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="gold-border bg-card rounded-xl p-6">
+            <p className="text-sm text-muted-foreground">Total Stories</p>
+            <p className="text-3xl font-bold text-primary mt-2">
+              {stories.length + generatedStories.length}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              {stories.length} manual + {generatedStories.length} auto
+            </p>
+          </div>
+          <div className="gold-border bg-card rounded-xl p-6">
+            <p className="text-sm text-muted-foreground">Active Stories</p>
+            <p className="text-3xl font-bold text-green-500 mt-2">
+              {stories.filter((s) => s.is_active).length + 
+               generatedStories.filter((s) => s.status === "active").length}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Live on dashboard now
+            </p>
+          </div>
+          <div className="gold-border bg-card rounded-xl p-6">
+            <p className="text-sm text-muted-foreground">Preview Stories</p>
+            <p className="text-3xl font-bold text-yellow-500 mt-2">
+              {generatedStories.filter((s) => s.status === "preview_only").length}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Coming tomorrow
+            </p>
+          </div>
+          <div className="gold-border bg-card rounded-xl p-6">
             <p className="text-sm text-muted-foreground">Manual Stories</p>
-            <p className="text-3xl font-bold text-primary mt-2">{stories.length}</p>
-          </div>
-          <div className="gold-border bg-card rounded-xl p-6">
-            <p className="text-sm text-muted-foreground">Active Manual</p>
             <p className="text-3xl font-bold text-primary mt-2">
-              {stories.filter((s) => s.is_active).length}
+              {stories.length}
             </p>
-          </div>
-          <div className="gold-border bg-card rounded-xl p-6">
-            <p className="text-sm text-muted-foreground">Generated Stories</p>
-            <p className="text-3xl font-bold text-primary mt-2">
-              {generatedStories.length}
-            </p>
-          </div>
-          <div className="gold-border bg-card rounded-xl p-6">
-            <p className="text-sm text-muted-foreground">Active Generated</p>
-            <p className="text-3xl font-bold text-primary mt-2">
-              {generatedStories.filter((s) => s.status === "active").length}
+            <p className="text-xs text-muted-foreground mt-1">
+              {stories.filter((s) => s.is_active).length} active
             </p>
           </div>
         </div>
