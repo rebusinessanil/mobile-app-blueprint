@@ -877,20 +877,25 @@ export default function BannerPreview() {
               </div>}
           </>;
       default:
-        // 'rank' category - original rank banner layout
+        // 'rank' category - Bonanza layout applied
         return <>
-            {/* Congratulations Image - Admin controlled, always displayed */}
-            {bannerDefaults?.congratulations_image && <div style={{
+            {/* Congratulations Image */}
+            {bannerDefaults?.congratulations_image && <div className="absolute z-20" style={{
             top: '162px',
             left: '978px',
             transform: 'translateX(-50%)',
             width: '648px',
             height: '162px'
-          }} className="absolute z-20 my-0">
-                
+          }}>
+                <img src={bannerDefaults.congratulations_image} alt="Congratulations" style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.7))'
+            }} />
               </div>}
 
-            {/* Text Below Congratulations Image */}
+            {/* Rank Achievement Title */}
             <div className="absolute z-20" style={{
             top: '236px',
             left: '978px',
@@ -898,13 +903,58 @@ export default function BannerPreview() {
             width: '648px',
             textAlign: 'center'
           }}>
-              {/* Placeholder for future content */}
+              <p style={{
+              fontSize: '42px',
+              fontWeight: '600',
+              color: '#ffffff',
+              textShadow: '2px 2px 8px rgba(0,0,0,0.9)',
+              letterSpacing: '1px'
+            }}>
+                RANK PROMOTION WINNER
+              </p>
             </div>
 
-            {/* CENTER-RIGHT - Name - FIXED SIZE, POSITION, FONTS */}
-            
+            {/* Achiever Name */}
+            <div className="absolute" style={{
+            top: '337px',
+            left: '978px',
+            transform: 'translateX(-50%)',
+            width: '648px',
+            padding: '0 27px'
+          }}>
+              <h2 style={{
+              color: '#ffffff',
+              textAlign: 'center',
+              fontSize: '54px',
+              fontWeight: '700',
+              textShadow: '3px 3px 10px rgba(0,0,0,0.9)',
+              letterSpacing: '1px',
+              margin: 0
+            }}>
+                {truncatedMainName.toUpperCase()}
+              </h2>
+            </div>
 
-            {/* BOTTOM CENTER - Income - FIXED FONTS AND POSITION */}
+            {/* Team Name */}
+            <div className="absolute" style={{
+            top: '470px',
+            left: '978px',
+            transform: 'translateX(-50%)',
+            width: '648px',
+            padding: '0 27px'
+          }}>
+              {bannerData.teamCity && <p style={{
+              marginTop: '13px',
+              color: '#ffffff',
+              textAlign: 'center',
+              fontSize: '28px',
+              textShadow: '2px 2px 4px rgba(0,0,0,0.9)'
+            }}>
+                  {bannerData.teamCity.toUpperCase()}
+                </p>}
+            </div>
+
+            {/* Income Section */}
             {bannerData.chequeAmount && <div className="absolute" style={{
             bottom: '202px',
             left: '67px',
