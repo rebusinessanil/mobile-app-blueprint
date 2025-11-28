@@ -876,6 +876,9 @@ export default function BannerPreview() {
                 </p>
               </div>}
           </>;
+      case 'story':
+        // Story category - NO congratulation sticker, NO achiever name, NO team name
+        return <></>;
       default:
         // 'rank' category - Bonanza layout applied
         return <>
