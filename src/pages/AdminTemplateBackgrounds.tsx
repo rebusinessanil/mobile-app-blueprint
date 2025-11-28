@@ -6,16 +6,25 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { Loader2, Upload, Trash2, Eye, EyeOff } from 'lucide-react';
+import { Loader2, Upload, Trash2, Eye, EyeOff, Calendar, Edit, MoreVertical } from 'lucide-react';
 import { useTemplateBackgrounds, uploadTemplateBackground, removeTemplateBackground, toggleBackgroundActive } from '@/hooks/useTemplateBackgrounds';
 import { AdminGuard } from "@/components/AdminGuard";
+import { useStoriesEvents, useStoriesFestivals } from '@/hooks/useAutoStories';
+import { Badge } from '@/components/ui/badge';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 export default function AdminTemplateBackgrounds() {
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedTemplate, setSelectedTemplate] = useState<string>('');
+  const [selectedStory, setSelectedStory] = useState<any>(null);
   const [uploading, setUploading] = useState(false);
   const [bulkUploading, setBulkUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number } | null>(null);
+
+  // Fetch stories for "Stories" category
+  const { events, loading: eventsLoading } = useStoriesEvents();
+  const { festivals, loading: festivalsLoading } = useStoriesFestivals();
+  const allStories = [...events.map(e => ({ ...e, type: 'event' })), ...festivals.map(f => ({ ...f, type: 'festival' }))];
 
   // Fetch categories
   const { data: categories, isLoading: categoriesLoading } = useQuery({
@@ -31,6 +40,8 @@ export default function AdminTemplateBackgrounds() {
       return data;
     },
   });
+
+  const isStoriesCategory = categories?.find(c => c.id === selectedCategory)?.slug === 'stories';
 
   // Fetch templates for selected category with optional rank info
   const { data: templates, isLoading: templatesLoading } = useQuery({
@@ -203,8 +214,74 @@ export default function AdminTemplateBackgrounds() {
         </CardContent>
       </Card>
 
+      {/* Story Selection for Stories Category */}
+      {isStoriesCategory && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Select Story ({allStories.length} available)</CardTitle>
+            <CardDescription>Choose a story to manage its background slots</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {eventsLoading || festivalsLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-gold" />
+              </div>
+            ) : allStories.length === 0 ? (
+              <p className="text-muted-foreground text-sm py-4 text-center">No stories found</p>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {allStories.map((story: any) => {
+                  const isEvent = story.type === 'event';
+                  const storyId = story.id;
+                  const storyTitle = isEvent ? story.person_name : story.festival_name;
+                  const storyDate = isEvent ? story.event_date : story.festival_date;
+                  const isActive = story.is_active ?? true;
+                  
+                  return (
+                    <button
+                      key={storyId}
+                      onClick={() => setSelectedStory(story)}
+                      className={`text-left bg-card border rounded-2xl overflow-hidden transition-all ${
+                        selectedStory?.id === storyId ? 'border-primary shadow-lg' : 'border-primary/20 hover:border-primary/40'
+                      }`}
+                    >
+                      {/* Image */}
+                      <div className="relative aspect-square bg-muted">
+                        <img src={story.poster_url} alt={storyTitle} className="w-full h-full object-cover" />
+                        {/* Category Pill */}
+                        <Badge className={`absolute top-2 left-2 text-[9px] px-1.5 py-0.5 border-0 ${
+                          isEvent ? 'bg-blue-500/90' : 'bg-purple-500/90'
+                        } text-white`}>
+                          {isEvent ? story.event_type : 'Festival'}
+                        </Badge>
+                        {/* Status Dot */}
+                        <div className="absolute top-2 right-2">
+                          <div className={`w-2.5 h-2.5 rounded-full border-2 border-white shadow-lg ${
+                            isActive ? 'bg-green-500' : 'bg-gray-500'
+                          }`} />
+                        </div>
+                      </div>
+                      
+                      {/* Content */}
+                      <div className="p-2.5">
+                        <h3 className="font-semibold text-foreground text-xs leading-tight line-clamp-1 mb-1">
+                          {storyTitle}
+                        </h3>
+                        <p className="text-[10px] text-muted-foreground">
+                          {new Date(storyDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                        </p>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       {/* Template Selection with Rank Display */}
-      {selectedCategory && (
+      {selectedCategory && !isStoriesCategory && (
         <Card>
           <CardHeader>
             <CardTitle>Select Template ({templates?.length || 0} available)</CardTitle>
@@ -257,8 +334,70 @@ export default function AdminTemplateBackgrounds() {
         </Card>
       )}
 
+      {/* Stories Background Slots Management */}
+      {isStoriesCategory && selectedStory && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Story Background Slots (16 Slots)</CardTitle>
+            <CardDescription>
+              Manage background images for the selected story. Each story has 16 available slots.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="p-4 bg-muted/50 rounded-lg border border-primary/20">
+              <h3 className="font-semibold text-sm mb-2">Selected Story</h3>
+              <p className="text-sm text-muted-foreground">
+                {selectedStory.type === 'event' ? selectedStory.person_name : selectedStory.festival_name}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {new Date(selectedStory.type === 'event' ? selectedStory.event_date : selectedStory.festival_date).toLocaleDateString()}
+              </p>
+            </div>
+
+            {/* Upload Section */}
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Upload Story Background</Label>
+                <div className="flex items-center gap-4">
+                  <Input
+                    type="file"
+                    accept="image/png,image/jpeg,image/jpg"
+                    onChange={handleUpload}
+                    disabled={uploading}
+                    className="flex-1"
+                  />
+                  {uploading && <Loader2 className="h-5 w-5 animate-spin text-gold" />}
+                </div>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Upload background images for this story's 16 slots
+              </p>
+            </div>
+
+            {/* 16-Slot Grid for Stories */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {Array.from({ length: 16 }, (_, index) => {
+                const slotNumber = index + 1;
+                return (
+                  <Card key={slotNumber} className="border-dashed">
+                    <CardContent className="p-4 space-y-2">
+                      <div className="text-xs font-medium text-muted-foreground mb-1">
+                        Slot {slotNumber}
+                      </div>
+                      <div className="w-full h-32 flex items-center justify-center border-2 border-dashed rounded bg-muted/10">
+                        <Upload className="h-8 w-8 text-muted-foreground/50" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Background Management */}
-      {selectedTemplate && (
+      {selectedTemplate && !isStoriesCategory && (
         <Card>
           <CardHeader>
             <CardTitle>Template Backgrounds (16 Slots)</CardTitle>
