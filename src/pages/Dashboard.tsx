@@ -11,7 +11,7 @@ import { useBirthdays } from "@/hooks/useBirthdays";
 import { useAnniversaries } from "@/hooks/useAnniversaries";
 import { useMotivationalBanners } from "@/hooks/useMotivationalBanners";
 import { useFestivals } from "@/hooks/useFestivals";
-import { useGeneratedStories } from "@/hooks/useAutoStories";
+import { useUnifiedStories } from "@/hooks/useUnifiedStories";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import Profile from "./Profile";
 import { Badge } from "@/components/ui/badge";
@@ -41,8 +41,8 @@ export default function Dashboard() {
     festivals
   } = useFestivals();
   const {
-    stories: generatedStories
-  } = useGeneratedStories();
+    stories: unifiedStories
+  } = useUnifiedStories();
   const [userId, setUserId] = useState<string | null>(null);
   const {
     profile
@@ -150,7 +150,7 @@ export default function Dashboard() {
       {/* Content */}
       <div className="px-6 py-6 space-y-6">
         {/* Unified Stories Section */}
-        {(festivals.length > 0 || generatedStories.length > 0) && (
+        {unifiedStories.length > 0 && (
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -159,36 +159,49 @@ export default function Dashboard() {
               </div>
             </div>
             <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-              {/* Active Generated Stories */}
-              {generatedStories
+              {/* Active Stories */}
+              {unifiedStories
                 .filter((story) => story.status === "active")
-                .slice(0, 8)
-                .map((story) => (
-                  <Link
-                    key={story.id}
-                    to={`/story/${story.id}`}
-                    className="min-w-[84px] relative flex-shrink-0 transition-all hover:scale-105"
-                  >
-                    <div className="gold-border bg-card rounded-2xl overflow-hidden">
-                      <div className="w-[84px] h-[84px] relative">
-                        <img
-                          src={story.poster_url}
-                          alt={story.title}
-                          className="w-full h-full object-cover"
-                        />
-                        <div className="absolute top-2 right-2 w-3 h-3 bg-green-500 rounded-full border-2 border-white shadow-lg" />
+                .slice(0, 16)
+                .map((story) => {
+                  // Determine navigation path based on story type
+                  const getStoryPath = () => {
+                    if (story.story_type === "festival") {
+                      return `/festival-preview/${story.id}`;
+                    } else if (story.story_type === "event") {
+                      return `/story/${story.id}`;
+                    } else {
+                      return `/story/${story.id}`;
+                    }
+                  };
+
+                  return (
+                    <Link
+                      key={story.id}
+                      to={getStoryPath()}
+                      className="min-w-[84px] relative flex-shrink-0 transition-all hover:scale-105"
+                    >
+                      <div className="gold-border bg-card rounded-2xl overflow-hidden">
+                        <div className="w-[84px] h-[84px] relative">
+                          <img
+                            src={story.background_url || story.cover_image_url}
+                            alt={story.title}
+                            className="w-full h-full object-cover"
+                          />
+                          <div className="absolute top-2 right-2 w-3 h-3 bg-green-500 rounded-full border-2 border-white shadow-lg" />
+                        </div>
+                        <div className="p-2 text-center">
+                          <p className="text-xs font-semibold text-foreground leading-tight line-clamp-2">
+                            {story.title}
+                          </p>
+                        </div>
                       </div>
-                      <div className="p-2 text-center">
-                        <p className="text-xs font-semibold text-foreground leading-tight line-clamp-2">
-                          {story.title}
-                        </p>
-                      </div>
-                    </div>
-                  </Link>
-                ))}
+                    </Link>
+                  );
+                })}
 
               {/* Preview Stories */}
-              {generatedStories
+              {unifiedStories
                 .filter((story) => story.status === "preview_only")
                 .slice(0, 8)
                 .map((story) => (
@@ -199,7 +212,7 @@ export default function Dashboard() {
                     <div className="gold-border bg-card rounded-2xl overflow-hidden">
                       <div className="w-[84px] h-[84px] relative">
                         <img
-                          src={story.poster_url}
+                          src={story.background_url || story.cover_image_url}
                           alt={story.title}
                           className="w-full h-full object-cover"
                         />
@@ -217,31 +230,6 @@ export default function Dashboard() {
                     </div>
                   </div>
                 ))}
-
-              {/* Festival Stories */}
-              {festivals.slice(0, 8).map((festival) => (
-                <Link
-                  key={festival.id}
-                  to={`/festival-preview/${festival.id}`}
-                  className="min-w-[84px] relative flex-shrink-0 transition-all hover:scale-105"
-                >
-                  <div className="gold-border bg-card rounded-2xl overflow-hidden">
-                    <div className="w-[84px] h-[84px] relative">
-                      <img
-                        src={festival.poster_url}
-                        alt={festival.festival_name}
-                        className="w-full h-full object-cover"
-                      />
-                      <div className="absolute top-2 right-2 w-3 h-3 bg-green-500 rounded-full border-2 border-white shadow-lg" />
-                    </div>
-                    <div className="p-2 text-center">
-                      <p className="text-xs font-semibold text-foreground leading-tight line-clamp-2">
-                        {festival.festival_name}
-                      </p>
-                    </div>
-                  </div>
-                </Link>
-              ))}
             </div>
           </div>
         )}
