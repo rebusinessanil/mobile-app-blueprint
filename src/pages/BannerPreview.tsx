@@ -880,13 +880,13 @@ export default function BannerPreview() {
         // 'rank' category - original rank banner layout
         return <>
             {/* Congratulations Image - Admin controlled, always displayed */}
-            {bannerDefaults?.congratulations_image && <div className="absolute z-20" style={{
+            {bannerDefaults?.congratulations_image && <div style={{
             top: '162px',
             left: '978px',
             transform: 'translateX(-50%)',
             width: '648px',
             height: '162px'
-          }}>
+          }} className="absolute z-20 my-0">
                 <img src={bannerDefaults.congratulations_image} alt="Congratulations" style={{
               width: '100%',
               height: '100%',
@@ -907,31 +907,7 @@ export default function BannerPreview() {
             </div>
 
             {/* CENTER-RIGHT - Name - FIXED SIZE, POSITION, FONTS */}
-            <div className="banner-text-content absolute" style={{
-            top: '337px',
-            left: '978px',
-            transform: 'translateX(-50%)',
-            width: '648px',
-            minWidth: '648px',
-            maxWidth: '648px',
-            padding: '0 27px'
-          }}>
-              <h2 title={mainBannerName.toUpperCase()} style={{
-              color: '#ffffff',
-              textAlign: 'center',
-              margin: '0 auto'
-            }} className="banner-preview-name text-center px-0 py-[2px] mx-[26px]">
-                {truncatedMainName.toUpperCase()}
-              </h2>
-              
-              {bannerData.teamCity && <p title={bannerData.teamCity.toUpperCase()} style={{
-              marginTop: '13px',
-              color: '#ffffff',
-              textAlign: 'center'
-            }} className="banner-team text-center px-[5px] py-[6px]">
-                  {bannerData.teamCity.toUpperCase()}
-                </p>}
-            </div>
+            
 
             {/* BOTTOM CENTER - Income - FIXED FONTS AND POSITION */}
             {bannerData.chequeAmount && <div className="absolute" style={{
@@ -1405,24 +1381,7 @@ export default function BannerPreview() {
                     </div>
 
                     {/* Upper Bar 3 - Lower */}
-                    <div className="absolute z-10" style={{
-                      top: '180px',
-                      left: 0,
-                      right: 0,
-                      height: '50px'
-                    }}>
-                      
-                      
-                      <div style={{
-                        position: 'absolute',
-                        right: '100px',
-                        top: 0,
-                        width: '300px',
-                        height: '50px',
-                        background: '#ffd700',
-                        clipPath: 'polygon(10% 0, 100% 0, 90% 100%, 0% 100%)'
-                      }} />
-                    </div>
+                    
                   </>}
 
                 {/* Top-Left Logo */}
