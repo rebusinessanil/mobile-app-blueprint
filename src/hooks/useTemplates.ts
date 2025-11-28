@@ -52,18 +52,6 @@ export interface Template {
   } | null;
 }
 
-export interface Story {
-  id: string;
-  category_id: string;
-  title: string;
-  cover_image_url: string;
-  type: string;
-  content_url: string | null;
-  display_order: number;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
-}
 
 export const useTemplateCategories = () => {
   const [categories, setCategories] = useState<TemplateCategory[]>([]);
@@ -214,60 +202,6 @@ export const useTemplates = (categoryId?: string, tripId?: string, rankId?: stri
   return { templates, loading, error };
 };
 
-export const useStories = (categoryId?: string) => {
-  const [stories, setStories] = useState<Story[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-
-  const fetchStories = async () => {
-    try {
-      let query = supabase
-        .from('stories')
-        .select('*')
-        .eq('is_active', true)
-        .order('display_order', { ascending: true });
-
-      if (categoryId) {
-        query = query.eq('category_id', categoryId);
-      }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-      setStories(data || []);
-    } catch (err) {
-      setError(err as Error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchStories();
-
-    // Real-time subscription
-    const channel = supabase
-      .channel('stories-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'stories',
-        },
-        () => {
-          fetchStories();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [categoryId]);
-
-  return { stories, loading, error, refetch: fetchStories };
-};
 
 export const useAdminTemplates = () => {
   const updateCategoryCover = async (
