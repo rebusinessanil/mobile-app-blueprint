@@ -1704,10 +1704,10 @@ export default function BannerPreview() {
                         justifyContent: 'flex-start',
                         zIndex: 1
                       }}>
-                        {/* User Info - Left Aligned */}
+                        {/* User Info - Center Aligned, 20% from Left */}
                         <div style={{
-                          textAlign: 'left',
-                          padding: '0 30px'
+                          textAlign: 'center',
+                          paddingLeft: '20%'
                         }}>
                           <div style={{
                             fontSize: '32px',
