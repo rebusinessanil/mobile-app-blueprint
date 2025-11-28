@@ -12,7 +12,6 @@ import { useAnniversaries } from "@/hooks/useAnniversaries";
 import { useMotivationalBanners } from "@/hooks/useMotivationalBanners";
 import { useFestivals } from "@/hooks/useFestivals";
 import { useGeneratedStories } from "@/hooks/useAutoStories";
-import { useStoriesEvents } from "@/hooks/useStoriesEvents";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import Profile from "./Profile";
 import { Badge } from "@/components/ui/badge";
@@ -44,7 +43,6 @@ export default function Dashboard() {
   const {
     stories: generatedStories
   } = useGeneratedStories();
-  const { stories: unifiedStories } = useStoriesEvents(16); // 16-slot limit
   const [userId, setUserId] = useState<string | null>(null);
   const {
     profile
@@ -151,60 +149,33 @@ export default function Dashboard() {
 
       {/* Content */}
       <div className="px-6 py-6 space-y-6">
-        {/* Unified Stories Section (16-slot max) */}
-        {unifiedStories.length > 0 && (
-          <div className="space-y-3">
+        {/* Stories Section - Square Festival Cards */}
+        {festivals.length > 0 && <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="text-2xl">📖</span>
-                <h2 className="text-lg font-bold text-foreground">Stories</h2>
+                <span className="text-base">📖</span>
+                <h2 className="text-sm font-bold text-foreground">Stories</h2>
               </div>
             </div>
             <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-              {unifiedStories.map((story) => {
-                const getStoryLink = () => {
-                  if (story.story_type === 'festival' && story.festival_id) {
-                    return `/create/festival-banner/${story.festival_id}`;
-                  } else if (story.story_type === 'category' && story.category_id) {
-                    return `/create/category-banner/${story.category_id}`;
-                  } else if (story.story_type === 'event') {
-                    return `/story/${story.id}`;
-                  } else if (story.story_type === 'offer') {
-                    return `/offer/${story.id}`;
-                  }
-                  return '#';
-                };
-
-                return (
-                  <Link
-                    key={story.id}
-                    to={getStoryLink()}
-                    className="min-w-[100px] relative flex-shrink-0 transition-all hover:scale-105"
-                  >
-                    <div className="gold-border bg-card rounded-2xl overflow-hidden">
-                      <div className="w-[100px] h-[100px] relative">
-                        <img
-                          src={story.image_url}
-                          alt={story.title}
-                          className="w-full h-full object-cover"
-                        />
-                        {/* Green Active Indicator */}
-                        <div className="absolute top-2 right-2 w-3 h-3 bg-green-500 rounded-full border-2 border-white shadow-lg" />
-                      </div>
-                      <div className="p-2 text-center">
-                        <p className="text-xs font-semibold text-foreground leading-tight line-clamp-2">
-                          {story.title}
-                        </p>
-                      </div>
+              {festivals.slice(0, 16).map(festival => <Link key={festival.id} to={`/festival-preview/${festival.id}`} className="min-w-[84px] relative flex-shrink-0 transition-all hover:scale-105">
+                  <div className="gold-border bg-card rounded-2xl overflow-hidden">
+                    <div className="w-[84px] h-[84px] relative">
+                      <img src={festival.poster_url} alt={festival.festival_name} className="w-full h-full object-cover" />
+                      {/* Green Active Indicator */}
+                      <div className="absolute top-2 right-2 w-3 h-3 bg-green-500 rounded-full border-2 border-white shadow-lg" />
                     </div>
-                  </Link>
-                );
-              })}
+                    <div className="p-2 text-center">
+                      <p className="text-xs font-semibold text-foreground leading-tight line-clamp-2">
+                        {festival.festival_name}
+                      </p>
+                    </div>
+                  </div>
+                </Link>)}
             </div>
-          </div>
-        )}
+          </div>}
 
-        {/* Auto-Generated Stories Section (Keep for backward compatibility) */}
+        {/* Auto-Generated Stories Section */}
         {generatedStories.length > 0 && <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
