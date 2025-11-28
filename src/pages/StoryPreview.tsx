@@ -81,17 +81,17 @@ export default function StoryPreview() {
     })) || [];
 
     // Auto-navigate to banner preview with pre-filled story event data
-    // STORY RULES: No achiever name or photo auto-load - keep empty
+    // STORY AUTO-INJECT: Profile photo, rank badge, username, and contact details
     navigate("/banner-preview", {
       state: {
         categoryType: 'story', // Always 'story' for stories_events
         rankName: eventType === 'birthday' ? 'Birthday Celebration' : 
                  eventType === 'anniversary' ? 'Anniversary Celebration' : 
                  'Event Celebration',
-        name: "", // STORY RULE: No achiever name auto-load - keep empty
+        name: profile.name || "", // AUTO-INJECT: User's name from profile
         teamCity: "", // Optional
         greeting: "", // Optional
-        photo: null, // STORY RULE: No achiever image auto-load
+        photo: null, // Achiever photo optional - will use profile photo if not uploaded
         uplines,
         slotStickers: {},
         templates,
