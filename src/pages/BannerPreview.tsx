@@ -9,8 +9,7 @@ import downloadIcon from "@/assets/download-icon.png";
 import { useProfile } from "@/hooks/useProfile";
 import { useProfilePhotos } from "@/hooks/useProfilePhotos";
 import { useBannerSettings } from "@/hooks/useBannerSettings";
-import { useTemplateBackgrounds } from "@/hooks/useTemplateBackgrounds";
-import { useStoryBackgroundSlots } from "@/hooks/useStoryBackgroundSlots";
+import { useGlobalBackgroundSlots, getSlotBackgroundStyle } from "@/hooks/useGlobalBackgroundSlots";
 import { useBannerDefaults } from "@/hooks/useBannerDefaults";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -251,21 +250,16 @@ export default function BannerPreview() {
     }
   }, [currentTemplateId, bannerData?.categoryType]);
 
-  // For story category, fetch from story_background_slots instead of template_backgrounds
+  // Use global background slots system with real-time sync and default colors
   const storyId = bannerData?.storyId || bannerData?.eventId;
   const {
-    slots: storyBackgroundSlots,
-    loading: storyBackgroundsLoading
-  } = useStoryBackgroundSlots(
-    bannerData?.categoryType === 'story' ? storyId : undefined
-  );
-
-  // For non-story categories, fetch from template_backgrounds
-  const {
-    backgrounds
-  } = useTemplateBackgrounds(
-    bannerData?.categoryType !== 'story' ? currentTemplateId : undefined
-  );
+    slots: globalBackgroundSlots,
+    loading: backgroundsLoading
+  } = useGlobalBackgroundSlots({
+    templateId: bannerData?.categoryType !== 'story' ? currentTemplateId : undefined,
+    storyId: bannerData?.categoryType === 'story' ? storyId : undefined,
+    categoryType: bannerData?.categoryType
+  });
 
   // Real-time sync for sticker updates from admin panel
   useRealtimeStickerSync({
@@ -379,47 +373,23 @@ export default function BannerPreview() {
     }
   }, [stickerImages, selectedTemplate, selectedStickerId, stickerScale, isAdmin]);
 
-  // Map selectedTemplate (0-15) to slot_number (1-16) and fetch correct background
-  // CRITICAL: Only show background if it exists for this exact slot - NO fallbacks, NO cross-contamination
+  // Map selectedTemplate (0-15) to slot_number (1-16) and get background from global slots
   const selectedSlot = selectedTemplate + 1;
+  const currentSlot = globalBackgroundSlots.find(slot => slot.slotNumber === selectedSlot);
+  const backgroundStyle = currentSlot ? getSlotBackgroundStyle(currentSlot) : {};
   
-  // For story category, use story background slots; for others, use template backgrounds
-  const backgroundImage = bannerData?.categoryType === 'story' 
-    ? storyBackgroundSlots.find(slot => slot.slot_number === selectedSlot)?.image_url || null
-    : backgrounds.find(bg => bg.slot_number === selectedSlot)?.background_image_url || null;
-
   // Debug background selection
   useEffect(() => {
-    if (bannerData?.categoryType === 'story') {
-      console.log('🎨 Story background selection:', {
-        selectedSlot,
-        totalSlots: storyBackgroundSlots.length,
-        storyId,
-        foundBackground: !!backgroundImage,
-        backgroundUrl: backgroundImage ? backgroundImage.substring(0, 60) + '...' : 'none'
-      });
-
-      // Warn if slots exist but none match current slot
-      if (storyBackgroundSlots.length > 0 && !backgroundImage) {
-        console.warn('⚠️ Story slots exist but none for slot', selectedSlot);
-        console.log('Available story slots:', storyBackgroundSlots.map(slot => slot.slot_number));
-      }
-    } else {
-      console.log('🎨 Template background selection:', {
-        selectedSlot,
-        totalBackgrounds: backgrounds.length,
-        currentTemplateId,
-        foundBackground: !!backgroundImage,
-        backgroundUrl: backgroundImage ? backgroundImage.substring(0, 60) + '...' : 'none'
-      });
-
-      // Warn if backgrounds exist but none match current slot
-      if (backgrounds.length > 0 && !backgroundImage) {
-        console.warn('⚠️ Backgrounds exist but none for slot', selectedSlot);
-        console.log('Available slots:', backgrounds.map(bg => bg.slot_number));
-      }
-    }
-  }, [selectedSlot, backgrounds, storyBackgroundSlots, currentTemplateId, backgroundImage, bannerData?.categoryType, storyId]);
+    console.log('🎨 Global background selection:', {
+      selectedSlot,
+      categoryType: bannerData?.categoryType,
+      hasImage: currentSlot?.hasImage,
+      imageUrl: currentSlot?.imageUrl ? currentSlot.imageUrl.substring(0, 60) + '...' : 'none',
+      defaultColor: currentSlot?.defaultColor,
+      templateId: currentTemplateId,
+      storyId
+    });
+  }, [selectedSlot, currentSlot, currentTemplateId, bannerData?.categoryType, storyId]);
 
   // Main banner name - ALWAYS from user input in form (bannerData.name)
   const mainBannerName: string = bannerData?.name || "";
@@ -1405,9 +1375,8 @@ export default function BannerPreview() {
                 overflow: 'hidden',
                 cursor: isAdmin && isDragMode ? 'crosshair' : 'default'
               }}>
-              <div className="absolute inset-0">
-                {/* Background Image (if uploaded) or Gradient Background */}
-                {backgroundImage ? <img src={backgroundImage} alt="Template background" className="absolute inset-0 w-full h-full object-cover" /> : null}
+              <div className="absolute inset-0" style={backgroundStyle}>
+                {/* Background automatically from global slot system (image or default color) */}
 
                 {/* Story Category: Three Dark-Theme Upper Bars */}
                 {bannerData.categoryType === 'story' && <>
@@ -2069,22 +2038,23 @@ export default function BannerPreview() {
         </div>
       </div>
 
-      {/* Scrollable Slot Selector Box - Only this area scrolls */}
-      {backgrounds.length > 0 && <div className="flex-1 min-h-0 px-3 sm:px-4 pb-3 sm:pb-4">
+      {/* Scrollable Slot Selector Box - All 16 slots with global background system */}
+      {globalBackgroundSlots.length > 0 && <div className="flex-1 min-h-0 px-3 sm:px-4 pb-3 sm:pb-4">
           <div className="h-full overflow-y-auto rounded-2xl sm:rounded-3xl bg-[#111827]/50 border-2 border-[#FFD700]/20 p-3 sm:p-4 shadow-[0_0_30px_rgba(255,215,0,0.1)] scrollbar-thin scrollbar-thumb-[#FFD700]/30 scrollbar-track-transparent">
             <div className="grid grid-cols-4 gap-2 sm:gap-3">
-              {Array.from({
-            length: 16
-          }, (_, i) => i + 1).map(slotNum => {
-            const bg = backgrounds.find(b => b.slot_number === slotNum);
-            const isSelected = selectedTemplate === slotNum - 1;
-            return <button key={slotNum} onClick={() => setSelectedTemplate(slotNum - 1)} className={`aspect-square rounded-lg overflow-hidden transition-all ${isSelected ? 'border-4 border-[#FFD700] scale-105 shadow-[0_0_20px_rgba(255,215,0,0.5)]' : 'border-2 border-gray-600 hover:border-[#FFD700] hover:scale-105'}`}>
-                    {bg?.background_image_url ? <img src={bg.background_image_url} alt={`Slot ${slotNum}`} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center" style={{
-                background: templateColors[slotNum - 1]?.bgGradient || 'linear-gradient(to bottom right, #1f2937, #111827)'
-              }}>
-                         <span className="text-white text-xs font-bold">{slotNum}</span>
-                      </div>}
-                  </button>;
+              {globalBackgroundSlots.map((slot) => {
+            const isSelected = selectedTemplate === slot.slotNumber - 1;
+            return (
+              <button 
+                key={slot.slotNumber} 
+                onClick={() => setSelectedTemplate(slot.slotNumber - 1)} 
+                className={`aspect-square rounded-lg overflow-hidden transition-all ${isSelected ? 'border-4 border-[#FFD700] scale-105 shadow-[0_0_20px_rgba(255,215,0,0.5)]' : 'border-2 border-gray-600 hover:border-[#FFD700] hover:scale-105'}`}
+              >
+                <div className="w-full h-full flex items-center justify-center" style={getSlotBackgroundStyle(slot)}>
+                  {!slot.hasImage && <span className="text-white text-xs font-bold">{slot.slotNumber}</span>}
+                </div>
+              </button>
+            );
           })}
             </div>
           </div>
