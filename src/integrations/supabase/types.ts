@@ -924,6 +924,36 @@ export type Database = {
         }
         Relationships: []
       }
+      story_background_slots: {
+        Row: {
+          created_at: string | null
+          id: string
+          image_url: string
+          is_active: boolean | null
+          slot_number: number
+          story_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          image_url: string
+          is_active?: boolean | null
+          slot_number: number
+          story_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          image_url?: string
+          is_active?: boolean | null
+          slot_number?: number
+          story_id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       template_backgrounds: {
         Row: {
           background_image_url: string

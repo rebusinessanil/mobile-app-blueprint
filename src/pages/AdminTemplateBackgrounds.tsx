@@ -10,6 +10,7 @@ import { Loader2, Upload, Trash2, Eye, EyeOff, Calendar, Edit, MoreVertical } fr
 import { useTemplateBackgrounds, uploadTemplateBackground, removeTemplateBackground, toggleBackgroundActive } from '@/hooks/useTemplateBackgrounds';
 import { AdminGuard } from "@/components/AdminGuard";
 import { useStoriesEvents, useStoriesFestivals } from '@/hooks/useAutoStories';
+import { useStoryBackgroundSlots, uploadStoryBackgroundSlot, removeStoryBackgroundSlot, toggleStoryBackgroundSlotActive } from '@/hooks/useStoryBackgroundSlots';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
@@ -20,6 +21,7 @@ export default function AdminTemplateBackgrounds() {
   const [uploading, setUploading] = useState(false);
   const [bulkUploading, setBulkUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number } | null>(null);
+  const [storySlotUploadProgress, setStorySlotUploadProgress] = useState<Record<number, number>>({});
 
   // Fetch stories for "Stories" category
   const { events, loading: eventsLoading } = useStoriesEvents();
@@ -63,6 +65,11 @@ export default function AdminTemplateBackgrounds() {
 
   // Fetch backgrounds for selected template
   const { backgrounds, loading: backgroundsLoading } = useTemplateBackgrounds(selectedTemplate);
+  
+  // Fetch story background slots when story is selected
+  const { slots: storySlots, loading: storySlotsLoading } = useStoryBackgroundSlots(
+    isStoriesCategory && selectedStory ? selectedStory.id : undefined
+  );
 
   const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -170,6 +177,55 @@ export default function AdminTemplateBackgrounds() {
       toast.error('Failed to update background status');
     } else {
       toast.success(`Background ${!isActive ? 'activated' : 'deactivated'}`);
+    }
+  };
+
+  const handleStorySlotUpload = async (file: File, slotNumber: number) => {
+    if (!selectedStory) {
+      toast.error("Please select a story first");
+      return;
+    }
+
+    setStorySlotUploadProgress((prev) => ({ ...prev, [slotNumber]: 0 }));
+
+    const result = await uploadStoryBackgroundSlot(selectedStory.id, slotNumber, file);
+
+    if (result.error) {
+      toast.error(`Failed to upload story background for slot ${slotNumber}`);
+    } else {
+      toast.success(`Story background uploaded to slot ${slotNumber}`);
+    }
+
+    setStorySlotUploadProgress((prev) => ({ ...prev, [slotNumber]: 100 }));
+    setTimeout(() => {
+      setStorySlotUploadProgress((prev) => {
+        const updated = { ...prev };
+        delete updated[slotNumber];
+        return updated;
+      });
+    }, 1000);
+  };
+
+  const handleStorySlotBulkUpload = async (files: FileList) => {
+    if (!selectedStory) {
+      toast.error("Please select a story first");
+      return;
+    }
+
+    const filesArray = Array.from(files);
+    const availableSlots = Array.from({ length: 16 }, (_, i) => i + 1).filter(
+      (slot) => !storySlots.some((s) => s.slot_number === slot)
+    );
+
+    if (filesArray.length > availableSlots.length) {
+      toast.error(`Can only upload ${availableSlots.length} more backgrounds (16 slot limit)`);
+      return;
+    }
+
+    for (let i = 0; i < filesArray.length; i++) {
+      const file = filesArray[i];
+      const slotNumber = availableSlots[i];
+      await handleStorySlotUpload(file, slotNumber);
     }
   };
 
@@ -338,10 +394,28 @@ export default function AdminTemplateBackgrounds() {
       {isStoriesCategory && selectedStory && (
         <Card>
           <CardHeader>
-            <CardTitle>Story Background Slots (16 Slots)</CardTitle>
-            <CardDescription>
-              Manage background images for the selected story. Each story has 16 available slots.
-            </CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Story Background Slots (16 Slots)</CardTitle>
+                <CardDescription>
+                  Upload and manage background images for each slot (selected story only)
+                </CardDescription>
+              </div>
+              <div className="flex gap-2">
+                <Input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={(e) => e.target.files && handleStorySlotBulkUpload(e.target.files)}
+                  className="hidden"
+                  id="story-bulk-upload"
+                />
+                <Button variant="outline" size="sm" onClick={() => document.getElementById("story-bulk-upload")?.click()}>
+                  <Upload className="h-4 w-4 mr-2" />
+                  Bulk Upload
+                </Button>
+              </div>
+            </div>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="p-4 bg-muted/50 rounded-lg border border-primary/20">
@@ -354,44 +428,96 @@ export default function AdminTemplateBackgrounds() {
               </p>
             </div>
 
-            {/* Upload Section */}
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>Upload Story Background</Label>
-                <div className="flex items-center gap-4">
-                  <Input
-                    type="file"
-                    accept="image/png,image/jpeg,image/jpg"
-                    onChange={handleUpload}
-                    disabled={uploading}
-                    className="flex-1"
-                  />
-                  {uploading && <Loader2 className="h-5 w-5 animate-spin text-gold" />}
-                </div>
+            {storySlotsLoading ? (
+              <div className="text-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
               </div>
-              <p className="text-sm text-muted-foreground">
-                Upload background images for this story's 16 slots
-              </p>
-            </div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {Array.from({ length: 16 }, (_, i) => i + 1).map((slotNumber) => {
+                  const slot = storySlots.find((s) => s.slot_number === slotNumber);
+                  const progress = storySlotUploadProgress[slotNumber];
 
-            {/* 16-Slot Grid for Stories */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {Array.from({ length: 16 }, (_, index) => {
-                const slotNumber = index + 1;
-                return (
-                  <Card key={slotNumber} className="border-dashed">
-                    <CardContent className="p-4 space-y-2">
-                      <div className="text-xs font-medium text-muted-foreground mb-1">
-                        Slot {slotNumber}
+                  return (
+                    <div key={slotNumber} className="relative border rounded-lg p-4 bg-card hover:border-primary/50 transition-colors">
+                      <div className="aspect-square bg-muted rounded-lg overflow-hidden mb-2">
+                        {slot ? (
+                          <img src={slot.image_url} alt={`Story Slot ${slotNumber}`} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                            <Upload className="h-8 w-8" />
+                          </div>
+                        )}
                       </div>
-                      <div className="w-full h-32 flex items-center justify-center border-2 border-dashed rounded bg-muted/10">
-                        <Upload className="h-8 w-8 text-muted-foreground/50" />
+
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium">Slot {slotNumber}</span>
+                        {slot && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={async () => {
+                              if (confirm(`Hide slot ${slotNumber}?`)) {
+                                await toggleStoryBackgroundSlotActive(slot.id, false);
+                                toast.success("Slot hidden");
+                              }
+                            }}
+                          >
+                            <EyeOff className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
+
+                      {progress !== undefined && progress < 100 && (
+                        <div className="absolute inset-0 bg-background/80 flex items-center justify-center rounded-lg">
+                          <div className="text-center">
+                            <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-2" />
+                            <p className="text-sm">{progress}%</p>
+                          </div>
+                        </div>
+                      )}
+
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleStorySlotUpload(file, slotNumber);
+                        }}
+                        className="hidden"
+                        id={`story-slot-${slotNumber}`}
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full"
+                        onClick={() => document.getElementById(`story-slot-${slotNumber}`)?.click()}
+                      >
+                        <Upload className="h-4 w-4 mr-2" />
+                        {slot ? "Replace" : "Upload"}
+                      </Button>
+
+                      {slot && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="w-full mt-2 text-destructive hover:text-destructive"
+                          onClick={async () => {
+                            if (confirm(`Remove slot ${slotNumber}?`)) {
+                              await removeStoryBackgroundSlot(slot.id);
+                              toast.success("Slot removed");
+                            }
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Remove
+                        </Button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </CardContent>
         </Card>
       )}

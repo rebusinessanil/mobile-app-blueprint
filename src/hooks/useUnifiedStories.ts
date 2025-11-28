@@ -12,6 +12,7 @@ export interface UnifiedStory {
   expires_at?: string;
   is_active?: boolean;
   created_at: string;
+  background_url?: string; // First active background from story_background_slots
 }
 
 export const useUnifiedStories = () => {
@@ -33,22 +34,33 @@ export const useUnifiedStories = () => {
 
       if (generatedError) throw generatedError;
 
-      // Combine and format stories (only generated stories now)
-      const unified: UnifiedStory[] = [
-        ...(generatedStories || []).map((story) => ({
-          id: story.id,
-          title: story.title,
-          cover_image_url: story.poster_url,
-          status: story.status as "active" | "preview_only" | "expired",
-          story_type: "generated" as const,
-          source_type: story.source_type as "event" | "festival",
-          event_date: story.event_date,
-          expires_at: story.expires_at,
-          created_at: story.created_at,
-        })),
-      ];
+      // Fetch first active background for each story
+      const storiesWithBackgrounds = await Promise.all(
+        (generatedStories || []).map(async (story) => {
+          const { data: slots } = await supabase
+            .from("story_background_slots")
+            .select("image_url")
+            .eq("story_id", story.id)
+            .eq("is_active", true)
+            .order("slot_number", { ascending: true })
+            .limit(1);
 
-      setStories(unified);
+          return {
+            id: story.id,
+            title: story.title,
+            cover_image_url: story.poster_url,
+            status: story.status as "active" | "preview_only" | "expired",
+            story_type: "generated" as const,
+            source_type: story.source_type as "event" | "festival",
+            event_date: story.event_date,
+            expires_at: story.expires_at,
+            created_at: story.created_at,
+            background_url: slots?.[0]?.image_url || story.poster_url, // Use first slot or fallback to poster
+          };
+        })
+      );
+
+      setStories(storiesWithBackgrounds);
       setError(null);
     } catch (err) {
       setError(err as Error);
