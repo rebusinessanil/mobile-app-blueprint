@@ -15,6 +15,7 @@ import { useGeneratedStories } from "@/hooks/useAutoStories";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import Profile from "./Profile";
 import { Badge } from "@/components/ui/badge";
+import { useQuery } from "@tanstack/react-query";
 export default function Dashboard() {
   const {
     categories
@@ -43,6 +44,20 @@ export default function Dashboard() {
   const {
     stories: generatedStories
   } = useGeneratedStories();
+  
+  // Fetch stories_events
+  const { data: storiesEvents = [] } = useQuery({
+    queryKey: ["stories-events"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("stories_events")
+        .select("*")
+        .order("event_date", { ascending: true });
+      if (error) throw error;
+      return data || [];
+    },
+  });
+  
   const [userId, setUserId] = useState<string | null>(null);
   const {
     profile
@@ -150,7 +165,7 @@ export default function Dashboard() {
       {/* Content */}
       <div className="px-6 py-6 space-y-6">
         {/* Unified Stories Section */}
-        {(festivals.length > 0 || generatedStories.length > 0) && (
+        {(festivals.length > 0 || generatedStories.length > 0 || storiesEvents.length > 0) && (
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -232,11 +247,36 @@ export default function Dashboard() {
                         alt={festival.festival_name}
                         className="w-full h-full object-cover"
                       />
-                      <div className="absolute top-2 right-2 w-3 h-3 bg-green-500 rounded-full border-2 border-white shadow-lg" />
+                      <div className={`absolute top-2 right-2 w-3 h-3 ${festival.is_active ? 'bg-green-500' : 'bg-yellow-500'} rounded-full border-2 border-white shadow-lg`} />
                     </div>
                     <div className="p-2 text-center">
                       <p className="text-xs font-semibold text-foreground leading-tight line-clamp-2">
                         {festival.festival_name}
+                      </p>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+
+              {/* Stories Events */}
+              {storiesEvents.slice(0, 8).map((event) => (
+                <Link
+                  key={event.id}
+                  to={`/story/${event.id}`}
+                  className="min-w-[84px] relative flex-shrink-0 transition-all hover:scale-105"
+                >
+                  <div className="gold-border bg-card rounded-2xl overflow-hidden">
+                    <div className="w-[84px] h-[84px] relative">
+                      <img
+                        src={event.poster_url}
+                        alt={event.title || event.person_name}
+                        className="w-full h-full object-cover"
+                      />
+                      <div className={`absolute top-2 right-2 w-3 h-3 ${event.is_active ? 'bg-green-500' : 'bg-yellow-500'} rounded-full border-2 border-white shadow-lg`} />
+                    </div>
+                    <div className="p-2 text-center">
+                      <p className="text-xs font-semibold text-foreground leading-tight line-clamp-2">
+                        {event.title || event.person_name}
                       </p>
                     </div>
                   </div>
