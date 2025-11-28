@@ -1673,7 +1673,8 @@ export default function BannerPreview() {
                   </div>}
 
                 {/* BOTTOM RIGHT - Mentor Photo - FIXED SIZE AND POSITION - SQUARE 1:1 RATIO - Other Categories */}
-                {mentorPhoto && bannerData.categoryType !== 'motivational' && <div className="absolute overflow-hidden shadow-2xl cursor-pointer transition-transform duration-500 ease-in-out" onClick={() => setIsMentorPhotoFlipped(!isMentorPhotoFlipped)} style={{
+                {/* HIDE MENTOR PHOTO FOR STORY CATEGORY */}
+                {mentorPhoto && bannerData.categoryType !== 'motivational' && bannerData.categoryType !== 'story' && <div className="absolute overflow-hidden shadow-2xl cursor-pointer transition-transform duration-500 ease-in-out" onClick={() => setIsMentorPhotoFlipped(!isMentorPhotoFlipped)} style={{
                     bottom: 0,
                     right: 0,
                     width: '540px',
