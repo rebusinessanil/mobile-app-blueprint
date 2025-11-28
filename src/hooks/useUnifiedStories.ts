@@ -5,14 +5,16 @@ export interface UnifiedStory {
   id: string;
   title: string;
   cover_image_url: string;
-  status: "active" | "preview_only" | "inactive" | "expired";
-  story_type: "generated";
-  source_type?: "event" | "festival";
-  event_date?: string;
-  expires_at?: string;
-  is_active?: boolean;
+  event_type: string;
+  person_name?: string;
+  festival_name?: string;
+  is_active: boolean;
+  priority?: number;
+  event_date: string;
+  start_date?: string;
+  end_date?: string;
   created_at: string;
-  background_url?: string; // First active background from story_background_slots
+  background_url?: string;
 }
 
 export const useUnifiedStories = () => {
@@ -24,19 +26,24 @@ export const useUnifiedStories = () => {
     try {
       setLoading(true);
 
-      // Fetch auto-generated stories
-      const { data: generatedStories, error: generatedError } = await supabase
-        .from("stories_generated")
+      // Fetch from stories_events - single source of truth
+      // Filter: active stories, not expired, limit 16, sorted by priority then start_date
+      const today = new Date().toISOString().split('T')[0];
+      
+      const { data: storiesEvents, error: eventsError } = await supabase
+        .from("stories_events")
         .select("*")
-        .in("status", ["preview_only", "active"])
-        .gte("expires_at", new Date().toISOString())
-        .order("event_date", { ascending: true });
+        .eq("is_active", true)
+        .or(`end_date.is.null,end_date.gte.${today}`)
+        .order("priority", { ascending: false })
+        .order("start_date", { ascending: true })
+        .limit(16);
 
-      if (generatedError) throw generatedError;
+      if (eventsError) throw eventsError;
 
       // Fetch first active background for each story
       const storiesWithBackgrounds = await Promise.all(
-        (generatedStories || []).map(async (story) => {
+        (storiesEvents || []).map(async (story) => {
           const { data: slots } = await supabase
             .from("story_background_slots")
             .select("image_url")
@@ -47,15 +54,18 @@ export const useUnifiedStories = () => {
 
           return {
             id: story.id,
-            title: story.title,
+            title: story.title || `${story.event_type} - ${story.person_name || story.festival_id}`,
             cover_image_url: story.poster_url,
-            status: story.status as "active" | "preview_only" | "expired",
-            story_type: "generated" as const,
-            source_type: story.source_type as "event" | "festival",
+            event_type: story.event_type,
+            person_name: story.person_name,
+            festival_name: story.festival_id,
+            is_active: story.is_active ?? true,
+            priority: story.priority,
             event_date: story.event_date,
-            expires_at: story.expires_at,
+            start_date: story.start_date,
+            end_date: story.end_date,
             created_at: story.created_at,
-            background_url: slots?.[0]?.image_url || story.poster_url, // Use first slot or fallback to poster
+            background_url: slots?.[0]?.image_url || story.poster_url,
           };
         })
       );
@@ -73,25 +83,25 @@ export const useUnifiedStories = () => {
   useEffect(() => {
     fetchAllStories();
 
-    // Real-time subscription for generated stories
-    const generatedChannel = supabase
-      .channel("generated-stories-changes")
+    // Real-time subscription for stories_events - instant sync
+    const storiesChannel = supabase
+      .channel("stories-events-realtime")
       .on(
         "postgres_changes",
         {
           event: "*",
           schema: "public",
-          table: "stories_generated",
+          table: "stories_events",
         },
-        () => {
-          console.log("📡 Generated story update received");
+        (payload) => {
+          console.log("📡 Stories update received:", payload);
           fetchAllStories();
         }
       )
       .subscribe();
 
     return () => {
-      supabase.removeChannel(generatedChannel);
+      supabase.removeChannel(storiesChannel);
     };
   }, []);
 
