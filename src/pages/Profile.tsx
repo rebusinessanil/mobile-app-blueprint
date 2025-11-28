@@ -1,17 +1,19 @@
 import { Link, useNavigate } from "react-router-dom";
 import BottomNav from "@/components/BottomNav";
-import { User, Wallet, Download, Settings, Lock, HelpCircle, MessageCircle, LogOut, Star, Edit, Shield } from "lucide-react";
+import { User, Wallet, Download, Settings, Lock, HelpCircle, MessageCircle, LogOut, Star, Edit, Shield, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import { useProfile } from "@/hooks/useProfile";
+import { useStoriesEvents } from "@/hooks/useStoriesEvents";
 
 export default function Profile() {
   const navigate = useNavigate();
   const [userId, setUserId] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const { profile, loading } = useProfile(userId || undefined);
+  const { stories } = useStoriesEvents(); // Fetch all active stories for display
 
   useEffect(() => {
     const getUser = async () => {
@@ -102,6 +104,40 @@ export default function Profile() {
           </div>
         </div>
       </div>
+
+      {/* My Stories Section */}
+      {stories.length > 0 && (
+        <div className="px-6 mb-6">
+          <div className="gold-border bg-card rounded-2xl p-5">
+            <div className="flex items-center gap-2 mb-4">
+              <BookOpen className="w-5 h-5 text-primary" />
+              <h3 className="font-bold text-foreground">My Stories</h3>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              {stories.slice(0, 9).map((story) => (
+                <div key={story.id} className="relative">
+                  <div className="aspect-square rounded-xl overflow-hidden gold-border">
+                    <img
+                      src={story.image_url}
+                      alt={story.title}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute top-1 right-1 w-2 h-2 bg-green-500 rounded-full border border-white" />
+                  </div>
+                  <p className="text-xs text-center mt-1 text-muted-foreground truncate">
+                    {story.title}
+                  </p>
+                </div>
+              ))}
+            </div>
+            {stories.length > 9 && (
+              <p className="text-xs text-center mt-3 text-muted-foreground">
+                +{stories.length - 9} more stories
+              </p>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Menu Items */}
       <div className="px-6 space-y-3">

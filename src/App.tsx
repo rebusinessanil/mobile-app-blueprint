@@ -44,6 +44,7 @@ import AdminRanks from "./pages/AdminRanks";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminUsers from "./pages/AdminUsers";
 import AdminStories from "./pages/AdminStories";
+import AdminStoriesEvents from "./pages/AdminStoriesEvents";
 import AdminAutoStories from "./pages/AdminAutoStories";
 import AdminStickerLibrary from "./pages/AdminStickerLibrary";
 import Wallet from "./pages/Wallet";
@@ -101,7 +102,8 @@ const App = () => (
           <Route path="/admin" element={<AuthGuard><AdminDashboard /></AuthGuard>} />
           <Route path="/admin/users" element={<AuthGuard><AdminUsers /></AuthGuard>} />
           <Route path="/admin/templates" element={<AuthGuard><AdminTemplates /></AuthGuard>} />
-          <Route path="/admin/stories" element={<AuthGuard><AdminStories /></AuthGuard>} />
+          <Route path="/admin/stories" element={<AuthGuard><AdminStoriesEvents /></AuthGuard>} />
+          <Route path="/admin/stories-manual" element={<AuthGuard><AdminStories /></AuthGuard>} />
           <Route path="/admin/ranks" element={<AuthGuard><AdminRanks /></AuthGuard>} />
           <Route path="/admin/stickers" element={<AuthGuard><AdminStickers /></AuthGuard>} />
           <Route path="/admin/rank-stickers" element={<AuthGuard><AdminRankStickers /></AuthGuard>} />
