@@ -444,7 +444,7 @@ export default function AdminStories() {
         </div>
 
         {/* Fixed Floating Add Button */}
-        <div className="absolute bottom-4 right-4 z-40">
+        <div className="absolute bottom-24 left-6 z-40">
           <Button onClick={() => handleOpenDialog(undefined, activeTab === "festivals" ? "festival" : "event")} className="h-14 w-14 rounded-full bg-primary hover:bg-primary/90 shadow-lg">
             <Plus className="h-6 w-6" />
           </Button>
