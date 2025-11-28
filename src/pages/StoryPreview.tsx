@@ -80,28 +80,24 @@ export default function StoryPreview() {
       avatar: upline.avatar_url
     })) || [];
 
-    // Determine categoryType based on event_type (birthday, anniversary, or default to event)
-    const categoryType = eventType === 'birthday' ? 'birthday' : 
-                        eventType === 'anniversary' ? 'anniversary' : 
-                        'event';
-
-    // Auto-navigate to banner preview with pre-filled event data
-    // FESTIVAL RULES: No achiever name or photo auto-load - keep empty
+    // Auto-navigate to banner preview with pre-filled story event data
+    // STORY RULES: No achiever name or photo auto-load - keep empty
     navigate("/banner-preview", {
       state: {
-        categoryType,
-        rankName: categoryType === 'birthday' ? 'Birthday Celebration' : 
-                 categoryType === 'anniversary' ? 'Anniversary Celebration' : 
+        categoryType: 'story', // Always 'story' for stories_events
+        rankName: eventType === 'birthday' ? 'Birthday Celebration' : 
+                 eventType === 'anniversary' ? 'Anniversary Celebration' : 
                  'Event Celebration',
-        name: "", // FESTIVAL RULE: No achiever name auto-load - keep empty
+        name: "", // STORY RULE: No achiever name auto-load - keep empty
         teamCity: "", // Optional
         greeting: "", // Optional
-        photo: null, // FESTIVAL RULE: No achiever image auto-load
+        photo: null, // STORY RULE: No achiever image auto-load
         uplines,
         slotStickers: {},
         templates,
         templateId: firstTemplate.id,
-        eventId: eventId,
+        eventId: eventId, // Pass eventId for story background slot fetching
+        storyId: eventId, // Also pass as storyId for clarity
         rankId: undefined
       },
       replace: true // Replace history entry to prevent back button issues
