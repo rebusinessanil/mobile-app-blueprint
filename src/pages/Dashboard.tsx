@@ -174,12 +174,12 @@ export default function Dashboard() {
               </div>
             </div>
             
-            <div className="space-y-4">
+            <div className="flex gap-6 overflow-x-auto pb-2 scrollbar-hide">
               {/* Festival Category */}
               {festivals.length > 0 && (
-                <div className="space-y-2">
+                <div className="flex-shrink-0 space-y-2">
                   <h3 className="text-sm font-semibold text-primary px-1">Festival</h3>
-                  <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                  <div className="flex gap-3">
                     {festivals.slice(0, 8).map((festival) => (
                       <Link
                         key={festival.id}
@@ -209,9 +209,9 @@ export default function Dashboard() {
 
               {/* Birthday Category */}
               {storiesEvents.filter(e => e.event_type === 'birthday').length > 0 && (
-                <div className="space-y-2">
+                <div className="flex-shrink-0 space-y-2">
                   <h3 className="text-sm font-semibold text-primary px-1">Birthday</h3>
-                  <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                  <div className="flex gap-3">
                     {storiesEvents
                       .filter(e => e.event_type === 'birthday')
                       .slice(0, 8)
@@ -244,9 +244,9 @@ export default function Dashboard() {
 
               {/* Anniversary Category */}
               {storiesEvents.filter(e => e.event_type === 'anniversary').length > 0 && (
-                <div className="space-y-2">
+                <div className="flex-shrink-0 space-y-2">
                   <h3 className="text-sm font-semibold text-primary px-1">Anniversary</h3>
-                  <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                  <div className="flex gap-3">
                     {storiesEvents
                       .filter(e => e.event_type === 'anniversary')
                       .slice(0, 8)
@@ -279,9 +279,9 @@ export default function Dashboard() {
 
               {/* Auto Generated Category */}
               {generatedStories.filter((story) => story.status === "active").length > 0 && (
-                <div className="space-y-2">
+                <div className="flex-shrink-0 space-y-2">
                   <h3 className="text-sm font-semibold text-primary px-1">Auto Generated</h3>
-                  <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                  <div className="flex gap-3">
                     {generatedStories
                       .filter((story) => story.status === "active")
                       .slice(0, 8)
@@ -314,9 +314,9 @@ export default function Dashboard() {
 
               {/* Preview Stories */}
               {generatedStories.filter((story) => story.status === "preview_only").length > 0 && (
-                <div className="space-y-2">
+                <div className="flex-shrink-0 space-y-2">
                   <h3 className="text-sm font-semibold text-primary px-1">Coming Soon</h3>
-                  <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                  <div className="flex gap-3">
                     {generatedStories
                       .filter((story) => story.status === "preview_only")
                       .slice(0, 8)
@@ -352,9 +352,9 @@ export default function Dashboard() {
 
               {/* Other Event Types */}
               {storiesEvents.filter(e => e.event_type !== 'birthday' && e.event_type !== 'anniversary').length > 0 && (
-                <div className="space-y-2">
+                <div className="flex-shrink-0 space-y-2">
                   <h3 className="text-sm font-semibold text-primary px-1">Events</h3>
-                  <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                  <div className="flex gap-3">
                     {storiesEvents
                       .filter(e => e.event_type !== 'birthday' && e.event_type !== 'anniversary')
                       .slice(0, 8)
