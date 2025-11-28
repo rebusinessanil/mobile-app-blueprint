@@ -1706,9 +1706,6 @@ export default function BannerPreview() {
                       }}>
                         {/* User Info - Centered */}
                         <div style={{
-                          position: 'absolute',
-                          left: '50%',
-                          transform: 'translateX(-50%)',
                           textAlign: 'center',
                           padding: '0 20px'
                         }}>
