@@ -11,8 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Plus, Trash2, Edit, Eye, EyeOff, RefreshCw, Sparkles, Calendar, X } from "lucide-react";
-import { Switch } from "@/components/ui/switch";
+import { Plus, Trash2, Edit, Settings, Calendar, Sparkles, MoreVertical, Eye, EyeOff } from "lucide-react";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { useGeneratedStories, useStoriesEvents, useStoriesFestivals } from "@/hooks/useAutoStories";
 import {
@@ -23,6 +22,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 type StoryType = "event" | "festival";
 
@@ -103,7 +108,7 @@ export default function AdminStories() {
     const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
     const filePath = `${fileName}`;
 
-    const { error: uploadError, data } = await supabase.storage
+    const { error: uploadError } = await supabase.storage
       .from(bucket)
       .upload(filePath, file);
 
@@ -159,14 +164,14 @@ export default function AdminStories() {
             .eq("id", editingStory.id);
 
           if (error) throw error;
-          toast.success("Event story updated successfully");
+          toast.success("Event updated");
         } else {
           const { error } = await supabase
             .from("stories_events")
             .insert([eventData]);
 
           if (error) throw error;
-          toast.success("Event story created successfully");
+          toast.success("Event created");
         }
         refetchEvents();
       } else {
@@ -185,14 +190,14 @@ export default function AdminStories() {
             .eq("id", editingStory.id);
 
           if (error) throw error;
-          toast.success("Festival story updated successfully");
+          toast.success("Festival updated");
         } else {
           const { error } = await supabase
             .from("stories_festivals")
             .insert([festivalData]);
 
           if (error) throw error;
-          toast.success("Festival story created successfully");
+          toast.success("Festival created");
         }
         refetchFestivals();
       }
@@ -200,12 +205,12 @@ export default function AdminStories() {
       setIsDialogOpen(false);
       refetchGenerated();
     } catch (error: any) {
-      toast.error("Failed to save story: " + error.message);
+      toast.error("Failed to save: " + error.message);
     }
   };
 
   const handleDelete = async (id: string, type: StoryType) => {
-    if (!confirm("Are you sure you want to delete this story?")) return;
+    if (!confirm("Delete this story?")) return;
 
     try {
       const table = type === "event" ? "stories_events" : "stories_festivals";
@@ -216,7 +221,7 @@ export default function AdminStories() {
 
       if (error) throw error;
 
-      toast.success("Story deleted successfully");
+      toast.success("Deleted");
       if (type === "event") {
         refetchEvents();
       } else {
@@ -224,7 +229,7 @@ export default function AdminStories() {
       }
       refetchGenerated();
     } catch (error: any) {
-      toast.error("Failed to delete story: " + error.message);
+      toast.error("Delete failed: " + error.message);
     }
   };
 
@@ -238,7 +243,7 @@ export default function AdminStories() {
 
       if (error) throw error;
 
-      toast.success("Story status updated");
+      toast.success("Status updated");
       if (type === "event") {
         refetchEvents();
       } else {
@@ -246,14 +251,14 @@ export default function AdminStories() {
       }
       refetchGenerated();
     } catch (error: any) {
-      toast.error("Failed to update status: " + error.message);
+      toast.error("Update failed: " + error.message);
     }
   };
 
   const handleGenerateTestStories = async () => {
     try {
       setIsGenerating(true);
-      toast.info("Generating test stories...");
+      toast.info("Generating stories...");
 
       const { data, error } = await supabase.functions.invoke('auto-story-generator', {
         body: {}
@@ -261,10 +266,10 @@ export default function AdminStories() {
 
       if (error) throw error;
 
-      toast.success(`Test stories generated successfully! ${data?.stats?.tomorrowEvents || 0} events, ${data?.stats?.tomorrowFestivals || 0} festivals`);
+      toast.success(`Generated ${data?.stats?.tomorrowEvents || 0} events, ${data?.stats?.tomorrowFestivals || 0} festivals`);
       refetchGenerated();
     } catch (error: any) {
-      toast.error("Failed to generate test stories: " + error.message);
+      toast.error("Generation failed: " + error.message);
     } finally {
       setIsGenerating(false);
     }
@@ -276,191 +281,184 @@ export default function AdminStories() {
 
   return (
     <AdminLayout>
-      <div className="h-[calc(100vh-4rem)] flex flex-col overflow-hidden">
-        {/* Fixed Header */}
-        <div className="flex-shrink-0 space-y-6 px-6 py-6">
-          {/* Title and Actions */}
+      <div className="min-h-screen bg-background pb-20">
+        {/* Compact Header */}
+        <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-sm border-b border-primary/20 px-4 py-3">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-foreground">Stories Management</h1>
-              <p className="text-muted-foreground mt-1">
-                Create and manage manual stories & auto-generated daily stories
-              </p>
+              <p className="text-xs text-muted-foreground uppercase tracking-wide">Admin Panel</p>
+              <h1 className="text-xl font-bold text-foreground">Stories Management</h1>
             </div>
-            <div className="flex gap-2">
-              <Button 
-                onClick={() => {
-                  refetchEvents();
-                  refetchFestivals();
-                  refetchGenerated();
-                }} 
-                variant="outline" 
-                size="icon"
-                className="h-10 w-10"
-              >
-                <RefreshCw className="w-4 h-4" />
-              </Button>
-              <Button 
-                onClick={handleGenerateTestStories} 
-                className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
-                disabled={isGenerating}
-              >
-                <Sparkles className="w-4 h-4 mr-2" />
-                {isGenerating ? "Generating..." : "Auto Generate"}
-              </Button>
-              <Button 
-                onClick={() => handleOpenDialog(undefined, "event")}
-                className="bg-primary hover:bg-primary/90"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Add Story
-              </Button>
-            </div>
-          </div>
-
-          {/* Stats Summary Bar */}
-          <div className="grid grid-cols-4 gap-4">
-            <div className="gold-border bg-card rounded-xl p-4 shadow-lg">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Total Stories</p>
-              <p className="text-3xl font-bold text-primary mt-2">{totalStories}</p>
-              <p className="text-xs text-muted-foreground mt-1">All active + preview</p>
-            </div>
-            <div className="gold-border bg-card rounded-xl p-4 shadow-lg">
-              <p className="text-xs font-semibold text-green-500 uppercase tracking-wide">Active Generated</p>
-              <p className="text-3xl font-bold text-green-500 mt-2">{activeGenerated}</p>
-              <p className="text-xs text-muted-foreground mt-1">Live now</p>
-            </div>
-            <div className="gold-border bg-card rounded-xl p-4 shadow-lg">
-              <p className="text-xs font-semibold text-yellow-500 uppercase tracking-wide">Preview Stories</p>
-              <p className="text-3xl font-bold text-yellow-500 mt-2">{previewGenerated}</p>
-              <p className="text-xs text-muted-foreground mt-1">Coming tomorrow</p>
-            </div>
-            <div className="gold-border bg-card rounded-xl p-4 shadow-lg">
-              <p className="text-xs font-semibold text-blue-400 uppercase tracking-wide">Source Data</p>
-              <p className="text-3xl font-bold text-blue-400 mt-2">{events.length + festivals.length}</p>
-              <p className="text-xs text-muted-foreground mt-1">Events & festivals</p>
-            </div>
-          </div>
-
-          {/* Filter Tabs */}
-          <div className="flex gap-2">
             <Button
-              onClick={() => setActiveTab("events")}
-              variant={activeTab === "events" ? "default" : "outline"}
-              className={activeTab === "events" ? "bg-blue-500 hover:bg-blue-600 text-white" : ""}
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9"
+              onClick={handleGenerateTestStories}
+              disabled={isGenerating}
             >
-              Events ({events.length})
-            </Button>
-            <Button
-              onClick={() => setActiveTab("festivals")}
-              variant={activeTab === "festivals" ? "default" : "outline"}
-              className={activeTab === "festivals" ? "bg-purple-500 hover:bg-purple-600 text-white" : ""}
-            >
-              Festivals ({festivals.length})
-            </Button>
-            <Button
-              onClick={() => setActiveTab("generated")}
-              variant={activeTab === "generated" ? "default" : "outline"}
-              className={activeTab === "generated" ? "bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600 text-white" : ""}
-            >
-              Auto-Generated ({generatedStories.length})
+              {isGenerating ? (
+                <Sparkles className="w-5 h-5 animate-spin text-primary" />
+              ) : (
+                <Settings className="w-5 h-5 text-primary" />
+              )}
             </Button>
           </div>
         </div>
 
-        {/* Scrollable Content Area */}
-        <div className="flex-1 overflow-y-auto px-6 pb-6">
+        {/* Compact Summary Chips */}
+        <div className="px-4 py-4">
+          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+            <div className="flex-shrink-0 bg-card border border-primary/20 rounded-xl px-4 py-2.5 min-w-[100px]">
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Total</p>
+              <p className="text-2xl font-bold text-primary">{totalStories}</p>
+            </div>
+            <div className="flex-shrink-0 bg-card border border-green-500/20 rounded-xl px-4 py-2.5 min-w-[100px]">
+              <p className="text-[10px] font-semibold text-green-500 uppercase tracking-wide">Active</p>
+              <p className="text-2xl font-bold text-green-500">{activeGenerated}</p>
+            </div>
+            <div className="flex-shrink-0 bg-card border border-yellow-500/20 rounded-xl px-4 py-2.5 min-w-[100px]">
+              <p className="text-[10px] font-semibold text-yellow-500 uppercase tracking-wide">Preview</p>
+              <p className="text-2xl font-bold text-yellow-500">{previewGenerated}</p>
+            </div>
+            <div className="flex-shrink-0 bg-card border border-blue-400/20 rounded-xl px-4 py-2.5 min-w-[100px]">
+              <p className="text-[10px] font-semibold text-blue-400 uppercase tracking-wide">Source</p>
+              <p className="text-2xl font-bold text-blue-400">{events.length + festivals.length}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Sticky Filter Tabs */}
+        <div className="sticky top-[68px] z-20 bg-background/95 backdrop-blur-sm border-b border-primary/20 px-4 py-3">
+          <div className="flex gap-2">
+            <button
+              onClick={() => setActiveTab("events")}
+              className={`flex-1 py-2.5 px-4 rounded-full font-semibold text-sm transition-all ${
+                activeTab === "events"
+                  ? "bg-blue-500 text-white shadow-lg"
+                  : "bg-card border border-primary/20 text-muted-foreground"
+              }`}
+            >
+              Events
+              <span className="ml-1.5 opacity-75">({events.length})</span>
+            </button>
+            <button
+              onClick={() => setActiveTab("festivals")}
+              className={`flex-1 py-2.5 px-4 rounded-full font-semibold text-sm transition-all ${
+                activeTab === "festivals"
+                  ? "bg-purple-500 text-white shadow-lg"
+                  : "bg-card border border-primary/20 text-muted-foreground"
+              }`}
+            >
+              Festivals
+              <span className="ml-1.5 opacity-75">({festivals.length})</span>
+            </button>
+            <button
+              onClick={() => setActiveTab("generated")}
+              className={`flex-1 py-2.5 px-4 rounded-full font-semibold text-sm transition-all ${
+                activeTab === "generated"
+                  ? "bg-gradient-to-r from-green-500 to-teal-500 text-white shadow-lg"
+                  : "bg-card border border-primary/20 text-muted-foreground"
+              }`}
+            >
+              Auto
+              <span className="ml-1.5 opacity-75">({generatedStories.length})</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Story Cards Grid */}
+        <div className="px-4 py-4">
           {loading ? (
-            <div className="text-center py-12 text-muted-foreground">Loading stories...</div>
+            <div className="text-center py-12 text-muted-foreground">Loading...</div>
           ) : (
             <>
               {/* Events Tab */}
               {activeTab === "events" && (
                 <>
                   {events.length === 0 ? (
-                    <div className="gold-border bg-card rounded-xl p-12 text-center">
-                      <Calendar className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                      <h3 className="text-xl font-semibold text-foreground mb-2">No Events Yet</h3>
-                      <p className="text-muted-foreground mb-6">
-                        Create your first event (birthday/anniversary) to generate stories
-                      </p>
-                      <Button onClick={() => handleOpenDialog(undefined, "event")}>
+                    <div className="text-center py-12">
+                      <Calendar className="w-12 h-12 text-muted-foreground mx-auto mb-3 opacity-50" />
+                      <p className="text-sm text-muted-foreground mb-4">No events yet</p>
+                      <Button
+                        onClick={() => handleOpenDialog(undefined, "event")}
+                        size="sm"
+                        className="bg-blue-500 hover:bg-blue-600"
+                      >
                         <Plus className="w-4 h-4 mr-2" />
                         Add Event
                       </Button>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                    <div className="grid grid-cols-2 gap-3">
                       {events.map((event) => (
                         <div
                           key={event.id}
-                          className="gold-border bg-card rounded-2xl overflow-hidden hover:gold-glow transition-all shadow-lg group"
+                          className="bg-card border border-primary/20 rounded-2xl overflow-hidden hover:border-primary/40 transition-all animate-fade-in"
                         >
                           {/* Image */}
-                          <div className="relative w-full aspect-square bg-muted">
+                          <div className="relative aspect-square bg-muted">
                             <img
                               src={event.poster_url}
                               alt={event.person_name}
                               className="w-full h-full object-cover"
                             />
-                            {/* Status Indicator */}
-                            <div className="absolute top-2 right-2">
-                              {(event.is_active ?? true) ? (
-                                <div className="w-3 h-3 bg-green-500 rounded-full border-2 border-white shadow-lg" />
-                              ) : (
-                                <Badge variant="secondary" className="text-xs bg-gray-500/90 text-white">
-                                  Inactive
-                                </Badge>
-                              )}
-                            </div>
-                            {/* Category Label */}
-                            <Badge 
-                              className="absolute bottom-2 left-2 text-xs bg-blue-500/90 text-white"
-                            >
+                            {/* Category Pill */}
+                            <Badge className="absolute top-2 left-2 text-[9px] px-1.5 py-0.5 bg-blue-500/90 text-white border-0">
                               {event.event_type}
                             </Badge>
+                            {/* Status Dot */}
+                            <div className="absolute top-2 right-2">
+                              <div className={`w-2.5 h-2.5 rounded-full border-2 border-white shadow-lg ${
+                                (event.is_active ?? true) ? "bg-green-500" : "bg-gray-500"
+                              }`} />
+                            </div>
                           </div>
                           
                           {/* Content */}
-                          <div className="p-3">
-                            <h3 className="font-semibold text-foreground text-sm mb-1 line-clamp-1">
+                          <div className="p-2.5">
+                            <h3 className="font-semibold text-foreground text-xs leading-tight line-clamp-1 mb-1">
                               {event.person_name}
                             </h3>
-                            <p className="text-xs text-muted-foreground mb-3">
+                            <p className="text-[10px] text-muted-foreground mb-2">
                               {new Date(event.event_date).toLocaleDateString('en-US', { 
                                 month: 'short', 
-                                day: 'numeric',
-                                year: 'numeric'
+                                day: 'numeric'
                               })}
                             </p>
                             
                             {/* Actions */}
                             <div className="flex gap-1">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="flex-1 h-8 text-xs"
-                                onClick={() => handleOpenDialog(event, "event")}
-                              >
-                                <Edit className="w-3 h-3 mr-1" />
-                                Edit
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleDelete(event.id, "event")}
-                                className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
-                              >
-                                <Trash2 className="w-3 h-3" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleToggleActive(event.id, event.is_active ?? true, "event")}
-                                className="h-8 w-8 p-0"
-                              >
-                                {(event.is_active ?? true) ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
-                              </Button>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-7 w-full text-xs"
+                                  >
+                                    <MoreVertical className="w-3 h-3" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-36">
+                                  <DropdownMenuItem onClick={() => handleOpenDialog(event, "event")}>
+                                    <Edit className="w-3 h-3 mr-2" />
+                                    Edit
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleToggleActive(event.id, event.is_active ?? true, "event")}>
+                                    {(event.is_active ?? true) ? (
+                                      <><EyeOff className="w-3 h-3 mr-2" />Deactivate</>
+                                    ) : (
+                                      <><Eye className="w-3 h-3 mr-2" />Activate</>
+                                    )}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem 
+                                    onClick={() => handleDelete(event.id, "event")}
+                                    className="text-destructive focus:text-destructive"
+                                  >
+                                    <Trash2 className="w-3 h-3 mr-2" />
+                                    Delete
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
                             </div>
                           </div>
                         </div>
@@ -474,89 +472,89 @@ export default function AdminStories() {
               {activeTab === "festivals" && (
                 <>
                   {festivals.length === 0 ? (
-                    <div className="gold-border bg-card rounded-xl p-12 text-center">
-                      <Calendar className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                      <h3 className="text-xl font-semibold text-foreground mb-2">No Festivals Yet</h3>
-                      <p className="text-muted-foreground mb-6">
-                        Create your first festival to generate stories
-                      </p>
-                      <Button onClick={() => handleOpenDialog(undefined, "festival")}>
+                    <div className="text-center py-12">
+                      <Calendar className="w-12 h-12 text-muted-foreground mx-auto mb-3 opacity-50" />
+                      <p className="text-sm text-muted-foreground mb-4">No festivals yet</p>
+                      <Button
+                        onClick={() => handleOpenDialog(undefined, "festival")}
+                        size="sm"
+                        className="bg-purple-500 hover:bg-purple-600"
+                      >
                         <Plus className="w-4 h-4 mr-2" />
                         Add Festival
                       </Button>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                    <div className="grid grid-cols-2 gap-3">
                       {festivals.map((festival) => (
                         <div
                           key={festival.id}
-                          className="gold-border bg-card rounded-2xl overflow-hidden hover:gold-glow transition-all shadow-lg group"
+                          className="bg-card border border-primary/20 rounded-2xl overflow-hidden hover:border-primary/40 transition-all animate-fade-in"
                         >
                           {/* Image */}
-                          <div className="relative w-full aspect-square bg-muted">
+                          <div className="relative aspect-square bg-muted">
                             <img
                               src={festival.poster_url}
                               alt={festival.festival_name}
                               className="w-full h-full object-cover"
                             />
-                            {/* Status Indicator */}
-                            <div className="absolute top-2 right-2">
-                              {festival.is_active ? (
-                                <div className="w-3 h-3 bg-green-500 rounded-full border-2 border-white shadow-lg" />
-                              ) : (
-                                <Badge variant="secondary" className="text-xs bg-gray-500/90 text-white">
-                                  Inactive
-                                </Badge>
-                              )}
-                            </div>
-                            {/* Category Label */}
-                            <Badge 
-                              className="absolute bottom-2 left-2 text-xs bg-purple-500/90 text-white"
-                            >
+                            {/* Category Pill */}
+                            <Badge className="absolute top-2 left-2 text-[9px] px-1.5 py-0.5 bg-purple-500/90 text-white border-0">
                               Festival
                             </Badge>
+                            {/* Status Dot */}
+                            <div className="absolute top-2 right-2">
+                              <div className={`w-2.5 h-2.5 rounded-full border-2 border-white shadow-lg ${
+                                festival.is_active ? "bg-green-500" : "bg-gray-500"
+                              }`} />
+                            </div>
                           </div>
                           
                           {/* Content */}
-                          <div className="p-3">
-                            <h3 className="font-semibold text-foreground text-sm mb-1 line-clamp-1">
+                          <div className="p-2.5">
+                            <h3 className="font-semibold text-foreground text-xs leading-tight line-clamp-1 mb-1">
                               {festival.festival_name}
                             </h3>
-                            <p className="text-xs text-muted-foreground mb-3">
+                            <p className="text-[10px] text-muted-foreground mb-2">
                               {new Date(festival.festival_date).toLocaleDateString('en-US', { 
                                 month: 'short', 
-                                day: 'numeric',
-                                year: 'numeric'
+                                day: 'numeric'
                               })}
                             </p>
                             
                             {/* Actions */}
                             <div className="flex gap-1">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="flex-1 h-8 text-xs"
-                                onClick={() => handleOpenDialog(festival, "festival")}
-                              >
-                                <Edit className="w-3 h-3 mr-1" />
-                                Edit
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleDelete(festival.id, "festival")}
-                                className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
-                              >
-                                <Trash2 className="w-3 h-3" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleToggleActive(festival.id, festival.is_active ?? true, "festival")}
-                                className="h-8 w-8 p-0"
-                              >
-                                {festival.is_active ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
-                              </Button>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-7 w-full text-xs"
+                                  >
+                                    <MoreVertical className="w-3 h-3" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-36">
+                                  <DropdownMenuItem onClick={() => handleOpenDialog(festival, "festival")}>
+                                    <Edit className="w-3 h-3 mr-2" />
+                                    Edit
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleToggleActive(festival.id, festival.is_active, "festival")}>
+                                    {festival.is_active ? (
+                                      <><EyeOff className="w-3 h-3 mr-2" />Deactivate</>
+                                    ) : (
+                                      <><Eye className="w-3 h-3 mr-2" />Activate</>
+                                    )}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem 
+                                    onClick={() => handleDelete(festival.id, "festival")}
+                                    className="text-destructive focus:text-destructive"
+                                  >
+                                    <Trash2 className="w-3 h-3 mr-2" />
+                                    Delete
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
                             </div>
                           </div>
                         </div>
@@ -570,65 +568,62 @@ export default function AdminStories() {
               {activeTab === "generated" && (
                 <>
                   {generatedStories.length === 0 ? (
-                    <div className="gold-border bg-card rounded-xl p-12 text-center">
-                      <Sparkles className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                      <h3 className="text-xl font-semibold text-foreground mb-2">No Generated Stories</h3>
-                      <p className="text-muted-foreground mb-6">
-                        Click "Auto Generate" to create stories from your events and festivals
-                      </p>
-                      <Button onClick={handleGenerateTestStories} disabled={isGenerating}>
+                    <div className="text-center py-12">
+                      <Sparkles className="w-12 h-12 text-muted-foreground mx-auto mb-3 opacity-50" />
+                      <p className="text-sm text-muted-foreground mb-4">No generated stories</p>
+                      <Button
+                        onClick={handleGenerateTestStories}
+                        disabled={isGenerating}
+                        size="sm"
+                        className="bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600"
+                      >
                         <Sparkles className="w-4 h-4 mr-2" />
-                        {isGenerating ? "Generating..." : "Auto Generate"}
+                        {isGenerating ? "Generating..." : "Generate"}
                       </Button>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                    <div className="grid grid-cols-2 gap-3">
                       {generatedStories.map((story) => (
                         <div
                           key={story.id}
-                          className="gold-border bg-card rounded-2xl overflow-hidden hover:gold-glow transition-all shadow-lg group"
+                          className="bg-card border border-primary/20 rounded-2xl overflow-hidden hover:border-primary/40 transition-all animate-fade-in"
                         >
                           {/* Image */}
-                          <div className="relative w-full aspect-square bg-muted">
+                          <div className="relative aspect-square bg-muted">
                             <img
                               src={story.poster_url}
                               alt={story.title}
                               className="w-full h-full object-cover"
                             />
-                            {/* Status Badge Overlay */}
+                            {/* Preview Overlay */}
                             {story.status === "preview_only" && (
-                              <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                                <Badge variant="secondary" className="text-xs px-2 py-1 bg-yellow-500/90 text-white">
+                              <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                                <Badge className="text-[9px] px-2 py-1 bg-yellow-500/90 text-white border-0">
                                   Tomorrow
                                 </Badge>
                               </div>
                             )}
-                            {/* Status Indicator */}
-                            <div className="absolute top-2 right-2">
-                              {story.status === "active" ? (
-                                <div className="w-3 h-3 bg-green-500 rounded-full border-2 border-white shadow-lg" />
-                              ) : (
-                                <div className="w-3 h-3 bg-yellow-500 rounded-full border-2 border-white shadow-lg" />
-                              )}
-                            </div>
-                            {/* Category Label */}
-                            <Badge 
-                              className="absolute bottom-2 left-2 text-xs bg-gradient-to-r from-green-500 to-teal-500 text-white"
-                            >
+                            {/* Category Pill */}
+                            <Badge className="absolute top-2 left-2 text-[9px] px-1.5 py-0.5 bg-gradient-to-r from-green-500 to-teal-500 text-white border-0">
                               {story.source_type}
                             </Badge>
+                            {/* Status Dot */}
+                            <div className="absolute top-2 right-2">
+                              <div className={`w-2.5 h-2.5 rounded-full border-2 border-white shadow-lg ${
+                                story.status === "active" ? "bg-green-500" : "bg-yellow-500"
+                              }`} />
+                            </div>
                           </div>
                           
                           {/* Content */}
-                          <div className="p-3">
-                            <h3 className="font-semibold text-foreground text-sm mb-1 line-clamp-2">
+                          <div className="p-2.5">
+                            <h3 className="font-semibold text-foreground text-xs leading-tight line-clamp-2 mb-1">
                               {story.title}
                             </h3>
-                            <p className="text-xs text-muted-foreground">
+                            <p className="text-[10px] text-muted-foreground">
                               {new Date(story.event_date).toLocaleDateString('en-US', { 
                                 month: 'short', 
-                                day: 'numeric',
-                                year: 'numeric'
+                                day: 'numeric'
                               })}
                             </p>
                           </div>
@@ -641,184 +636,193 @@ export default function AdminStories() {
             </>
           )}
         </div>
+
+        {/* Floating Action Button */}
+        <button
+          onClick={() => handleOpenDialog(undefined, activeTab === "festivals" ? "festival" : "event")}
+          className="fixed bottom-20 right-4 w-14 h-14 bg-primary hover:bg-primary/90 text-primary-foreground rounded-full shadow-2xl flex items-center justify-center transition-transform hover:scale-110 z-40 animate-scale-in"
+        >
+          <Plus className="w-6 h-6" />
+        </button>
       </div>
 
       {/* Full-Screen Create/Edit Modal */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-bold">
-              {editingStory ? "Edit Story" : "Create New Story"}
-            </DialogTitle>
-            <DialogDescription>
-              {formData.story_type === "event" 
-                ? "Add event details to generate personalized birthday or anniversary stories"
-                : "Add festival details to generate celebratory stories"}
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-6 py-4">
-            {/* Story Type */}
-            <div className="space-y-2">
-              <Label>Story Type *</Label>
-              <Select
-                value={formData.story_type}
-                onValueChange={(value: StoryType) => {
-                  setFormData({ ...formData, story_type: value });
-                }}
-                disabled={!!editingStory}
-              >
-                <SelectTrigger className="bg-background">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="event">Event (Birthday/Anniversary)</SelectItem>
-                  <SelectItem value="festival">Festival</SelectItem>
-                </SelectContent>
-              </Select>
+        <DialogContent className="w-full max-w-full h-full max-h-full m-0 rounded-none p-0 animate-slide-in-right">
+          <div className="h-full flex flex-col">
+            {/* Modal Header */}
+            <div className="flex-shrink-0 border-b border-primary/20 px-4 py-4">
+              <DialogHeader>
+                <DialogTitle className="text-xl font-bold">
+                  {editingStory ? "Edit Story" : "Create Story"}
+                </DialogTitle>
+                <DialogDescription className="text-sm">
+                  {formData.story_type === "event" 
+                    ? "Add event details for birthday or anniversary"
+                    : "Add festival details for celebration"}
+                </DialogDescription>
+              </DialogHeader>
             </div>
 
-            {/* Event Fields */}
-            {formData.story_type === "event" && (
-              <>
+            {/* Modal Content - Scrollable */}
+            <div className="flex-1 overflow-y-auto px-4 py-6">
+              <div className="space-y-5 max-w-md mx-auto">
+                {/* Story Type */}
                 <div className="space-y-2">
-                  <Label>Event Type *</Label>
+                  <Label className="text-sm font-semibold">Story Type *</Label>
                   <Select
-                    value={formData.event_type}
-                    onValueChange={(value: "birthday" | "anniversary") => {
-                      setFormData({ ...formData, event_type: value });
+                    value={formData.story_type}
+                    onValueChange={(value: StoryType) => {
+                      setFormData({ ...formData, story_type: value });
                     }}
+                    disabled={!!editingStory}
                   >
-                    <SelectTrigger className="bg-background">
+                    <SelectTrigger className="h-12 bg-background border-primary/20">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="birthday">Birthday</SelectItem>
-                      <SelectItem value="anniversary">Anniversary</SelectItem>
+                      <SelectItem value="event">Event</SelectItem>
+                      <SelectItem value="festival">Festival</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
+                {/* Event Fields */}
+                {formData.story_type === "event" && (
+                  <>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-semibold">Event Type *</Label>
+                      <Select
+                        value={formData.event_type}
+                        onValueChange={(value: "birthday" | "anniversary") => {
+                          setFormData({ ...formData, event_type: value });
+                        }}
+                      >
+                        <SelectTrigger className="h-12 bg-background border-primary/20">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="birthday">Birthday</SelectItem>
+                          <SelectItem value="anniversary">Anniversary</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-sm font-semibold">Person Name *</Label>
+                      <Input
+                        value={formData.person_name}
+                        onChange={(e) =>
+                          setFormData({ ...formData, person_name: e.target.value })
+                        }
+                        placeholder="Enter person's name"
+                        className="h-12 bg-background border-primary/20"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-sm font-semibold">Event Date *</Label>
+                      <Input
+                        type="date"
+                        value={formData.event_date}
+                        onChange={(e) =>
+                          setFormData({ ...formData, event_date: e.target.value })
+                        }
+                        className="h-12 bg-background border-primary/20"
+                      />
+                    </div>
+                  </>
+                )}
+
+                {/* Festival Fields */}
+                {formData.story_type === "festival" && (
+                  <>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-semibold">Festival Name *</Label>
+                      <Input
+                        value={formData.festival_name}
+                        onChange={(e) =>
+                          setFormData({ ...formData, festival_name: e.target.value })
+                        }
+                        placeholder="Enter festival name"
+                        className="h-12 bg-background border-primary/20"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-sm font-semibold">Festival Date *</Label>
+                      <Input
+                        type="date"
+                        value={formData.festival_date}
+                        onChange={(e) =>
+                          setFormData({ ...formData, festival_date: e.target.value })
+                        }
+                        className="h-12 bg-background border-primary/20"
+                      />
+                    </div>
+                  </>
+                )}
+
+                {/* Common Fields */}
                 <div className="space-y-2">
-                  <Label>Person Name *</Label>
+                  <Label className="text-sm font-semibold">Title (Optional)</Label>
                   <Input
-                    value={formData.person_name}
+                    value={formData.title}
                     onChange={(e) =>
-                      setFormData({ ...formData, person_name: e.target.value })
+                      setFormData({ ...formData, title: e.target.value })
                     }
-                    placeholder="Enter person's name"
-                    className="bg-background"
+                    placeholder="Auto-generated if empty"
+                    className="h-12 bg-background border-primary/20"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Event Date *</Label>
+                  <Label className="text-sm font-semibold">Description (Optional)</Label>
                   <Input
-                    type="date"
-                    value={formData.event_date}
+                    value={formData.description}
                     onChange={(e) =>
-                      setFormData({ ...formData, event_date: e.target.value })
+                      setFormData({ ...formData, description: e.target.value })
                     }
-                    className="bg-background"
-                  />
-                </div>
-              </>
-            )}
-
-            {/* Festival Fields */}
-            {formData.story_type === "festival" && (
-              <>
-                <div className="space-y-2">
-                  <Label>Festival Name *</Label>
-                  <Input
-                    value={formData.festival_name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, festival_name: e.target.value })
-                    }
-                    placeholder="Enter festival name"
-                    className="bg-background"
+                    placeholder="Additional details"
+                    className="h-12 bg-background border-primary/20"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Festival Date *</Label>
+                  <Label className="text-sm font-semibold">Poster Image *</Label>
                   <Input
-                    type="date"
-                    value={formData.festival_date}
-                    onChange={(e) =>
-                      setFormData({ ...formData, festival_date: e.target.value })
-                    }
-                    className="bg-background"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setPosterFile(e.target.files?.[0] || null)}
+                    className="h-12 bg-background border-primary/20"
                   />
+                  {editingStory?.poster_url && !posterFile && (
+                    <p className="text-xs text-muted-foreground">
+                      Current poster kept if no new file selected
+                    </p>
+                  )}
                 </div>
-              </>
-            )}
-
-            {/* Common Fields */}
-            <div className="space-y-2">
-              <Label>Title (Optional)</Label>
-              <Input
-                value={formData.title}
-                onChange={(e) =>
-                  setFormData({ ...formData, title: e.target.value })
-                }
-                placeholder="Auto-generated if left empty"
-                className="bg-background"
-              />
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label>Description (Optional)</Label>
-              <Input
-                value={formData.description}
-                onChange={(e) =>
-                  setFormData({ ...formData, description: e.target.value })
-                }
-                placeholder="Additional details"
-                className="bg-background"
-              />
+            {/* Modal Footer - Fixed */}
+            <div className="flex-shrink-0 border-t border-primary/20 p-4 bg-background">
+              <div className="flex gap-3 max-w-md mx-auto">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsDialogOpen(false)}
+                  className="flex-1 h-12"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleSave}
+                  className="flex-1 h-12 bg-primary hover:bg-primary/90"
+                >
+                  {editingStory ? "Update" : "Create"}
+                </Button>
+              </div>
             </div>
-
-            <div className="space-y-2">
-              <Label>Poster Image *</Label>
-              <Input
-                type="file"
-                accept="image/*"
-                onChange={(e) => setPosterFile(e.target.files?.[0] || null)}
-                className="bg-background"
-              />
-              {editingStory?.poster_url && !posterFile && (
-                <p className="text-xs text-muted-foreground">
-                  Current poster will be kept if no new file is selected
-                </p>
-              )}
-            </div>
-
-            <div className="flex items-center gap-3">
-              <Switch
-                checked={formData.is_active}
-                onCheckedChange={(checked) =>
-                  setFormData({ ...formData, is_active: checked })
-                }
-              />
-              <Label className="cursor-pointer">Active</Label>
-            </div>
-          </div>
-
-          <div className="flex gap-3 pt-4 border-t">
-            <Button
-              variant="outline"
-              onClick={() => setIsDialogOpen(false)}
-              className="flex-1"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSave}
-              className="flex-1 bg-primary hover:bg-primary/90"
-            >
-              {editingStory ? "Update Story" : "Create Story"}
-            </Button>
           </div>
         </DialogContent>
       </Dialog>
