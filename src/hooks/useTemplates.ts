@@ -103,7 +103,7 @@ export const useTemplateCategories = () => {
   return { categories, loading, error };
 };
 
-export const useTemplates = (categoryId?: string, tripId?: string, rankId?: string, birthdayId?: string, anniversaryId?: string, motivationalBannerId?: string, festivalId?: string) => {
+export const useTemplates = (categoryId?: string, tripId?: string, rankId?: string, birthdayId?: string, anniversaryId?: string, motivationalBannerId?: string, festivalId?: string, storiesEventsId?: string) => {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -146,6 +146,10 @@ export const useTemplates = (categoryId?: string, tripId?: string, rankId?: stri
         query = query.eq('festival_id', festivalId);
       }
 
+      if (storiesEventsId) {
+        query = query.eq('stories_events_id', storiesEventsId);
+      }
+
       const { data, error } = await query;
 
         if (error) throw error;
@@ -174,11 +178,13 @@ export const useTemplates = (categoryId?: string, tripId?: string, rankId?: stri
       ? `motivational_banner_id=eq.${motivationalBannerId}`
       : festivalId
       ? `festival_id=eq.${festivalId}`
+      : storiesEventsId
+      ? `stories_events_id=eq.${storiesEventsId}`
       : categoryId 
       ? `category_id=eq.${categoryId}` 
       : undefined;
     const channel = supabase
-      .channel(`templates-changes-${categoryId || tripId || rankId || birthdayId || anniversaryId || motivationalBannerId || festivalId || 'all'}-${Math.random()}`)
+      .channel(`templates-changes-${categoryId || tripId || rankId || birthdayId || anniversaryId || motivationalBannerId || festivalId || storiesEventsId || 'all'}-${Math.random()}`)
       .on(
         'postgres_changes',
         {
@@ -197,7 +203,7 @@ export const useTemplates = (categoryId?: string, tripId?: string, rankId?: stri
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [categoryId, tripId, rankId, birthdayId, anniversaryId, motivationalBannerId, festivalId]);
+  }, [categoryId, tripId, rankId, birthdayId, anniversaryId, motivationalBannerId, festivalId, storiesEventsId]);
 
   return { templates, loading, error };
 };

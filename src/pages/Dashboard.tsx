@@ -216,11 +216,11 @@ export default function Dashboard() {
                       .filter(e => e.event_type === 'birthday')
                       .slice(0, 8)
                       .map((event) => (
-                        <Link
-                          key={event.id}
-                          to={`/story/${event.id}`}
-                          className="min-w-[84px] relative flex-shrink-0 transition-all hover:scale-105"
-                        >
+                      <Link
+                        key={event.id}
+                        to={`/story-preview/${event.id}`}
+                        className="min-w-[84px] relative flex-shrink-0 transition-all hover:scale-105"
+                      >
                           <div className="gold-border bg-card rounded-2xl overflow-hidden">
                             <div className="w-[84px] h-[84px] relative">
                               <img
@@ -251,11 +251,11 @@ export default function Dashboard() {
                       .filter(e => e.event_type === 'anniversary')
                       .slice(0, 8)
                       .map((event) => (
-                        <Link
-                          key={event.id}
-                          to={`/story/${event.id}`}
-                          className="min-w-[84px] relative flex-shrink-0 transition-all hover:scale-105"
-                        >
+                      <Link
+                        key={event.id}
+                        to={`/story-preview/${event.id}`}
+                        className="min-w-[84px] relative flex-shrink-0 transition-all hover:scale-105"
+                      >
                           <div className="gold-border bg-card rounded-2xl overflow-hidden">
                             <div className="w-[84px] h-[84px] relative">
                               <img
@@ -359,11 +359,11 @@ export default function Dashboard() {
                       .filter(e => e.event_type !== 'birthday' && e.event_type !== 'anniversary')
                       .slice(0, 8)
                       .map((event) => (
-                        <Link
-                          key={event.id}
-                          to={`/story/${event.id}`}
-                          className="min-w-[84px] relative flex-shrink-0 transition-all hover:scale-105"
-                        >
+                      <Link
+                        key={event.id}
+                        to={`/story-preview/${event.id}`}
+                        className="min-w-[84px] relative flex-shrink-0 transition-all hover:scale-105"
+                      >
                           <div className="gold-border bg-card rounded-2xl overflow-hidden">
                             <div className="w-[84px] h-[84px] relative">
                               <img
