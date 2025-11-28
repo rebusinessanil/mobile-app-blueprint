@@ -1689,11 +1689,11 @@ export default function BannerPreview() {
                         </div>
                       </div>
 
-                      {/* Main Dark Panel with Neon Border - Positioned between contact box and profile pic */}
+                      {/* Main Dark Panel with Neon Border */}
                       <div style={{
                         position: 'absolute',
-                        left: '320px',
-                        right: '560px',
+                        left: '270px',
+                        right: '0',
                         height: '100%',
                         background: 'linear-gradient(135deg, #0f1419 0%, #1a1f2e 100%)',
                         borderRadius: '12px 60px 60px 12px',
