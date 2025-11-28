@@ -377,7 +377,7 @@ export default function BannerPreview() {
   const selectedSlot = selectedTemplate + 1;
   const currentSlot = globalBackgroundSlots.find(slot => slot.slotNumber === selectedSlot);
   const backgroundStyle = currentSlot ? getSlotBackgroundStyle(currentSlot) : {};
-  
+
   // Debug background selection
   useEffect(() => {
     console.log('🎨 Global background selection:', {
@@ -1387,32 +1387,9 @@ export default function BannerPreview() {
                       right: 0,
                       height: '50px'
                     }}>
-                      <div style={{
-                        position: 'absolute',
-                        left: '80px',
-                        top: 0,
-                        width: '400px',
-                        height: '50px',
-                        background: '#06d6a0',
-                        clipPath: 'polygon(0 0, 90% 0, 100% 100%, 10% 100%)'
-                      }} />
-                      <div style={{
-                        position: 'absolute',
-                        left: '390px',
-                        top: 0,
-                        width: '900px',
-                        height: '50px',
-                        background: '#1a1f2e'
-                      }} />
-                      <div style={{
-                        position: 'absolute',
-                        right: '50px',
-                        top: 0,
-                        width: '350px',
-                        height: '50px',
-                        background: '#06d6a0',
-                        clipPath: 'polygon(10% 0, 100% 0, 90% 100%, 0% 100%)'
-                      }} />
+                      
+                      
+                      
                     </div>
 
                     {/* Upper Bar 2 - Mid */}
@@ -1422,32 +1399,9 @@ export default function BannerPreview() {
                       right: 0,
                       height: '50px'
                     }}>
-                      <div style={{
-                        position: 'absolute',
-                        left: 0,
-                        top: 0,
-                        width: '280px',
-                        height: '50px',
-                        background: '#00a8e8',
-                        clipPath: 'polygon(0 0, 90% 0, 100% 100%, 0% 100%)'
-                      }} />
-                      <div style={{
-                        position: 'absolute',
-                        left: '230px',
-                        top: 0,
-                        width: '950px',
-                        height: '50px',
-                        background: '#1a1f2e'
-                      }} />
-                      <div style={{
-                        position: 'absolute',
-                        right: 0,
-                        top: 0,
-                        width: '280px',
-                        height: '50px',
-                        background: '#00a8e8',
-                        clipPath: 'polygon(0 0, 100% 0, 100% 100%, 10% 100%)'
-                      }} />
+                      
+                      
+                      
                     </div>
 
                     {/* Upper Bar 3 - Lower */}
@@ -1457,23 +1411,8 @@ export default function BannerPreview() {
                       right: 0,
                       height: '50px'
                     }}>
-                      <div style={{
-                        position: 'absolute',
-                        left: '50px',
-                        top: 0,
-                        width: '350px',
-                        height: '50px',
-                        background: '#ffd700',
-                        clipPath: 'polygon(0 0, 90% 0, 100% 100%, 10% 100%)'
-                      }} />
-                      <div style={{
-                        position: 'absolute',
-                        left: '340px',
-                        top: 0,
-                        width: '900px',
-                        height: '50px',
-                        background: '#1a1f2e'
-                      }} />
+                      
+                      
                       <div style={{
                         position: 'absolute',
                         right: '100px',
@@ -2042,19 +1981,13 @@ export default function BannerPreview() {
       {globalBackgroundSlots.length > 0 && <div className="flex-1 min-h-0 px-3 sm:px-4 pb-3 sm:pb-4">
           <div className="h-full overflow-y-auto rounded-2xl sm:rounded-3xl bg-[#111827]/50 border-2 border-[#FFD700]/20 p-3 sm:p-4 shadow-[0_0_30px_rgba(255,215,0,0.1)] scrollbar-thin scrollbar-thumb-[#FFD700]/30 scrollbar-track-transparent">
             <div className="grid grid-cols-4 gap-2 sm:gap-3">
-              {globalBackgroundSlots.map((slot) => {
+              {globalBackgroundSlots.map(slot => {
             const isSelected = selectedTemplate === slot.slotNumber - 1;
-            return (
-              <button 
-                key={slot.slotNumber} 
-                onClick={() => setSelectedTemplate(slot.slotNumber - 1)} 
-                className={`aspect-square rounded-lg overflow-hidden transition-all ${isSelected ? 'border-4 border-[#FFD700] scale-105 shadow-[0_0_20px_rgba(255,215,0,0.5)]' : 'border-2 border-gray-600 hover:border-[#FFD700] hover:scale-105'}`}
-              >
+            return <button key={slot.slotNumber} onClick={() => setSelectedTemplate(slot.slotNumber - 1)} className={`aspect-square rounded-lg overflow-hidden transition-all ${isSelected ? 'border-4 border-[#FFD700] scale-105 shadow-[0_0_20px_rgba(255,215,0,0.5)]' : 'border-2 border-gray-600 hover:border-[#FFD700] hover:scale-105'}`}>
                 <div className="w-full h-full flex items-center justify-center" style={getSlotBackgroundStyle(slot)}>
                   {!slot.hasImage && <span className="text-white text-xs font-bold">{slot.slotNumber}</span>}
                 </div>
-              </button>
-            );
+              </button>;
           })}
             </div>
           </div>
