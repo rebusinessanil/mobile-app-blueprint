@@ -6,8 +6,8 @@ export interface UnifiedStory {
   title: string;
   cover_image_url: string;
   status: "active" | "preview_only" | "inactive" | "expired";
-  story_type: "generated";
-  source_type?: "event" | "festival";
+  story_type: "generated" | "event" | "festival";
+  source_type?: "event" | "festival" | "birthday" | "anniversary";
   event_date?: string;
   expires_at?: string;
   is_active?: boolean;
@@ -34,8 +34,26 @@ export const useUnifiedStories = () => {
 
       if (generatedError) throw generatedError;
 
-      // Fetch first active background for each story
-      const storiesWithBackgrounds = await Promise.all(
+      // Fetch stories_events (birthday/anniversary events)
+      const { data: eventsStories, error: eventsError } = await supabase
+        .from("stories_events")
+        .select("*")
+        .eq("is_active", true)
+        .order("event_date", { ascending: true });
+
+      if (eventsError) throw eventsError;
+
+      // Fetch stories_festivals
+      const { data: festivalsStories, error: festivalsError } = await supabase
+        .from("stories_festivals")
+        .select("*")
+        .eq("is_active", true)
+        .order("festival_date", { ascending: true });
+
+      if (festivalsError) throw festivalsError;
+
+      // Process generated stories with backgrounds
+      const generatedWithBackgrounds = await Promise.all(
         (generatedStories || []).map(async (story) => {
           const { data: slots } = await supabase
             .from("story_background_slots")
@@ -55,12 +73,74 @@ export const useUnifiedStories = () => {
             event_date: story.event_date,
             expires_at: story.expires_at,
             created_at: story.created_at,
-            background_url: slots?.[0]?.image_url || story.poster_url, // Use first slot or fallback to poster
+            background_url: slots?.[0]?.image_url || story.poster_url,
           };
         })
       );
 
-      setStories(storiesWithBackgrounds);
+      // Process events stories with backgrounds
+      const eventsWithBackgrounds = await Promise.all(
+        (eventsStories || []).map(async (event) => {
+          const { data: slots } = await supabase
+            .from("story_background_slots")
+            .select("image_url")
+            .eq("story_id", event.id)
+            .eq("is_active", true)
+            .order("slot_number", { ascending: true })
+            .limit(1);
+
+          return {
+            id: event.id,
+            title: event.title || event.person_name,
+            cover_image_url: event.poster_url,
+            status: "active" as const,
+            story_type: "event" as const,
+            source_type: event.event_type as "birthday" | "anniversary",
+            event_date: event.event_date,
+            is_active: event.is_active,
+            created_at: event.created_at || new Date().toISOString(),
+            background_url: slots?.[0]?.image_url || event.poster_url,
+          };
+        })
+      );
+
+      // Process festivals stories with backgrounds
+      const festivalsWithBackgrounds = await Promise.all(
+        (festivalsStories || []).map(async (festival) => {
+          const { data: slots } = await supabase
+            .from("story_background_slots")
+            .select("image_url")
+            .eq("story_id", festival.id)
+            .eq("is_active", true)
+            .order("slot_number", { ascending: true })
+            .limit(1);
+
+          return {
+            id: festival.id,
+            title: festival.festival_name,
+            cover_image_url: festival.poster_url,
+            status: "active" as const,
+            story_type: "festival" as const,
+            event_date: festival.festival_date,
+            is_active: festival.is_active,
+            created_at: festival.created_at || new Date().toISOString(),
+            background_url: slots?.[0]?.image_url || festival.poster_url,
+          };
+        })
+      );
+
+      // Combine all stories and sort by event_date
+      const allStories = [
+        ...generatedWithBackgrounds,
+        ...eventsWithBackgrounds,
+        ...festivalsWithBackgrounds,
+      ].sort((a, b) => {
+        const dateA = new Date(a.event_date || a.created_at);
+        const dateB = new Date(b.event_date || b.created_at);
+        return dateA.getTime() - dateB.getTime();
+      });
+
+      setStories(allStories);
       setError(null);
     } catch (err) {
       setError(err as Error);
@@ -73,9 +153,9 @@ export const useUnifiedStories = () => {
   useEffect(() => {
     fetchAllStories();
 
-    // Real-time subscription for generated stories
+    // Real-time subscription for all story tables
     const generatedChannel = supabase
-      .channel("generated-stories-changes")
+      .channel("unified-stories-changes")
       .on(
         "postgres_changes",
         {
@@ -85,6 +165,42 @@ export const useUnifiedStories = () => {
         },
         () => {
           console.log("📡 Generated story update received");
+          fetchAllStories();
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "stories_events",
+        },
+        () => {
+          console.log("📡 Stories event update received");
+          fetchAllStories();
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "stories_festivals",
+        },
+        () => {
+          console.log("📡 Stories festival update received");
+          fetchAllStories();
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "story_background_slots",
+        },
+        () => {
+          console.log("📡 Story background slot update received");
           fetchAllStories();
         }
       )
