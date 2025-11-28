@@ -12,6 +12,7 @@ import { useAnniversaries } from "@/hooks/useAnniversaries";
 import { useMotivationalBanners } from "@/hooks/useMotivationalBanners";
 import { useFestivals } from "@/hooks/useFestivals";
 import { useGeneratedStories } from "@/hooks/useAutoStories";
+import { useUnifiedStories } from "@/hooks/useUnifiedStories";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import Profile from "./Profile";
 import { Badge } from "@/components/ui/badge";
@@ -45,18 +46,8 @@ export default function Dashboard() {
     stories: generatedStories
   } = useGeneratedStories();
   
-  // Fetch stories_events
-  const { data: storiesEvents = [] } = useQuery({
-    queryKey: ["stories-events"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("stories_events")
-        .select("*")
-        .order("event_date", { ascending: true });
-      if (error) throw error;
-      return data || [];
-    },
-  });
+  // Use unified stories hook with real-time sync
+  const { stories: unifiedStories } = useUnifiedStories();
   
   const [userId, setUserId] = useState<string | null>(null);
   const {
@@ -164,8 +155,8 @@ export default function Dashboard() {
 
       {/* Content */}
       <div className="px-6 py-6 space-y-6">
-        {/* Unified Stories Section */}
-        {(festivals.length > 0 || generatedStories.length > 0 || storiesEvents.length > 0) && (
+        {/* Unified Stories Section - Single Carousel */}
+        {(unifiedStories.length > 0 || festivals.length > 0 || generatedStories.length > 0) && (
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -174,216 +165,84 @@ export default function Dashboard() {
               </div>
             </div>
             
-            <div className="flex gap-6 overflow-x-auto pb-2 scrollbar-hide">
-              {/* Festival Category */}
-              {festivals.length > 0 && (
-                <div className="flex-shrink-0 space-y-2">
-                  <h3 className="text-sm font-semibold text-primary px-1">Festival</h3>
-                  <div className="flex gap-3">
-                    {festivals.slice(0, 8).map((festival) => (
-                      <Link
-                        key={festival.id}
-                        to={`/festival-preview/${festival.id}`}
-                        className="min-w-[84px] relative flex-shrink-0 transition-all hover:scale-105"
-                      >
-                        <div className="gold-border bg-card rounded-2xl overflow-hidden">
-                          <div className="w-[84px] h-[84px] relative">
-                            <img
-                              src={festival.poster_url}
-                              alt={festival.festival_name}
-                              className="w-full h-full object-cover"
-                            />
-                            <div className={`absolute top-2 right-2 w-3 h-3 ${festival.is_active ? 'bg-green-500' : 'bg-yellow-500'} rounded-full border-2 border-white shadow-lg`} />
-                          </div>
-                          <div className="p-2 text-center">
-                            <p className="text-xs font-semibold text-foreground leading-tight line-clamp-2">
-                              {festival.festival_name}
-                            </p>
-                          </div>
-                        </div>
-                      </Link>
-                    ))}
+            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+              {/* Unified Stories from stories_events (Birthday, Anniversary, Events, Offers) */}
+              {unifiedStories.map((story) => (
+                <Link
+                  key={story.id}
+                  to={`/story-preview/${story.id}`}
+                  className="min-w-[84px] relative flex-shrink-0 transition-all hover:scale-105"
+                >
+                  <div className="gold-border bg-card rounded-2xl overflow-hidden">
+                    <div className="w-[84px] h-[84px] relative">
+                      <img
+                        src={story.cover_image_url}
+                        alt={story.title}
+                        className="w-full h-full object-cover"
+                      />
+                      <div className={`absolute top-2 right-2 w-3 h-3 ${story.is_active ? 'bg-green-500' : 'bg-yellow-500'} rounded-full border-2 border-white shadow-lg`} />
+                    </div>
+                    <div className="p-2 text-center">
+                      <p className="text-xs font-semibold text-foreground leading-tight line-clamp-2">
+                        {story.title}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              )}
+                </Link>
+              ))}
 
-              {/* Birthday Category */}
-              {storiesEvents.filter(e => e.event_type === 'birthday').length > 0 && (
-                <div className="flex-shrink-0 space-y-2">
-                  <h3 className="text-sm font-semibold text-primary px-1">Birthday</h3>
-                  <div className="flex gap-3">
-                    {storiesEvents
-                      .filter(e => e.event_type === 'birthday')
-                      .slice(0, 8)
-                      .map((event) => (
-                      <Link
-                        key={event.id}
-                        to={`/story-preview/${event.id}`}
-                        className="min-w-[84px] relative flex-shrink-0 transition-all hover:scale-105"
-                      >
-                          <div className="gold-border bg-card rounded-2xl overflow-hidden">
-                            <div className="w-[84px] h-[84px] relative">
-                              <img
-                                src={event.poster_url}
-                                alt={event.title || event.person_name}
-                                className="w-full h-full object-cover"
-                              />
-                              <div className={`absolute top-2 right-2 w-3 h-3 ${event.is_active ? 'bg-green-500' : 'bg-yellow-500'} rounded-full border-2 border-white shadow-lg`} />
-                            </div>
-                            <div className="p-2 text-center">
-                              <p className="text-xs font-semibold text-foreground leading-tight line-clamp-2">
-                                {event.title || event.person_name}
-                              </p>
-                            </div>
-                          </div>
-                        </Link>
-                      ))}
+              {/* Festival Category (separate from stories_events) */}
+              {festivals.slice(0, 8).map((festival) => (
+                <Link
+                  key={festival.id}
+                  to={`/festival-preview/${festival.id}`}
+                  className="min-w-[84px] relative flex-shrink-0 transition-all hover:scale-105"
+                >
+                  <div className="gold-border bg-card rounded-2xl overflow-hidden">
+                    <div className="w-[84px] h-[84px] relative">
+                      <img
+                        src={festival.poster_url}
+                        alt={festival.festival_name}
+                        className="w-full h-full object-cover"
+                      />
+                      <div className={`absolute top-2 right-2 w-3 h-3 ${festival.is_active ? 'bg-green-500' : 'bg-yellow-500'} rounded-full border-2 border-white shadow-lg`} />
+                    </div>
+                    <div className="p-2 text-center">
+                      <p className="text-xs font-semibold text-foreground leading-tight line-clamp-2">
+                        {festival.festival_name}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              )}
+                </Link>
+              ))}
 
-              {/* Anniversary Category */}
-              {storiesEvents.filter(e => e.event_type === 'anniversary').length > 0 && (
-                <div className="flex-shrink-0 space-y-2">
-                  <h3 className="text-sm font-semibold text-primary px-1">Anniversary</h3>
-                  <div className="flex gap-3">
-                    {storiesEvents
-                      .filter(e => e.event_type === 'anniversary')
-                      .slice(0, 8)
-                      .map((event) => (
-                      <Link
-                        key={event.id}
-                        to={`/story-preview/${event.id}`}
-                        className="min-w-[84px] relative flex-shrink-0 transition-all hover:scale-105"
-                      >
-                          <div className="gold-border bg-card rounded-2xl overflow-hidden">
-                            <div className="w-[84px] h-[84px] relative">
-                              <img
-                                src={event.poster_url}
-                                alt={event.title || event.person_name}
-                                className="w-full h-full object-cover"
-                              />
-                              <div className={`absolute top-2 right-2 w-3 h-3 ${event.is_active ? 'bg-green-500' : 'bg-yellow-500'} rounded-full border-2 border-white shadow-lg`} />
-                            </div>
-                            <div className="p-2 text-center">
-                              <p className="text-xs font-semibold text-foreground leading-tight line-clamp-2">
-                                {event.title || event.person_name}
-                              </p>
-                            </div>
-                          </div>
-                        </Link>
-                      ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Auto Generated Category */}
-              {generatedStories.filter((story) => story.status === "active").length > 0 && (
-                <div className="flex-shrink-0 space-y-2">
-                  <h3 className="text-sm font-semibold text-primary px-1">Auto Generated</h3>
-                  <div className="flex gap-3">
-                    {generatedStories
-                      .filter((story) => story.status === "active")
-                      .slice(0, 8)
-                      .map((story) => (
-                        <Link
-                          key={story.id}
-                          to={`/story/${story.id}`}
-                          className="min-w-[84px] relative flex-shrink-0 transition-all hover:scale-105"
-                        >
-                          <div className="gold-border bg-card rounded-2xl overflow-hidden">
-                            <div className="w-[84px] h-[84px] relative">
-                              <img
-                                src={story.poster_url}
-                                alt={story.title}
-                                className="w-full h-full object-cover"
-                              />
-                              <div className="absolute top-2 right-2 w-3 h-3 bg-green-500 rounded-full border-2 border-white shadow-lg" />
-                            </div>
-                            <div className="p-2 text-center">
-                              <p className="text-xs font-semibold text-foreground leading-tight line-clamp-2">
-                                {story.title}
-                              </p>
-                            </div>
-                          </div>
-                        </Link>
-                      ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Preview Stories */}
-              {generatedStories.filter((story) => story.status === "preview_only").length > 0 && (
-                <div className="flex-shrink-0 space-y-2">
-                  <h3 className="text-sm font-semibold text-primary px-1">Coming Soon</h3>
-                  <div className="flex gap-3">
-                    {generatedStories
-                      .filter((story) => story.status === "preview_only")
-                      .slice(0, 8)
-                      .map((story) => (
-                        <div
-                          key={story.id}
-                          className="min-w-[84px] relative flex-shrink-0 opacity-75"
-                        >
-                          <div className="gold-border bg-card rounded-2xl overflow-hidden">
-                            <div className="w-[84px] h-[84px] relative">
-                              <img
-                                src={story.poster_url}
-                                alt={story.title}
-                                className="w-full h-full object-cover"
-                              />
-                              <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                                <Badge variant="secondary" className="text-[10px] px-1 py-0">
-                                  Tomorrow
-                                </Badge>
-                              </div>
-                            </div>
-                            <div className="p-2 text-center">
-                              <p className="text-xs font-semibold text-muted-foreground leading-tight line-clamp-2">
-                                {story.title}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Other Event Types */}
-              {storiesEvents.filter(e => e.event_type !== 'birthday' && e.event_type !== 'anniversary').length > 0 && (
-                <div className="flex-shrink-0 space-y-2">
-                  <h3 className="text-sm font-semibold text-primary px-1">Events</h3>
-                  <div className="flex gap-3">
-                    {storiesEvents
-                      .filter(e => e.event_type !== 'birthday' && e.event_type !== 'anniversary')
-                      .slice(0, 8)
-                      .map((event) => (
-                      <Link
-                        key={event.id}
-                        to={`/story-preview/${event.id}`}
-                        className="min-w-[84px] relative flex-shrink-0 transition-all hover:scale-105"
-                      >
-                          <div className="gold-border bg-card rounded-2xl overflow-hidden">
-                            <div className="w-[84px] h-[84px] relative">
-                              <img
-                                src={event.poster_url}
-                                alt={event.title || event.person_name}
-                                className="w-full h-full object-cover"
-                              />
-                              <div className={`absolute top-2 right-2 w-3 h-3 ${event.is_active ? 'bg-green-500' : 'bg-yellow-500'} rounded-full border-2 border-white shadow-lg`} />
-                            </div>
-                            <div className="p-2 text-center">
-                              <p className="text-xs font-semibold text-foreground leading-tight line-clamp-2">
-                                {event.title || event.person_name}
-                              </p>
-                            </div>
-                          </div>
-                        </Link>
-                      ))}
-                  </div>
-                </div>
-              )}
+              {/* Auto Generated Stories */}
+              {generatedStories
+                .filter((story) => story.status === "active")
+                .slice(0, 8)
+                .map((story) => (
+                  <Link
+                    key={story.id}
+                    to={`/story/${story.id}`}
+                    className="min-w-[84px] relative flex-shrink-0 transition-all hover:scale-105"
+                  >
+                    <div className="gold-border bg-card rounded-2xl overflow-hidden">
+                      <div className="w-[84px] h-[84px] relative">
+                        <img
+                          src={story.poster_url}
+                          alt={story.title}
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute top-2 right-2 w-3 h-3 bg-green-500 rounded-full border-2 border-white shadow-lg" />
+                      </div>
+                      <div className="p-2 text-center">
+                        <p className="text-xs font-semibold text-foreground leading-tight line-clamp-2">
+                          {story.title}
+                        </p>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
             </div>
           </div>
         )}
