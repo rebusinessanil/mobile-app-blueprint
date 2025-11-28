@@ -10,6 +10,7 @@ import { useProfile } from "@/hooks/useProfile";
 import { useProfilePhotos } from "@/hooks/useProfilePhotos";
 import { useBannerSettings } from "@/hooks/useBannerSettings";
 import { useTemplateBackgrounds } from "@/hooks/useTemplateBackgrounds";
+import { useStoryBackgroundSlots } from "@/hooks/useStoryBackgroundSlots";
 import { useBannerDefaults } from "@/hooks/useBannerDefaults";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -44,6 +45,8 @@ interface BannerData {
   eventVenue?: string;
   quote?: string;
   motivationalBannerId?: string;
+  storyId?: string; // For story background slots
+  eventId?: string; // For story background slots (alias)
 }
 export default function BannerPreview() {
   const navigate = useNavigate();
@@ -241,15 +244,28 @@ export default function BannerPreview() {
 
   // Validate templateId exists before fetching backgrounds
   useEffect(() => {
-    if (!currentTemplateId) {
+    if (!currentTemplateId && bannerData?.categoryType !== 'story') {
       console.error('❌ No templateId - backgrounds cannot be fetched. This will cause cross-contamination!');
-    } else {
+    } else if (currentTemplateId) {
       console.log('✅ Fetching backgrounds for templateId:', currentTemplateId);
     }
-  }, [currentTemplateId]);
+  }, [currentTemplateId, bannerData?.categoryType]);
+
+  // For story category, fetch from story_background_slots instead of template_backgrounds
+  const storyId = bannerData?.storyId || bannerData?.eventId;
+  const {
+    slots: storyBackgroundSlots,
+    loading: storyBackgroundsLoading
+  } = useStoryBackgroundSlots(
+    bannerData?.categoryType === 'story' ? storyId : undefined
+  );
+
+  // For non-story categories, fetch from template_backgrounds
   const {
     backgrounds
-  } = useTemplateBackgrounds(currentTemplateId);
+  } = useTemplateBackgrounds(
+    bannerData?.categoryType !== 'story' ? currentTemplateId : undefined
+  );
 
   // Real-time sync for sticker updates from admin panel
   useRealtimeStickerSync({
@@ -366,24 +382,44 @@ export default function BannerPreview() {
   // Map selectedTemplate (0-15) to slot_number (1-16) and fetch correct background
   // CRITICAL: Only show background if it exists for this exact slot - NO fallbacks, NO cross-contamination
   const selectedSlot = selectedTemplate + 1;
-  const backgroundImage = backgrounds.find(bg => bg.slot_number === selectedSlot)?.background_image_url || null;
+  
+  // For story category, use story background slots; for others, use template backgrounds
+  const backgroundImage = bannerData?.categoryType === 'story' 
+    ? storyBackgroundSlots.find(slot => slot.slot_number === selectedSlot)?.image_url || null
+    : backgrounds.find(bg => bg.slot_number === selectedSlot)?.background_image_url || null;
 
   // Debug background selection
   useEffect(() => {
-    console.log('🎨 Background selection:', {
-      selectedSlot,
-      totalBackgrounds: backgrounds.length,
-      currentTemplateId,
-      foundBackground: !!backgroundImage,
-      backgroundUrl: backgroundImage ? backgroundImage.substring(0, 60) + '...' : 'none'
-    });
+    if (bannerData?.categoryType === 'story') {
+      console.log('🎨 Story background selection:', {
+        selectedSlot,
+        totalSlots: storyBackgroundSlots.length,
+        storyId,
+        foundBackground: !!backgroundImage,
+        backgroundUrl: backgroundImage ? backgroundImage.substring(0, 60) + '...' : 'none'
+      });
 
-    // Warn if backgrounds exist but none match current slot
-    if (backgrounds.length > 0 && !backgroundImage) {
-      console.warn('⚠️ Backgrounds exist but none for slot', selectedSlot);
-      console.log('Available slots:', backgrounds.map(bg => bg.slot_number));
+      // Warn if slots exist but none match current slot
+      if (storyBackgroundSlots.length > 0 && !backgroundImage) {
+        console.warn('⚠️ Story slots exist but none for slot', selectedSlot);
+        console.log('Available story slots:', storyBackgroundSlots.map(slot => slot.slot_number));
+      }
+    } else {
+      console.log('🎨 Template background selection:', {
+        selectedSlot,
+        totalBackgrounds: backgrounds.length,
+        currentTemplateId,
+        foundBackground: !!backgroundImage,
+        backgroundUrl: backgroundImage ? backgroundImage.substring(0, 60) + '...' : 'none'
+      });
+
+      // Warn if backgrounds exist but none match current slot
+      if (backgrounds.length > 0 && !backgroundImage) {
+        console.warn('⚠️ Backgrounds exist but none for slot', selectedSlot);
+        console.log('Available slots:', backgrounds.map(bg => bg.slot_number));
+      }
     }
-  }, [selectedSlot, backgrounds, currentTemplateId, backgroundImage]);
+  }, [selectedSlot, backgrounds, storyBackgroundSlots, currentTemplateId, backgroundImage, bannerData?.categoryType, storyId]);
 
   // Main banner name - ALWAYS from user input in form (bannerData.name)
   const mainBannerName: string = bannerData?.name || "";
