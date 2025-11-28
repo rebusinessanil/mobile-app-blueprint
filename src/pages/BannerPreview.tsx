@@ -1584,7 +1584,7 @@ export default function BannerPreview() {
                     borderRadius: '16px',
                     transform: isMentorPhotoFlipped ? 'scaleX(-1)' : 'scaleX(1)',
                     border: 'none',
-                    zIndex: bannerData.categoryType === 'story' ? 5 : 3
+                    zIndex: 5
                   }}>
                     <img src={mentorPhoto} alt={profileName} style={{
                       width: '540px',
