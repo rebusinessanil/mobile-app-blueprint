@@ -1572,8 +1572,9 @@ export default function BannerPreview() {
 
                 {/* BOTTOM RIGHT - Mentor Photo - FIXED SIZE AND POSITION - SQUARE 1:1 RATIO - All Categories including Story */}
                 {/* Profile photo displays for all categories including Story (same as Festival) */}
+                {/* For story category, position above lower-third with higher z-index */}
                 {mentorPhoto && bannerData.categoryType !== 'motivational' && <div className="absolute overflow-hidden shadow-2xl cursor-pointer transition-transform duration-500 ease-in-out" onClick={() => setIsMentorPhotoFlipped(!isMentorPhotoFlipped)} style={{
-                    bottom: 0,
+                    bottom: bannerData.categoryType === 'story' ? '150px' : 0,
                     right: 0,
                     width: '540px',
                     height: '540px',
@@ -1583,7 +1584,8 @@ export default function BannerPreview() {
                     maxHeight: '540px',
                     borderRadius: '16px',
                     transform: isMentorPhotoFlipped ? 'scaleX(-1)' : 'scaleX(1)',
-                    border: 'none'
+                    border: 'none',
+                    zIndex: bannerData.categoryType === 'story' ? 5 : 'auto'
                   }}>
                     <img src={mentorPhoto} alt={profileName} style={{
                       width: '540px',
@@ -1606,6 +1608,16 @@ export default function BannerPreview() {
                     // Calculate variant based on slot number (0-15) in repeating sequence
                     const slotNumber = selectedTemplate; // selectedTemplate is 0-indexed
                     const variantIndex = slotNumber % 3 + 1; // 1, 2, or 3
+
+                    // Helper function to convert name to title case (capitalize first letter of each word)
+                    const toTitleCase = (str: string) => {
+                      if (!str) return '';
+                      return str
+                        .toLowerCase()
+                        .split(' ')
+                        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                        .join(' ');
+                    };
 
                     // Define three variants with strict color isolation
                     const variants = {
@@ -1642,58 +1654,18 @@ export default function BannerPreview() {
                       justifyContent: 'space-between',
                       zIndex: 4
                     }}>
-                      {/* Main Dark Banner with Colored Border */}
+                      {/* Left Tab with Angled Edge - Flipped Horizontally */}
                       <div style={{
                         position: 'absolute',
                         left: 0,
-                        right: '280px',
-                        height: '100%',
-                        background: '#1a1f2e',
-                        borderRadius: '50px 8px 8px 50px',
-                        border: `4px solid ${currentVariant.borderColor}`,
-                        boxShadow: `0 6px 20px rgba(0, 0, 0, 0.5), 0 0 20px ${currentVariant.shadowColor}`,
-                        display: 'flex',
-                        alignItems: 'center',
-                        padding: '0 40px'
-                      }}>
-                        {/* User Info on Left */}
-                        <div style={{
-                          flex: 1
-                        }}>
-                          <div style={{
-                            fontSize: '30px',
-                            fontWeight: '800',
-                            color: '#ffffff',
-                            marginBottom: '4px',
-                            letterSpacing: '1px',
-                            textShadow: '0 2px 6px rgba(0, 0, 0, 0.6)'
-                          }}>
-                            {profileName?.toUpperCase() || 'USER NAME'}
-                          </div>
-                          <div style={{
-                            fontSize: '28px',
-                            fontWeight: '700',
-                            color: currentVariant.borderColor,
-                            letterSpacing: '1px',
-                            textShadow: '0 2px 4px rgba(0, 0, 0, 0.5)'
-                          }}>
-                            {displayRank || 'RANK'}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Right Tab with Angled Edge */}
-                      <div style={{
-                        position: 'absolute',
-                        right: 0,
                         height: '100%',
                         width: '320px',
                         background: currentVariant.tabColor,
-                        clipPath: 'polygon(15% 0, 100% 0, 100% 100%, 15% 100%, 0% 50%)',
+                        clipPath: 'polygon(0 0, 85% 0, 100% 50%, 85% 100%, 0 100%)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        paddingLeft: '60px',
+                        paddingRight: '60px',
                         boxShadow: `0 6px 20px ${currentVariant.shadowColor}`
                       }}>
                         <div style={{
@@ -1717,6 +1689,48 @@ export default function BannerPreview() {
                             textShadow: '0 2px 6px rgba(0, 0, 0, 0.5)'
                           }}>
                             {profile?.mobile || profile?.whatsapp || '+91 7734990035'}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Main Dark Banner with Colored Border - Flipped to Right */}
+                      <div style={{
+                        position: 'absolute',
+                        right: 0,
+                        left: '280px',
+                        height: '100%',
+                        background: '#1a1f2e',
+                        borderRadius: '8px 50px 50px 8px',
+                        border: `4px solid ${currentVariant.borderColor}`,
+                        boxShadow: `0 6px 20px rgba(0, 0, 0, 0.5), 0 0 20px ${currentVariant.shadowColor}`,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: '0 40px'
+                      }}>
+                        {/* User Info Centered */}
+                        <div style={{
+                          textAlign: 'center',
+                          width: '100%'
+                        }}>
+                          <div style={{
+                            fontSize: '30px',
+                            fontWeight: '800',
+                            color: '#ffffff',
+                            marginBottom: '4px',
+                            letterSpacing: '1px',
+                            textShadow: '0 2px 6px rgba(0, 0, 0, 0.6)'
+                          }}>
+                            {toTitleCase(profileName) || 'User Name'}
+                          </div>
+                          <div style={{
+                            fontSize: '28px',
+                            fontWeight: '700',
+                            color: currentVariant.borderColor,
+                            letterSpacing: '1px',
+                            textShadow: '0 2px 4px rgba(0, 0, 0, 0.5)'
+                          }}>
+                            {displayRank || 'RANK'}
                           </div>
                         </div>
                       </div>
