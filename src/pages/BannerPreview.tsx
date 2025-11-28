@@ -1602,8 +1602,8 @@ export default function BannerPreview() {
                   </div>}
 
 
-                {/* STORY CATEGORY: Lower-Third Redesigned - Clean Modern Layout */}
-                {bannerData.categoryType === 'story' && (() => {
+                {/* ALL CATEGORIES (except Motivational): Lower-Third Redesigned - Clean Modern Layout */}
+                {bannerData.categoryType !== 'motivational' && (() => {
                     // Calculate variant based on slot number (0-15) in repeating sequence
                     const slotNumber = selectedTemplate; // selectedTemplate is 0-indexed
                     const variantIndex = slotNumber % 3 + 1; // 1, 2, or 3
@@ -1853,8 +1853,8 @@ export default function BannerPreview() {
                     </div>;
                   })()}
 
-                {/* BOTTOM CENTER - Profile Name & Rank - FIXED FONTS AND POSITION (Only for non-motivational) */}
-                {bannerData.categoryType !== 'motivational' && <div className="absolute text-center" style={{
+                {/* BOTTOM CENTER - Profile Name & Rank - HIDDEN (Lower-third now displays this) */}
+                {false && bannerData.categoryType !== 'motivational' && <div className="absolute text-center" style={{
                     bottom: '40px',
                     left: '50%',
                     transform: 'translateX(-45%)',
