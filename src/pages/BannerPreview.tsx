@@ -895,24 +895,7 @@ export default function BannerPreview() {
             }} />
               </div>}
 
-            {/* Rank Achievement Title */}
-            <div className="absolute z-20" style={{
-            top: '236px',
-            left: '978px',
-            transform: 'translateX(-50%)',
-            width: '648px',
-            textAlign: 'center'
-          }}>
-              <p style={{
-              fontSize: '42px',
-              fontWeight: '600',
-              color: '#ffffff',
-              textShadow: '2px 2px 8px rgba(0,0,0,0.9)',
-              letterSpacing: '1px'
-            }}>
-                RANK PROMOTION WINNER
-              </p>
-            </div>
+            {/* Rank Achievement Title - Removed */}
 
             {/* Achiever Name */}
             <div className="absolute" style={{
