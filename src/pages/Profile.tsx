@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import { useProfile } from "@/hooks/useProfile";
+import MyStories from "@/components/MyStories";
 
 export default function Profile() {
   const navigate = useNavigate();
@@ -101,6 +102,11 @@ export default function Profile() {
             </p>
           </div>
         </div>
+      </div>
+
+      {/* My Stories Section */}
+      <div className="px-0 mb-6">
+        <MyStories />
       </div>
 
       {/* Menu Items */}
