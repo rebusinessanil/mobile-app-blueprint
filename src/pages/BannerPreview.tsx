@@ -1557,8 +1557,8 @@ export default function BannerPreview() {
                 </div>
 
                 {/* LEFT - Main User Photo - FIXED SIZE AND POSITION - 3:4 RATIO - REDUCED BY 12% */}
-                {/* HIDE ACHIEVER PHOTO FOR STORY CATEGORY */}
-                {primaryPhoto && bannerData?.categoryType !== 'story' && <div className="absolute overflow-hidden cursor-pointer transition-transform duration-500 ease-in-out" onClick={() => setIsPhotoFlipped(!isPhotoFlipped)} style={{
+                {/* Profile/Achiever photo displays for all categories including Story (same as Festival) */}
+                {primaryPhoto && <div className="absolute overflow-hidden cursor-pointer transition-transform duration-500 ease-in-out" onClick={() => setIsPhotoFlipped(!isPhotoFlipped)} style={{
                     left: '40px',
                     /* LOCKED */
                     top: '162px',
@@ -1677,9 +1677,9 @@ export default function BannerPreview() {
                     }} />
                   </div>}
 
-                {/* BOTTOM RIGHT - Mentor Photo - FIXED SIZE AND POSITION - SQUARE 1:1 RATIO - Other Categories */}
-                {/* HIDE MENTOR PHOTO FOR STORY CATEGORY */}
-                {mentorPhoto && bannerData.categoryType !== 'motivational' && bannerData.categoryType !== 'story' && <div className="absolute overflow-hidden shadow-2xl cursor-pointer transition-transform duration-500 ease-in-out" onClick={() => setIsMentorPhotoFlipped(!isMentorPhotoFlipped)} style={{
+                {/* BOTTOM RIGHT - Mentor Photo - FIXED SIZE AND POSITION - SQUARE 1:1 RATIO - All Categories including Story */}
+                {/* Profile photo displays for all categories including Story (same as Festival) */}
+                {mentorPhoto && bannerData.categoryType !== 'motivational' && <div className="absolute overflow-hidden shadow-2xl cursor-pointer transition-transform duration-500 ease-in-out" onClick={() => setIsMentorPhotoFlipped(!isMentorPhotoFlipped)} style={{
                     bottom: 0,
                     right: 0,
                     width: '540px',
