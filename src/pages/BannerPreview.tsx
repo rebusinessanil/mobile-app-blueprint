@@ -1602,7 +1602,7 @@ export default function BannerPreview() {
                   </div>}
 
 
-                {/* STORY CATEGORY: Lower-Third Redesigned - Clean Modern Layout */}
+                {/* STORY CATEGORY: Lower-Third Cycling Variants - Horizontally Flipped Design */}
                 {bannerData.categoryType === 'story' && (() => {
                     // Calculate variant based on slot number (0-15) in repeating sequence
                     const slotNumber = selectedTemplate; // selectedTemplate is 0-indexed
@@ -1615,135 +1615,117 @@ export default function BannerPreview() {
                       ).join(' ');
                     };
 
-                    // Define three color variants: red, orange, teal
+                    // Define three variants with strict color isolation
                     const variants = {
                       1: {
-                        borderColor: '#ef4444',
-                        tabColor: '#ef4444',
-                        shadowColor: 'rgba(239, 68, 68, 0.5)',
-                        name: 'Red'
+                        borderColor: '#ffd700',
+                        tabColor: '#ffd700',
+                        shadowColor: 'rgba(255, 215, 0, 0.4)',
+                        name: 'Yellow'
                       },
                       2: {
-                        borderColor: '#f97316',
-                        tabColor: '#f97316',
-                        shadowColor: 'rgba(249, 115, 22, 0.5)',
-                        name: 'Orange'
+                        borderColor: '#00a8e8',
+                        tabColor: '#00a8e8',
+                        shadowColor: 'rgba(0, 168, 232, 0.4)',
+                        name: 'Blue'
                       },
                       3: {
-                        borderColor: '#14b8a6',
-                        tabColor: '#14b8a6',
-                        shadowColor: 'rgba(20, 184, 166, 0.5)',
+                        borderColor: '#06d6a0',
+                        tabColor: '#06d6a0',
+                        shadowColor: 'rgba(6, 214, 160, 0.4)',
                         name: 'Teal'
                       }
                     };
                     const currentVariant = variants[variantIndex as keyof typeof variants];
-                    
                     return <div className="absolute" style={{
-                      bottom: '30px',
-                      left: '20px',
-                      right: '20px',
-                      height: '120px',
+                      bottom: '35px',
+                      left: '27px',
+                      right: '27px',
+                      height: '105px',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
                       zIndex: 4
                     }}>
-                      {/* Left Curved Tag with Contact Info */}
+                      {/* Left Tab with Angled Edge - Flipped */}
                       <div style={{
                         position: 'absolute',
                         left: 0,
                         height: '100%',
-                        width: '300px',
+                        width: '320px',
                         background: currentVariant.tabColor,
-                        clipPath: 'polygon(0% 0, 85% 0, 95% 50%, 85% 100%, 0% 100%)',
+                        clipPath: 'polygon(0% 0, 85% 0, 100% 50%, 85% 100%, 0% 100%)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        paddingRight: '50px',
-                        boxShadow: `0 8px 24px ${currentVariant.shadowColor}, 0 0 0 2px rgba(0,0,0,0.3)`,
-                        zIndex: 2
+                        paddingRight: '60px',
+                        boxShadow: `0 6px 20px ${currentVariant.shadowColor}`
                       }}>
                         <div style={{
                           textAlign: 'center'
                         }}>
                           <div style={{
-                            fontSize: '14px',
-                            fontWeight: '700',
+                            fontSize: '15px',
+                            fontWeight: '600',
                             color: '#ffffff',
-                            marginBottom: '4px',
-                            letterSpacing: '2px',
-                            textTransform: 'uppercase',
-                            textShadow: '0 2px 4px rgba(0, 0, 0, 0.5)'
+                            marginBottom: '2px',
+                            letterSpacing: '1.5px',
+                            textShadow: '0 2px 4px rgba(0, 0, 0, 0.4)'
                           }}>
                             CALL FOR MENTORSHIP
                           </div>
                           <div style={{
-                            fontSize: '24px',
-                            fontWeight: '900',
+                            fontSize: '26px',
+                            fontWeight: '800',
                             color: '#ffffff',
-                            letterSpacing: '0.5px',
-                            textShadow: '0 2px 8px rgba(0, 0, 0, 0.6)'
+                            letterSpacing: '1px',
+                            textShadow: '0 2px 6px rgba(0, 0, 0, 0.5)'
                           }}>
-                            +91 7734990035
+                            {profile?.mobile || profile?.whatsapp || '+91 7734990035'}
                           </div>
                         </div>
                       </div>
 
-                      {/* Main Dark Panel with Neon Border */}
-                      <div style={{
-                        position: 'absolute',
-                        left: '270px',
-                        right: '140px',
-                        height: '100%',
-                        background: 'linear-gradient(135deg, #0f1419 0%, #1a1f2e 100%)',
-                        borderRadius: '12px 60px 60px 12px',
-                        border: `3px solid ${currentVariant.borderColor}`,
-                        boxShadow: `0 8px 32px rgba(0, 0, 0, 0.6), 0 0 30px ${currentVariant.shadowColor}, inset 0 2px 8px rgba(0,0,0,0.3)`,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        zIndex: 1
-                      }}>
-                        {/* User Info - Centered */}
-                        <div style={{
-                          textAlign: 'center',
-                          padding: '0 20px'
-                        }}>
-                          <div style={{
-                            fontSize: '32px',
-                            fontWeight: '900',
-                            color: '#ffffff',
-                            marginBottom: '2px',
-                            letterSpacing: '0.5px',
-                            textShadow: '0 3px 8px rgba(0, 0, 0, 0.7), 0 0 20px rgba(255,255,255,0.1)'
-                          }}>
-                            {profileName ? capitalizeWords(profileName) : 'Dilip Singh Rathore'}
-                          </div>
-                          <div style={{
-                            fontSize: '22px',
-                            fontWeight: '700',
-                            color: '#ffffff',
-                            letterSpacing: '1.5px',
-                            textTransform: 'capitalize',
-                            textShadow: '0 2px 6px rgba(0, 0, 0, 0.6)'
-                          }}>
-                            {displayRank || 'Royal Ambassador'}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Right Circular Profile Placeholder */}
+                      {/* Main Dark Banner with Colored Border - Flipped to Right */}
                       <div style={{
                         position: 'absolute',
                         right: 0,
-                        width: '120px',
-                        height: '120px',
-                        borderRadius: '50%',
+                        left: '280px',
+                        height: '100%',
+                        background: '#1a1f2e',
+                        borderRadius: '8px 50px 50px 8px',
                         border: `4px solid ${currentVariant.borderColor}`,
-                        background: 'rgba(26, 31, 46, 0.5)',
-                        boxShadow: `0 8px 24px ${currentVariant.shadowColor}, 0 0 30px ${currentVariant.shadowColor}, inset 0 2px 8px rgba(0,0,0,0.4)`,
-                        zIndex: 2
-                      }} />
+                        boxShadow: `0 6px 20px rgba(0, 0, 0, 0.5), 0 0 20px ${currentVariant.shadowColor}`,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: '0 40px'
+                      }}>
+                        {/* User Info Centered */}
+                        <div style={{
+                          textAlign: 'center'
+                        }}>
+                          <div style={{
+                            fontSize: '30px',
+                            fontWeight: '800',
+                            color: '#ffffff',
+                            marginBottom: '4px',
+                            letterSpacing: '1px',
+                            textShadow: '0 2px 6px rgba(0, 0, 0, 0.6)'
+                          }}>
+                            {profileName ? capitalizeWords(profileName) : 'User Name'}
+                          </div>
+                          <div style={{
+                            fontSize: '28px',
+                            fontWeight: '700',
+                            color: currentVariant.borderColor,
+                            letterSpacing: '1px',
+                            textShadow: '0 2px 4px rgba(0, 0, 0, 0.5)'
+                          }}>
+                            {displayRank || 'RANK'}
+                          </div>
+                        </div>
+                      </div>
                     </div>;
                   })()}
 
