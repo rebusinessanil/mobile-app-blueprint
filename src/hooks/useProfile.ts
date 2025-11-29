@@ -12,6 +12,7 @@ export interface Profile {
   profile_photo: string | null;
   created_at: string;
   updated_at: string;
+  balance?: number; // Wallet balance from user_credits
 }
 
 export const useProfile = (userId?: string) => {
@@ -25,17 +26,28 @@ export const useProfile = (userId?: string) => {
       return;
     }
 
-    // Fetch initial profile
+    // Fetch initial profile with credit balance
     const fetchProfile = async () => {
       try {
-        const { data, error } = await supabase
+        const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('*')
           .eq('user_id', userId)
           .single();
 
-        if (error) throw error;
-        setProfile(data);
+        if (profileError) throw profileError;
+
+        // Fetch credit balance
+        const { data: creditsData } = await supabase
+          .from('user_credits')
+          .select('balance')
+          .eq('user_id', userId)
+          .single();
+
+        setProfile({
+          ...profileData,
+          balance: creditsData?.balance || 0,
+        });
       } catch (err) {
         setError(err as Error);
       } finally {
@@ -45,7 +57,7 @@ export const useProfile = (userId?: string) => {
 
     fetchProfile();
 
-    // Set up real-time subscription
+    // Set up real-time subscriptions for both profile and credits
     const channel = supabase
       .channel('profile-changes')
       .on(
@@ -57,7 +69,23 @@ export const useProfile = (userId?: string) => {
           filter: `user_id=eq.${userId}`,
         },
         (payload) => {
-          setProfile(payload.new as Profile);
+          setProfile(prev => ({
+            ...(payload.new as Profile),
+            balance: prev?.balance || 0,
+          }));
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'user_credits',
+          filter: `user_id=eq.${userId}`,
+        },
+        () => {
+          console.log('Credits updated, refreshing profile balance');
+          fetchProfile();
         }
       )
       .subscribe();
