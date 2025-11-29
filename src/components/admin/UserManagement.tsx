@@ -45,7 +45,7 @@ export default function UserManagement() {
 
     // Set up real-time subscriptions for instant admin panel updates
     const channel = supabase
-      .channel('admin-user-management')
+      .channel('admin-user-management-sync')
       .on(
         'postgres_changes',
         {
@@ -53,8 +53,8 @@ export default function UserManagement() {
           schema: 'public',
           table: 'user_credits',
         },
-        () => {
-          console.log('User credits updated, refreshing user list');
+        (payload) => {
+          console.log('Admin panel: User credits updated in real-time', payload);
           fetchUsers();
         }
       )
@@ -65,12 +65,17 @@ export default function UserManagement() {
           schema: 'public',
           table: 'profiles',
         },
-        () => {
-          console.log('Profile updated, refreshing user list');
+        (payload) => {
+          console.log('Admin panel: Profile updated in real-time', payload);
           fetchUsers();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Admin panel subscription status:', status);
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Admin panel real-time sync active');
+        }
+      });
 
     return () => {
       supabase.removeChannel(channel);
