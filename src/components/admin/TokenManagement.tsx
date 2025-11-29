@@ -23,6 +23,39 @@ export default function TokenManagement() {
 
   useEffect(() => {
     fetchTokenStats();
+
+    // Set up real-time subscriptions for instant admin panel updates
+    const channel = supabase
+      .channel('admin-token-stats')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'user_credits',
+        },
+        () => {
+          console.log('Credits updated, refreshing admin stats');
+          fetchTokenStats();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'credit_transactions',
+        },
+        () => {
+          console.log('Transaction detected, refreshing admin stats');
+          fetchTokenStats();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchTokenStats = async () => {

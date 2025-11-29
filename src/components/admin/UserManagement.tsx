@@ -42,6 +42,39 @@ export default function UserManagement() {
 
   useEffect(() => {
     fetchUsers();
+
+    // Set up real-time subscriptions for instant admin panel updates
+    const channel = supabase
+      .channel('admin-user-management')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'user_credits',
+        },
+        () => {
+          console.log('User credits updated, refreshing user list');
+          fetchUsers();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'profiles',
+        },
+        () => {
+          console.log('Profile updated, refreshing user list');
+          fetchUsers();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchUsers = async () => {
