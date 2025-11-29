@@ -22,6 +22,12 @@ export default function Login() {
       }
     }
   };
+
+  const handlePinKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace' && !pin[index] && index > 0) {
+      document.getElementById(`pin-${index - 1}`)?.focus();
+    }
+  };
   const handleLogin = async () => {
     // Validation
     if (!emailOrMobile.trim()) {
@@ -85,7 +91,7 @@ export default function Login() {
           <div className="space-y-2">
             <label className="text-sm text-foreground">4-Digit PIN</label>
             <div className="flex gap-3 justify-between">
-              {pin.map((digit, index) => <input key={index} id={`pin-${index}`} type="password" maxLength={1} value={digit} onChange={e => handlePinChange(index, e.target.value)} className="pin-input" />)}
+              {pin.map((digit, index) => <input key={index} id={`pin-${index}`} type="password" maxLength={1} value={digit} onChange={e => handlePinChange(index, e.target.value)} onKeyDown={e => handlePinKeyDown(index, e)} className="pin-input" />)}
             </div>
           </div>
 
