@@ -72,7 +72,7 @@ export default function Wallet() {
   useEffect(() => {
     if (!userId) return;
 
-    // Set up real-time subscription for credit updates
+    // Set up real-time subscription for instant credit updates
     const channel = supabase
       .channel(`wallet-updates-${userId}`)
       .on(
@@ -84,7 +84,15 @@ export default function Wallet() {
           filter: `user_id=eq.${userId}`,
         },
         (payload) => {
-          console.log("Credit balance updated:", payload);
+          console.log("Credit balance updated in real-time:", payload);
+          // Immediately update balance from payload for instant display
+          if (payload.new && 'balance' in payload.new) {
+            setBalance(prev => prev ? {
+              ...prev,
+              balance: (payload.new as any).balance
+            } : null);
+          }
+          // Fetch full wallet data to ensure all fields are in sync
           fetchWalletData(userId);
         }
       )
@@ -97,12 +105,16 @@ export default function Wallet() {
           filter: `user_id=eq.${userId}`,
         },
         (payload) => {
-          console.log("Transaction detected:", payload);
+          console.log("New transaction detected in real-time:", payload);
+          // Fetch full wallet data including new transaction
           fetchWalletData(userId);
         }
       )
       .subscribe((status) => {
         console.log("Wallet subscription status:", status);
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Wallet real-time sync active');
+        }
       });
 
     return () => {

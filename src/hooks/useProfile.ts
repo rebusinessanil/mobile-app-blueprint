@@ -57,9 +57,9 @@ export const useProfile = (userId?: string) => {
 
     fetchProfile();
 
-    // Set up real-time subscriptions for both profile and credits
+    // Set up real-time subscriptions for both profile and credits with instant sync
     const channel = supabase
-      .channel('profile-changes')
+      .channel(`profile-credits-${userId}`)
       .on(
         'postgres_changes',
         {
@@ -69,6 +69,7 @@ export const useProfile = (userId?: string) => {
           filter: `user_id=eq.${userId}`,
         },
         (payload) => {
+          console.log('Profile updated in real-time:', payload);
           setProfile(prev => ({
             ...(payload.new as Profile),
             balance: prev?.balance || 0,
@@ -83,12 +84,22 @@ export const useProfile = (userId?: string) => {
           table: 'user_credits',
           filter: `user_id=eq.${userId}`,
         },
-        () => {
-          console.log('Credits updated, refreshing profile balance');
+        (payload) => {
+          console.log('Credits updated in real-time:', payload);
+          // Immediately update balance from payload for instant sync
+          if (payload.new && 'balance' in payload.new) {
+            setProfile(prev => prev ? {
+              ...prev,
+              balance: (payload.new as any).balance
+            } : null);
+          }
+          // Also fetch full profile to ensure consistency
           fetchProfile();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Profile subscription status:', status);
+      });
 
     return () => {
       supabase.removeChannel(channel);
