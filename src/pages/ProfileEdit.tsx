@@ -438,8 +438,8 @@ export default function ProfileEdit() {
           </div>
 
           {/* Gender */}
-          <div className="gold-border bg-card rounded-2xl p-5">
-            <div className="flex items-center justify-between">
+          <div className="gold-border bg-card rounded-2xl p-5 py-0 px-[15px]">
+            <div className="flex items-center justify-between py-[7px]">
               <label className="text-sm text-foreground">Gender</label>
               <div className="flex gap-3">
                 <button onClick={() => setFormData({
