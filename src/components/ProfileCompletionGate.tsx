@@ -25,7 +25,7 @@ export default function ProfileCompletionGate({
 }: ProfileCompletionGateProps) {
   const navigate = useNavigate();
   
-  // Check localStorage synchronously on every render to prevent flash
+  // Check localStorage synchronously FIRST - this is instant
   const popupAlreadyShown = getPopupShownStatus();
   
   const {
@@ -42,26 +42,31 @@ export default function ProfileCompletionGate({
     navigate("/profile-edit");
   };
 
-  // If popup was already shown once, always bypass - no flash
+  // CRITICAL: If popup was already shown once, IMMEDIATELY bypass - no flash, no loading
   if (popupAlreadyShown) {
     return <>{children}</>;
   }
 
-  // Show loading state while checking profile completion
+  // Popup was never shown, so we need to check profile completion
+  // Show BLANK loading state until profile check completes - prevents any flash
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-pulse text-primary">Loading...</div>
+      <div className="min-h-screen bg-background">
+        {/* Completely blank with same background - no visible loading indicator */}
       </div>
     );
   }
 
-  // If profile is complete, show children
+  // Profile check complete - if profile is complete, show children and mark popup as shown
   if (isComplete) {
+    // Auto-mark as shown since profile is complete (prevents future checks)
+    try {
+      localStorage.setItem(PROFILE_POPUP_SHOWN_KEY, "true");
+    } catch {}
     return <>{children}</>;
   }
 
-  // Profile incomplete AND popup never shown - show blocking screen
+  // Profile incomplete AND popup never shown - show blocking popup
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-6">
       <div className="w-full max-w-md">
