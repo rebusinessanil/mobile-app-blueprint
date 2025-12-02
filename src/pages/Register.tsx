@@ -187,10 +187,10 @@ export default function Register() {
           {/* Mobile Number */}
           <div className="space-y-1">
             <label className="text-xs text-foreground">Mobile Number *</label>
-            <Input type="tel" placeholder="+91XXXXXXXXXX or 10-digit number" value={formData.mobile} onChange={e => setFormData({
+            <Input type="tel" value={formData.mobile} onChange={e => setFormData({
             ...formData,
             mobile: e.target.value
-          })} className="gold-border bg-secondary text-foreground placeholder:text-muted-foreground h-10 text-sm" required />
+          })} className="gold-border bg-secondary text-foreground placeholder:text-muted-foreground h-10 text-sm" required placeholder="10-digit number" />
           </div>
 
           {/* Different WhatsApp Number Checkbox */}
