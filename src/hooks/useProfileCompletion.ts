@@ -31,6 +31,17 @@ export const useProfileCompletion = (userId?: string) => {
           .eq('user_id', userId)
           .maybeSingle();
 
+        // If profile_completion_bonus_given is true, profile is permanently complete
+        if (profile?.profile_completion_bonus_given === true) {
+          setStatus({
+            isComplete: true,
+            missingFields: [],
+            completionPercentage: 100,
+            loading: false,
+          });
+          return;
+        }
+
         // Fetch profile photos count
         const { data: photos, error: photosError } = await supabase
           .from('profile_photos')
