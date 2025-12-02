@@ -22,7 +22,9 @@ export default function ProfileEdit() {
     error: profileError,
     updateProfile
   } = useProfile(userId || undefined);
-  const { photos: profilePhotos } = useProfilePhotos(userId || undefined);
+  const {
+    photos: profilePhotos
+  } = useProfilePhotos(userId || undefined);
 
   // Get authenticated user
   useEffect(() => {
@@ -58,24 +60,18 @@ export default function ProfileEdit() {
   // Load profile data when available
   useEffect(() => {
     if (profile) {
-      const predefinedRoles = ["bronze", "silver", "gold", "platinum", "emerald", "topaz", 
-        "ruby-star", "sapphire", "star-sapphire", "diamond", "blue-diamond", "black-diamond",
-        "royal-diamond", "crown-diamond", "ambassador", "royal-ambassador", 
-        "crown-ambassador", "brand-ambassador"];
-      
+      const predefinedRoles = ["bronze", "silver", "gold", "platinum", "emerald", "topaz", "ruby-star", "sapphire", "star-sapphire", "diamond", "blue-diamond", "black-diamond", "royal-diamond", "crown-diamond", "ambassador", "royal-ambassador", "crown-ambassador", "brand-ambassador"];
       const isCustomRole = profile.role && !predefinedRoles.includes(profile.role);
-      
       setFormData({
         title: "mr",
         name: profile.name || "",
         mobile: profile.mobile || "",
         whatsapp: profile.whatsapp || "",
-        role: isCustomRole ? "custom" : (profile.role || "royal-ambassador"),
+        role: isCustomRole ? "custom" : profile.role || "royal-ambassador",
         language: "eng",
         gender: "male",
         married: false
       });
-      
       if (isCustomRole && profile.role) {
         setCustomRole(profile.role);
       }
@@ -91,81 +87,74 @@ export default function ProfileEdit() {
       setPhotos([]);
     }
   }, [profilePhotos]);
-  
   const handleSetPrimaryPhoto = async (index: number) => {
     if (!userId || !profilePhotos[index]) return;
-    
     try {
       // First, unset all photos as primary
-      await supabase
-        .from('profile_photos')
-        .update({ is_primary: false })
-        .eq('user_id', userId);
-      
+      await supabase.from('profile_photos').update({
+        is_primary: false
+      }).eq('user_id', userId);
+
       // Then set the selected photo as primary
-      const { error } = await supabase
-        .from('profile_photos')
-        .update({ is_primary: true })
-        .eq('id', profilePhotos[index].id);
-      
+      const {
+        error
+      } = await supabase.from('profile_photos').update({
+        is_primary: true
+      }).eq('id', profilePhotos[index].id);
       if (error) throw error;
-      
       toast.success("Primary photo updated!");
     } catch (error) {
       console.error("Error setting primary photo:", error);
       toast.error("Failed to set primary photo");
     }
   };
-  
   const handlePhotosChange = async (newPhotos: string[]) => {
     if (!userId) return;
-    
+
     // Optimistically update UI
     setPhotos(newPhotos);
-    
     try {
       // Delete all existing photos
-      const { error: deleteError } = await supabase
-        .from('profile_photos')
-        .delete()
-        .eq('user_id', userId);
-      
+      const {
+        error: deleteError
+      } = await supabase.from('profile_photos').delete().eq('user_id', userId);
       if (deleteError) throw deleteError;
-      
+
       // Upload new photos
       for (let i = 0; i < newPhotos.length; i++) {
         const photo = newPhotos[i];
-        
+
         // Convert base64 to blob
         const response = await fetch(photo);
         const blob = await response.blob();
-        
+
         // Upload to storage with user folder structure
         const fileName = `${userId}/${Date.now()}_${i}.png`;
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('profile-photos')
-          .upload(fileName, blob, {
-            contentType: 'image/png',
-            upsert: true
-          });
-        
+        const {
+          data: uploadData,
+          error: uploadError
+        } = await supabase.storage.from('profile-photos').upload(fileName, blob, {
+          contentType: 'image/png',
+          upsert: true
+        });
         if (uploadError) throw uploadError;
-        
+
         // Get public URL
-        const { data: { publicUrl } } = supabase.storage
-          .from('profile-photos')
-          .getPublicUrl(fileName);
-        
+        const {
+          data: {
+            publicUrl
+          }
+        } = supabase.storage.from('profile-photos').getPublicUrl(fileName);
+
         // Insert into profile_photos table
-        const { error: insertError } = await supabase
-          .from('profile_photos')
-          .insert({
-            user_id: userId,
-            photo_url: publicUrl,
-            display_order: i,
-            is_primary: i === 0
-          });
-        
+        const {
+          error: insertError
+        } = await supabase.from('profile_photos').insert({
+          user_id: userId,
+          photo_url: publicUrl,
+          display_order: i,
+          is_primary: i === 0
+        });
         if (insertError) throw insertError;
       }
     } catch (error) {
@@ -181,25 +170,20 @@ export default function ProfileEdit() {
     const hasWhatsapp = formData.whatsapp && /^\d{10}$/.test(formData.whatsapp.replace(/\D/g, ''));
     const hasRole = formData.role && formData.role.trim() !== '';
     const hasPhotos = photos.length > 0;
-    
     return hasName && hasMobile && hasWhatsapp && hasRole && hasPhotos;
   };
 
   // Check if profile completion bonus should be shown
   const checkAndShowBonusModal = async () => {
     if (!userId) return false;
-    
     try {
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('profile_completion_bonus_given')
-        .eq('user_id', userId)
-        .single();
-      
+      const {
+        data: profileData
+      } = await supabase.from('profiles').select('profile_completion_bonus_given').eq('user_id', userId).single();
       if (profileData?.profile_completion_bonus_given) {
         return false; // Bonus already given
       }
-      
+
       // Show bonus modal
       setShowBonusModal(true);
       setPendingBonusCredit(true);
@@ -213,43 +197,32 @@ export default function ProfileEdit() {
   // Credit profile completion bonus after user confirms
   const creditProfileCompletionBonus = async () => {
     if (!userId) return;
-    
     try {
       // Get current credits
-      const { data: currentCredits } = await supabase
-        .from('user_credits')
-        .select('balance, total_earned')
-        .eq('user_id', userId)
-        .single();
-      
+      const {
+        data: currentCredits
+      } = await supabase.from('user_credits').select('balance, total_earned').eq('user_id', userId).single();
       if (currentCredits) {
         // Credit 199 to wallet
-        await supabase
-          .from('user_credits')
-          .update({ 
-            balance: currentCredits.balance + 199,
-            total_earned: currentCredits.total_earned + 199,
-            updated_at: new Date().toISOString()
-          })
-          .eq('user_id', userId);
+        await supabase.from('user_credits').update({
+          balance: currentCredits.balance + 199,
+          total_earned: currentCredits.total_earned + 199,
+          updated_at: new Date().toISOString()
+        }).eq('user_id', userId);
       }
-      
+
       // Create transaction record
-      await supabase
-        .from('credit_transactions')
-        .insert({
-          user_id: userId,
-          amount: 199,
-          transaction_type: 'admin_credit',
-          description: 'Profile Completion Bonus - 199 Credits FREE!'
-        });
-      
+      await supabase.from('credit_transactions').insert({
+        user_id: userId,
+        amount: 199,
+        transaction_type: 'admin_credit',
+        description: 'Profile Completion Bonus - 199 Credits FREE!'
+      });
+
       // Mark bonus as given
-      await supabase
-        .from('profiles')
-        .update({ profile_completion_bonus_given: true })
-        .eq('user_id', userId);
-      
+      await supabase.from('profiles').update({
+        profile_completion_bonus_given: true
+      }).eq('user_id', userId);
     } catch (error) {
       console.error('Error crediting profile completion bonus:', error);
     }
@@ -263,7 +236,6 @@ export default function ProfileEdit() {
     toast.success("199 Credits added to your wallet!");
     navigate("/dashboard");
   };
-
   const handleSave = async () => {
     // Validation
     if (!formData.name.trim()) {
@@ -294,11 +266,9 @@ export default function ProfileEdit() {
       toast.error("Please enter a custom role name");
       return;
     }
-    
     setLoading(true);
     try {
       const finalRole = formData.role === "custom" ? customRole.trim() : formData.role;
-      
       const {
         error
       } = await updateProfile({
@@ -314,7 +284,7 @@ export default function ProfileEdit() {
         toast.error(error.message || "Failed to update profile. Please try again.");
         return;
       }
-      
+
       // Check if profile is now complete and show bonus modal if first time
       if (isProfileComplete()) {
         const showedModal = await checkAndShowBonusModal();
@@ -323,7 +293,6 @@ export default function ProfileEdit() {
           return; // Don't navigate yet, wait for modal confirmation
         }
       }
-      
       toast.success("Profile updated successfully! Your banners will auto-update.");
       navigate("/dashboard");
     } catch (err) {
@@ -334,10 +303,7 @@ export default function ProfileEdit() {
     }
   };
   return <>
-    <ProfileCompletionBonusModal 
-      open={showBonusModal} 
-      onConfirm={handleBonusConfirm}
-    />
+    <ProfileCompletionBonusModal open={showBonusModal} onConfirm={handleBonusConfirm} />
     <div className="min-h-screen bg-navy-dark pb-6">
       {/* Header */}
       <header className="sticky top-0 bg-navy-dark/95 backdrop-blur-sm z-40 px-6 py-4 border-b border-primary/20">
@@ -372,13 +338,7 @@ export default function ProfileEdit() {
 
         {/* Photo Gallery */}
         <div className="space-y-3">
-          <PhotoUploadGrid 
-            photos={photos} 
-            onPhotosChange={handlePhotosChange} 
-            maxPhotos={5}
-            primaryPhotoIndex={profilePhotos.findIndex(p => p.is_primary)}
-            onSetPrimary={handleSetPrimaryPhoto}
-          />
+          <PhotoUploadGrid photos={photos} onPhotosChange={handlePhotosChange} maxPhotos={5} primaryPhotoIndex={profilePhotos.findIndex(p => p.is_primary)} onSetPrimary={handleSetPrimaryPhoto} />
           <p className="text-center text-sm text-primary">Profile Images (Max 5)</p>
         </div>
 
@@ -389,9 +349,9 @@ export default function ProfileEdit() {
             <label className="text-sm text-foreground">Name</label>
             <div className="flex gap-3">
               <Select value={formData.title} onValueChange={value => setFormData({
-              ...formData,
-              title: value
-            })}>
+                ...formData,
+                title: value
+              })}>
                 <SelectTrigger className="w-24 gold-border bg-secondary text-foreground h-12">
                   <SelectValue />
                 </SelectTrigger>
@@ -403,9 +363,9 @@ export default function ProfileEdit() {
                 </SelectContent>
               </Select>
               <Input value={formData.name} onChange={e => setFormData({
-              ...formData,
-              name: e.target.value
-            })} className="flex-1 gold-border bg-secondary text-foreground h-12 border-b-2 border-t-0 border-x-0 rounded-none" />
+                ...formData,
+                name: e.target.value
+              })} className="flex-1 gold-border bg-secondary text-foreground h-12 border-b-2 border-t-0 border-x-0 rounded-none" />
             </div>
           </div>
 
@@ -413,27 +373,21 @@ export default function ProfileEdit() {
           <div className="space-y-2">
             <label className="text-sm text-foreground">Mobile Number</label>
             <Input type="tel" value={formData.mobile} onChange={e => setFormData({
-            ...formData,
-            mobile: e.target.value
-          })} className="gold-border bg-secondary text-foreground h-12 border-b-2 border-t-0 border-x-0 rounded-none" />
+              ...formData,
+              mobile: e.target.value
+            })} className="gold-border bg-secondary text-foreground h-12 border-b-2 border-t-0 border-x-0 rounded-none" />
           </div>
 
           {/* WhatsApp Number */}
-          <div className="space-y-2">
-            <label className="text-sm text-foreground">WhatsApp Number</label>
-            <Input type="tel" value={formData.whatsapp} onChange={e => setFormData({
-            ...formData,
-            whatsapp: e.target.value
-          })} className="gold-border bg-secondary text-foreground h-12 border-b-2 border-t-0 border-x-0 rounded-none" />
-          </div>
+          
 
           {/* Role */}
           <div className="space-y-2">
             <label className="text-sm text-foreground">Role</label>
             <Select value={formData.role} onValueChange={value => setFormData({
-            ...formData,
-            role: value
-          })}>
+              ...formData,
+              role: value
+            })}>
               <SelectTrigger className="gold-border bg-secondary text-foreground h-12 border-b-2 border-t-0 border-x-0 rounded-none">
                 <SelectValue />
               </SelectTrigger>
@@ -460,14 +414,7 @@ export default function ProfileEdit() {
               </SelectContent>
             </Select>
             
-            {formData.role === "custom" && (
-              <Input 
-                value={customRole} 
-                onChange={e => setCustomRole(e.target.value)}
-                placeholder="Enter custom role name"
-                className="gold-border bg-secondary text-foreground h-12 border-b-2 border-t-0 border-x-0 rounded-none mt-2"
-              />
-            )}
+            {formData.role === "custom" && <Input value={customRole} onChange={e => setCustomRole(e.target.value)} placeholder="Enter custom role name" className="gold-border bg-secondary text-foreground h-12 border-b-2 border-t-0 border-x-0 rounded-none mt-2" />}
           </div>
 
           {/* Default Language */}
@@ -475,9 +422,9 @@ export default function ProfileEdit() {
             <div className="flex items-center justify-between">
               <label className="text-sm text-foreground">Default Language</label>
               <Select value={formData.language} onValueChange={value => setFormData({
-              ...formData,
-              language: value
-            })}>
+                ...formData,
+                language: value
+              })}>
                 <SelectTrigger className="w-32 gold-border bg-secondary text-foreground h-10 border-b-2 border-t-0 border-x-0 rounded-none">
                   <SelectValue />
                 </SelectTrigger>
@@ -496,15 +443,15 @@ export default function ProfileEdit() {
               <label className="text-sm text-foreground">Gender</label>
               <div className="flex gap-3">
                 <button onClick={() => setFormData({
-                ...formData,
-                gender: "male"
-              })} className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${formData.gender === "male" ? "bg-primary ring-2 ring-primary ring-offset-2 ring-offset-card" : "bg-secondary border-2 border-primary/30"}`}>
+                  ...formData,
+                  gender: "male"
+                })} className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${formData.gender === "male" ? "bg-primary ring-2 ring-primary ring-offset-2 ring-offset-card" : "bg-secondary border-2 border-primary/30"}`}>
                   <span className="text-2xl">👨</span>
                 </button>
                 <button onClick={() => setFormData({
-                ...formData,
-                gender: "female"
-              })} className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${formData.gender === "female" ? "bg-primary ring-2 ring-primary ring-offset-2 ring-offset-card" : "bg-secondary border-2 border-primary/30"}`}>
+                  ...formData,
+                  gender: "female"
+                })} className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${formData.gender === "female" ? "bg-primary ring-2 ring-primary ring-offset-2 ring-offset-card" : "bg-secondary border-2 border-primary/30"}`}>
                   <span className="text-2xl">👩</span>
                 </button>
               </div>
@@ -516,9 +463,9 @@ export default function ProfileEdit() {
             <div className="flex items-center justify-between">
               <label className="text-sm text-foreground">Are you married</label>
               <Switch checked={formData.married} onCheckedChange={checked => setFormData({
-              ...formData,
-              married: checked
-            })} className="data-[state=checked]:bg-primary" />
+                ...formData,
+                married: checked
+              })} className="data-[state=checked]:bg-primary" />
             </div>
           </div>
         </div>
