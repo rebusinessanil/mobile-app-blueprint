@@ -53,8 +53,7 @@ export default function UserManagement() {
           schema: 'public',
           table: 'user_credits',
         },
-        (payload) => {
-          console.log('Admin panel: User credits updated in real-time', payload);
+        () => {
           fetchUsers();
         }
       )
@@ -65,17 +64,11 @@ export default function UserManagement() {
           schema: 'public',
           table: 'profiles',
         },
-        (payload) => {
-          console.log('Admin panel: Profile updated in real-time', payload);
+        () => {
           fetchUsers();
         }
       )
-      .subscribe((status) => {
-        console.log('Admin panel subscription status:', status);
-        if (status === 'SUBSCRIBED') {
-          console.log('✅ Admin panel real-time sync active');
-        }
-      });
+      .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
@@ -125,7 +118,6 @@ export default function UserManagement() {
 
       setUsers(combinedUsers);
     } catch (error: any) {
-      console.error('Error fetching users:', error);
       toast.error("Failed to load users");
     } finally {
       setLoading(false);
@@ -150,7 +142,6 @@ export default function UserManagement() {
         .maybeSingle();
 
       if (fetchError) {
-        console.error('Error fetching user credits:', fetchError);
         throw new Error(`Failed to fetch credits: ${fetchError.message}`);
       }
 
@@ -166,7 +157,6 @@ export default function UserManagement() {
           });
 
         if (insertError) {
-          console.error('Error creating user credits:', insertError);
           throw new Error(`Failed to create credits: ${insertError.message}`);
         }
       } else {
@@ -190,7 +180,6 @@ export default function UserManagement() {
           .eq('user_id', selectedUser.user_id);
 
         if (updateError) {
-          console.error('Error updating user credits:', updateError);
           throw new Error(`Failed to update credits: ${updateError.message}`);
         }
       }
@@ -206,7 +195,6 @@ export default function UserManagement() {
         });
 
       if (txError) {
-        console.error('Error logging transaction:', txError);
         throw new Error(`Failed to log transaction: ${txError.message}`);
       }
 
@@ -214,7 +202,6 @@ export default function UserManagement() {
       setIsDialogOpen(false);
       fetchUsers();
     } catch (error: any) {
-      console.error('Error adjusting credits:', error);
       toast.error(error.message || "Failed to adjust credits");
     }
   };

@@ -69,7 +69,6 @@ export const useProfile = (userId?: string) => {
           filter: `user_id=eq.${userId}`,
         },
         (payload) => {
-          console.log('Profile updated in real-time:', payload);
           setProfile(prev => ({
             ...(payload.new as Profile),
             balance: prev?.balance || 0,
@@ -85,7 +84,6 @@ export const useProfile = (userId?: string) => {
           filter: `user_id=eq.${userId}`,
         },
         (payload) => {
-          console.log('Credits updated in real-time:', payload);
           // Immediately update balance from payload for instant sync
           if (payload.new && 'balance' in payload.new) {
             setProfile(prev => prev ? {
@@ -97,9 +95,7 @@ export const useProfile = (userId?: string) => {
           fetchProfile();
         }
       )
-      .subscribe((status) => {
-        console.log('Profile subscription status:', status);
-      });
+      .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
@@ -151,7 +147,6 @@ export const useProfile = (userId?: string) => {
       return { data, error: null };
     } catch (err) {
       const error = err as Error;
-      console.error('Profile update error:', error);
       return { data: null, error };
     }
   };

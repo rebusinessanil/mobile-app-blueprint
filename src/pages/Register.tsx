@@ -6,6 +6,28 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { UserPlus, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { z } from "zod";
+
+// Zod validation schema for registration
+const registrationSchema = z.object({
+  fullName: z.string()
+    .trim()
+    .min(2, "Name must be at least 2 characters")
+    .max(100, "Name must be less than 100 characters")
+    .regex(/^[a-zA-Z\s'-]+$/, "Name can only contain letters, spaces, hyphens and apostrophes"),
+  email: z.string()
+    .trim()
+    .email("Please enter a valid email address")
+    .max(255, "Email must be less than 255 characters"),
+  mobile: z.string()
+    .trim()
+    .min(10, "Mobile number must be at least 10 digits")
+    .max(16, "Mobile number is too long"),
+  pin: z.string()
+    .length(4, "PIN must be exactly 4 digits")
+    .regex(/^\d{4}$/, "PIN must contain only numbers"),
+});
+
 export default function Register() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
@@ -30,49 +52,42 @@ export default function Register() {
     }
   };
   const handleSendOTP = async () => {
-    // Validation
-    if (!formData.fullName.trim()) {
-      toast.error("Please enter your full name");
-      return;
-    }
-    if (!formData.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      toast.error("Please enter a valid email address");
+    const pinCode = pin.join("");
+    
+    // Zod validation for all inputs
+    const validationResult = registrationSchema.safeParse({
+      fullName: formData.fullName,
+      email: formData.email,
+      mobile: formData.mobile,
+      pin: pinCode,
+    });
+
+    if (!validationResult.success) {
+      const firstError = validationResult.error.errors[0];
+      toast.error(firstError.message);
       return;
     }
 
-    // Validate mobile number (E.164 format support)
-    // Must start with + and contain 10-15 digits
+    // Validate mobile number format (E.164 or plain 10-digit)
     const mobileNumber = formData.mobile.trim();
-    if (!mobileNumber) {
-      toast.error("Mobile number is required");
-      return;
-    }
-
-    // E.164 format validation: +[country code][number] (10-15 digits total)
     const e164Pattern = /^\+[1-9]\d{9,14}$/;
-
-    // Also support plain 10-digit numbers (will be converted to E.164)
     const plainPattern = /^\d{10}$/;
+    
     let formattedMobile = mobileNumber;
     if (e164Pattern.test(mobileNumber)) {
-      // Already in E.164 format
       formattedMobile = mobileNumber;
     } else if (plainPattern.test(mobileNumber)) {
-      // Convert 10-digit to E.164 format with default country code +91 (India)
       formattedMobile = `+91${mobileNumber}`;
     } else {
       toast.error("Please enter a valid mobile number (10 digits or +[country code][number])");
       return;
     }
-    const pinCode = pin.join("");
-    if (pinCode.length !== 4) {
-      toast.error("Please enter a 4-digit PIN");
-      return;
-    }
+
     if (!formData.agreeToTerms) {
       toast.error("Please agree to the Terms & Conditions");
       return;
     }
+    
     setIsLoading(true);
     try {
       // Create password from PIN (you may want to add more complexity)
@@ -112,7 +127,7 @@ export default function Register() {
         });
       }
     } catch (error: any) {
-      console.error("Registration error:", error);
+      // Security: Don't log sensitive registration data
       toast.error(error.message || "Registration failed. Please try again.");
     } finally {
       setIsLoading(false);
