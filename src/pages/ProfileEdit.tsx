@@ -304,55 +304,52 @@ export default function ProfileEdit() {
   };
   return <>
     <ProfileCompletionBonusModal open={showBonusModal} onConfirm={handleBonusConfirm} />
-    <div className="min-h-screen bg-navy-dark pb-6">
+    <div className="h-screen bg-navy-dark flex flex-col overflow-hidden">
       {/* Header */}
-      <header className="sticky top-0 bg-navy-dark/95 backdrop-blur-sm z-40 px-6 py-4 border-b border-primary/20">
+      <header className="flex-shrink-0 bg-navy-dark/95 backdrop-blur-sm z-40 px-4 py-3 border-b border-primary/20">
         <div className="flex items-center justify-between">
-          <button onClick={() => navigate("/profile")} className="w-10 h-10 rounded-xl border-2 border-primary flex items-center justify-center hover:bg-primary/10 transition-colors">
-            <ArrowLeft className="w-5 h-5 text-primary" />
+          <button onClick={() => navigate("/profile")} className="w-9 h-9 rounded-xl border-2 border-primary flex items-center justify-center hover:bg-primary/10 transition-colors">
+            <ArrowLeft className="w-4 h-4 text-primary" />
           </button>
           <div className="text-center">
-            <h1 className="text-xl font-bold text-primary">Profile</h1>
-            <p className="text-sm text-foreground">Here is your profile details.</p>
+            <h1 className="text-lg font-bold text-primary">Profile</h1>
+            <p className="text-xs text-foreground">Here is your profile details.</p>
           </div>
-          <div className="w-10" />
+          <div className="w-9" />
         </div>
       </header>
 
-      <div className="px-6 py-6 space-y-6">
+      <div className="flex-1 overflow-hidden px-4 py-3 flex flex-col">
         {/* Profile ID Banner */}
-        <div className="flex items-center gap-3 px-4 py-3 bg-card/50 rounded-xl border border-primary/30">
-          <div className="w-10 h-10 bg-destructive rounded-xl flex items-center justify-center">
-            <FileText className="w-5 h-5 text-white" />
+        <div className="flex-shrink-0 flex items-center gap-2 px-3 py-2 bg-card/50 rounded-xl border border-primary/30 mb-3">
+          <div className="w-8 h-8 bg-destructive rounded-lg flex items-center justify-center">
+            <FileText className="w-4 h-4 text-white" />
           </div>
           <div className="flex-1">
             <p className="text-xs text-muted-foreground">Update Profile</p>
           </div>
-          <div className="px-4 py-1 bg-primary rounded-full">
+          <div className="px-3 py-1 bg-primary rounded-full">
             <div className="flex items-center gap-1">
-              <Award className="w-4 h-4 text-primary-foreground" />
-              <span className="text-sm font-semibold text-primary-foreground">RE BUSINESS</span>
+              <Award className="w-3 h-3 text-primary-foreground" />
+              <span className="text-xs font-semibold text-primary-foreground">RE BUSINESS</span>
             </div>
           </div>
         </div>
 
         {/* Photo Gallery */}
-        <div className="space-y-3">
+        <div className="flex-shrink-0 mb-3">
           <PhotoUploadGrid photos={photos} onPhotosChange={handlePhotosChange} maxPhotos={5} primaryPhotoIndex={profilePhotos.findIndex(p => p.is_primary)} onSetPrimary={handleSetPrimaryPhoto} />
-          <p className="text-center text-sm text-primary">Profile Images (Max 5)</p>
+          <p className="text-center text-xs text-primary mt-1">Profile Images (Max 5)</p>
         </div>
 
-        {/* Form Fields */}
-        <div className="space-y-5">
+        {/* Form Fields - Compact */}
+        <div className="flex-1 overflow-y-auto space-y-3 pr-1">
           {/* Name with Title */}
-          <div className="space-y-2">
-            <label className="text-sm text-foreground">Name</label>
-            <div className="flex gap-3">
-              <Select value={formData.title} onValueChange={value => setFormData({
-                ...formData,
-                title: value
-              })}>
-                <SelectTrigger className="w-24 gold-border bg-secondary text-foreground h-12">
+          <div className="space-y-1">
+            <label className="text-xs text-foreground">Name</label>
+            <div className="flex gap-2">
+              <Select value={formData.title} onValueChange={value => setFormData({...formData, title: value})}>
+                <SelectTrigger className="w-20 gold-border bg-secondary text-foreground h-10 text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-card border-primary">
@@ -362,36 +359,24 @@ export default function ProfileEdit() {
                   <SelectItem value="dr">Dr.</SelectItem>
                 </SelectContent>
               </Select>
-              <Input value={formData.name} onChange={e => setFormData({
-                ...formData,
-                name: e.target.value
-              })} className="flex-1 gold-border bg-secondary text-foreground h-12 border-b-2 border-t-0 border-x-0 rounded-none" />
+              <Input value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="flex-1 gold-border bg-secondary text-foreground h-10 text-sm border-b-2 border-t-0 border-x-0 rounded-none" />
             </div>
           </div>
 
           {/* Mobile Number */}
-          <div className="space-y-2">
-            <label className="text-sm text-foreground">Mobile Number</label>
-            <Input type="tel" value={formData.mobile} onChange={e => setFormData({
-              ...formData,
-              mobile: e.target.value
-            })} className="gold-border bg-secondary text-foreground h-12 border-b-2 border-t-0 border-x-0 rounded-none" placeholder="10 Digit Mobile Number" />
+          <div className="space-y-1">
+            <label className="text-xs text-foreground">Mobile Number</label>
+            <Input type="tel" value={formData.mobile} onChange={e => setFormData({...formData, mobile: e.target.value})} className="gold-border bg-secondary text-foreground h-10 text-sm border-b-2 border-t-0 border-x-0 rounded-none" placeholder="10 Digit Number" />
           </div>
 
-          {/* WhatsApp Number */}
-          
-
           {/* Role */}
-          <div className="space-y-2">
-            <label className="text-sm text-foreground">Role</label>
-            <Select value={formData.role} onValueChange={value => setFormData({
-              ...formData,
-              role: value
-            })}>
-              <SelectTrigger className="gold-border bg-secondary text-foreground h-12 border-b-2 border-t-0 border-x-0 rounded-none">
+          <div className="space-y-1">
+            <label className="text-xs text-foreground">Role</label>
+            <Select value={formData.role} onValueChange={value => setFormData({...formData, role: value})}>
+              <SelectTrigger className="gold-border bg-secondary text-foreground h-10 text-sm border-b-2 border-t-0 border-x-0 rounded-none">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-card border-primary">
+              <SelectContent className="bg-card border-primary max-h-48">
                 <SelectItem value="custom">Custom Name</SelectItem>
                 <SelectItem value="bronze">Bronze</SelectItem>
                 <SelectItem value="silver">Silver</SelectItem>
@@ -413,19 +398,15 @@ export default function ProfileEdit() {
                 <SelectItem value="brand-ambassador">Brand Ambassador</SelectItem>
               </SelectContent>
             </Select>
-            
-            {formData.role === "custom" && <Input value={customRole} onChange={e => setCustomRole(e.target.value)} placeholder="Enter custom role name" className="gold-border bg-secondary text-foreground h-12 border-b-2 border-t-0 border-x-0 rounded-none mt-2" />}
+            {formData.role === "custom" && <Input value={customRole} onChange={e => setCustomRole(e.target.value)} placeholder="Enter custom role name" className="gold-border bg-secondary text-foreground h-10 text-sm border-b-2 border-t-0 border-x-0 rounded-none mt-1" />}
           </div>
 
-          {/* Default Language */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <label className="text-sm text-foreground">Default Language</label>
-              <Select value={formData.language} onValueChange={value => setFormData({
-                ...formData,
-                language: value
-              })}>
-                <SelectTrigger className="w-32 gold-border bg-secondary text-foreground h-10 border-b-2 border-t-0 border-x-0 rounded-none">
+          {/* Language & Gender Row */}
+          <div className="flex gap-3">
+            <div className="flex-1 space-y-1">
+              <label className="text-xs text-foreground">Language</label>
+              <Select value={formData.language} onValueChange={value => setFormData({...formData, language: value})}>
+                <SelectTrigger className="gold-border bg-secondary text-foreground h-10 text-sm border-b-2 border-t-0 border-x-0 rounded-none">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-card border-primary">
@@ -435,35 +416,22 @@ export default function ProfileEdit() {
                 </SelectContent>
               </Select>
             </div>
-          </div>
-
-          {/* Gender */}
-          <div className="gold-border bg-card rounded-2xl p-5 py-0 px-[15px]">
-            <div className="flex items-center justify-between py-[7px]">
-              <label className="text-sm text-foreground">Gender</label>
-              <div className="flex gap-3">
-                <button onClick={() => setFormData({
-                  ...formData,
-                  gender: "male"
-                })} className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${formData.gender === "male" ? "bg-primary ring-2 ring-primary ring-offset-2 ring-offset-card" : "bg-secondary border-2 border-primary/30"}`}>
-                  <span className="text-2xl">👨</span>
+            <div className="flex-1 space-y-1">
+              <label className="text-xs text-foreground">Gender</label>
+              <div className="flex gap-2 justify-center">
+                <button onClick={() => setFormData({...formData, gender: "male"})} className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${formData.gender === "male" ? "bg-primary ring-2 ring-primary ring-offset-1 ring-offset-card" : "bg-secondary border-2 border-primary/30"}`}>
+                  <span className="text-xl">👨</span>
                 </button>
-                <button onClick={() => setFormData({
-                  ...formData,
-                  gender: "female"
-                })} className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${formData.gender === "female" ? "bg-primary ring-2 ring-primary ring-offset-2 ring-offset-card" : "bg-secondary border-2 border-primary/30"}`}>
-                  <span className="text-2xl">👩</span>
+                <button onClick={() => setFormData({...formData, gender: "female"})} className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${formData.gender === "female" ? "bg-primary ring-2 ring-primary ring-offset-1 ring-offset-card" : "bg-secondary border-2 border-primary/30"}`}>
+                  <span className="text-xl">👩</span>
                 </button>
               </div>
             </div>
           </div>
-
-          {/* Married */}
-          
         </div>
 
         {/* Save Button */}
-        <Button onClick={handleSave} disabled={loading || !userId} className="w-full h-14 bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-lg rounded-2xl disabled:opacity-50 disabled:cursor-not-allowed">
+        <Button onClick={handleSave} disabled={loading || !userId} className="flex-shrink-0 w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-base rounded-xl disabled:opacity-50 disabled:cursor-not-allowed mt-3">
           {loading ? "Saving..." : "SAVE"}
         </Button>
       </div>
