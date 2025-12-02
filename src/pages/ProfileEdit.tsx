@@ -171,6 +171,74 @@ export default function ProfileEdit() {
     }
   };
 
+  // Check if profile is complete for bonus
+  const isProfileComplete = () => {
+    const hasName = formData.name.trim() !== '' && formData.name !== 'User';
+    const hasMobile = formData.mobile && /^\d{10}$/.test(formData.mobile.replace(/\D/g, ''));
+    const hasWhatsapp = formData.whatsapp && /^\d{10}$/.test(formData.whatsapp.replace(/\D/g, ''));
+    const hasRole = formData.role && formData.role.trim() !== '';
+    const hasPhotos = photos.length > 0;
+    
+    return hasName && hasMobile && hasWhatsapp && hasRole && hasPhotos;
+  };
+
+  // Credit profile completion bonus
+  const creditProfileCompletionBonus = async () => {
+    if (!userId) return;
+    
+    try {
+      // Check if bonus was already given
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('profile_completion_bonus_given')
+        .eq('user_id', userId)
+        .single();
+      
+      if (profileData?.profile_completion_bonus_given) {
+        return; // Bonus already given
+      }
+      
+      // Get current credits
+      const { data: currentCredits } = await supabase
+        .from('user_credits')
+        .select('balance, total_earned')
+        .eq('user_id', userId)
+        .single();
+      
+      if (currentCredits) {
+        // Credit 199 to wallet
+        await supabase
+          .from('user_credits')
+          .update({ 
+            balance: currentCredits.balance + 199,
+            total_earned: currentCredits.total_earned + 199,
+            updated_at: new Date().toISOString()
+          })
+          .eq('user_id', userId);
+      }
+      
+      // Create transaction record
+      await supabase
+        .from('credit_transactions')
+        .insert({
+          user_id: userId,
+          amount: 199,
+          transaction_type: 'admin_credit',
+          description: 'Profile Completion Bonus - 199 Credits FREE!'
+        });
+      
+      // Mark bonus as given
+      await supabase
+        .from('profiles')
+        .update({ profile_completion_bonus_given: true })
+        .eq('user_id', userId);
+      
+      toast.success("🎉 Congratulations! You received 199 FREE credits for completing your profile!");
+    } catch (error) {
+      console.error('Error crediting profile completion bonus:', error);
+    }
+  };
+
   const handleSave = async () => {
     // Validation
     if (!formData.name.trim()) {
@@ -189,11 +257,11 @@ export default function ProfileEdit() {
       toast.error("You can upload only 5 photos.");
       return;
     }
-    if (formData.mobile && !/^\d{10}$/.test(formData.mobile.replace(/\D/g, ''))) {
+    if (!formData.mobile || !/^\d{10}$/.test(formData.mobile.replace(/\D/g, ''))) {
       toast.error("Please enter a valid 10-digit mobile number");
       return;
     }
-    if (formData.whatsapp && !/^\d{10}$/.test(formData.whatsapp.replace(/\D/g, ''))) {
+    if (!formData.whatsapp || !/^\d{10}$/.test(formData.whatsapp.replace(/\D/g, ''))) {
       toast.error("Please enter a valid 10-digit WhatsApp number");
       return;
     }
@@ -221,8 +289,14 @@ export default function ProfileEdit() {
         toast.error(error.message || "Failed to update profile. Please try again.");
         return;
       }
+      
+      // Check if profile is now complete and credit bonus if first time
+      if (isProfileComplete()) {
+        await creditProfileCompletionBonus();
+      }
+      
       toast.success("Profile updated successfully! Your banners will auto-update.");
-      navigate("/profile");
+      navigate("/dashboard");
     } catch (err) {
       console.error("Unexpected error during profile update:", err);
       toast.error("An unexpected error occurred. Please try again.");
