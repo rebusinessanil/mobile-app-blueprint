@@ -459,15 +459,7 @@ export default function ProfileEdit() {
           </div>
 
           {/* Married */}
-          <div className="gold-border bg-card rounded-2xl p-5">
-            <div className="flex items-center justify-between">
-              <label className="text-sm text-foreground">Are you married</label>
-              <Switch checked={formData.married} onCheckedChange={checked => setFormData({
-                ...formData,
-                married: checked
-              })} className="data-[state=checked]:bg-primary" />
-            </div>
-          </div>
+          
         </div>
 
         {/* Save Button */}
