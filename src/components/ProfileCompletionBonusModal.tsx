@@ -1,18 +1,15 @@
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Gift } from "lucide-react";
-
 interface ProfileCompletionBonusModalProps {
   open: boolean;
   onConfirm: () => void;
 }
-
-export default function ProfileCompletionBonusModal({ 
-  open, 
-  onConfirm 
+export default function ProfileCompletionBonusModal({
+  open,
+  onConfirm
 }: ProfileCompletionBonusModalProps) {
-  return (
-    <Dialog open={open} onOpenChange={() => {}}>
+  return <Dialog open={open} onOpenChange={() => {}}>
       <DialogContent className="bg-card border-primary/30 max-w-sm mx-auto text-center p-8">
         <div className="flex flex-col items-center gap-4">
           <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center">
@@ -20,21 +17,17 @@ export default function ProfileCompletionBonusModal({
           </div>
           
           <h2 className="text-2xl font-bold text-primary">
-            You got 199 Credits FREE!
+            Congratulations
           </h2>
           
           <p className="text-muted-foreground">
-            Thank you for completing your profile.
+            You got 199 Credits FREE!
           </p>
           
-          <Button 
-            onClick={onConfirm}
-            className="w-full mt-4 bg-primary hover:bg-primary/90 text-primary-foreground font-bold"
-          >
+          <Button onClick={onConfirm} className="w-full mt-4 bg-primary hover:bg-primary/90 text-primary-foreground font-bold">
             OK
           </Button>
         </div>
       </DialogContent>
-    </Dialog>
-  );
+    </Dialog>;
 }
