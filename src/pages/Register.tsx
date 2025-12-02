@@ -118,18 +118,18 @@ export default function Register() {
       setIsLoading(false);
     }
   };
-  return <div className="min-h-screen bg-navy-dark flex items-center justify-center p-6 py-12">
+  return <div className="h-screen bg-navy-dark flex items-center justify-center p-3 overflow-hidden">
       <div className="w-full max-w-md">
-        <div className="gold-border bg-card p-8 space-y-5">
+        <div className="gold-border bg-card p-4 space-y-3">
           {/* Icon */}
           <div className="flex justify-center">
-            <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center">
-              <UserPlus className="w-8 h-8 text-primary-foreground" />
+            <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center">
+              <UserPlus className="w-6 h-6 text-primary-foreground" />
             </div>
           </div>
 
           {/* Title */}
-          <h1 className="text-3xl font-bold text-center text-foreground">REGISTRATION</h1>
+          <h1 className="text-2xl font-bold text-center text-foreground">REGISTRATION</h1>
 
           {/* Continue with Google */}
           <Button type="button" onClick={async () => {
@@ -146,7 +146,7 @@ export default function Register() {
           } catch (error: any) {
             toast.error(error.message || "Google sign-in failed");
           }
-        }} className="w-full h-12 bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 font-medium flex items-center justify-center gap-3">
+        }} className="w-full h-10 bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 font-medium flex items-center justify-center gap-2 text-sm">
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
               <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
@@ -167,50 +167,49 @@ export default function Register() {
           </div>
 
           {/* Full Name */}
-          <div className="space-y-2">
-            <label className="text-sm text-foreground">Full Name *</label>
+          <div className="space-y-1">
+            <label className="text-xs text-foreground">Full Name *</label>
             <Input type="text" placeholder="Enter your full name" value={formData.fullName} onChange={e => setFormData({
             ...formData,
             fullName: e.target.value
-          })} className="gold-border bg-secondary text-foreground placeholder:text-muted-foreground h-12" />
+          })} className="gold-border bg-secondary text-foreground placeholder:text-muted-foreground h-10 text-sm" />
           </div>
 
           {/* Email */}
-          <div className="space-y-2">
-            <label className="text-sm text-foreground">Email Address *</label>
+          <div className="space-y-1">
+            <label className="text-xs text-foreground">Email Address *</label>
             <Input type="email" placeholder="your.email@example.com" value={formData.email} onChange={e => setFormData({
             ...formData,
             email: e.target.value
-          })} className="gold-border bg-secondary text-foreground placeholder:text-muted-foreground h-12" />
+          })} className="gold-border bg-secondary text-foreground placeholder:text-muted-foreground h-10 text-sm" />
           </div>
 
           {/* Mobile Number */}
-          <div className="space-y-2">
-            <label className="text-sm text-foreground">Mobile Number *</label>
+          <div className="space-y-1">
+            <label className="text-xs text-foreground">Mobile Number *</label>
             <Input type="tel" placeholder="+91XXXXXXXXXX or 10-digit number" value={formData.mobile} onChange={e => setFormData({
             ...formData,
             mobile: e.target.value
-          })} className="gold-border bg-secondary text-foreground placeholder:text-muted-foreground h-12" required />
-            
+          })} className="gold-border bg-secondary text-foreground placeholder:text-muted-foreground h-10 text-sm" required />
           </div>
 
           {/* Different WhatsApp Number Checkbox */}
           
 
           {/* WhatsApp Number (conditional) */}
-          {formData.differentWhatsApp && <div className="space-y-2">
-              <label className="text-sm text-foreground">WhatsApp Number</label>
+          {formData.differentWhatsApp && <div className="space-y-1">
+              <label className="text-xs text-foreground">WhatsApp Number</label>
               <Input type="tel" placeholder="10-digit WhatsApp number" value={formData.whatsappNumber} onChange={e => setFormData({
             ...formData,
             whatsappNumber: e.target.value
-          })} className="gold-border bg-secondary text-foreground placeholder:text-muted-foreground h-12" />
+          })} className="gold-border bg-secondary text-foreground placeholder:text-muted-foreground h-10 text-sm" />
             </div>}
 
           {/* PIN Input */}
-          <div className="space-y-2">
-            <label className="text-sm text-foreground">Create 4-Digit PIN *</label>
-            <div className="flex gap-3 justify-between">
-              {pin.map((digit, index) => <input key={index} id={`reg-pin-${index}`} type="password" maxLength={1} value={digit} onChange={e => handlePinChange(index, e.target.value)} className="pin-input" />)}
+          <div className="space-y-1">
+            <label className="text-xs text-foreground">Create 4-Digit PIN *</label>
+            <div className="flex gap-2 justify-between">
+              {pin.map((digit, index) => <input key={index} id={`reg-pin-${index}`} type="password" maxLength={1} value={digit} onChange={e => handlePinChange(index, e.target.value)} className="pin-input w-12 h-10 text-center" />)}
             </div>
           </div>
 
@@ -218,12 +217,12 @@ export default function Register() {
           
 
           {/* Terms & Conditions */}
-          <div className="flex items-start gap-2">
+          <div className="flex items-center gap-2">
             <Checkbox checked={formData.agreeToTerms} onCheckedChange={checked => setFormData({
             ...formData,
             agreeToTerms: checked as boolean
-          })} className="border-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground mt-1" />
-            <label className="text-sm text-foreground">
+          })} className="border-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground h-4 w-4" />
+            <label className="text-xs text-foreground">
               I agree to the{" "}
               <a href="#" className="text-primary underline">
                 Terms & Conditions
@@ -232,12 +231,12 @@ export default function Register() {
           </div>
 
           {/* Send OTP Button */}
-          <Button onClick={handleSendOTP} disabled={!formData.agreeToTerms || isLoading} className="w-full h-14 bg-primary hover:bg-primary/90 text-primary-foreground text-lg font-semibold">
+          <Button onClick={handleSendOTP} disabled={!formData.agreeToTerms || isLoading} className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground text-base font-semibold">
             {isLoading ? "SENDING..." : "SEND OTP"}
           </Button>
 
           {/* Login Link */}
-          <p className="text-center text-sm text-muted-foreground">
+          <p className="text-center text-xs text-muted-foreground">
             Already have an account?{" "}
             <Link to="/login" className="text-primary font-semibold hover:underline">
               Login
