@@ -120,7 +120,7 @@ export default function Register() {
   };
   return <div className="h-screen bg-navy-dark flex items-center justify-center p-3 overflow-hidden">
       <div className="w-full max-w-md">
-        <div className="gold-border bg-card p-4 space-y-3">
+        <div className="gold-border bg-card p-4 space-y-3 my-0 mx-[24px] px-[13px] py-[13px] border-2">
           {/* Icon */}
           <div className="flex justify-center">
             <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center">
