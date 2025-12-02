@@ -372,10 +372,10 @@ export default function ProfileEdit() {
           {/* Mobile Number */}
           <div className="space-y-2">
             <label className="text-sm text-foreground">Mobile Number</label>
-            <Input type="tel" placeholder="10 Digit Number" value={formData.mobile} onChange={e => setFormData({
+            <Input type="tel" value={formData.mobile} onChange={e => setFormData({
               ...formData,
               mobile: e.target.value
-            })} className="gold-border bg-secondary text-foreground h-12 border-b-2 border-t-0 border-x-0 rounded-none" />
+            })} className="gold-border bg-secondary text-foreground h-12 border-b-2 border-t-0 border-x-0 rounded-none" placeholder="10 Digit Mobile Number" />
           </div>
 
           {/* WhatsApp Number */}
