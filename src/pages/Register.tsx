@@ -191,7 +191,7 @@ export default function Register() {
             ...formData,
             mobile: e.target.value
           })} className="gold-border bg-secondary text-foreground placeholder:text-muted-foreground h-12" required />
-            <p className="text-xs text-muted-foreground">Enter with country code (+91...) or 10 digits</p>
+            
           </div>
 
           {/* Different WhatsApp Number Checkbox */}
