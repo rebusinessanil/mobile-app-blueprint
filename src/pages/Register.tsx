@@ -208,7 +208,7 @@ export default function Register() {
 
           {/* PIN Input */}
           <div className="space-y-2">
-            <label className="text-sm text-foreground">4-Digit PIN *</label>
+            <label className="text-sm text-foreground">Create 4-Digit PIN *</label>
             <div className="flex gap-3 justify-between">
               {pin.map((digit, index) => <input key={index} id={`reg-pin-${index}`} type="password" maxLength={1} value={digit} onChange={e => handlePinChange(index, e.target.value)} className="pin-input" />)}
             </div>
