@@ -21,35 +21,44 @@ import ProfileCompletionGate from "@/components/ProfileCompletionGate";
 
 export default function Dashboard() {
   const {
-    categories
+    categories,
+    loading: categoriesLoading
   } = useTemplateCategories();
   const {
-    templates: allTemplates
+    templates: allTemplates,
+    loading: templatesLoading
   } = useTemplates();
   const {
-    ranks
+    ranks,
+    loading: ranksLoading
   } = useRanks();
   const {
-    trips
+    trips,
+    loading: tripsLoading
   } = useBonanzaTrips();
   const {
-    birthdays
+    birthdays,
+    loading: birthdaysLoading
   } = useBirthdays();
   const {
-    anniversaries
+    anniversaries,
+    loading: anniversariesLoading
   } = useAnniversaries();
   const {
-    motivationalBanners
+    motivationalBanners,
+    loading: motivationalLoading
   } = useMotivationalBanners();
   const {
-    festivals
+    festivals,
+    loading: festivalsLoading
   } = useFestivals();
   const {
-    stories: generatedStories
+    stories: generatedStories,
+    loading: storiesLoading
   } = useGeneratedStories();
   
   // Fetch stories_events
-  const { data: storiesEvents = [] } = useQuery({
+  const { data: storiesEvents = [], isLoading: storiesEventsLoading } = useQuery({
     queryKey: ["stories-events"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -66,6 +75,11 @@ export default function Dashboard() {
     profile
   } = useProfile(userId ?? undefined);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+
+  // Check if all data is loaded
+  const isDataLoading = categoriesLoading || templatesLoading || ranksLoading || 
+    tripsLoading || birthdaysLoading || anniversariesLoading || 
+    motivationalLoading || festivalsLoading || storiesLoading || storiesEventsLoading;
 
   // Get rank templates with covers
   const getRankTemplates = () => {
@@ -129,6 +143,50 @@ export default function Dashboard() {
   const getCategoryTemplates = (categoryId: string) => {
     return allTemplates.filter(t => t.category_id === categoryId).slice(0, 3);
   };
+  // Show blank loading state until all data is ready - prevents flash
+  if (isDataLoading) {
+    return (
+      <ProfileCompletionGate userId={userId}>
+        <div className="min-h-screen bg-navy-dark pb-24">
+          {/* Blank loading state with same background */}
+          <header className="sticky top-0 bg-navy-dark/95 backdrop-blur-sm z-40 px-6 py-4 border-b border-primary/20">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center">
+                  <Star className="w-6 h-6 text-primary-foreground" />
+                </div>
+                <div>
+                  <h1 className="text-xl font-bold text-foreground">ReBusiness</h1>
+                  <p className="text-sm text-muted-foreground">Loading...</p>
+                </div>
+              </div>
+            </div>
+          </header>
+          <div className="px-6 py-6 space-y-6">
+            {/* Skeleton loaders */}
+            <div className="space-y-3">
+              <div className="h-6 w-32 bg-secondary/50 rounded animate-pulse" />
+              <div className="flex gap-3 overflow-hidden">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="w-[84px] h-[110px] bg-secondary/30 rounded-2xl animate-pulse flex-shrink-0" />
+                ))}
+              </div>
+            </div>
+            <div className="space-y-3">
+              <div className="h-6 w-40 bg-secondary/50 rounded animate-pulse" />
+              <div className="flex gap-3 overflow-hidden">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="w-[120px] h-[140px] bg-secondary/30 rounded-2xl animate-pulse flex-shrink-0" />
+                ))}
+              </div>
+            </div>
+          </div>
+          <BottomNav />
+        </div>
+      </ProfileCompletionGate>
+    );
+  }
+
   return (
     <ProfileCompletionGate userId={userId}>
       <div className="min-h-screen bg-navy-dark pb-24">
