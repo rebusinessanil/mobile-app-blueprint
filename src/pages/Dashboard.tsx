@@ -4,6 +4,7 @@ import BottomNav from "@/components/BottomNav";
 import { Menu, Bell, Star, Calendar, Zap, Award } from "lucide-react";
 import { useTemplateCategories, useTemplates } from "@/hooks/useTemplates";
 import { useProfile } from "@/hooks/useProfile";
+import { useProfilePhotos } from "@/hooks/useProfilePhotos";
 import { supabase } from "@/integrations/supabase/client";
 import { useRanks } from "@/hooks/useTemplates";
 import { useBonanzaTrips } from "@/hooks/useBonanzaTrips";
@@ -63,6 +64,7 @@ export default function Dashboard() {
   const {
     profile
   } = useProfile(userId ?? undefined);
+  const { photos: profilePhotos } = useProfilePhotos(userId ?? undefined);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   // Get rank templates with covers
@@ -129,7 +131,7 @@ export default function Dashboard() {
   };
   return <div className="min-h-screen bg-navy-dark pb-24">
       {/* Welcome Popup for first-time users */}
-      <WelcomePopupModal userId={userId} />
+      <WelcomePopupModal userId={userId} profile={profile} photosCount={profilePhotos.length} />
       
       {/* Header */}
       <header className="sticky top-0 bg-navy-dark/95 backdrop-blur-sm z-40 px-6 py-4 border-b border-primary/20">
