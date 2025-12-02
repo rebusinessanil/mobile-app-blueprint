@@ -6,6 +6,19 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Lock, MessageCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { z } from "zod";
+
+// Zod validation schema for login
+const loginSchema = z.object({
+  email: z.string()
+    .trim()
+    .email("Please enter a valid email address")
+    .max(255, "Email must be less than 255 characters"),
+  pin: z.string()
+    .length(4, "PIN must be exactly 4 digits")
+    .regex(/^\d{4}$/, "PIN must contain only numbers"),
+});
+
 export default function Login() {
   const navigate = useNavigate();
   const [emailOrMobile, setEmailOrMobile] = useState("");
@@ -28,16 +41,20 @@ export default function Login() {
     }
   };
   const handleLogin = async () => {
-    // Validation
-    if (!emailOrMobile.trim()) {
-      toast.error("Please enter your email");
-      return;
-    }
     const pinString = pin.join("");
-    if (pinString.length !== 4) {
-      toast.error("Please enter your 4-digit PIN");
+    
+    // Zod validation for inputs
+    const validationResult = loginSchema.safeParse({
+      email: emailOrMobile,
+      pin: pinString,
+    });
+
+    if (!validationResult.success) {
+      const firstError = validationResult.error.errors[0];
+      toast.error(firstError.message);
       return;
     }
+
     setLoading(true);
     try {
       // Sign in with email and PIN as password
@@ -45,7 +62,7 @@ export default function Login() {
         data,
         error
       } = await supabase.auth.signInWithPassword({
-        email: emailOrMobile,
+        email: emailOrMobile.trim(),
         password: pinString
       });
       if (error) {
@@ -61,7 +78,7 @@ export default function Login() {
         navigate("/dashboard");
       }
     } catch (error) {
-      console.error("Login error:", error);
+      // Security: Don't log sensitive login data
       toast.error("An unexpected error occurred. Please try again.");
     } finally {
       setLoading(false);

@@ -35,7 +35,6 @@ export default function TokenManagement() {
           table: 'user_credits',
         },
         () => {
-          console.log('Credits updated, refreshing admin stats');
           fetchTokenStats();
         }
       )
@@ -47,7 +46,6 @@ export default function TokenManagement() {
           table: 'credit_transactions',
         },
         () => {
-          console.log('Transaction detected, refreshing admin stats');
           fetchTokenStats();
         }
       )
@@ -106,7 +104,6 @@ export default function TokenManagement() {
         recent_transactions: recentTransactions,
       });
     } catch (error: any) {
-      console.error('Error fetching token stats:', error);
       toast.error("Failed to load token statistics");
     } finally {
       setLoading(false);
