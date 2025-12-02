@@ -1,11 +1,18 @@
-import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { UserCircle, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useProfileCompletion } from "@/hooks/useProfileCompletion";
-import { supabase } from "@/integrations/supabase/client";
 
 const PROFILE_POPUP_SHOWN_KEY = "rebusiness_profile_popup_shown";
+
+// Check localStorage synchronously to prevent flash
+const getPopupShownStatus = (): boolean => {
+  try {
+    return localStorage.getItem(PROFILE_POPUP_SHOWN_KEY) === "true";
+  } catch {
+    return false;
+  }
+};
 
 interface ProfileCompletionGateProps {
   userId: string | null;
@@ -17,7 +24,10 @@ export default function ProfileCompletionGate({
   children
 }: ProfileCompletionGateProps) {
   const navigate = useNavigate();
-  const [popupDismissed, setPopupDismissed] = useState<boolean | null>(null);
+  
+  // Check localStorage synchronously on every render to prevent flash
+  const popupAlreadyShown = getPopupShownStatus();
+  
   const {
     isComplete,
     missingFields,
@@ -25,23 +35,20 @@ export default function ProfileCompletionGate({
     loading
   } = useProfileCompletion(userId || undefined);
 
-  // Check localStorage on mount
-  useEffect(() => {
-    const wasShown = localStorage.getItem(PROFILE_POPUP_SHOWN_KEY);
-    setPopupDismissed(wasShown === "true");
-  }, []);
-
-  const handleContinueToProfile = async () => {
+  const handleContinueToProfile = () => {
     // Set flag in localStorage immediately
     localStorage.setItem(PROFILE_POPUP_SHOWN_KEY, "true");
-    setPopupDismissed(true);
-    
     // Navigate to profile edit
     navigate("/profile-edit");
   };
 
-  // Show loading state while checking
-  if (loading || popupDismissed === null) {
+  // If popup was already shown once, always bypass - no flash
+  if (popupAlreadyShown) {
+    return <>{children}</>;
+  }
+
+  // Show loading state while checking profile completion
+  if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="animate-pulse text-primary">Loading...</div>
@@ -49,8 +56,8 @@ export default function ProfileCompletionGate({
     );
   }
 
-  // If profile is complete OR popup was already shown once, show children
-  if (isComplete || popupDismissed) {
+  // If profile is complete, show children
+  if (isComplete) {
     return <>{children}</>;
   }
 
