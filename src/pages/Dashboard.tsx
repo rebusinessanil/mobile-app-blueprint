@@ -16,6 +16,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import Profile from "./Profile";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
+import WelcomePopupModal from "@/components/WelcomePopupModal";
 export default function Dashboard() {
   const {
     categories
@@ -127,6 +128,9 @@ export default function Dashboard() {
     return allTemplates.filter(t => t.category_id === categoryId).slice(0, 3);
   };
   return <div className="min-h-screen bg-navy-dark pb-24">
+      {/* Welcome Popup for first-time users */}
+      <WelcomePopupModal userId={userId} />
+      
       {/* Header */}
       <header className="sticky top-0 bg-navy-dark/95 backdrop-blur-sm z-40 px-6 py-4 border-b border-primary/20">
         <div className="flex items-center justify-between">
