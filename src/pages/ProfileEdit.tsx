@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { useProfile } from "@/hooks/useProfile";
 import { useProfilePhotos } from "@/hooks/useProfilePhotos";
 import { supabase } from "@/integrations/supabase/client";
+import ProfileCompletionBonusModal from "@/components/ProfileCompletionBonusModal";
 export default function ProfileEdit() {
   const navigate = useNavigate();
   const [photos, setPhotos] = useState<string[]>([]);
@@ -51,6 +52,8 @@ export default function ProfileEdit() {
     married: false
   });
   const [customRole, setCustomRole] = useState("");
+  const [showBonusModal, setShowBonusModal] = useState(false);
+  const [pendingBonusCredit, setPendingBonusCredit] = useState(false);
 
   // Load profile data when available
   useEffect(() => {
@@ -182,12 +185,11 @@ export default function ProfileEdit() {
     return hasName && hasMobile && hasWhatsapp && hasRole && hasPhotos;
   };
 
-  // Credit profile completion bonus
-  const creditProfileCompletionBonus = async () => {
-    if (!userId) return;
+  // Check if profile completion bonus should be shown
+  const checkAndShowBonusModal = async () => {
+    if (!userId) return false;
     
     try {
-      // Check if bonus was already given
       const { data: profileData } = await supabase
         .from('profiles')
         .select('profile_completion_bonus_given')
@@ -195,9 +197,24 @@ export default function ProfileEdit() {
         .single();
       
       if (profileData?.profile_completion_bonus_given) {
-        return; // Bonus already given
+        return false; // Bonus already given
       }
       
+      // Show bonus modal
+      setShowBonusModal(true);
+      setPendingBonusCredit(true);
+      return true;
+    } catch (error) {
+      console.error('Error checking bonus status:', error);
+      return false;
+    }
+  };
+
+  // Credit profile completion bonus after user confirms
+  const creditProfileCompletionBonus = async () => {
+    if (!userId) return;
+    
+    try {
       // Get current credits
       const { data: currentCredits } = await supabase
         .from('user_credits')
@@ -233,10 +250,18 @@ export default function ProfileEdit() {
         .update({ profile_completion_bonus_given: true })
         .eq('user_id', userId);
       
-      toast.success("🎉 Congratulations! You received 199 FREE credits for completing your profile!");
     } catch (error) {
       console.error('Error crediting profile completion bonus:', error);
     }
+  };
+
+  // Handle bonus modal confirmation
+  const handleBonusConfirm = async () => {
+    await creditProfileCompletionBonus();
+    setShowBonusModal(false);
+    setPendingBonusCredit(false);
+    toast.success("199 Credits added to your wallet!");
+    navigate("/dashboard");
   };
 
   const handleSave = async () => {
@@ -290,9 +315,13 @@ export default function ProfileEdit() {
         return;
       }
       
-      // Check if profile is now complete and credit bonus if first time
+      // Check if profile is now complete and show bonus modal if first time
       if (isProfileComplete()) {
-        await creditProfileCompletionBonus();
+        const showedModal = await checkAndShowBonusModal();
+        if (showedModal) {
+          toast.success("Profile updated successfully!");
+          return; // Don't navigate yet, wait for modal confirmation
+        }
       }
       
       toast.success("Profile updated successfully! Your banners will auto-update.");
@@ -304,7 +333,12 @@ export default function ProfileEdit() {
       setLoading(false);
     }
   };
-  return <div className="min-h-screen bg-navy-dark pb-6">
+  return <>
+    <ProfileCompletionBonusModal 
+      open={showBonusModal} 
+      onConfirm={handleBonusConfirm}
+    />
+    <div className="min-h-screen bg-navy-dark pb-6">
       {/* Header */}
       <header className="sticky top-0 bg-navy-dark/95 backdrop-blur-sm z-40 px-6 py-4 border-b border-primary/20">
         <div className="flex items-center justify-between">
@@ -494,5 +528,6 @@ export default function ProfileEdit() {
           {loading ? "Saving..." : "SAVE"}
         </Button>
       </div>
-    </div>;
+    </div>
+  </>;
 }
