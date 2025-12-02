@@ -63,7 +63,7 @@ export default function WelcomePopupModal({ userId, profile, photosCount = 0 }: 
     localStorage.setItem(WELCOME_POPUP_KEY, "true");
     setIsOpen(false);
     // Navigate to profile edit
-    navigate("/profile/edit");
+    navigate("/profile-edit");
   };
 
   return (
