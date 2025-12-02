@@ -1,11 +1,21 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import BottomNav from "@/components/BottomNav";
 import { Search, Filter, Trophy, Gift, Calendar, Star, MessageCircle, Zap, Briefcase, Target, Medal, Image, Users, IndianRupee, BarChart3 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { supabase } from "@/integrations/supabase/client";
+import ProfileCompletionGate from "@/components/ProfileCompletionGate";
 
 export default function Categories() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [userId, setUserId] = useState<string | null>(null);
+
+  // Get authenticated user
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUserId(session?.user?.id ?? null);
+    });
+  }, []);
 
   const categories = [
     { icon: Trophy, label: "Rank Promotion", color: "bg-yellow-600", path: "/rank-selection" },
@@ -30,9 +40,10 @@ export default function Categories() {
   );
 
   return (
-    <div className="min-h-screen bg-navy-dark pb-24">
-      {/* Header */}
-      <header className="sticky top-0 bg-navy-dark/95 backdrop-blur-sm z-40 px-6 py-4 border-b border-primary/20">
+    <ProfileCompletionGate userId={userId}>
+      <div className="min-h-screen bg-navy-dark pb-24">
+        {/* Header */}
+        <header className="sticky top-0 bg-navy-dark/95 backdrop-blur-sm z-40 px-6 py-4 border-b border-primary/20">
         <h1 className="text-2xl font-bold text-foreground mb-4">All Categories</h1>
         
         {/* Search Bar */}
@@ -76,7 +87,8 @@ export default function Categories() {
         </div>
       </div>
 
-      <BottomNav />
-    </div>
+        <BottomNav />
+      </div>
+    </ProfileCompletionGate>
   );
 }

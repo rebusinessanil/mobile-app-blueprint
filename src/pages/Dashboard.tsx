@@ -17,6 +17,8 @@ import Profile from "./Profile";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import WelcomePopupModal from "@/components/WelcomePopupModal";
+import ProfileCompletionGate from "@/components/ProfileCompletionGate";
+
 export default function Dashboard() {
   const {
     categories
@@ -127,9 +129,11 @@ export default function Dashboard() {
   const getCategoryTemplates = (categoryId: string) => {
     return allTemplates.filter(t => t.category_id === categoryId).slice(0, 3);
   };
-  return <div className="min-h-screen bg-navy-dark pb-24">
-      {/* Welcome Popup for first-time users */}
-      <WelcomePopupModal userId={userId} />
+  return (
+    <ProfileCompletionGate userId={userId}>
+      <div className="min-h-screen bg-navy-dark pb-24">
+        {/* Welcome Popup for first-time users */}
+        <WelcomePopupModal userId={userId} />
       
       {/* Header */}
       <header className="sticky top-0 bg-navy-dark/95 backdrop-blur-sm z-40 px-6 py-4 border-b border-primary/20">
@@ -539,6 +543,8 @@ export default function Dashboard() {
       })}
       </div>
 
-      <BottomNav />
-    </div>;
+        <BottomNav />
+      </div>
+    </ProfileCompletionGate>
+  );
 }
