@@ -82,35 +82,8 @@ export default function Login() {
       }
       if (data.user) {
         toast.success("Login successful!");
-        
-        // Check profile completion status
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('name, mobile, role')
-          .eq('user_id', data.user.id)
-          .maybeSingle();
-        
-        const { data: photos } = await supabase
-          .from('profile_photos')
-          .select('id')
-          .eq('user_id', data.user.id);
-        
-        // Check if profile is complete (name, mobile 10 digits, role, at least 1 photo)
-        const mobileDigits = profile?.mobile?.replace(/\D/g, '').slice(-10) || '';
-        const hasValidName = profile?.name && profile.name.trim() !== '' && profile.name !== 'User';
-        const hasValidMobile = mobileDigits.length === 10;
-        const hasValidRole = profile?.role && profile.role.trim() !== '';
-        const hasPhoto = photos && photos.length > 0;
-        
-        const isProfileComplete = hasValidName && hasValidMobile && hasValidRole && hasPhoto;
-        
-        if (isProfileComplete) {
-          // Full access - go to dashboard
-          navigate("/dashboard");
-        } else {
-          // Incomplete profile - go to profile-edit
-          navigate("/profile-edit");
-        }
+        // Full access - redirect directly to dashboard
+        navigate("/dashboard");
       }
     } catch (error) {
       // Security: Don't log sensitive login data
