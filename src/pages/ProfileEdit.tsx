@@ -333,16 +333,32 @@ export default function ProfileEdit() {
         toast.success("PIN updated successfully!");
       }
 
-      // Check if profile is now complete and show bonus modal if first time
-      if (isProfileComplete()) {
-        const showedModal = await checkAndShowBonusModal();
-        if (showedModal) {
-          toast.success("Profile updated successfully!");
-          return; // Don't navigate yet, wait for modal confirmation
+      // Re-fetch profile to check if profile_completed is now true (set by database trigger)
+      const { data: updatedProfile } = await supabase
+        .from('profiles')
+        .select('profile_completed, profile_completion_bonus_given')
+        .eq('user_id', userId)
+        .single();
+
+      if (updatedProfile?.profile_completed === true) {
+        // Profile is now complete - update localStorage
+        localStorage.setItem("rebusiness_profile_completed", "true");
+        
+        // Show bonus modal if first time completing profile
+        if (!updatedProfile?.profile_completion_bonus_given) {
+          const showedModal = await checkAndShowBonusModal();
+          if (showedModal) {
+            toast.success("Profile completed successfully!");
+            return; // Don't navigate yet, wait for modal confirmation
+          }
         }
+        
+        toast.success("Profile updated successfully!");
+        navigate("/dashboard", { replace: true });
+      } else {
+        // Profile still incomplete
+        toast.success("Profile updated! Please complete all required fields.");
       }
-      toast.success("Profile updated successfully! Your banners will auto-update.");
-      navigate("/dashboard");
     } catch (err) {
       console.error("Unexpected error during profile update:", err);
       toast.error("An unexpected error occurred. Please try again.");
