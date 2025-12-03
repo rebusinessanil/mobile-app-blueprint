@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { 
   LayoutDashboard, 
@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useState } from "react";
+import AdminUserInfo from "./AdminUserInfo";
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -60,7 +60,12 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         <p className="text-sm text-muted-foreground mt-1">Management Panel</p>
       </div>
       
-      <nav className="flex-1 p-4 space-y-2">
+      {/* Admin User Info - Real-time synced */}
+      <div className="px-4 pt-4">
+        <AdminUserInfo />
+      </div>
+      
+      <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
         {adminRoutes.map((route) => {
           const Icon = route.icon;
           const isActive = location.pathname === route.path;
