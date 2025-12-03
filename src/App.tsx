@@ -53,6 +53,7 @@ import MyDownloads from "./pages/MyDownloads";
 import Transactions from "./pages/Transactions";
 import UniversalBannerCreate from "./pages/UniversalBannerCreate";
 import ChangePin from "./pages/ChangePin";
+import AuthCallback from "./pages/AuthCallback";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -76,6 +77,7 @@ function App() {
               <Route path="/" element={<Login />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/auth/callback" element={<AuthCallback />} />
               <Route path="/otp-verification" element={<OTPVerification />} />
               <Route path="/profile-setup" element={<ProfileSetup />} />
               
