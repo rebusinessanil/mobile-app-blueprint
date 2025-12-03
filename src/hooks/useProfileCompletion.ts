@@ -51,7 +51,7 @@ export const useProfileCompletion = (userId?: string) => {
 
         const missingFields: string[] = [];
         let completedFields = 0;
-        const totalFields = 5; // name, mobile, whatsapp, role, profile_photo
+        const totalFields = 4; // name, mobile, role, profile_photo (WhatsApp removed)
 
         // Check name
         if (!profile?.name || profile.name.trim() === '' || profile.name === 'User') {
@@ -60,16 +60,10 @@ export const useProfileCompletion = (userId?: string) => {
           completedFields++;
         }
 
-        // Check mobile
-        if (!profile?.mobile || profile.mobile === '+000000000000' || !/^\d{10}$/.test(profile.mobile.replace(/\D/g, ''))) {
+        // Check mobile - extract digits and validate 10-digit format
+        const mobileDigits = profile?.mobile?.replace(/\D/g, '').slice(-10) || '';
+        if (!mobileDigits || mobileDigits.length !== 10) {
           missingFields.push('Mobile Number');
-        } else {
-          completedFields++;
-        }
-
-        // Check whatsapp
-        if (!profile?.whatsapp || !/^\d{10}$/.test(profile.whatsapp.replace(/\D/g, ''))) {
-          missingFields.push('WhatsApp Number');
         } else {
           completedFields++;
         }
