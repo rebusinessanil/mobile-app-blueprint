@@ -16,7 +16,6 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import Profile from "./Profile";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
-import WelcomePopupModal from "@/components/WelcomePopupModal";
 import ProfileCompletionGate from "@/components/ProfileCompletionGate";
 import StoriesSection from "@/components/dashboard/StoriesSection";
 import BannerCard from "@/components/dashboard/BannerCard";
@@ -198,9 +197,6 @@ export default function Dashboard() {
   return (
     <ProfileCompletionGate userId={userId}>
       <div className="min-h-screen bg-navy-dark pb-24">
-        {/* Welcome Popup for first-time users */}
-        <WelcomePopupModal userId={userId} />
-      
       {/* Header */}
       <header className="sticky top-0 bg-navy-dark/95 backdrop-blur-sm z-40 px-6 py-4 border-b border-primary/20">
         <div className="flex items-center justify-between">
