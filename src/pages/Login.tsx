@@ -3,10 +3,11 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Lock, MessageCircle } from "lucide-react";
+import { Lock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { z } from "zod";
+import whatsappIcon from "@/assets/whatsapp-icon.png";
 
 // Zod validation schema for login
 const loginSchema = z.object({
@@ -81,7 +82,35 @@ export default function Login() {
       }
       if (data.user) {
         toast.success("Login successful!");
-        navigate("/dashboard");
+        
+        // Check profile completion status
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('name, mobile, role')
+          .eq('user_id', data.user.id)
+          .maybeSingle();
+        
+        const { data: photos } = await supabase
+          .from('profile_photos')
+          .select('id')
+          .eq('user_id', data.user.id);
+        
+        // Check if profile is complete (name, mobile 10 digits, role, at least 1 photo)
+        const mobileDigits = profile?.mobile?.replace(/\D/g, '').slice(-10) || '';
+        const hasValidName = profile?.name && profile.name.trim() !== '' && profile.name !== 'User';
+        const hasValidMobile = mobileDigits.length === 10;
+        const hasValidRole = profile?.role && profile.role.trim() !== '';
+        const hasPhoto = photos && photos.length > 0;
+        
+        const isProfileComplete = hasValidName && hasValidMobile && hasValidRole && hasPhoto;
+        
+        if (isProfileComplete) {
+          // Full access - go to dashboard
+          navigate("/dashboard");
+        } else {
+          // Incomplete profile - go to profile-edit
+          navigate("/profile-edit");
+        }
       }
     } catch (error) {
       // Security: Don't log sensitive login data
@@ -154,7 +183,15 @@ export default function Login() {
         </div>
       </div>
 
-      {/* WhatsApp FAB */}
-      
+      {/* WhatsApp FAB - Always visible on login page, cannot be closed */}
+      <a
+        href="https://wa.me/917734990035"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-[#25D366] flex items-center justify-center shadow-lg hover:scale-110 transition-transform"
+        aria-label="WhatsApp Support"
+      >
+        <img src={whatsappIcon} alt="WhatsApp" className="w-8 h-8" />
+      </a>
     </div>;
 }
