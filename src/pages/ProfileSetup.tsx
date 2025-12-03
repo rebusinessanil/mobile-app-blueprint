@@ -21,6 +21,7 @@ export default function ProfileSetup() {
 
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [name, setName] = useState(userName);
+  const [mobile, setMobile] = useState("");
   const [teamCity, setTeamCity] = useState("");
   const [role, setRole] = useState("");
   const [isUploading, setIsUploading] = useState(false);
@@ -28,11 +29,31 @@ export default function ProfileSetup() {
   const [currentImage, setCurrentImage] = useState<string | null>(null);
   const [currentFile, setCurrentFile] = useState<File | null>(null);
 
+  // Fetch user's mobile number from auth on mount
   useEffect(() => {
     if (!userId) {
       toast.error("Invalid session. Please register again.");
       navigate("/register");
+      return;
     }
+
+    // Get mobile from auth user metadata
+    const fetchMobile = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        // Try to get mobile from various sources
+        const userMobile = user.user_metadata?.mobile || 
+                          user.phone || 
+                          user.user_metadata?.phone ||
+                          "";
+        // Clean mobile number - remove any prefix like +91
+        const cleanMobile = userMobile.replace(/^\+?\d{0,2}/, '').slice(-10);
+        if (cleanMobile && cleanMobile.length === 10) {
+          setMobile(cleanMobile);
+        }
+      }
+    };
+    fetchMobile();
   }, [userId, navigate]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -136,17 +157,13 @@ export default function ProfileSetup() {
         uploadedPhotoUrls.push(publicUrl);
       }
 
-      // Create profile
-      // Get mobile from auth user metadata
-      const { data: { user } } = await supabase.auth.getUser();
-      const mobile = user?.user_metadata?.mobile || user?.phone || '+000000000000';
-
+      // Create profile with user-entered mobile
       const { error: profileError } = await supabase
         .from("profiles")
         .insert({
           user_id: userId,
           name: name.trim(),
-          mobile: mobile, // Required field
+          mobile: mobile.trim(), // User's mobile from signup
           role: role.trim() || null,
           profile_photo: uploadedPhotoUrls[0], // Primary photo
         });
@@ -268,6 +285,25 @@ export default function ProfileSetup() {
             />
           </div>
 
+          {/* Mobile Number Input */}
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-foreground">Mobile Number *</label>
+            <Input
+              type="tel"
+              placeholder="Enter mobile number"
+              value={mobile}
+              onChange={(e) => {
+                const value = e.target.value.replace(/\D/g, '').slice(0, 10);
+                setMobile(value);
+              }}
+              className="gold-border bg-background h-12"
+              maxLength={10}
+            />
+            {mobile && mobile.length !== 10 && (
+              <p className="text-xs text-destructive">Please enter a valid 10-digit mobile number</p>
+            )}
+          </div>
+
           {/* Team/City Input */}
           <div className="space-y-2">
             <label className="text-sm font-semibold text-foreground">Team / City</label>
@@ -295,7 +331,7 @@ export default function ProfileSetup() {
           {/* Complete Button */}
           <Button
             onClick={handleComplete}
-            disabled={photos.length === 0 || !name.trim() || isUploading}
+            disabled={photos.length === 0 || !name.trim() || mobile.length !== 10 || isUploading}
             className="w-full h-14 bg-primary hover:bg-primary/90 text-primary-foreground text-lg font-semibold"
           >
             {isUploading ? "Setting up your profile..." : "Complete Profile"}
