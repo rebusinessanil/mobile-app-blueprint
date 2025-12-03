@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, FileText, Award, Check } from "lucide-react";
+import { ArrowLeft, FileText, Award, Check, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -61,6 +61,8 @@ export default function ProfileEdit() {
   const [createPin, setCreatePin] = useState("");
   const [confirmPin, setConfirmPin] = useState("");
   const [pinError, setPinError] = useState("");
+  const [showCreatePin, setShowCreatePin] = useState(false);
+  const [showConfirmPin, setShowConfirmPin] = useState(false);
 
   // Load profile data when available
   useEffect(() => {
@@ -473,23 +475,32 @@ export default function ProfileEdit() {
           <div className="space-y-4 pt-4">
             <div className="space-y-2">
               <label className="text-sm text-foreground">Create PIN</label>
-              <Input
-                type="password"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                maxLength={4}
-                value={createPin}
-                onChange={(e) => {
-                  const value = e.target.value.replace(/\D/g, '').slice(0, 4);
-                  setCreatePin(value);
-                  // Clear confirm PIN when create PIN changes
-                  if (confirmPin) setConfirmPin("");
-                  // Clear error when typing
-                  if (pinError) setPinError("");
-                }}
-                placeholder="●●●●"
-                className="gold-border bg-secondary text-foreground h-12 border-b-2 border-t-0 border-x-0 rounded-none tracking-[0.5em] text-center text-lg"
-              />
+              <div className="relative">
+                <Input
+                  type={showCreatePin ? "text" : "password"}
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={4}
+                  value={createPin}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, '').slice(0, 4);
+                    setCreatePin(value);
+                    // Clear confirm PIN when create PIN changes
+                    if (confirmPin) setConfirmPin("");
+                    // Clear error when typing
+                    if (pinError) setPinError("");
+                  }}
+                  placeholder="●●●●"
+                  className="gold-border bg-secondary text-foreground h-12 border-b-2 border-t-0 border-x-0 rounded-none tracking-[0.5em] text-center text-lg pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowCreatePin(!showCreatePin)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {showCreatePin ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
               {createPin.length > 0 && createPin.length < 4 && (
                 <p className="text-sm text-destructive">PIN must be 4 digits</p>
               )}
@@ -501,7 +512,7 @@ export default function ProfileEdit() {
                 <label className="text-sm text-foreground">Confirm PIN</label>
                 <div className="relative">
                   <Input
-                    type="password"
+                    type={showConfirmPin ? "text" : "password"}
                     inputMode="numeric"
                     pattern="[0-9]*"
                     maxLength={4}
@@ -525,8 +536,15 @@ export default function ProfileEdit() {
                       pinError ? "border-destructive" : confirmPin.length === 4 && confirmPin === createPin ? "border-green-500" : ""
                     }`}
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPin(!showConfirmPin)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {showConfirmPin ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
                   {confirmPin.length === 4 && confirmPin === createPin && !pinError && (
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <div className="absolute right-10 top-1/2 -translate-y-1/2">
                       <Check className="w-5 h-5 text-green-500" />
                     </div>
                   )}
