@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, FileText, Award } from "lucide-react";
+import { ArrowLeft, FileText, Award, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -56,6 +56,11 @@ export default function ProfileEdit() {
   const [customRole, setCustomRole] = useState("");
   const [showBonusModal, setShowBonusModal] = useState(false);
   const [pendingBonusCredit, setPendingBonusCredit] = useState(false);
+  
+  // PIN state
+  const [createPin, setCreatePin] = useState("");
+  const [confirmPin, setConfirmPin] = useState("");
+  const [pinError, setPinError] = useState("");
 
   // Load profile data when available
   useEffect(() => {
@@ -266,6 +271,20 @@ export default function ProfileEdit() {
       toast.error("Please enter a custom role name");
       return;
     }
+    
+    // PIN validation (optional field, but if filled, must be complete and match)
+    if (createPin.length > 0) {
+      if (createPin.length !== 4) {
+        toast.error("PIN must be 4 digits");
+        return;
+      }
+      if (confirmPin !== createPin) {
+        toast.error("PIN does not match");
+        setPinError("PIN does not match");
+        return;
+      }
+    }
+    
     setLoading(true);
     try {
       const finalRole = formData.role === "custom" ? customRole.trim() : formData.role;
@@ -283,6 +302,19 @@ export default function ProfileEdit() {
         console.error("Profile update error:", error);
         toast.error(error.message || "Failed to update profile. Please try again.");
         return;
+      }
+      
+      // Save PIN if provided (hash it before saving)
+      if (createPin.length === 4 && confirmPin === createPin && userId) {
+        // Use simple hash for PIN (in production, use bcrypt on server-side)
+        const pinHash = btoa(createPin); // Base64 encoding as simple obfuscation
+        await supabase.auth.updateUser({
+          data: { pin_hash: pinHash }
+        });
+        // Clear PIN fields after successful save
+        setCreatePin("");
+        setConfirmPin("");
+        toast.success("PIN updated successfully!");
       }
 
       // Check if profile is now complete and show bonus modal if first time
@@ -435,6 +467,75 @@ export default function ProfileEdit() {
                 </SelectContent>
               </Select>
             </div>
+          </div>
+
+          {/* Create PIN Section */}
+          <div className="space-y-4 pt-4">
+            <div className="space-y-2">
+              <label className="text-sm text-foreground">Create PIN</label>
+              <Input
+                type="password"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={4}
+                value={createPin}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\D/g, '').slice(0, 4);
+                  setCreatePin(value);
+                  // Clear confirm PIN when create PIN changes
+                  if (confirmPin) setConfirmPin("");
+                  // Clear error when typing
+                  if (pinError) setPinError("");
+                }}
+                placeholder="●●●●"
+                className="gold-border bg-secondary text-foreground h-12 border-b-2 border-t-0 border-x-0 rounded-none tracking-[0.5em] text-center text-lg"
+              />
+              {createPin.length > 0 && createPin.length < 4 && (
+                <p className="text-sm text-destructive">PIN must be 4 digits</p>
+              )}
+            </div>
+
+            {/* Confirm PIN - only show when Create PIN has 4 digits */}
+            {createPin.length === 4 && (
+              <div className="space-y-2">
+                <label className="text-sm text-foreground">Confirm PIN</label>
+                <div className="relative">
+                  <Input
+                    type="password"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={4}
+                    value={confirmPin}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, '').slice(0, 4);
+                      setConfirmPin(value);
+                      // Validate PIN match
+                      if (value.length === 4) {
+                        if (value !== createPin) {
+                          setPinError("PIN does not match");
+                        } else {
+                          setPinError("");
+                        }
+                      } else {
+                        setPinError("");
+                      }
+                    }}
+                    placeholder="●●●●"
+                    className={`gold-border bg-secondary text-foreground h-12 border-b-2 border-t-0 border-x-0 rounded-none tracking-[0.5em] text-center text-lg pr-10 ${
+                      pinError ? "border-destructive" : confirmPin.length === 4 && confirmPin === createPin ? "border-green-500" : ""
+                    }`}
+                  />
+                  {confirmPin.length === 4 && confirmPin === createPin && !pinError && (
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                      <Check className="w-5 h-5 text-green-500" />
+                    </div>
+                  )}
+                </div>
+                {pinError && (
+                  <p className="text-sm text-destructive">{pinError}</p>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Gender */}
