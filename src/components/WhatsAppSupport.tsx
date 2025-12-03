@@ -14,8 +14,8 @@ export default function WhatsAppSupport() {
   const [userName, setUserName] = useState<string>("");
   const location = useLocation();
 
-  // Check if on login/signup pages
-  const isAuthPage = ["/login", "/register", "/verify-otp", "/"].includes(location.pathname);
+  // Check if on login/signup pages - WhatsApp icon cannot be closed on these pages
+  const isAuthPage = location.pathname === "/login" || location.pathname === "/register";
 
   useEffect(() => {
     // Check auth state
