@@ -51,6 +51,7 @@ import Wallet from "./pages/Wallet";
 import MyDownloads from "./pages/MyDownloads";
 import Transactions from "./pages/Transactions";
 import UniversalBannerCreate from "./pages/UniversalBannerCreate";
+import ChangePin from "./pages/ChangePin";
 
 const queryClient = new QueryClient();
 
@@ -87,6 +88,7 @@ const App = () => (
           <Route path="/wallet" element={<AuthGuard><Wallet /></AuthGuard>} />
           <Route path="/transactions" element={<AuthGuard><Transactions /></AuthGuard>} />
           <Route path="/my-downloads" element={<AuthGuard><MyDownloads /></AuthGuard>} />
+          <Route path="/change-pin" element={<AuthGuard><ChangePin /></AuthGuard>} />
           <Route path="/banner-create/:category" element={<AuthGuard><UniversalBannerCreate /></AuthGuard>} />
           <Route path="/banner-create/bonanza" element={<AuthGuard><BonanzaBannerCreate /></AuthGuard>} />
           <Route path="/banner-create/birthday" element={<AuthGuard><BirthdayBannerCreate /></AuthGuard>} />
