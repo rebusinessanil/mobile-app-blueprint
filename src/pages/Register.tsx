@@ -10,24 +10,11 @@ import { z } from "zod";
 
 // Zod validation schema for registration
 const registrationSchema = z.object({
-  fullName: z.string()
-    .trim()
-    .min(2, "Name must be at least 2 characters")
-    .max(100, "Name must be less than 100 characters")
-    .regex(/^[a-zA-Z\s'-]+$/, "Name can only contain letters, spaces, hyphens and apostrophes"),
-  email: z.string()
-    .trim()
-    .email("Please enter a valid email address")
-    .max(255, "Email must be less than 255 characters"),
-  mobile: z.string()
-    .trim()
-    .min(10, "Mobile number must be at least 10 digits")
-    .max(16, "Mobile number is too long"),
-  pin: z.string()
-    .length(4, "PIN must be exactly 4 digits")
-    .regex(/^\d{4}$/, "PIN must contain only numbers"),
+  fullName: z.string().trim().min(2, "Name must be at least 2 characters").max(100, "Name must be less than 100 characters").regex(/^[a-zA-Z\s'-]+$/, "Name can only contain letters, spaces, hyphens and apostrophes"),
+  email: z.string().trim().email("Please enter a valid email address").max(255, "Email must be less than 255 characters"),
+  mobile: z.string().trim().min(10, "Mobile number must be at least 10 digits").max(16, "Mobile number is too long"),
+  pin: z.string().length(4, "PIN must be exactly 4 digits").regex(/^\d{4}$/, "PIN must contain only numbers")
 });
-
 export default function Register() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
@@ -53,15 +40,14 @@ export default function Register() {
   };
   const handleSendOTP = async () => {
     const pinCode = pin.join("");
-    
+
     // Zod validation for all inputs
     const validationResult = registrationSchema.safeParse({
       fullName: formData.fullName,
       email: formData.email,
       mobile: formData.mobile,
-      pin: pinCode,
+      pin: pinCode
     });
-
     if (!validationResult.success) {
       const firstError = validationResult.error.errors[0];
       toast.error(firstError.message);
@@ -72,7 +58,6 @@ export default function Register() {
     const mobileNumber = formData.mobile.trim();
     const e164Pattern = /^\+[1-9]\d{9,14}$/;
     const plainPattern = /^\d{10}$/;
-    
     let formattedMobile = mobileNumber;
     if (e164Pattern.test(mobileNumber)) {
       formattedMobile = mobileNumber;
@@ -82,12 +67,10 @@ export default function Register() {
       toast.error("Please enter a valid mobile number (10 digits or +[country code][number])");
       return;
     }
-
     if (!formData.agreeToTerms) {
       toast.error("Please agree to the Terms & Conditions");
       return;
     }
-    
     setIsLoading(true);
     try {
       // Create password from PIN (you may want to add more complexity)
@@ -260,9 +243,7 @@ export default function Register() {
         </div>
 
         {/* WhatsApp FAB */}
-        <a href="https://wa.me/1234567890" target="_blank" rel="noopener noreferrer" className="fixed bottom-6 right-6 w-14 h-14 bg-[#25D366] rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform z-50">
-          <MessageCircle className="w-7 h-7 text-white" />
-        </a>
+        
       </div>
     </div>;
 }
