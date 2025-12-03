@@ -69,6 +69,9 @@ export default function ChangePin() {
     }
   };
 
+  // PIN prefix to meet Supabase 6-character minimum password requirement
+  const PIN_PREFIX = "pin_";
+
   // Save new PIN - updates both auth password and metadata for instant sync
   const handleSaveNewPin = async () => {
     if (newPin.length !== 4) {
@@ -82,9 +85,12 @@ export default function ChangePin() {
     
     setLoading(true);
     try {
+      // Pad PIN with prefix to meet Supabase 6+ character password requirement
+      const paddedPassword = PIN_PREFIX + newPin;
+      
       // Update the actual auth password so signInWithPassword works with new PIN
       const { error: passwordError } = await supabase.auth.updateUser({
-        password: newPin
+        password: paddedPassword
       });
       
       if (passwordError) throw passwordError;
