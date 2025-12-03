@@ -29,6 +29,8 @@ export default function UplineManager({
   const [tempImage, setTempImage] = useState<string>("");
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [processing, setProcessing] = useState(false);
+  const [processingProgress, setProcessingProgress] = useState(0);
+  const [processingText, setProcessingText] = useState('');
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>, index: number) => {
     const file = event.target.files?.[0];
@@ -59,10 +61,15 @@ export default function UplineManager({
 
   const handleRemoveBackground = async () => {
     setProcessing(true);
-    setShowBgRemover(false);
+    setProcessingProgress(0);
+    setProcessingText('Starting...');
+    
     try {
       const img = await loadImage(await fetch(tempImage).then(r => r.blob()));
-      const processedBlob = await removeBackground(img);
+      const processedBlob = await removeBackground(img, (stage, percent) => {
+        setProcessingProgress(percent);
+        setProcessingText(stage);
+      });
       const processedDataUrl = await new Promise<string>(resolve => {
         const reader = new FileReader();
         reader.onloadend = () => resolve(reader.result as string);
@@ -75,6 +82,8 @@ export default function UplineManager({
       await uploadAvatar(tempImage);
     } finally {
       setProcessing(false);
+      setProcessingProgress(0);
+      setProcessingText('');
     }
   };
 
@@ -127,38 +136,63 @@ export default function UplineManager({
   // Fill slots up to maxUplines
   const slots = Array(maxUplines).fill(null).map((_, i) => uplines[i] || null);
 
-  return <div className="space-y-4">
-    <div className="grid grid-cols-4 gap-4">
-      {slots.map((upline, index) => <div key={index} className="relative mx-[9px] px-0 my-0 py-0">
-        <div className="aspect-square rounded-full border-2 border-primary bg-card overflow-hidden flex items-center justify-center">
-          {upline?.avatar_url ? <img src={upline.avatar_url} alt={upline.name} className="w-full h-full object-cover" /> : <User className="w-12 h-12 text-primary" />}
-        </div>
-        
-        {upline?.avatar_url ? <button onClick={() => handleRemoveUpline(index)} className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
-          <X className="w-4 h-4 text-white" />
-        </button> : <label className="absolute -bottom-2 -right-2 w-8 h-8 bg-primary rounded-full flex items-center justify-center cursor-pointer hover:bg-primary/90 px-0 mx-0 my-0">
-          <Upload className="w-4 h-4 text-primary-foreground" />
-          <input type="file" accept="image/*" className="hidden" onChange={e => handleFileSelect(e, index)} />
-        </label>}
-      </div>)}
-    </div>
-
-    {showCrop && <ImageCropper image={tempImage} onCropComplete={handleCropComplete} onCancel={() => {
-      setShowCrop(false);
-      setTempImage("");
-      setEditingIndex(null);
-    }} />}
-
-    <BackgroundRemoverModal open={showBgRemover} onKeep={handleKeepBackground} onRemove={handleRemoveBackground} onClose={() => {
-      setShowBgRemover(false);
-      setTempImage("");
-      setEditingIndex(null);
-    }} />
-
-    {processing && <div className="fixed inset-0 bg-background/80 flex items-center justify-center z-50">
-      <div className="bg-card p-6 rounded-2xl border-2 border-primary">
-        <p className="text-foreground">Processing image...</p>
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-4 gap-4">
+        {slots.map((upline, index) => (
+          <div key={index} className="relative mx-[9px] px-0 my-0 py-0">
+            <div className="aspect-square rounded-full border-2 border-primary bg-card overflow-hidden flex items-center justify-center">
+              {upline?.avatar_url ? (
+                <img src={upline.avatar_url} alt={upline.name} className="w-full h-full object-cover" />
+              ) : (
+                <User className="w-12 h-12 text-primary" />
+              )}
+            </div>
+            
+            {upline?.avatar_url ? (
+              <button 
+                onClick={() => handleRemoveUpline(index)} 
+                className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center"
+              >
+                <X className="w-4 h-4 text-white" />
+              </button>
+            ) : (
+              <label className="absolute -bottom-2 -right-2 w-8 h-8 bg-primary rounded-full flex items-center justify-center cursor-pointer hover:bg-primary/90 px-0 mx-0 my-0">
+                <Upload className="w-4 h-4 text-primary-foreground" />
+                <input type="file" accept="image/*" className="hidden" onChange={e => handleFileSelect(e, index)} />
+              </label>
+            )}
+          </div>
+        ))}
       </div>
-    </div>}
-  </div>;
+
+      {showCrop && (
+        <ImageCropper 
+          image={tempImage} 
+          onCropComplete={handleCropComplete} 
+          onCancel={() => {
+            setShowCrop(false);
+            setTempImage("");
+            setEditingIndex(null);
+          }} 
+        />
+      )}
+
+      <BackgroundRemoverModal 
+        open={showBgRemover || processing} 
+        onKeep={handleKeepBackground} 
+        onRemove={handleRemoveBackground} 
+        onClose={() => {
+          if (!processing) {
+            setShowBgRemover(false);
+            setTempImage("");
+            setEditingIndex(null);
+          }
+        }}
+        isProcessing={processing}
+        progress={processingProgress}
+        progressText={processingText}
+      />
+    </div>
+  );
 }
