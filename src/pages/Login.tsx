@@ -40,6 +40,9 @@ export default function Login() {
       document.getElementById(`pin-${index - 1}`)?.focus();
     }
   };
+  // PIN prefix to meet Supabase 6-character minimum password requirement
+  const PIN_PREFIX = "pin_";
+
   const handleLogin = async () => {
     const pinString = pin.join("");
     
@@ -57,13 +60,16 @@ export default function Login() {
 
     setLoading(true);
     try {
-      // Sign in with email and PIN as password
+      // Pad PIN with prefix to match saved password format
+      const paddedPassword = PIN_PREFIX + pinString;
+      
+      // Sign in with email and padded PIN as password
       const {
         data,
         error
       } = await supabase.auth.signInWithPassword({
         email: emailOrMobile.trim(),
-        password: pinString
+        password: paddedPassword
       });
       if (error) {
         if (error.message.includes("Invalid login credentials")) {

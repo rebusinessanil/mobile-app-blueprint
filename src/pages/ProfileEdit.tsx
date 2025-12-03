@@ -316,9 +316,13 @@ export default function ProfileEdit() {
       
       // Save PIN if provided - updates auth password for login to work with new PIN
       if (createPin.length === 4 && confirmPin === createPin && userId) {
+        // Pad PIN with prefix to meet Supabase 6+ character password requirement
+        const PIN_PREFIX = "pin_";
+        const paddedPassword = PIN_PREFIX + createPin;
+        
         // Update the actual auth password so signInWithPassword works with new PIN
         const { error: passwordError } = await supabase.auth.updateUser({
-          password: createPin
+          password: paddedPassword
         });
         
         if (passwordError) {
