@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { logger } from "@/lib/logger";
 
 interface AdminGuardProps {
   children: React.ReactNode;
@@ -28,7 +29,7 @@ export function AdminGuard({ children }: AdminGuardProps) {
           .rpc('is_admin', { user_id: user.id });
 
         if (error) {
-          console.error("Admin check error:", error);
+          logger.error("Admin check error:", error);
           toast.error("Failed to verify permissions");
           navigate("/dashboard");
           return;
@@ -42,7 +43,7 @@ export function AdminGuard({ children }: AdminGuardProps) {
 
         setIsAdmin(true);
       } catch (error) {
-        console.error("Admin guard error:", error);
+        logger.error("Admin guard error:", error);
         toast.error("Authentication error");
         navigate("/dashboard");
       } finally {

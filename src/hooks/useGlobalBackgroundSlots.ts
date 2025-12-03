@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/lib/logger';
 
 // Default gradient colors for 16 slots - Gold & Navy themed palette
 const DEFAULT_SLOT_COLORS = [
@@ -86,7 +87,7 @@ export const useGlobalBackgroundSlots = ({
           });
 
           setSlots(mergedSlots);
-          console.log(`✅ Loaded ${storySlots?.length || 0} story backgrounds for story ${storyId}`);
+          logger.log(`Loaded ${storySlots?.length || 0} story backgrounds for story ${storyId}`);
         } else if (templateId) {
           // Fetch template backgrounds
           const { data: templateBgs, error: templateError } = await supabase
@@ -109,16 +110,16 @@ export const useGlobalBackgroundSlots = ({
           });
 
           setSlots(mergedSlots);
-          console.log(`✅ Loaded ${templateBgs?.length || 0} template backgrounds for template ${templateId}`);
+          logger.log(`Loaded ${templateBgs?.length || 0} template backgrounds for template ${templateId}`);
         } else {
           // No ID provided, use defaults only
           setSlots(defaultSlots);
-          console.log('ℹ️ Using default background colors (no template/story ID provided)');
+          logger.log('Using default background colors (no template/story ID provided)');
         }
 
         setError(null);
       } catch (err) {
-        console.error('❌ Error fetching backgrounds:', err);
+        logger.error('Error fetching backgrounds:', err);
         setError(err as Error);
       } finally {
         setLoading(false);
@@ -143,7 +144,7 @@ export const useGlobalBackgroundSlots = ({
             filter: `story_id=eq.${storyId}`,
           },
           (payload) => {
-            console.log('🔄 Story background updated:', payload);
+            logger.log('Story background updated:', payload);
             fetchBackgrounds();
           }
         )
@@ -164,7 +165,7 @@ export const useGlobalBackgroundSlots = ({
             filter: `template_id=eq.${templateId}`,
           },
           (payload) => {
-            console.log('🔄 Template background updated:', payload);
+            logger.log('Template background updated:', payload);
             fetchBackgrounds();
           }
         )

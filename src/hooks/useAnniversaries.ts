@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/lib/logger';
 
 export interface Anniversary {
   id: string;
@@ -35,7 +36,7 @@ export const useAnniversaries = () => {
         setError(null);
       } catch (err) {
         setError(err as Error);
-        console.error('Error fetching anniversaries:', err);
+        logger.error('Error fetching anniversaries:', err);
       } finally {
         setLoading(false);
       }
@@ -54,7 +55,7 @@ export const useAnniversaries = () => {
           table: 'Anniversary',
         },
         (payload) => {
-          console.log('Anniversary changed:', payload);
+          logger.log('Anniversary changed:', payload);
           fetchAnniversaries();
         }
       )
@@ -94,7 +95,7 @@ export const useAnniversary = (anniversaryId?: string) => {
         setError(null);
       } catch (err) {
         setError(err as Error);
-        console.error('Error fetching anniversary:', err);
+        logger.error('Error fetching anniversary:', err);
       } finally {
         setLoading(false);
       }
@@ -114,7 +115,7 @@ export const useAnniversary = (anniversaryId?: string) => {
           filter: `id=eq.${anniversaryId}`,
         },
         (payload) => {
-          console.log('Anniversary changed:', payload);
+          logger.log('Anniversary changed:', payload);
           fetchAnniversary();
         }
       )

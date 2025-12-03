@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { logger } from "@/lib/logger";
 
 interface StickerTransform {
   position_x: number;
@@ -27,7 +28,7 @@ export const useStickerTransform = (stickerId: string, rankId: string, categoryI
 
       if (error) throw error;
     } catch (error) {
-      console.error("Error updating sticker transform:", error);
+      logger.error("Error updating sticker transform:", error);
       toast.error("Failed to update sticker position");
     } finally {
       setIsSaving(false);

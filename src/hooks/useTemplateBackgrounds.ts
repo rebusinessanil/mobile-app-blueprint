@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/lib/logger';
 
 export interface TemplateBackground {
   id: string;
@@ -23,7 +24,7 @@ export const useTemplateBackgrounds = (templateId?: string) => {
 
         // CRITICAL: If no templateId, return empty array to prevent cross-contamination
         if (!templateId) {
-          console.warn('⚠️ useTemplateBackgrounds called without templateId - returning empty array to prevent cross-contamination');
+          logger.warn('useTemplateBackgrounds called without templateId - returning empty array to prevent cross-contamination');
           setBackgrounds([]);
           setError(null);
           setLoading(false);
@@ -40,13 +41,13 @@ export const useTemplateBackgrounds = (templateId?: string) => {
 
         if (error) throw error;
 
-        console.log(`✅ Fetched ${data?.length || 0} backgrounds for template ${templateId}`);
+        logger.log(`Fetched ${data?.length || 0} backgrounds for template ${templateId}`);
         
         // Validate slot numbers are in valid range
         if (data && data.length > 0) {
           const invalidSlots = data.filter(bg => bg.slot_number < 1 || bg.slot_number > 16);
           if (invalidSlots.length > 0) {
-            console.error('❌ Invalid slot numbers detected:', invalidSlots.map(bg => bg.slot_number));
+            logger.error('Invalid slot numbers detected:', invalidSlots.map(bg => bg.slot_number));
           }
         }
 
@@ -54,7 +55,7 @@ export const useTemplateBackgrounds = (templateId?: string) => {
         setError(null);
       } catch (err) {
         setError(err as Error);
-        console.error('❌ Error fetching backgrounds:', err);
+        logger.error('Error fetching backgrounds:', err);
       } finally {
         setLoading(false);
       }
@@ -74,7 +75,7 @@ export const useTemplateBackgrounds = (templateId?: string) => {
           filter: templateId ? `template_id=eq.${templateId}` : undefined,
         },
         (payload) => {
-          console.log('Background changed:', payload);
+          logger.log('Background changed:', payload);
           fetchBackgrounds();
         }
       )

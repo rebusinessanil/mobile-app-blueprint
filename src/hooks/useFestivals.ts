@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/lib/logger';
 
 export interface Festival {
   id: string;
@@ -31,7 +32,7 @@ export const useFestivals = () => {
       setError(null);
     } catch (err) {
       setError(err as Error);
-      console.error('Error fetching festivals:', err);
+      logger.error('Error fetching festivals:', err);
     } finally {
       setLoading(false);
     }
@@ -51,7 +52,7 @@ export const useFestivals = () => {
           table: 'stories_festivals',
         },
         (payload) => {
-          console.log('📡 Festival update received:', payload);
+          logger.log('Festival update received:', payload);
           fetchFestivals();
         }
       )
@@ -91,7 +92,7 @@ export const useFestival = (festivalId?: string) => {
         setError(null);
       } catch (err) {
         setError(err as Error);
-        console.error('Error fetching festival:', err);
+        logger.error('Error fetching festival:', err);
       } finally {
         setLoading(false);
       }
@@ -111,7 +112,7 @@ export const useFestival = (festivalId?: string) => {
           filter: `id=eq.${festivalId}`,
         },
         (payload) => {
-          console.log('📡 Festival update received:', payload);
+          logger.log('Festival update received:', payload);
           fetchFestival();
         }
       )

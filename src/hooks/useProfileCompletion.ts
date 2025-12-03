@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/lib/logger';
 
 export interface ProfileCompletionStatus {
   isComplete: boolean;
@@ -97,7 +98,7 @@ export const useProfileCompletion = (userId?: string) => {
           loading: false,
         });
       } catch (error) {
-        console.error('Error checking profile completion:', error);
+        logger.error('Error checking profile completion:', error);
         setStatus(prev => ({ ...prev, loading: false }));
       }
     };

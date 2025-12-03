@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/lib/logger';
 
 export interface Birthday {
   id: string;
@@ -35,7 +36,7 @@ export const useBirthdays = () => {
         setError(null);
       } catch (err) {
         setError(err as Error);
-        console.error('Error fetching birthdays:', err);
+        logger.error('Error fetching birthdays:', err);
       } finally {
         setLoading(false);
       }
@@ -54,7 +55,7 @@ export const useBirthdays = () => {
           table: 'Birthday',
         },
         (payload) => {
-          console.log('Birthday changed:', payload);
+          logger.log('Birthday changed:', payload);
           fetchBirthdays();
         }
       )
@@ -94,7 +95,7 @@ export const useBirthday = (birthdayId?: string) => {
         setError(null);
       } catch (err) {
         setError(err as Error);
-        console.error('Error fetching birthday:', err);
+        logger.error('Error fetching birthday:', err);
       } finally {
         setLoading(false);
       }
@@ -114,7 +115,7 @@ export const useBirthday = (birthdayId?: string) => {
           filter: `id=eq.${birthdayId}`,
         },
         (payload) => {
-          console.log('Birthday changed:', payload);
+          logger.log('Birthday changed:', payload);
           fetchBirthday();
         }
       )
