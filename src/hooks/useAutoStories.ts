@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { logger } from "@/lib/logger";
 
 export interface GeneratedStory {
   id: string;
@@ -49,7 +50,7 @@ export const useGeneratedStories = () => {
       if (error) throw error;
       setStories((data as GeneratedStory[]) || []);
     } catch (error) {
-      console.error("Error fetching generated stories:", error);
+      logger.error("Error fetching generated stories:", error);
     } finally {
       setLoading(false);
     }
@@ -95,7 +96,7 @@ export const useStoriesEvents = () => {
       if (error) throw error;
       setEvents((data as StoriesEvent[]) || []);
     } catch (error) {
-      console.error("Error fetching stories events:", error);
+      logger.error("Error fetching stories events:", error);
     } finally {
       setLoading(false);
     }
@@ -142,7 +143,7 @@ export const useStoriesFestivals = () => {
       if (error) throw error;
       setFestivals((data as StoriesFestival[]) || []);
     } catch (error) {
-      console.error("Error fetching stories festivals:", error);
+      logger.error("Error fetching stories festivals:", error);
     } finally {
       setLoading(false);
     }

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { logger } from "@/lib/logger";
 
 export interface StoryBackgroundSlot {
   id: string;
@@ -37,7 +38,7 @@ export const useStoryBackgroundSlots = (storyId?: string) => {
       setError(null);
     } catch (err) {
       setError(err as Error);
-      console.error("Error fetching story background slots:", err);
+      logger.error("Error fetching story background slots:", err);
     } finally {
       setLoading(false);
     }
@@ -59,7 +60,7 @@ export const useStoryBackgroundSlots = (storyId?: string) => {
           filter: `story_id=eq.${storyId}`,
         },
         () => {
-          console.log("📡 Story background slot update received");
+          logger.log("Story background slot update received");
           fetchSlots();
         }
       )
@@ -133,7 +134,7 @@ export const uploadStoryBackgroundSlot = async (
 
     return { id: data.id, url: urlData.publicUrl, error: null };
   } catch (err) {
-    console.error("Error uploading story background slot:", err);
+    logger.error("Error uploading story background slot:", err);
     return { id: null, url: null, error: err as Error };
   }
 };
@@ -150,7 +151,7 @@ export const removeStoryBackgroundSlot = async (
     if (deleteError) throw deleteError;
     return { error: null };
   } catch (err) {
-    console.error("Error removing story background slot:", err);
+    logger.error("Error removing story background slot:", err);
     return { error: err as Error };
   }
 };
@@ -168,7 +169,7 @@ export const toggleStoryBackgroundSlotActive = async (
     if (updateError) throw updateError;
     return { error: null };
   } catch (err) {
-    console.error("Error toggling story background slot:", err);
+    logger.error("Error toggling story background slot:", err);
     return { error: err as Error };
   }
 };

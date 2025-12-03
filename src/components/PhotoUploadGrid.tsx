@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import ImageCropper from "./ImageCropper";
 import BackgroundRemoverModal from "./BackgroundRemoverModal";
 import { removeBackground, loadImage } from "@/lib/backgroundRemover";
+import { logger } from "@/lib/logger";
 
 interface PhotoUploadGridProps {
   photos: string[];
@@ -109,7 +110,7 @@ export default function PhotoUploadGrid({ photos, onPhotosChange, maxPhotos = 5,
       };
       reader.readAsDataURL(processedBlob);
     } catch (error) {
-      console.error("Background removal error:", error);
+      logger.error("Background removal error:", error);
       toast.error("Image processing failed. Try another photo.");
       setIsProcessing(false);
       setBgRemovalModalOpen(false);

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { logger } from "@/lib/logger";
 import type { User } from "@supabase/supabase-js";
 
 interface AuthGuardProps {
@@ -50,7 +51,7 @@ export default function AuthGuard({ children }: AuthGuardProps) {
         .maybeSingle();
 
       if (error) {
-        console.error('Error checking profile:', error);
+        logger.error('Error checking profile:', error);
         setCheckingProfile(false);
         return;
       }
@@ -66,7 +67,7 @@ export default function AuthGuard({ children }: AuthGuardProps) {
           });
 
         if (insertError) {
-          console.error('Error creating profile:', insertError);
+          logger.error('Error creating profile:', insertError);
           navigate("/profile-setup", { replace: true });
           return;
         }

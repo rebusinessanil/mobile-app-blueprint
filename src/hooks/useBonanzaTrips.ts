@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/lib/logger';
 
 export interface BonanzaTrip {
   id: string;
@@ -33,7 +34,7 @@ export const useBonanzaTrips = () => {
       setError(null);
     } catch (err) {
       setError(err as Error);
-      console.error('Error fetching bonanza trips:', err);
+      logger.error('Error fetching bonanza trips:', err);
     } finally {
       setLoading(false);
     }
@@ -53,7 +54,7 @@ export const useBonanzaTrips = () => {
           table: 'bonanza_trips',
         },
         (payload) => {
-          console.log('📡 Bonanza trip update received:', payload);
+          logger.log('Bonanza trip update received:', payload);
           fetchTrips();
         }
       )
@@ -93,7 +94,7 @@ export const useBonanzaTrip = (tripId?: string) => {
         setError(null);
       } catch (err) {
         setError(err as Error);
-        console.error('Error fetching bonanza trip:', err);
+        logger.error('Error fetching bonanza trip:', err);
       } finally {
         setLoading(false);
       }
@@ -113,7 +114,7 @@ export const useBonanzaTrip = (tripId?: string) => {
           filter: `id=eq.${tripId}`,
         },
         (payload) => {
-          console.log('📡 Bonanza trip update received:', payload);
+          logger.log('Bonanza trip update received:', payload);
           fetchTrip();
         }
       )

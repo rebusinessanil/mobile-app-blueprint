@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { logger } from '@/lib/logger';
 
 interface PhotoPosition {
   x: number;
@@ -31,7 +32,7 @@ export const useBannerImageProcessor = () => {
     setIsProcessing(true);
     
     try {
-      console.log('Calling backend image processor with Sharp...');
+      logger.log('Calling backend image processor with Sharp...');
       
       const { data, error } = await supabase.functions.invoke('process-banner-image', {
         body: {
@@ -44,7 +45,7 @@ export const useBannerImageProcessor = () => {
       });
 
       if (error) {
-        console.error('Edge function error:', error);
+        logger.error('Edge function error:', error);
         throw new Error(error.message || 'Failed to process image');
       }
 
@@ -52,14 +53,14 @@ export const useBannerImageProcessor = () => {
         throw new Error('Image processing failed');
       }
 
-      console.log('Banner processed successfully with sharp edges:', data.imageUrl);
+      logger.log('Banner processed successfully with sharp edges:', data.imageUrl);
       setProcessedImageUrl(data.imageUrl);
       
       toast.success('Banner processed with clean, sharp edges');
       return data.imageUrl;
 
     } catch (error) {
-      console.error('Error processing banner image:', error);
+      logger.error('Error processing banner image:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to process image';
       toast.error(errorMessage);
       return null;

@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { logger } from '@/lib/logger';
 
 interface RealtimeStickerSyncOptions {
   categoryId?: string;
@@ -16,7 +17,7 @@ export const useRealtimeStickerSync = ({
   useEffect(() => {
     if (!categoryId || !rankId) return;
 
-    console.log('Setting up real-time sync for:', { categoryId, rankId });
+    logger.log('Setting up real-time sync for:', { categoryId, rankId });
 
     const channel = supabase
       .channel(`stickers-${categoryId}-${rankId}`)
@@ -29,7 +30,7 @@ export const useRealtimeStickerSync = ({
           filter: `category_id=eq.${categoryId}`,
         },
         (payload) => {
-          console.log('Real-time sticker update:', payload);
+          logger.log('Real-time sticker update:', payload);
           
           // Only trigger update if the change is for the current rank
           if (payload.new && (payload.new as any).rank_id === rankId) {
@@ -41,11 +42,11 @@ export const useRealtimeStickerSync = ({
         }
       )
       .subscribe((status) => {
-        console.log('Real-time subscription status:', status);
+        logger.log('Real-time subscription status:', status);
       });
 
     return () => {
-      console.log('Cleaning up real-time subscription');
+      logger.log('Cleaning up real-time subscription');
       supabase.removeChannel(channel);
     };
   }, [categoryId, rankId, onUpdate]);
