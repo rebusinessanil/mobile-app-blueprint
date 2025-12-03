@@ -520,6 +520,7 @@ export type Database = {
           id: string
           mobile: string
           name: string
+          profile_completed: boolean | null
           profile_completion_bonus_given: boolean | null
           profile_photo: string | null
           rank: string | null
@@ -537,6 +538,7 @@ export type Database = {
           id?: string
           mobile: string
           name: string
+          profile_completed?: boolean | null
           profile_completion_bonus_given?: boolean | null
           profile_photo?: string | null
           rank?: string | null
@@ -554,6 +556,7 @@ export type Database = {
           id?: string
           mobile?: string
           name?: string
+          profile_completed?: boolean | null
           profile_completion_bonus_given?: boolean | null
           profile_photo?: string | null
           rank?: string | null
