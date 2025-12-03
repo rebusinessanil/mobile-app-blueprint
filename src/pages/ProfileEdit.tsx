@@ -222,7 +222,7 @@ export default function ProfileEdit() {
         user_id: userId,
         amount: 199,
         transaction_type: 'admin_credit',
-        description: 'Profile Completion Bonus - 199 Credits FREE!'
+        description: 'Welcome Bonus Credited (199 Credits)'
       });
 
       // Mark bonus as given
