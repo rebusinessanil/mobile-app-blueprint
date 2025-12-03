@@ -69,7 +69,7 @@ export default function ChangePin() {
     }
   };
 
-  // Save new PIN
+  // Save new PIN - updates both auth password and metadata for instant sync
   const handleSaveNewPin = async () => {
     if (newPin.length !== 4) {
       toast.error("New PIN must be 4 digits");
@@ -82,12 +82,18 @@ export default function ChangePin() {
     
     setLoading(true);
     try {
-      const pinHash = btoa(newPin);
-      const { error } = await supabase.auth.updateUser({
-        data: { pin_hash: pinHash }
+      // Update the actual auth password so signInWithPassword works with new PIN
+      const { error: passwordError } = await supabase.auth.updateUser({
+        password: newPin
       });
       
-      if (error) throw error;
+      if (passwordError) throw passwordError;
+      
+      // Also store PIN hash in metadata for reference/verification
+      const pinHash = btoa(newPin);
+      await supabase.auth.updateUser({
+        data: { pin_hash: pinHash }
+      });
       
       toast.success("PIN updated successfully!");
       navigate("/profile");

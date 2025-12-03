@@ -314,13 +314,25 @@ export default function ProfileEdit() {
         return;
       }
       
-      // Save PIN if provided (hash it before saving)
+      // Save PIN if provided - updates auth password for login to work with new PIN
       if (createPin.length === 4 && confirmPin === createPin && userId) {
-        // Use simple hash for PIN (in production, use bcrypt on server-side)
-        const pinHash = btoa(createPin); // Base64 encoding as simple obfuscation
+        // Update the actual auth password so signInWithPassword works with new PIN
+        const { error: passwordError } = await supabase.auth.updateUser({
+          password: createPin
+        });
+        
+        if (passwordError) {
+          console.error("Error updating PIN password:", passwordError);
+          toast.error("Failed to update PIN. Please try again.");
+          return;
+        }
+        
+        // Also store PIN hash in metadata for reference/verification
+        const pinHash = btoa(createPin);
         await supabase.auth.updateUser({
           data: { pin_hash: pinHash }
         });
+        
         // Clear PIN fields after successful save
         setCreatePin("");
         setConfirmPin("");
