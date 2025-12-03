@@ -23,6 +23,8 @@ export default function PhotoUploadGrid({ photos, onPhotosChange, maxPhotos = 5,
   const [croppedImage, setCroppedImage] = useState<string>("");
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [processingProgress, setProcessingProgress] = useState(0);
+  const [processingText, setProcessingText] = useState('');
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (photos.length >= maxPhotos) {
@@ -75,6 +77,9 @@ export default function PhotoUploadGrid({ photos, onPhotosChange, maxPhotos = 5,
 
   const handleRemoveBackground = async () => {
     setIsProcessing(true);
+    setProcessingProgress(0);
+    setProcessingText('Starting...');
+    
     try {
       // Convert base64 to blob
       const response = await fetch(croppedImage);
@@ -83,8 +88,11 @@ export default function PhotoUploadGrid({ photos, onPhotosChange, maxPhotos = 5,
       // Load image
       const img = await loadImage(blob);
       
-      // Remove background
-      const processedBlob = await removeBackground(img);
+      // Remove background with progress callback
+      const processedBlob = await removeBackground(img, (stage, percent) => {
+        setProcessingProgress(percent);
+        setProcessingText(stage);
+      });
       
       // Convert back to base64
       const reader = new FileReader();
@@ -106,6 +114,8 @@ export default function PhotoUploadGrid({ photos, onPhotosChange, maxPhotos = 5,
         setSelectedImage(null);
         setEditingIndex(null);
         setIsProcessing(false);
+        setProcessingProgress(0);
+        setProcessingText('');
         toast.success("Background removed successfully!");
       };
       reader.readAsDataURL(processedBlob);
@@ -113,6 +123,8 @@ export default function PhotoUploadGrid({ photos, onPhotosChange, maxPhotos = 5,
       logger.error("Background removal error:", error);
       toast.error("Image processing failed. Try another photo.");
       setIsProcessing(false);
+      setProcessingProgress(0);
+      setProcessingText('');
       setBgRemovalModalOpen(false);
       setCroppedImage("");
       setSelectedImage(null);
@@ -227,15 +239,10 @@ export default function PhotoUploadGrid({ photos, onPhotosChange, maxPhotos = 5,
         onKeep={handleKeepOriginal}
         onRemove={handleRemoveBackground}
         onClose={handleCancelBgRemoval}
+        isProcessing={isProcessing}
+        progress={processingProgress}
+        progressText={processingText}
       />
-
-      {isProcessing && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-card p-6 rounded-xl border-2 border-primary">
-            <p className="text-foreground">Processing image...</p>
-          </div>
-        </div>
-      )}
     </>
   );
 }
