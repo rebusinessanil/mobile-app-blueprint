@@ -290,12 +290,20 @@ export default function ProfileEdit() {
     setLoading(true);
     try {
       const finalRole = formData.role === "custom" ? customRole.trim() : formData.role;
+      // Format mobile number with country code if not present
+      const formattedMobile = formData.mobile ? 
+        (formData.mobile.startsWith('+') ? formData.mobile : `+91${formData.mobile.replace(/\D/g, '')}`) : 
+        '+000000000000';
+      const formattedWhatsapp = formData.whatsapp ? 
+        (formData.whatsapp.startsWith('+') ? formData.whatsapp : `+91${formData.whatsapp.replace(/\D/g, '')}`) : 
+        null;
+      
       const {
         error
       } = await updateProfile({
         name: formData.name.trim(),
-        mobile: formData.mobile || null,
-        whatsapp: formData.whatsapp || null,
+        mobile: formattedMobile,
+        whatsapp: formattedWhatsapp,
         role: finalRole,
         rank: finalRole,
         profile_photo: photos[0]
@@ -413,7 +421,19 @@ export default function ProfileEdit() {
           </div>
 
           {/* WhatsApp Number */}
-          
+          <div className="space-y-2">
+            <label className="text-sm text-foreground">WhatsApp Number</label>
+            <Input 
+              type="tel" 
+              value={formData.whatsapp} 
+              onChange={e => setFormData({
+                ...formData,
+                whatsapp: e.target.value
+              })} 
+              className="gold-border bg-secondary text-foreground h-12 border-b-2 border-t-0 border-x-0 rounded-none" 
+              placeholder="10 Digit WhatsApp Number" 
+            />
+          </div>
 
           {/* Role */}
           <div className="space-y-2">
