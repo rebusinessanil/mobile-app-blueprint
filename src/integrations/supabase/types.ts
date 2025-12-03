@@ -527,6 +527,7 @@ export type Database = {
           signup_method: string | null
           updated_at: string | null
           user_id: string
+          welcome_popup_seen: boolean | null
           whatsapp: string | null
         }
         Insert: {
@@ -543,6 +544,7 @@ export type Database = {
           signup_method?: string | null
           updated_at?: string | null
           user_id: string
+          welcome_popup_seen?: boolean | null
           whatsapp?: string | null
         }
         Update: {
@@ -559,6 +561,7 @@ export type Database = {
           signup_method?: string | null
           updated_at?: string | null
           user_id?: string
+          welcome_popup_seen?: boolean | null
           whatsapp?: string | null
         }
         Relationships: []

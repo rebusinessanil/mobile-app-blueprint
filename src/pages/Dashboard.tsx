@@ -19,6 +19,8 @@ import { useQuery } from "@tanstack/react-query";
 import ProfileCompletionGate from "@/components/ProfileCompletionGate";
 import StoriesSection from "@/components/dashboard/StoriesSection";
 import BannerCard from "@/components/dashboard/BannerCard";
+import WelcomeBonusModal from "@/components/WelcomeBonusModal";
+import { useWelcomeBonus } from "@/hooks/useWelcomeBonus";
 
 export default function Dashboard() {
   const {
@@ -76,6 +78,9 @@ export default function Dashboard() {
     profile
   } = useProfile(userId ?? undefined);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  
+  // Welcome bonus modal
+  const { showWelcomeModal, bonusAmount, handleContinue } = useWelcomeBonus();
 
   // Check if all data is loaded
   const isDataLoading = categoriesLoading || templatesLoading || ranksLoading || 
@@ -380,6 +385,12 @@ export default function Dashboard() {
 
         <BottomNav />
       </div>
+      {/* Welcome Bonus Modal */}
+      <WelcomeBonusModal
+        open={showWelcomeModal}
+        bonusAmount={bonusAmount}
+        onContinue={handleContinue}
+      />
     </ProfileCompletionGate>
   );
 }
