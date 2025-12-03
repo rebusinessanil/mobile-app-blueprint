@@ -47,7 +47,6 @@ export default function ProfileEdit() {
     title: "mr",
     name: "",
     mobile: "",
-    whatsapp: "",
     role: "royal-ambassador",
     language: "eng",
     gender: "male",
@@ -69,11 +68,12 @@ export default function ProfileEdit() {
     if (profile) {
       const predefinedRoles = ["bronze", "silver", "gold", "platinum", "emerald", "topaz", "ruby-star", "sapphire", "star-sapphire", "diamond", "blue-diamond", "black-diamond", "royal-diamond", "crown-diamond", "ambassador", "royal-ambassador", "crown-ambassador", "brand-ambassador"];
       const isCustomRole = profile.role && !predefinedRoles.includes(profile.role);
+      // Extract 10-digit mobile from stored format (e.g., +919876543210 -> 9876543210)
+      const extractedMobile = profile.mobile ? profile.mobile.replace(/^\+91/, '').replace(/\D/g, '').slice(-10) : '';
       setFormData({
         title: "mr",
         name: profile.name || "",
-        mobile: profile.mobile || "",
-        whatsapp: profile.whatsapp || "",
+        mobile: extractedMobile,
         role: isCustomRole ? "custom" : profile.role || "royal-ambassador",
         language: "eng",
         gender: "male",
@@ -174,10 +174,9 @@ export default function ProfileEdit() {
   const isProfileComplete = () => {
     const hasName = formData.name.trim() !== '' && formData.name !== 'User';
     const hasMobile = formData.mobile && /^\d{10}$/.test(formData.mobile.replace(/\D/g, ''));
-    const hasWhatsapp = formData.whatsapp && /^\d{10}$/.test(formData.whatsapp.replace(/\D/g, ''));
     const hasRole = formData.role && formData.role.trim() !== '';
     const hasPhotos = photos.length > 0;
-    return hasName && hasMobile && hasWhatsapp && hasRole && hasPhotos;
+    return hasName && hasMobile && hasRole && hasPhotos;
   };
 
   // Check if profile completion bonus should be shown
@@ -265,10 +264,6 @@ export default function ProfileEdit() {
       toast.error("Please enter a valid 10-digit mobile number");
       return;
     }
-    if (!formData.whatsapp || !/^\d{10}$/.test(formData.whatsapp.replace(/\D/g, ''))) {
-      toast.error("Please enter a valid 10-digit WhatsApp number");
-      return;
-    }
     if (formData.role === "custom" && !customRole.trim()) {
       toast.error("Please enter a custom role name");
       return;
@@ -290,20 +285,15 @@ export default function ProfileEdit() {
     setLoading(true);
     try {
       const finalRole = formData.role === "custom" ? customRole.trim() : formData.role;
-      // Format mobile number with country code if not present
-      const formattedMobile = formData.mobile ? 
-        (formData.mobile.startsWith('+') ? formData.mobile : `+91${formData.mobile.replace(/\D/g, '')}`) : 
-        '+000000000000';
-      const formattedWhatsapp = formData.whatsapp ? 
-        (formData.whatsapp.startsWith('+') ? formData.whatsapp : `+91${formData.whatsapp.replace(/\D/g, '')}`) : 
-        null;
+      // Format mobile number with country code
+      const formattedMobile = `+91${formData.mobile.replace(/\D/g, '')}`;
       
       const {
         error
       } = await updateProfile({
         name: formData.name.trim(),
         mobile: formattedMobile,
-        whatsapp: formattedWhatsapp,
+        whatsapp: null,
         role: finalRole,
         rank: finalRole,
         profile_photo: photos[0]
@@ -433,22 +423,7 @@ export default function ProfileEdit() {
             <Input type="tel" value={formData.mobile} onChange={e => setFormData({
               ...formData,
               mobile: e.target.value
-            })} className="gold-border bg-secondary text-foreground h-12 border-b-2 border-t-0 border-x-0 rounded-none" placeholder="10 Digit Mobile Number" />
-          </div>
-
-          {/* WhatsApp Number */}
-          <div className="space-y-2">
-            <label className="text-sm text-foreground">WhatsApp Number</label>
-            <Input 
-              type="tel" 
-              value={formData.whatsapp} 
-              onChange={e => setFormData({
-                ...formData,
-                whatsapp: e.target.value
-              })} 
-              className="gold-border bg-secondary text-foreground h-12 border-b-2 border-t-0 border-x-0 rounded-none" 
-              placeholder="10 Digit WhatsApp Number" 
-            />
+            })} className="gold-border bg-secondary text-foreground h-12 border-b-2 border-t-0 border-x-0 rounded-none" placeholder="Enter mobile number" />
           </div>
 
           {/* Role */}
