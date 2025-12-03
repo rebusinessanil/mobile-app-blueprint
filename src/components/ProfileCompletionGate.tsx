@@ -13,6 +13,17 @@ const getProfileCompletedStatus = (): boolean => {
   }
 };
 
+// Set profile completed status in localStorage
+const setProfileCompletedStatus = (completed: boolean): void => {
+  try {
+    if (completed) {
+      localStorage.setItem(PROFILE_COMPLETED_KEY, "true");
+    } else {
+      localStorage.removeItem(PROFILE_COMPLETED_KEY);
+    }
+  } catch {}
+};
+
 interface ProfileCompletionGateProps {
   userId: string | null;
   children: React.ReactNode;
@@ -30,12 +41,20 @@ export default function ProfileCompletionGate({
   
   const {
     isComplete,
-    loading
+    loading,
+    isOldUser
   } = useProfileCompletion(userId || undefined);
+
+  // Auto-set localStorage when profile is complete or user is old user
+  useEffect(() => {
+    if (!loading && (isComplete || isOldUser)) {
+      setProfileCompletedStatus(true);
+    }
+  }, [isComplete, loading, isOldUser]);
 
   // Prevent back navigation when profile is incomplete
   useEffect(() => {
-    if (profileAlreadyCompleted || loading) return;
+    if (profileAlreadyCompleted || loading || isOldUser) return;
     
     if (!isComplete && location.pathname !== "/profile-edit") {
       // Push state to prevent back navigation
@@ -50,27 +69,20 @@ export default function ProfileCompletionGate({
       window.addEventListener("popstate", handlePopState);
       return () => window.removeEventListener("popstate", handlePopState);
     }
-  }, [isComplete, loading, profileAlreadyCompleted, location.pathname, navigate]);
+  }, [isComplete, loading, profileAlreadyCompleted, isOldUser, location.pathname, navigate]);
 
-  // Redirect to profile-edit if profile is incomplete
+  // Redirect to profile-edit if profile is incomplete (NEW users only)
   useEffect(() => {
-    if (profileAlreadyCompleted) return;
+    if (profileAlreadyCompleted || isOldUser) return;
     if (loading) return;
     
     if (!isComplete && location.pathname !== "/profile-edit") {
       navigate("/profile-edit", { replace: true });
     }
-    
-    // Mark as completed when profile is complete
-    if (isComplete) {
-      try {
-        localStorage.setItem(PROFILE_COMPLETED_KEY, "true");
-      } catch {}
-    }
-  }, [isComplete, loading, profileAlreadyCompleted, location.pathname, navigate]);
+  }, [isComplete, loading, profileAlreadyCompleted, isOldUser, location.pathname, navigate]);
 
-  // If profile already completed in localStorage, show children immediately
-  if (profileAlreadyCompleted) {
+  // If profile already completed in localStorage OR is old user, show children immediately
+  if (profileAlreadyCompleted || isOldUser) {
     return <>{children}</>;
   }
 
@@ -88,15 +100,16 @@ export default function ProfileCompletionGate({
     return <>{children}</>;
   }
 
-  // Profile incomplete and not on profile-edit - will redirect via useEffect
-  // Show blank screen during redirect
-  if (!isComplete) {
-    return (
-      <div className="min-h-screen bg-background">
-        {/* Redirecting to profile-edit */}
-      </div>
-    );
+  // If profile is complete, show children
+  if (isComplete) {
+    return <>{children}</>;
   }
 
-  return <>{children}</>;
+  // Profile incomplete and not on profile-edit - will redirect via useEffect
+  // Show blank screen during redirect
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Redirecting to profile-edit */}
+    </div>
+  );
 }

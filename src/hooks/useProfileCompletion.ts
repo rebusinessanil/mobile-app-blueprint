@@ -2,11 +2,15 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { logger } from '@/lib/logger';
 
+// Update release date - users created before this are considered "old users"
+const UPDATE_RELEASE_DATE = new Date('2024-12-01T00:00:00Z');
+
 export interface ProfileCompletionStatus {
   isComplete: boolean;
   missingFields: string[];
   completionPercentage: number;
   loading: boolean;
+  isOldUser: boolean;
 }
 
 export const useProfileCompletion = (userId?: string) => {
@@ -15,6 +19,7 @@ export const useProfileCompletion = (userId?: string) => {
     missingFields: [],
     completionPercentage: 0,
     loading: true,
+    isOldUser: false,
   });
 
   useEffect(() => {
@@ -32,13 +37,27 @@ export const useProfileCompletion = (userId?: string) => {
           .eq('user_id', userId)
           .maybeSingle();
 
-        // If profile_completion_bonus_given is true, profile is permanently complete
+        // Check if this is an OLD user
+        const profileCreatedAt = profile?.created_at ? new Date(profile.created_at) : null;
+        const isOldUser = profileCreatedAt ? profileCreatedAt < UPDATE_RELEASE_DATE : false;
+
+        // OLD USER with profile_completion_bonus_given = true → always complete
+        // OR OLD USER (created before update) with complete profile → always complete
         if (profile?.profile_completion_bonus_given === true) {
+          // Also ensure welcome_popup_seen is set for old users
+          if (isOldUser && !profile.welcome_popup_seen) {
+            await supabase
+              .from('profiles')
+              .update({ welcome_popup_seen: true })
+              .eq('user_id', userId);
+          }
+          
           setStatus({
             isComplete: true,
             missingFields: [],
             completionPercentage: 100,
             loading: false,
+            isOldUser,
           });
           return;
         }
@@ -51,7 +70,7 @@ export const useProfileCompletion = (userId?: string) => {
 
         const missingFields: string[] = [];
         let completedFields = 0;
-        const totalFields = 4; // name, mobile, role, profile_photo (WhatsApp removed)
+        const totalFields = 4; // name, mobile, role, profile_photo
 
         // Check name
         if (!profile?.name || profile.name.trim() === '' || profile.name === 'User') {
@@ -83,13 +102,38 @@ export const useProfileCompletion = (userId?: string) => {
         }
 
         const completionPercentage = Math.round((completedFields / totalFields) * 100);
-        const isComplete = missingFields.length === 0;
+        const fieldsComplete = missingFields.length === 0;
+
+        // For OLD users with 100% complete profile, auto-grant access
+        // and set welcome_popup_seen to true
+        if (isOldUser && fieldsComplete) {
+          logger.log('Old user with complete profile detected, granting full access');
+          
+          // Auto-set flags for old users
+          await supabase
+            .from('profiles')
+            .update({ 
+              profile_completion_bonus_given: true,
+              welcome_popup_seen: true 
+            })
+            .eq('user_id', userId);
+
+          setStatus({
+            isComplete: true,
+            missingFields: [],
+            completionPercentage: 100,
+            loading: false,
+            isOldUser: true,
+          });
+          return;
+        }
 
         setStatus({
-          isComplete,
+          isComplete: fieldsComplete,
           missingFields,
           completionPercentage,
           loading: false,
+          isOldUser,
         });
       } catch (error) {
         logger.error('Error checking profile completion:', error);

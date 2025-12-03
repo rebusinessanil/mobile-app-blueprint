@@ -5,6 +5,9 @@ import { logger } from '@/lib/logger';
 
 const WELCOME_BONUS_AMOUNT = 199;
 
+// Update release date - users created before this are considered "old users"
+const UPDATE_RELEASE_DATE = new Date('2024-12-01T00:00:00Z');
+
 export function useWelcomeBonus() {
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const [bonusAmount, setBonusAmount] = useState(WELCOME_BONUS_AMOUNT);
@@ -19,10 +22,10 @@ export function useWelcomeBonus() {
         return;
       }
 
-      // Check profile for welcome_popup_seen status
+      // Check profile for welcome_popup_seen status and profile_completion_bonus_given
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('welcome_popup_seen')
+        .select('welcome_popup_seen, profile_completion_bonus_given, created_at')
         .eq('user_id', user.id)
         .single();
 
@@ -38,7 +41,25 @@ export function useWelcomeBonus() {
         return;
       }
 
-      // Check if bonus was credited (balance should be >= 199 for new users)
+      // Check if this is an OLD user (created before update release date)
+      // OR if profile_completion_bonus_given is already true (profile was completed before)
+      const profileCreatedAt = profile?.created_at ? new Date(profile.created_at) : null;
+      const isOldUser = profileCreatedAt && profileCreatedAt < UPDATE_RELEASE_DATE;
+      
+      if (isOldUser || profile?.profile_completion_bonus_given) {
+        // OLD USER: Auto-set welcome_popup_seen to true and skip popup
+        logger.log('Old user detected, skipping welcome bonus popup');
+        
+        await supabase
+          .from('profiles')
+          .update({ welcome_popup_seen: true })
+          .eq('user_id', user.id);
+        
+        setIsChecking(false);
+        return;
+      }
+
+      // For NEW users, check if bonus was credited
       const { data: credits, error: creditsError } = await supabase
         .from('user_credits')
         .select('balance, total_earned')
@@ -51,8 +72,8 @@ export function useWelcomeBonus() {
         return;
       }
 
-      // Check if user has received the welcome bonus (total_earned includes 199)
-      // and hasn't seen the popup yet
+      // Only show popup for NEW users who received welcome bonus
+      // and haven't seen the popup yet
       if (credits && credits.total_earned >= WELCOME_BONUS_AMOUNT && !profile?.welcome_popup_seen) {
         setBonusAmount(WELCOME_BONUS_AMOUNT);
         setShowWelcomeModal(true);
