@@ -56,14 +56,14 @@ export default function ProfileCompletionGate({
   useEffect(() => {
     if (profileAlreadyCompleted || loading || isOldUser) return;
     
-    if (!isComplete && location.pathname !== "/profile-edit") {
+    if (!isComplete && location.pathname !== "/profile-setup" && location.pathname !== "/profile-edit") {
       // Push state to prevent back navigation
       window.history.pushState(null, "", window.location.href);
       
       const handlePopState = () => {
         // Always push back to prevent escape
         window.history.pushState(null, "", window.location.href);
-        navigate("/profile-edit", { replace: true });
+        navigate("/profile-setup", { replace: true });
       };
       
       window.addEventListener("popstate", handlePopState);
@@ -71,13 +71,13 @@ export default function ProfileCompletionGate({
     }
   }, [isComplete, loading, profileAlreadyCompleted, isOldUser, location.pathname, navigate]);
 
-  // Redirect to profile-edit if profile is incomplete (NEW users only)
+  // Redirect to profile-setup if profile is incomplete (NEW users only)
   useEffect(() => {
     if (profileAlreadyCompleted || isOldUser) return;
     if (loading) return;
     
-    if (!isComplete && location.pathname !== "/profile-edit") {
-      navigate("/profile-edit", { replace: true });
+    if (!isComplete && location.pathname !== "/profile-setup" && location.pathname !== "/profile-edit") {
+      navigate("/profile-setup", { replace: true });
     }
   }, [isComplete, loading, profileAlreadyCompleted, isOldUser, location.pathname, navigate]);
 
@@ -95,8 +95,8 @@ export default function ProfileCompletionGate({
     );
   }
 
-  // If on profile-edit page, allow access
-  if (location.pathname === "/profile-edit") {
+  // If on profile-setup or profile-edit page, allow access
+  if (location.pathname === "/profile-setup" || location.pathname === "/profile-edit") {
     return <>{children}</>;
   }
 
