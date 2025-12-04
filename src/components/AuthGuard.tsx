@@ -36,7 +36,7 @@ export default function AuthGuard({ children }: AuthGuardProps) {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
-  // Check if user has a profile, create one if it doesn't exist
+  // Check if user has a profile - don't auto-create, let database trigger handle it
   useEffect(() => {
     const checkProfile = async () => {
       if (!user) {
@@ -44,9 +44,12 @@ export default function AuthGuard({ children }: AuthGuardProps) {
         return;
       }
 
+      // Wait a moment for database trigger to create profile for new users
+      await new Promise(resolve => setTimeout(resolve, 500));
+
       const { data: profile, error } = await supabase
         .from('profiles')
-        .select('id')
+        .select('id, profile_completed')
         .eq('user_id', user.id)
         .maybeSingle();
 
@@ -56,21 +59,13 @@ export default function AuthGuard({ children }: AuthGuardProps) {
         return;
       }
 
+      // If no profile exists after trigger should have created it,
+      // redirect to profile setup without trying to insert
       if (!profile) {
-        // Auto-create profile for existing user
-        const { error: insertError } = await supabase
-          .from('profiles')
-          .insert({
-            user_id: user.id,
-            name: user.email?.split('@')[0] || 'User',
-            mobile: user.phone || '+000000000000', // Required field
-          });
-
-        if (insertError) {
-          logger.error('Error creating profile:', insertError);
-          navigate("/profile-setup", { replace: true });
-          return;
-        }
+        logger.log('No profile found, redirecting to profile-edit');
+        navigate("/profile-edit", { replace: true });
+        setCheckingProfile(false);
+        return;
       }
 
       setCheckingProfile(false);
