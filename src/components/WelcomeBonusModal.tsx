@@ -1,6 +1,7 @@
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Gift } from "lucide-react";
+import { useState } from "react";
 
 interface WelcomeBonusModalProps {
   open: boolean;
@@ -13,10 +14,20 @@ export default function WelcomeBonusModal({
   bonusAmount,
   onContinue 
 }: WelcomeBonusModalProps) {
+  const [isClosing, setIsClosing] = useState(false);
+
+  const handleContinue = () => {
+    setIsClosing(true);
+    // Smooth fade-out animation (250ms) before redirect
+    setTimeout(() => {
+      onContinue();
+    }, 250);
+  };
+
   return (
-    <Dialog open={open} modal={true}>
+    <Dialog open={open && !isClosing} modal={true}>
       <DialogContent 
-        className="bg-gradient-to-b from-[#1a2744] to-[#0f1a2e] border-2 border-primary max-w-sm mx-auto"
+        className={`bg-gradient-to-b from-[#1a2744] to-[#0f1a2e] border-2 border-primary max-w-sm mx-auto transition-opacity duration-250 ${isClosing ? 'opacity-0' : 'opacity-100'}`}
         onPointerDownOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
         onInteractOutside={(e) => e.preventDefault()}
@@ -52,10 +63,11 @@ export default function WelcomeBonusModal({
           
           {/* Continue Button */}
           <Button
-            onClick={onContinue}
+            onClick={handleContinue}
+            disabled={isClosing}
             className="w-full h-14 text-lg font-bold bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl shadow-lg shadow-primary/30 transition-all hover:scale-[1.02]"
           >
-            Continue
+            {isClosing ? 'Opening Dashboard...' : 'Continue'}
           </Button>
         </div>
       </DialogContent>
