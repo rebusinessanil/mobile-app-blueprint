@@ -52,6 +52,7 @@ import MyDownloads from "./pages/MyDownloads";
 import Transactions from "./pages/Transactions";
 import UniversalBannerCreate from "./pages/UniversalBannerCreate";
 import ChangePin from "./pages/ChangePin";
+import AuthCallback from "./pages/AuthCallback";
 
 const queryClient = new QueryClient();
 
@@ -68,6 +69,7 @@ const App = () => (
           <Route path="/register" element={<Register />} />
           <Route path="/otp-verification" element={<OTPVerification />} />
           <Route path="/profile-setup" element={<ProfileSetup />} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
           
           {/* Protected routes - auth required */}
           <Route path="/dashboard" element={<AuthGuard><Dashboard /></AuthGuard>} />
