@@ -11,9 +11,15 @@ import whatsappIcon from "@/assets/whatsapp-icon.png";
 
 // Zod validation schema for login
 const loginSchema = z.object({
-  email: z.string().trim().email("Please enter a valid email address").max(255, "Email must be less than 255 characters"),
-  pin: z.string().length(4, "PIN must be exactly 4 digits").regex(/^\d{4}$/, "PIN must contain only numbers")
+  email: z.string()
+    .trim()
+    .email("Please enter a valid email address")
+    .max(255, "Email must be less than 255 characters"),
+  pin: z.string()
+    .length(4, "PIN must be exactly 4 digits")
+    .regex(/^\d{4}$/, "PIN must contain only numbers"),
 });
+
 export default function Login() {
   const navigate = useNavigate();
   const [emailOrMobile, setEmailOrMobile] = useState("");
@@ -35,27 +41,29 @@ export default function Login() {
       document.getElementById(`pin-${index - 1}`)?.focus();
     }
   };
-
   // PIN prefix to meet Supabase 6-character minimum password requirement
   const PIN_PREFIX = "pin_";
+
   const handleLogin = async () => {
     const pinString = pin.join("");
-
+    
     // Zod validation for inputs
     const validationResult = loginSchema.safeParse({
       email: emailOrMobile,
-      pin: pinString
+      pin: pinString,
     });
+
     if (!validationResult.success) {
       const firstError = validationResult.error.errors[0];
       toast.error(firstError.message);
       return;
     }
+
     setLoading(true);
     try {
       // Pad PIN with prefix to match saved password format
       const paddedPassword = PIN_PREFIX + pinString;
-
+      
       // Sign in with email and padded PIN as password
       const {
         data,
@@ -73,34 +81,9 @@ export default function Login() {
         return;
       }
       if (data.user) {
-        // Check profile_completed status from database
-        const {
-          data: profile,
-          error: profileError
-        } = await supabase.from('profiles').select('profile_completed').eq('user_id', data.user.id).single();
-        if (profileError) {
-          // Profile doesn't exist, redirect to setup
-          toast.success("Login successful!");
-          localStorage.removeItem("rebusiness_profile_completed");
-          navigate("/profile-edit", {
-            replace: true
-          });
-          return;
-        }
         toast.success("Login successful!");
-        if (profile?.profile_completed === true) {
-          // Profile complete - full access, go to dashboard
-          localStorage.setItem("rebusiness_profile_completed", "true");
-          navigate("/dashboard", {
-            replace: true
-          });
-        } else {
-          // Profile incomplete - force to profile setup
-          localStorage.removeItem("rebusiness_profile_completed");
-          navigate("/profile-edit", {
-            replace: true
-          });
-        }
+        // Full access - redirect directly to dashboard
+        navigate("/dashboard");
       }
     } catch (error) {
       // Security: Don't log sensitive login data
@@ -147,11 +130,15 @@ export default function Login() {
             </Link>
           </div>
 
+          {/* Continue with Google */}
+          
+
           {/* Divider */}
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-muted"></div>
             </div>
+            
           </div>
 
           {/* Login Button */}
@@ -170,6 +157,14 @@ export default function Login() {
       </div>
 
       {/* WhatsApp FAB - Always visible on login page, cannot be closed */}
-      
+      <a
+        href="https://wa.me/917734990035"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-[#25D366] flex items-center justify-center shadow-lg hover:scale-110 transition-transform"
+        aria-label="WhatsApp Support"
+      >
+        <img src={whatsappIcon} alt="WhatsApp" className="w-8 h-8" />
+      </a>
     </div>;
 }

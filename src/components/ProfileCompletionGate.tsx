@@ -1,7 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import { logger } from "@/lib/logger";
+import { useProfileCompletion } from "@/hooks/useProfileCompletion";
 
 const PROFILE_COMPLETED_KEY = "rebusiness_profile_completed";
 
@@ -36,88 +35,28 @@ export default function ProfileCompletionGate({
 }: ProfileCompletionGateProps) {
   const navigate = useNavigate();
   const location = useLocation();
-  const [loading, setLoading] = useState(true);
-  const [isComplete, setIsComplete] = useState(false);
   
   // Check localStorage synchronously FIRST - this is instant
   const profileAlreadyCompleted = getProfileCompletedStatus();
+  
+  const {
+    isComplete,
+    loading,
+    isOldUser
+  } = useProfileCompletion(userId || undefined);
 
+  // Auto-set localStorage when profile is complete or user is old user
   useEffect(() => {
-    const checkProfileCompletion = async () => {
-      if (!userId) {
-        setLoading(false);
-        return;
-      }
-
-      try {
-        // Fetch profile_completed field directly from database
-        const { data: profile, error } = await supabase
-          .from('profiles')
-          .select('profile_completed, created_at')
-          .eq('user_id', userId)
-          .single();
-
-        if (error) {
-          logger.error('Error fetching profile:', error);
-          setLoading(false);
-          return;
-        }
-
-        const profileCompleted = profile?.profile_completed === true;
-        
-        // Update local state and localStorage
-        setIsComplete(profileCompleted);
-        if (profileCompleted) {
-          setProfileCompletedStatus(true);
-        }
-
-        setLoading(false);
-      } catch (error) {
-        logger.error('Error checking profile completion:', error);
-        setLoading(false);
-      }
-    };
-
-    if (!profileAlreadyCompleted) {
-      checkProfileCompletion();
-    } else {
-      setIsComplete(true);
-      setLoading(false);
+    if (!loading && (isComplete || isOldUser)) {
+      setProfileCompletedStatus(true);
     }
-
-    // Set up real-time subscription
-    if (userId && !profileAlreadyCompleted) {
-      const channel = supabase
-        .channel(`profile-gate-${userId}`)
-        .on(
-          'postgres_changes',
-          {
-            event: 'UPDATE',
-            schema: 'public',
-            table: 'profiles',
-            filter: `user_id=eq.${userId}`
-          },
-          (payload) => {
-            const newProfile = payload.new as { profile_completed?: boolean };
-            if (newProfile?.profile_completed === true) {
-              setIsComplete(true);
-              setProfileCompletedStatus(true);
-            }
-          }
-        )
-        .subscribe();
-
-      return () => {
-        supabase.removeChannel(channel);
-      };
-    }
-  }, [userId, profileAlreadyCompleted]);
+  }, [isComplete, loading, isOldUser]);
 
   // Prevent back navigation when profile is incomplete
   useEffect(() => {
-    if (profileAlreadyCompleted || loading || isComplete) return;
+    if (profileAlreadyCompleted || loading || isOldUser) return;
     
-    if (location.pathname !== "/profile-edit") {
+    if (!isComplete && location.pathname !== "/profile-edit") {
       // Push state to prevent back navigation
       window.history.pushState(null, "", window.location.href);
       
@@ -130,19 +69,20 @@ export default function ProfileCompletionGate({
       window.addEventListener("popstate", handlePopState);
       return () => window.removeEventListener("popstate", handlePopState);
     }
-  }, [isComplete, loading, profileAlreadyCompleted, location.pathname, navigate]);
+  }, [isComplete, loading, profileAlreadyCompleted, isOldUser, location.pathname, navigate]);
 
-  // Redirect to profile-edit if profile is incomplete
+  // Redirect to profile-edit if profile is incomplete (NEW users only)
   useEffect(() => {
-    if (profileAlreadyCompleted || loading) return;
+    if (profileAlreadyCompleted || isOldUser) return;
+    if (loading) return;
     
     if (!isComplete && location.pathname !== "/profile-edit") {
       navigate("/profile-edit", { replace: true });
     }
-  }, [isComplete, loading, profileAlreadyCompleted, location.pathname, navigate]);
+  }, [isComplete, loading, profileAlreadyCompleted, isOldUser, location.pathname, navigate]);
 
-  // If profile already completed in localStorage, show children immediately
-  if (profileAlreadyCompleted) {
+  // If profile already completed in localStorage OR is old user, show children immediately
+  if (profileAlreadyCompleted || isOldUser) {
     return <>{children}</>;
   }
 
@@ -166,6 +106,7 @@ export default function ProfileCompletionGate({
   }
 
   // Profile incomplete and not on profile-edit - will redirect via useEffect
+  // Show blank screen during redirect
   return (
     <div className="min-h-screen bg-background">
       {/* Redirecting to profile-edit */}
