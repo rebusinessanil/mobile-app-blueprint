@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Upload, X, User } from "lucide-react";
@@ -15,12 +15,10 @@ interface Photo {
 
 export default function ProfileSetup() {
   const navigate = useNavigate();
-  const location = useLocation();
-  const userId = location.state?.userId;
-  const userName = location.state?.name || "";
 
+  const [userId, setUserId] = useState<string | null>(null);
   const [photos, setPhotos] = useState<Photo[]>([]);
-  const [name, setName] = useState(userName);
+  const [name, setName] = useState("");
   const [mobile, setMobile] = useState("");
   const [teamCity, setTeamCity] = useState("");
   const [role, setRole] = useState("");
@@ -28,33 +26,42 @@ export default function ProfileSetup() {
   const [cropperOpen, setCropperOpen] = useState(false);
   const [currentImage, setCurrentImage] = useState<string | null>(null);
   const [currentFile, setCurrentFile] = useState<File | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // Fetch user's mobile number from auth on mount
+  // Get user from session on mount
   useEffect(() => {
-    if (!userId) {
-      toast.error("Invalid session. Please register again.");
-      navigate("/register");
-      return;
-    }
-
-    // Get mobile from auth user metadata
-    const fetchMobile = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        // Try to get mobile from various sources
-        const userMobile = user.user_metadata?.mobile || 
-                          user.phone || 
-                          user.user_metadata?.phone ||
-                          "";
-        // Clean mobile number - remove any prefix like +91
-        const cleanMobile = userMobile.replace(/^\+?\d{0,2}/, '').slice(-10);
-        if (cleanMobile && cleanMobile.length === 10) {
-          setMobile(cleanMobile);
-        }
+    const initializeUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session?.user) {
+        // No session - redirect to register
+        navigate("/register", { replace: true });
+        return;
       }
+
+      const user = session.user;
+      setUserId(user.id);
+      
+      // Pre-fill name from user metadata
+      const userName = user.user_metadata?.full_name || 
+                       user.user_metadata?.name || 
+                       user.email?.split('@')[0] || "";
+      setName(userName);
+      
+      // Pre-fill mobile from user metadata
+      const userMobile = user.user_metadata?.mobile || 
+                         user.phone || 
+                         user.user_metadata?.phone || "";
+      const cleanMobile = userMobile.replace(/^\+?\d{0,2}/, '').slice(-10);
+      if (cleanMobile && cleanMobile.length === 10) {
+        setMobile(cleanMobile);
+      }
+      
+      setLoading(false);
     };
-    fetchMobile();
-  }, [userId, navigate]);
+
+    initializeUser();
+  }, [navigate]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -193,6 +200,17 @@ export default function ProfileSetup() {
       setIsUploading(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-navy-dark flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-foreground text-lg">Loading Profile Setup...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-navy-dark to-navy flex items-center justify-center p-6">
