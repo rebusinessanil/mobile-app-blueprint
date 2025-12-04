@@ -11,15 +11,9 @@ import whatsappIcon from "@/assets/whatsapp-icon.png";
 
 // Zod validation schema for login
 const loginSchema = z.object({
-  email: z.string()
-    .trim()
-    .email("Please enter a valid email address")
-    .max(255, "Email must be less than 255 characters"),
-  pin: z.string()
-    .length(4, "PIN must be exactly 4 digits")
-    .regex(/^\d{4}$/, "PIN must contain only numbers"),
+  email: z.string().trim().email("Please enter a valid email address").max(255, "Email must be less than 255 characters"),
+  pin: z.string().length(4, "PIN must be exactly 4 digits").regex(/^\d{4}$/, "PIN must contain only numbers")
 });
-
 export default function Login() {
   const navigate = useNavigate();
   const [emailOrMobile, setEmailOrMobile] = useState("");
@@ -43,27 +37,24 @@ export default function Login() {
   };
   // PIN prefix to meet Supabase 6-character minimum password requirement
   const PIN_PREFIX = "pin_";
-
   const handleLogin = async () => {
     const pinString = pin.join("");
-    
+
     // Zod validation for inputs
     const validationResult = loginSchema.safeParse({
       email: emailOrMobile,
-      pin: pinString,
+      pin: pinString
     });
-
     if (!validationResult.success) {
       const firstError = validationResult.error.errors[0];
       toast.error(firstError.message);
       return;
     }
-
     setLoading(true);
     try {
       // Pad PIN with prefix to match saved password format
       const paddedPassword = PIN_PREFIX + pinString;
-      
+
       // Sign in with email and padded PIN as password
       const {
         data,
@@ -157,14 +148,6 @@ export default function Login() {
       </div>
 
       {/* WhatsApp FAB - Always visible on login page, cannot be closed */}
-      <a
-        href="https://wa.me/917734990035"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-[#25D366] flex items-center justify-center shadow-lg hover:scale-110 transition-transform"
-        aria-label="WhatsApp Support"
-      >
-        <img src={whatsappIcon} alt="WhatsApp" className="w-8 h-8" />
-      </a>
+      
     </div>;
 }
