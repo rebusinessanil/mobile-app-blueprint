@@ -84,17 +84,27 @@ export default function RankBannerCreate() {
     }
   };
 
-  const handleCropComplete = async (croppedImage: string) => {
+  const handleCropComplete = (croppedImage: string) => {
+    setPhoto(croppedImage);
     setShowCropper(false);
     setTempPhoto(null);
-    // Auto-remove background immediately after crop
     setShowBgRemover(true);
+  };
+
+  const handleCropCancel = () => {
+    setShowCropper(false);
+    setTempPhoto(null);
+  };
+  const handleKeepBackground = () => {
+    setShowBgRemover(false);
+  };
+  const handleRemoveBackground = async () => {
+    if (!photo) return;
     setProcessingBg(true);
     setBgProgress(0);
     setBgProgressText('Loading AI model...');
-    
     try {
-      const img = await loadImage(await fetch(croppedImage).then(r => r.blob()));
+      const img = await loadImage(await fetch(photo).then(r => r.blob()));
       const processedBlob = await removeBackground(img, (stage, percent) => {
         setBgProgressText(stage);
         setBgProgress(percent);
@@ -108,20 +118,13 @@ export default function RankBannerCreate() {
       reader.readAsDataURL(processedBlob);
     } catch (error) {
       console.error("Background removal error:", error);
-      // On error, use cropped image without background removal
-      setPhoto(croppedImage);
+      toast.error("Failed to remove background. Keeping original image.");
       setShowBgRemover(false);
-      toast.error("Failed to remove background. Using original image.");
     } finally {
       setProcessingBg(false);
       setBgProgress(0);
       setBgProgressText('');
     }
-  };
-
-  const handleCropCancel = () => {
-    setShowCropper(false);
-    setTempPhoto(null);
   };
   const handleCreate = async () => {
     if (!formData.name) {
@@ -331,13 +334,13 @@ export default function RankBannerCreate() {
         </div>
       )}
 
-      {/* Background Remover Modal - Auto processing, no user choice */}
+      {/* Background Remover Modal */}
       <BackgroundRemoverModal 
         open={showBgRemover} 
-        onKeep={() => {}} 
-        onRemove={() => {}} 
-        onClose={() => {}}
-        isProcessing={true}
+        onKeep={handleKeepBackground} 
+        onRemove={handleRemoveBackground} 
+        onClose={() => !processingBg && setShowBgRemover(false)}
+        isProcessing={processingBg}
         progress={bgProgress}
         progressText={bgProgressText}
       />
