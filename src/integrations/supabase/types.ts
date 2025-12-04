@@ -520,6 +520,7 @@ export type Database = {
           id: string
           mobile: string
           name: string
+          profile_completed: boolean | null
           profile_completion_bonus_given: boolean | null
           profile_photo: string | null
           rank: string | null
@@ -527,6 +528,7 @@ export type Database = {
           signup_method: string | null
           updated_at: string | null
           user_id: string
+          welcome_bonus_given: boolean | null
           welcome_popup_seen: boolean | null
           whatsapp: string | null
         }
@@ -537,6 +539,7 @@ export type Database = {
           id?: string
           mobile: string
           name: string
+          profile_completed?: boolean | null
           profile_completion_bonus_given?: boolean | null
           profile_photo?: string | null
           rank?: string | null
@@ -544,6 +547,7 @@ export type Database = {
           signup_method?: string | null
           updated_at?: string | null
           user_id: string
+          welcome_bonus_given?: boolean | null
           welcome_popup_seen?: boolean | null
           whatsapp?: string | null
         }
@@ -554,6 +558,7 @@ export type Database = {
           id?: string
           mobile?: string
           name?: string
+          profile_completed?: boolean | null
           profile_completion_bonus_given?: boolean | null
           profile_photo?: string | null
           rank?: string | null
@@ -561,6 +566,7 @@ export type Database = {
           signup_method?: string | null
           updated_at?: string | null
           user_id?: string
+          welcome_bonus_given?: boolean | null
           welcome_popup_seen?: boolean | null
           whatsapp?: string | null
         }
