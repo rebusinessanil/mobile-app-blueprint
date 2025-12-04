@@ -10,52 +10,27 @@ export default function AuthCallback() {
   useEffect(() => {
     const handleAuthCallback = async () => {
       try {
-        // First, let Supabase handle the URL automatically
-        // This is important - Supabase client with detectSessionInUrl: true 
-        // will automatically detect and process the auth callback
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        // Check if we already have a session
+        const { data: { session } } = await supabase.auth.getSession();
         
-        if (sessionError) {
-          logger.error("Session error:", sessionError);
-          setError(sessionError.message);
-          return;
-        }
-
         if (session) {
-          logger.log("Session found after OAuth callback");
-          await handleUserRedirect(session.user.id);
+          // Session already exists, redirect to dashboard
+          logger.log("Session found, redirecting to dashboard");
+          navigate("/dashboard", { replace: true });
           return;
         }
 
-        // If no session yet, check for OAuth code in URL and exchange it
-        const urlParams = new URLSearchParams(window.location.search);
-        const code = urlParams.get("code");
-        
-        if (code) {
-          logger.log("Found OAuth code, exchanging for session...");
-          const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
-          
-          if (exchangeError) {
-            logger.error("Code exchange error:", exchangeError);
-            setError(exchangeError.message);
-            return;
-          }
-
-          if (data.session) {
-            logger.log("Session created from code exchange");
-            await handleUserRedirect(data.session.user.id);
-            return;
-          }
-        }
-
-        // Check for tokens in hash (implicit flow)
+        // Check for OAuth code in URL (hash or query params)
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const queryParams = new URLSearchParams(window.location.search);
+        
         const accessToken = hashParams.get("access_token");
         const refreshToken = hashParams.get("refresh_token");
+        const code = queryParams.get("code");
 
         if (accessToken && refreshToken) {
-          logger.log("Found tokens in hash, setting session...");
-          const { data, error: setSessionError } = await supabase.auth.setSession({
+          // Handle implicit grant flow (tokens in hash)
+          const { error: setSessionError } = await supabase.auth.setSession({
             access_token: accessToken,
             refresh_token: refreshToken,
           });
@@ -66,73 +41,39 @@ export default function AuthCallback() {
             return;
           }
 
-          if (data.session) {
-            logger.log("Session set from tokens");
-            await handleUserRedirect(data.session.user.id);
+          logger.log("Session set from tokens, redirecting to dashboard");
+          navigate("/dashboard", { replace: true });
+        } else if (code) {
+          // Handle PKCE flow (code in query params)
+          const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+
+          if (exchangeError) {
+            logger.error("Code exchange error:", exchangeError);
+            setError(exchangeError.message);
             return;
           }
-        }
 
-        // Check for error in URL
-        const errorDescription = hashParams.get("error_description") || urlParams.get("error_description");
-        if (errorDescription) {
-          setError(decodeURIComponent(errorDescription));
-          return;
+          logger.log("Code exchanged for session, redirecting to dashboard");
+          navigate("/dashboard", { replace: true });
+        } else {
+          // No tokens or code found, check for error in URL
+          const errorDescription = hashParams.get("error_description") || queryParams.get("error_description");
+          
+          if (errorDescription) {
+            setError(decodeURIComponent(errorDescription));
+          } else {
+            // No auth data found, redirect to login
+            logger.log("No auth data found, redirecting to login");
+            navigate("/login", { replace: true });
+          }
         }
-
-        // No auth data found, redirect to login
-        logger.log("No auth data found, redirecting to login");
-        navigate("/login", { replace: true });
-        
       } catch (err) {
         logger.error("Auth callback error:", err);
         setError("An unexpected error occurred during authentication");
       }
     };
 
-    const handleUserRedirect = async (userId: string) => {
-      try {
-        // Check if user has a completed profile
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('profile_completed, name, mobile, role')
-          .eq('user_id', userId)
-          .maybeSingle();
-
-        if (profileError) {
-          logger.error("Profile check error:", profileError);
-          // Still redirect to dashboard, AuthGuard will handle profile creation
-          navigate("/dashboard", { replace: true });
-          return;
-        }
-
-        if (!profile) {
-          // New user - profile will be auto-created by database trigger
-          // Redirect to profile-edit to complete setup
-          logger.log("New user, redirecting to profile-edit");
-          navigate("/profile-edit", { replace: true });
-          return;
-        }
-
-        // Check if profile is complete
-        const isComplete = profile.profile_completed === true;
-        
-        if (isComplete) {
-          logger.log("Profile complete, redirecting to dashboard");
-          navigate("/dashboard", { replace: true });
-        } else {
-          logger.log("Profile incomplete, redirecting to profile-edit");
-          navigate("/profile-edit", { replace: true });
-        }
-      } catch (err) {
-        logger.error("User redirect error:", err);
-        navigate("/dashboard", { replace: true });
-      }
-    };
-
-    // Small delay to ensure Supabase client is ready
-    const timer = setTimeout(handleAuthCallback, 100);
-    return () => clearTimeout(timer);
+    handleAuthCallback();
   }, [navigate]);
 
   if (error) {
