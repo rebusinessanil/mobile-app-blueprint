@@ -10,27 +10,6 @@ export default function AuthCallback() {
   useEffect(() => {
     let isMounted = true;
 
-    const redirectAfterAuth = async (userId: string) => {
-      if (!isMounted) return;
-      
-      // Check if user has completed profile setup
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('profile_completed')
-        .eq('user_id', userId)
-        .maybeSingle();
-
-      if (!profile || !profile.profile_completed) {
-        // New user or incomplete profile - go to profile setup
-        logger.log("Redirecting new user to profile-setup");
-        navigate("/profile-setup", { replace: true });
-      } else {
-        // Existing user with complete profile - go to dashboard
-        logger.log("Redirecting to dashboard");
-        navigate("/dashboard", { replace: true });
-      }
-    };
-
     const handleAuthCallback = async () => {
       try {
         // Get URL parameters
@@ -60,8 +39,8 @@ export default function AuthCallback() {
           }
 
           if (data?.session?.access_token && data?.session?.refresh_token) {
-            logger.log("Session created successfully via code exchange");
-            await redirectAfterAuth(data.session.user.id);
+            logger.log("Session created via code exchange, redirecting to profile-setup");
+            if (isMounted) navigate("/profile-setup", { replace: true });
             return;
           }
         }
@@ -81,17 +60,17 @@ export default function AuthCallback() {
           }
 
           if (data?.session) {
-            logger.log("Session set from tokens successfully");
-            await redirectAfterAuth(data.session.user.id);
+            logger.log("Session set from tokens, redirecting to profile-setup");
+            if (isMounted) navigate("/profile-setup", { replace: true });
             return;
           }
         }
 
-        // Check if session already exists (user returned to page)
+        // Check if session already exists
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.access_token && session?.refresh_token) {
-          logger.log("Existing session found");
-          await redirectAfterAuth(session.user.id);
+          logger.log("Existing session found, redirecting to profile-setup");
+          if (isMounted) navigate("/profile-setup", { replace: true });
           return;
         }
 
