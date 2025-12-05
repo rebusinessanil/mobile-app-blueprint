@@ -272,7 +272,7 @@ export default function Wallet() {
         {/* Stats Cards */}
         <div className="grid grid-cols-2 gap-3">
           <Card className="border-primary/20 bg-card">
-            <CardContent className="pt-5 pb-5">
+            <CardContent className="pt-4 pb-4">
               <div className="text-center space-y-0.5">
                 <p className="text-xs text-muted-foreground font-medium">Last Recharge</p>
                 {lastRecharge ? (
@@ -280,8 +280,11 @@ export default function Wallet() {
                     <p className="text-xl font-bold text-green-500">
                       ₹{lastRecharge.amount}
                     </p>
-                    <p className="text-[10px] text-muted-foreground mt-1">
+                    <p className="text-[10px] text-muted-foreground">
                       {formatToIST(lastRecharge.date).split(' • ')[0]}
+                    </p>
+                    <p className="text-xs text-red-500 font-semibold mt-1">
+                      Spent: ₹{Math.max(0, lastRecharge.amount - (balance?.balance || 0))}
                     </p>
                   </>
                 ) : (
