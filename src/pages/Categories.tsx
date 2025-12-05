@@ -41,9 +41,10 @@ export default function Categories() {
 
   return (
     <ProfileCompletionGate userId={userId}>
-      <div className="min-h-screen bg-navy-dark pb-24">
+      <div className="min-h-screen bg-navy-dark pb-24 overflow-x-hidden">
         {/* Header */}
-        <header className="sticky top-0 bg-navy-dark/95 backdrop-blur-sm z-40 px-6 py-4 border-b border-primary/20">
+        <header className="sticky top-0 bg-navy-dark/95 backdrop-blur-sm z-40 px-4 sm:px-6 py-4 border-b border-primary/20">
+          <div className="max-w-screen-md mx-auto">
         <h1 className="text-2xl font-bold text-foreground mb-4">All Categories</h1>
         
         {/* Search Bar */}
@@ -62,11 +63,12 @@ export default function Categories() {
             <Filter className="w-5 h-5 text-primary-foreground" />
           </button>
         </div>
+          </div>
       </header>
 
       {/* Categories Grid */}
-      <div className="px-6 py-6">
-        <div className="grid grid-cols-3 gap-4">
+      <div className="px-4 sm:px-6 py-6 max-w-screen-md mx-auto">
+        <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
           {filteredCategories.map((category, index) => {
             const Icon = category.icon;
             return (

@@ -82,9 +82,9 @@ export default function Login() {
 
     setLoading(false);
   };
-  return <div className="min-h-screen bg-navy-dark flex items-center justify-center p-6">
-      <div className="w-full max-w-md">
-        <div className="gold-border bg-card p-8 space-y-6">
+  return <div className="min-h-screen bg-navy-dark flex items-center justify-center p-4 sm:p-6 overflow-x-hidden overflow-y-auto">
+      <div className="auth-card w-full">
+        <div className="gold-border bg-card p-6 sm:p-8 space-y-5 sm:space-y-6 rounded-2xl">
           {/* Icon */}
           <div className="flex justify-center">
             <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center">

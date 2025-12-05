@@ -361,10 +361,10 @@ export default function ProfileEdit() {
     }
   };
   return <>
-    <div className="min-h-screen bg-navy-dark pb-6">
+    <div className="min-h-screen bg-navy-dark pb-6 overflow-x-hidden">
       {/* Header */}
-      <header className="sticky top-0 bg-navy-dark/95 backdrop-blur-sm z-40 px-6 py-4 border-b border-primary/20">
-        <div className="flex items-center justify-between">
+      <header className="sticky top-0 bg-navy-dark/95 backdrop-blur-sm z-40 px-4 sm:px-6 py-4 border-b border-primary/20">
+        <div className="flex items-center justify-between max-w-screen-md mx-auto">
           <button onClick={() => navigate("/profile")} className="w-10 h-10 rounded-xl border-2 border-primary flex items-center justify-center hover:bg-primary/10 transition-colors">
             <ArrowLeft className="w-5 h-5 text-primary" />
           </button>
@@ -376,7 +376,7 @@ export default function ProfileEdit() {
         </div>
       </header>
 
-      <div className="px-6 py-6 space-y-6">
+      <div className="px-4 sm:px-6 py-6 space-y-6 max-w-screen-md mx-auto">
         {/* Profile ID Banner */}
         <div className="flex items-center gap-3 px-4 py-3 bg-card/50 rounded-xl border border-primary/30">
           <div className="w-10 h-10 bg-destructive rounded-xl flex items-center justify-center">

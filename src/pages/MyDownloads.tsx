@@ -31,10 +31,10 @@ export default function MyDownloads() {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen bg-background pb-20 overflow-x-hidden">
       {/* Header */}
       <div className="sticky top-0 z-10 bg-card/95 backdrop-blur-sm border-b border-border/40">
-        <div className="container mx-auto px-4 py-4">
+        <div className="max-w-screen-md mx-auto px-4 py-4">
           <div className="flex items-center gap-4">
             <Button
               variant="ghost"
@@ -55,7 +55,7 @@ export default function MyDownloads() {
       </div>
 
       {/* Downloads List */}
-      <div className="container mx-auto px-4 py-6">
+      <div className="max-w-screen-md mx-auto px-4 py-6">
         {!downloads || downloads.length === 0 ? (
           <div className="text-center py-12">
             <Download className="w-16 h-16 mx-auto mb-4 text-muted-foreground/50" />
