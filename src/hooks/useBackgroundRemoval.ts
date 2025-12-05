@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef, startTransition } from 'react';
-import { removeBackground, loadImage } from '@/lib/backgroundRemover';
+import { removeBackground, loadImage, clearModel } from '@/lib/backgroundRemover';
 import { toast } from 'sonner';
 import { logger } from '@/lib/logger';
 
@@ -8,28 +8,14 @@ interface UseBackgroundRemovalOptions {
   onError?: (error: Error) => void;
 }
 
-// Throttle helper to prevent multiple rapid re-renders
+// Throttle with leading edge for immediate feedback
 const throttle = <T extends (...args: any[]) => any>(fn: T, delay: number) => {
   let lastCall = 0;
-  let timeoutId: ReturnType<typeof setTimeout> | null = null;
-  
   return (...args: Parameters<T>) => {
     const now = Date.now();
-    const remaining = delay - (now - lastCall);
-    
-    if (remaining <= 0) {
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-        timeoutId = null;
-      }
+    if (now - lastCall >= delay) {
       lastCall = now;
       fn(...args);
-    } else if (!timeoutId) {
-      timeoutId = setTimeout(() => {
-        lastCall = Date.now();
-        timeoutId = null;
-        fn(...args);
-      }, remaining);
     }
   };
 };
@@ -42,24 +28,18 @@ export const useBackgroundRemoval = (options?: UseBackgroundRemovalOptions) => {
   const [pendingImage, setPendingImage] = useState<string | null>(null);
   
   const processingRef = useRef(false);
-  const resultRef = useRef<string | null>(null);
+  const abortRef = useRef(false);
 
-  // Throttled progress update to prevent excessive re-renders
-  const throttledSetProgress = useRef(
-    throttle((value: number) => {
+  // Throttled progress updates - 150ms to reduce render load
+  const updateProgress = useCallback(
+    throttle((value: number, text: string) => {
       startTransition(() => {
         setProgress(value);
-      });
-    }, 100)
-  ).current;
-
-  const throttledSetProgressText = useRef(
-    throttle((text: string) => {
-      startTransition(() => {
         setProgressText(text);
       });
-    }, 100)
-  ).current;
+    }, 150),
+    []
+  );
 
   // Prevent page exit during processing
   useEffect(() => {
@@ -89,12 +69,21 @@ export const useBackgroundRemoval = (options?: UseBackgroundRemovalOptions) => {
     };
   }, [isProcessing]);
 
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (!processingRef.current) {
+        clearModel();
+      }
+    };
+  }, []);
+
   const openModal = useCallback((imageUrl: string) => {
     setPendingImage(imageUrl);
     setShowModal(true);
     setProgress(0);
     setProgressText('');
-    resultRef.current = null;
+    abortRef.current = false;
   }, []);
 
   const closeModal = useCallback(() => {
@@ -113,61 +102,60 @@ export const useBackgroundRemoval = (options?: UseBackgroundRemovalOptions) => {
   }, [pendingImage, closeModal]);
 
   const processRemoval = useCallback(async (): Promise<string | null> => {
-    if (!pendingImage) return null;
+    if (!pendingImage || processingRef.current) return null;
 
     setIsProcessing(true);
     processingRef.current = true;
-    setProgress(0);
-    setProgressText('Preparing...');
+    updateProgress(0, 'Preparing...');
 
     try {
-      // Fetch image blob
+      // Fetch and load image
       const response = await fetch(pendingImage);
       if (!response.ok) throw new Error('Failed to fetch image');
       const blob = await response.blob();
-      
-      // Load image element
       const img = await loadImage(blob);
 
-      // Process with throttled progress callback
+      if (abortRef.current) return null;
+
+      // Process with progress callback
       const processedBlob = await removeBackground(img, (stage, percent) => {
-        throttledSetProgress(percent);
-        throttledSetProgressText(stage);
+        if (!abortRef.current) {
+          updateProgress(percent, stage);
+        }
       });
 
-      // Convert to data URL with RAF yield
-      return new Promise((resolve, reject) => {
-        requestAnimationFrame(() => {
-          const reader = new FileReader();
-          reader.onload = () => {
-            const result = reader.result as string;
-            resultRef.current = result;
-            
-            // Use startTransition for state updates to prevent blocking
+      if (abortRef.current) return null;
+
+      // Convert blob to data URL off main render cycle
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = reader.result as string;
+          
+          // Batch all state updates together
+          startTransition(() => {
+            setProgress(100);
+            setProgressText('Complete!');
+          });
+          
+          // Delay modal close to ensure smooth transition
+          setTimeout(() => {
             startTransition(() => {
-              setProgress(100);
-              setProgressText('Complete!');
+              setShowModal(false);
+              setPendingImage(null);
+              setIsProcessing(false);
+              processingRef.current = false;
             });
             
-            // Close modal after a brief delay to ensure UI updates
-            requestAnimationFrame(() => {
-              startTransition(() => {
-                setShowModal(false);
-                setPendingImage(null);
-                setIsProcessing(false);
-                processingRef.current = false;
-              });
-              
-              toast.success('Background removed successfully!');
-              options?.onSuccess?.(result);
-              resolve(result);
-            });
-          };
-          reader.onerror = () => {
-            reject(new Error('Failed to read processed image'));
-          };
-          reader.readAsDataURL(processedBlob);
-        });
+            toast.success('Background removed successfully!');
+            options?.onSuccess?.(result);
+            resolve(result);
+          }, 100);
+        };
+        reader.onerror = () => {
+          throw new Error('Failed to read processed image');
+        };
+        reader.readAsDataURL(processedBlob);
       });
     } catch (error) {
       logger.error('Background removal error:', error);
@@ -184,16 +172,14 @@ export const useBackgroundRemoval = (options?: UseBackgroundRemovalOptions) => {
       options?.onError?.(error instanceof Error ? error : new Error(errorMsg));
       return null;
     }
-  }, [pendingImage, options, throttledSetProgress, throttledSetProgressText]);
+  }, [pendingImage, options, updateProgress]);
 
   return {
-    // State
     isProcessing,
     progress,
     progressText,
     showModal,
     pendingImage,
-    // Actions
     openModal,
     closeModal,
     keepBackground,
