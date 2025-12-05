@@ -153,9 +153,9 @@ export default function Wallet() {
         <div className="text-primary">Loading wallet...</div>
       </div>;
   }
-  return <div className="min-h-screen bg-navy-dark flex flex-col overflow-x-hidden">
+  return <div className="h-screen bg-navy-dark flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="relative px-4 sm:px-6 pt-6 pb-3 flex-shrink-0 max-w-screen-md mx-auto w-full">
+      <div className="relative px-6 pt-6 pb-3 flex-shrink-0">
         <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="absolute left-4 top-6 text-foreground hover:text-primary">
           <ChevronLeft className="w-6 h-6" />
         </Button>
@@ -165,7 +165,7 @@ export default function Wallet() {
         </div>
       </div>
 
-      <div className="px-4 sm:px-6 space-y-4 flex-shrink-0 max-w-screen-md mx-auto w-full">
+      <div className="px-6 space-y-4 flex-shrink-0">
         {/* Balance Card */}
         <Card className="gold-border bg-gradient-to-br from-primary/10 to-primary/5">
           <CardHeader className="pb-2">
@@ -233,7 +233,7 @@ export default function Wallet() {
       </div>
 
       {/* All Transactions Section - Scrollable */}
-      <div className="px-4 sm:px-6 flex-1 flex flex-col min-h-0 pb-24 mt-2 max-w-screen-md mx-auto w-full">
+      <div className="px-6 flex-1 flex flex-col min-h-0 pb-20 mt-2">
         <Card className="border-primary/20 bg-card flex-1 flex flex-col min-h-0">
           <CardHeader className="pb-2 flex-shrink-0">
             <CardTitle className="text-base font-semibold text-foreground">

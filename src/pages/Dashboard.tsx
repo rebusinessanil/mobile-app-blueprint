@@ -201,10 +201,10 @@ export default function Dashboard() {
 
   return (
     <ProfileCompletionGate userId={userId}>
-      <div className="min-h-screen bg-navy-dark pb-24 overflow-x-hidden overflow-y-auto max-w-full">
+      <div className="min-h-screen bg-navy-dark pb-24 overflow-x-hidden overflow-y-auto">
       {/* Fixed Header */}
       <header className="fixed top-0 left-0 right-0 bg-navy-dark/95 backdrop-blur-sm z-50 px-4 py-3 border-b border-primary/20">
-        <div className="flex items-center justify-between gap-2 max-w-screen-lg mx-auto">
+        <div className="flex items-center justify-between gap-2 max-w-full">
           <div className="flex items-center gap-2 min-w-0 flex-shrink">
             <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center flex-shrink-0">
               <Star className="w-5 h-5 text-primary-foreground" />
@@ -249,7 +249,7 @@ export default function Dashboard() {
       <div className="h-16"></div>
 
       {/* Content */}
-      <div className="py-6 space-y-6 max-w-screen-lg mx-auto">
+      <div className="py-6 space-y-6">
         {/* Unified Stories Section - Lazy loaded */}
         <StoriesSection 
           festivals={festivals}

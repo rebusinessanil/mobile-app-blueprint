@@ -71,9 +71,9 @@ export default function Transactions() {
   }
 
   return (
-    <div className="min-h-screen bg-navy-dark pb-24 overflow-x-hidden">
+    <div className="min-h-screen bg-navy-dark pb-24">
       {/* Header */}
-      <div className="relative px-4 sm:px-6 pt-8 pb-4 max-w-screen-md mx-auto">
+      <div className="relative px-6 pt-8 pb-4">
         <Button
           variant="ghost"
           size="icon"
@@ -90,7 +90,7 @@ export default function Transactions() {
         </div>
       </div>
 
-      <div className="px-4 sm:px-6 max-w-screen-md mx-auto">
+      <div className="px-6">
         <Card className="border-primary/20 bg-card">
           <CardHeader className="pb-3">
             <CardTitle className="text-lg font-semibold text-foreground">

@@ -44,10 +44,9 @@ export default function Messages() {
   );
 
   return (
-    <div className="min-h-screen bg-navy-dark pb-24 overflow-x-hidden">
+    <div className="min-h-screen bg-navy-dark pb-24">
       {/* Header */}
-      <header className="sticky top-0 bg-navy-dark/95 backdrop-blur-sm z-40 px-4 sm:px-6 py-4 border-b border-primary/20">
-        <div className="max-w-screen-md mx-auto">
+      <header className="sticky top-0 bg-navy-dark/95 backdrop-blur-sm z-40 px-6 py-4 border-b border-primary/20">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-2xl font-bold text-foreground">Messages</h1>
@@ -71,11 +70,10 @@ export default function Messages() {
             className="gold-border bg-secondary text-foreground pl-11 h-12"
           />
         </div>
-        </div>
       </header>
 
       {/* Messages List */}
-      <div className="px-4 sm:px-6 py-6 space-y-4 max-w-screen-md mx-auto">
+      <div className="px-6 py-6 space-y-4">
         {filteredMessages.map((message, index) => {
           const Icon = message.icon;
           return (

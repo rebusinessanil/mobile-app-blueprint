@@ -211,39 +211,28 @@ export default function UniversalBannerCreate() {
     setTempPhoto(null);
   };
 
-  const [bgProgress, setBgProgress] = useState(0);
-  const [bgProgressText, setBgProgressText] = useState('');
-
   const handleKeepBackground = () => {
     setShowBgRemover(false);
   };
 
   const handleRemoveBackground = async () => {
     if (!photo) return;
+    setShowBgRemover(false);
     setProcessingBg(true);
-    setBgProgress(0);
-    setBgProgressText('Loading AI model...');
     try {
       const img = await loadImage(await fetch(photo).then(r => r.blob()));
-      const processedBlob = await removeBackground(img, (stage, percent) => {
-        setBgProgressText(stage);
-        setBgProgress(percent);
-      });
+      const processedBlob = await removeBackground(img);
       const reader = new FileReader();
       reader.onload = () => {
         setPhoto(reader.result as string);
-        setShowBgRemover(false);
         toast.success("Background removed successfully!");
       };
       reader.readAsDataURL(processedBlob);
     } catch (error) {
       console.error("Background removal error:", error);
       toast.error("Failed to remove background. Keeping original image.");
-      setShowBgRemover(false);
     } finally {
       setProcessingBg(false);
-      setBgProgress(0);
-      setBgProgressText('');
     }
   };
 
@@ -311,16 +300,16 @@ export default function UniversalBannerCreate() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-6">
-      <header className="sticky top-0 bg-background/95 backdrop-blur-sm z-40 border-b border-border">
-        <div className="max-w-screen-md mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+    <div className="min-h-screen bg-navy-dark pb-6">
+      <header className="sticky top-0 bg-navy-dark/95 backdrop-blur-sm z-40 px-6 py-4 border-b border-primary/20">
+        <div className="flex items-center justify-between">
           <button onClick={() => navigate("/categories")} className="w-10 h-10 rounded-xl border-2 border-primary flex items-center justify-center hover:bg-primary/10 transition-colors">
             <ArrowLeft className="w-5 h-5 text-primary" />
           </button>
         </div>
       </header>
 
-      <div className="max-w-screen-md mx-auto px-4 sm:px-6 py-6 space-y-6">
+      <div className="px-6 py-6 space-y-6">
         {/* Category Header */}
         <div className="flex items-start gap-4">
           <div className={`bg-gradient-to-br ${config.gradient} rounded-3xl p-6 flex items-center justify-center gold-border flex-shrink-0 w-32 h-32`}>
@@ -358,7 +347,7 @@ export default function UniversalBannerCreate() {
         </div>
 
         {/* Form Fields and Photo Upload */}
-        <div className="flex flex-col sm:flex-row gap-4">
+        <div className="flex gap-4">
           <div className="flex-1 space-y-5">
             {/* Name Field - Required */}
             <div className="space-y-2">
@@ -407,7 +396,7 @@ export default function UniversalBannerCreate() {
 
           {/* Photo Upload Box */}
           {mode === "myPhoto" && (
-            <div className="w-full sm:w-48 flex-shrink-0">
+            <div className="w-48 flex-shrink-0">
               {photo ? (
                 <div className="relative w-full h-48 gold-border rounded-2xl overflow-hidden bg-secondary">
                   <img src={photo} alt="Uploaded" className="w-full h-full object-cover" />
@@ -461,10 +450,7 @@ export default function UniversalBannerCreate() {
         open={showBgRemover} 
         onKeep={handleKeepBackground} 
         onRemove={handleRemoveBackground} 
-        onClose={() => setShowBgRemover(false)}
-        isProcessing={processingBg}
-        progress={bgProgress}
-        progressText={bgProgressText}
+        onClose={() => setShowBgRemover(false)} 
       />
     </div>
   );

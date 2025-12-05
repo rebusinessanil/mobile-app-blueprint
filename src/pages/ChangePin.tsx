@@ -112,10 +112,10 @@ export default function ChangePin() {
   };
 
   return (
-    <div className="min-h-screen bg-navy-dark pb-6 overflow-x-hidden">
+    <div className="min-h-screen bg-navy-dark pb-6">
       {/* Header */}
-      <header className="sticky top-0 bg-navy-dark/95 backdrop-blur-sm z-40 px-4 sm:px-6 py-4 border-b border-primary/20">
-        <div className="flex items-center justify-between max-w-screen-md mx-auto">
+      <header className="sticky top-0 bg-navy-dark/95 backdrop-blur-sm z-40 px-6 py-4 border-b border-primary/20">
+        <div className="flex items-center justify-between">
           <button 
             onClick={() => navigate("/profile")} 
             className="w-10 h-10 rounded-xl border-2 border-primary flex items-center justify-center hover:bg-primary/10 transition-colors"
@@ -130,7 +130,7 @@ export default function ChangePin() {
         </div>
       </header>
 
-      <div className="px-4 sm:px-6 py-6 space-y-6 max-w-screen-md mx-auto">
+      <div className="px-6 py-6 space-y-6">
         {/* Security Icon */}
         <div className="flex justify-center">
           <div className="w-20 h-20 bg-primary/20 rounded-full flex items-center justify-center">

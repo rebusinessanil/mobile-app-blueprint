@@ -112,39 +112,28 @@ export default function MotivationalBannerCreate() {
     setTempPhoto(null);
   };
 
-  const [bgProgress, setBgProgress] = useState(0);
-  const [bgProgressText, setBgProgressText] = useState('');
-
   const handleKeepBackground = () => {
     setShowBgRemover(false);
   };
 
   const handleRemoveBackground = async () => {
     if (!photo) return;
+    setShowBgRemover(false);
     setProcessingBg(true);
-    setBgProgress(0);
-    setBgProgressText('Loading AI model...');
     try {
       const img = await loadImage(await fetch(photo).then(r => r.blob()));
-      const processedBlob = await removeBackground(img, (stage, percent) => {
-        setBgProgressText(stage);
-        setBgProgress(percent);
-      });
+      const processedBlob = await removeBackground(img);
       const reader = new FileReader();
       reader.onload = () => {
         setPhoto(reader.result as string);
-        setShowBgRemover(false);
         toast.success("Background removed successfully!");
       };
       reader.readAsDataURL(processedBlob);
     } catch (error) {
       console.error("Background removal error:", error);
       toast.error("Failed to remove background. Keeping original image.");
-      setShowBgRemover(false);
     } finally {
       setProcessingBg(false);
-      setBgProgress(0);
-      setBgProgressText('');
     }
   };
 
@@ -210,16 +199,16 @@ export default function MotivationalBannerCreate() {
   };
 
   return (
-    <div className="min-h-screen bg-navy-dark pb-6 overflow-x-hidden">
-      <header className="sticky top-0 bg-navy-dark/95 backdrop-blur-sm z-40 px-4 sm:px-6 py-4 border-b border-primary/20">
-        <div className="flex items-center justify-between max-w-screen-md mx-auto">
+    <div className="min-h-screen bg-navy-dark pb-6">
+      <header className="sticky top-0 bg-navy-dark/95 backdrop-blur-sm z-40 px-6 py-4 border-b border-primary/20">
+        <div className="flex items-center justify-between">
           <button onClick={() => navigate("/categories")} className="w-10 h-10 rounded-xl border-2 border-primary flex items-center justify-center hover:bg-primary/10 transition-colors">
             <ArrowLeft className="w-5 h-5 text-primary" />
           </button>
         </div>
       </header>
 
-      <div className="px-4 sm:px-6 py-6 space-y-6 max-w-screen-md mx-auto">
+      <div className="px-6 py-6 space-y-6">
         <div className="flex items-start gap-4">
           <div className="bg-gradient-to-br from-yellow-600 to-orange-600 rounded-3xl p-6 flex items-center justify-center gold-border flex-shrink-0 w-32 h-32">
             <div className="text-5xl">⚡</div>
@@ -348,10 +337,7 @@ export default function MotivationalBannerCreate() {
         open={showBgRemover} 
         onKeep={handleKeepBackground} 
         onRemove={handleRemoveBackground} 
-        onClose={() => setShowBgRemover(false)}
-        isProcessing={processingBg}
-        progress={bgProgress}
-        progressText={bgProgressText}
+        onClose={() => setShowBgRemover(false)} 
       />
     </div>
   );

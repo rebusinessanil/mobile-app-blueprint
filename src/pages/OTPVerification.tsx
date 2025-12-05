@@ -150,14 +150,14 @@ export default function OTPVerification() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-navy-dark to-navy flex items-center justify-center p-4 sm:p-6 overflow-x-hidden overflow-y-auto">
+    <div className="min-h-screen bg-gradient-to-br from-navy-dark to-navy flex items-center justify-center p-6">
       {/* Background decoration */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 left-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl" />
         <div className="absolute bottom-20 right-10 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
       </div>
 
-      <div className="relative auth-card w-full">
+      <div className="relative w-full max-w-md">
         {/* Back button */}
         <button
           onClick={() => navigate("/register")}
