@@ -46,7 +46,7 @@ export default function UserManagement() {
   const [showPin, setShowPin] = useState(false);
   const [newPin, setNewPin] = useState("");
   const [pinLoading, setPinLoading] = useState(false);
-  const [pinStatus, setPinStatus] = useState<{ has_pin: boolean; plain_pin: string | null } | null>(null);
+  const [pinStatus, setPinStatus] = useState<{ has_pin: boolean; masked_pin: string | null } | null>(null);
 
   useEffect(() => {
     fetchUsers();
@@ -286,11 +286,9 @@ export default function UserManagement() {
 
       if (error) throw error;
       
-      // Update PIN status with the new PIN
-      setPinStatus({ has_pin: true, plain_pin: data.plain_pin || newPin });
       toast.success("PIN reset successfully");
       setNewPin("");
-      setShowPin(true); // Show the new PIN after reset
+      setIsPinDialogOpen(false);
     } catch (error: any) {
       console.error("Error resetting PIN:", error);
       toast.error(error.message || "Failed to reset PIN");
@@ -619,26 +617,20 @@ export default function UserManagement() {
                 <div className="flex items-center justify-between mt-2">
                   <span className="text-sm text-muted-foreground">Current PIN</span>
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-foreground text-lg tracking-widest">
-                      {pinStatus.plain_pin 
-                        ? (showPin ? pinStatus.plain_pin : '••••') 
-                        : 'Not available'}
+                    <span className="font-mono text-foreground">
+                      {showPin ? '••••' : '****'}
                     </span>
-                    {pinStatus.plain_pin && (
-                      <button
-                        onClick={() => setShowPin(!showPin)}
-                        className="text-muted-foreground hover:text-foreground"
-                      >
-                        {showPin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </button>
-                    )}
+                    <button
+                      onClick={() => setShowPin(!showPin)}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      {showPin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
                   </div>
                 </div>
               )}
               <p className="text-xs text-muted-foreground mt-2">
-                {pinStatus?.plain_pin 
-                  ? 'PIN is visible to admin. Reset to update.' 
-                  : 'PIN was set by user and cannot be viewed. Reset to set a new one.'}
+                Note: PINs are securely hashed and cannot be viewed. You can only reset them.
               </p>
             </div>
 
