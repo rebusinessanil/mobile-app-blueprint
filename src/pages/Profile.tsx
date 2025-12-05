@@ -60,9 +60,9 @@ export default function Profile() {
   const allMenuItems = isAdmin ? [adminMenuItem, ...menuItems] : menuItems;
 
   return (
-    <div className="min-h-screen bg-navy-dark pb-24">
+    <div className="min-h-screen bg-navy-dark pb-24 overflow-x-hidden">
       {/* Profile Header */}
-      <div className="relative px-6 pt-8 pb-6">
+      <div className="relative px-4 sm:px-6 pt-8 pb-6 max-w-screen-md mx-auto">
         {/* Profile Card */}
         <div className="gold-border bg-gradient-to-br from-card to-secondary rounded-3xl p-6 text-center space-y-3">
           <div className="relative inline-block">
@@ -104,7 +104,7 @@ export default function Profile() {
       </div>
 
       {/* Menu Items */}
-      <div className="px-6 space-y-3">
+      <div className="px-4 sm:px-6 space-y-3 max-w-screen-md mx-auto">
         {allMenuItems.map((item, index) => {
           const Icon = item.icon;
           const isExternal = 'isExternal' in item && item.isExternal;
@@ -164,7 +164,7 @@ export default function Profile() {
       </div>
 
       {/* Logout Button */}
-      <div className="px-6 mt-6">
+      <div className="px-4 sm:px-6 mt-6 max-w-screen-md mx-auto">
         <Button
           onClick={handleLogout}
           variant="destructive"

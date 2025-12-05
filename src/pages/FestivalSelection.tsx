@@ -26,9 +26,9 @@ export default function FestivalSelection() {
   };
 
   return (
-    <div className="min-h-screen bg-navy-dark pb-24">
-      <header className="sticky top-0 bg-navy-dark/95 backdrop-blur-sm z-40 px-6 py-4 border-b border-primary/20">
-        <div className="flex items-center justify-between">
+    <div className="min-h-screen bg-navy-dark pb-24 overflow-x-hidden">
+      <header className="sticky top-0 bg-navy-dark/95 backdrop-blur-sm z-40 px-4 sm:px-6 py-4 border-b border-primary/20">
+        <div className="flex items-center justify-between max-w-screen-md mx-auto">
           <button
             onClick={() => navigate("/dashboard")}
             className="w-10 h-10 rounded-xl border-2 border-primary flex items-center justify-center hover:bg-primary/10 transition-colors"
@@ -40,7 +40,7 @@ export default function FestivalSelection() {
         </div>
       </header>
 
-      <div className="px-6 py-6">
+      <div className="px-4 sm:px-6 py-6 max-w-screen-md mx-auto">
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-primary mb-2">Festival Banners</h2>
           <p className="text-muted-foreground">
