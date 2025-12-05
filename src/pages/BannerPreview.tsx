@@ -399,8 +399,21 @@ export default function BannerPreview() {
   // Bottom profile name - ALWAYS from user profile (never changes)
   const profileName: string = profile?.name || "";
   const truncatedProfileName = profileName.length > MAX_NAME_LENGTH ? profileName.slice(0, MAX_NAME_LENGTH) + "..." : profileName;
-  const displayContact: string = profile?.mobile || profile?.whatsapp || "9876543210";
-  const displayRank: string = (profile?.rank || "ROYAL AMBASSADOR").replace(/[-–—]/g, ' ');
+  
+  // Display contact - auto-load from user profile
+  const displayContact: string = profile?.mobile || profile?.whatsapp || "";
+  
+  // Display rank - auto-load from user profile
+  const displayRank: string = (profile?.rank || "").replace(/[-–—]/g, ' ');
+
+  // Display uplines - use bannerData.uplines if provided, otherwise fall back to user's saved banner settings
+  const displayUplines: Upline[] = (bannerData?.uplines && bannerData.uplines.length > 0)
+    ? bannerData.uplines
+    : (bannerSettings?.upline_avatars || []).map((u, idx) => ({
+        id: `settings-${idx}`,
+        name: u.name || '',
+        avatar: u.avatar_url || ''
+      }));
 
   // Get primary profile photo - prioritize uploaded photo from banner creation for LEFT side
   // FESTIVAL, MOTIVATIONAL & STORY CATEGORIES: Skip auto-loading achiever image completely
@@ -1451,7 +1464,7 @@ export default function BannerPreview() {
                     }} />
                   </div>}
 
-                {/* Top - Upline avatars - FIXED SIZE AND POSITION */}
+                {/* Top - Upline avatars - FIXED SIZE AND POSITION - Auto-loaded from profile settings */}
                 <div className="absolute z-20" style={{
                     top: '10px',
                     left: '675px',
@@ -1459,7 +1472,7 @@ export default function BannerPreview() {
                     display: 'flex',
                     gap: '12px'
                   }}>
-                  {bannerData.uplines?.slice(0, 5).map((upline, idx) => <div key={upline.id} style={{
+                  {displayUplines?.slice(0, 5).map((upline, idx) => <div key={upline.id} style={{
                       width: '120px',
                       /* LOCKED */
                       height: '120px',
