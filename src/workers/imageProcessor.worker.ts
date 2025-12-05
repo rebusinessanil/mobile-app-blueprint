@@ -241,12 +241,14 @@ async function processFullImage(
   return `data:image/png;base64,${btoa(binary)}`;
 }
 
-// Compress banner image to max size (3MB default)
+// Compress banner image to max 1000x1000 and 1.5MB
 async function compressBannerImage(
   dataUrl: string,
   maxSizeBytes: number,
   initialQuality: number
 ): Promise<string> {
+  const TARGET_SIZE = 1000; // Fixed 1000x1000 max
+  
   // Decode base64 to blob
   const response = await fetch(dataUrl);
   const blob = await response.blob();
@@ -255,41 +257,42 @@ async function compressBannerImage(
   const bitmap = await createImageBitmap(blob);
   const { width, height } = bitmap;
   
-  let quality = initialQuality;
-  let scale = 1;
-  let result = dataUrl;
-  let attempts = 0;
-  const maxAttempts = 5;
+  // Calculate dimensions to fit within 1000x1000
+  let outWidth = width;
+  let outHeight = height;
   
-  // Check initial size
-  const initialSize = (dataUrl.length - dataUrl.indexOf(',') - 1) * 0.75;
-  
-  if (initialSize <= maxSizeBytes) {
-    return dataUrl;
+  if (width > TARGET_SIZE || height > TARGET_SIZE) {
+    if (width > height) {
+      outWidth = TARGET_SIZE;
+      outHeight = Math.round((height * TARGET_SIZE) / width);
+    } else {
+      outHeight = TARGET_SIZE;
+      outWidth = Math.round((width * TARGET_SIZE) / height);
+    }
   }
   
-  // Iteratively reduce quality and/or scale
+  // Create canvas at target size
+  const canvas = new OffscreenCanvas(outWidth, outHeight);
+  const ctx = canvas.getContext('2d');
+  
+  if (!ctx) throw new Error('Could not get canvas context');
+  
+  // Draw with high-quality scaling
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(bitmap, 0, 0, outWidth, outHeight);
+  
+  // Always use JPEG for smaller file size
+  let quality = initialQuality;
+  let attempts = 0;
+  const maxAttempts = 4;
+  
   while (attempts < maxAttempts) {
-    const targetWidth = Math.round(width * scale);
-    const targetHeight = Math.round(height * scale);
-    
-    const canvas = new OffscreenCanvas(targetWidth, targetHeight);
-    const ctx = canvas.getContext('2d');
-    
-    if (!ctx) throw new Error('Could not get canvas context');
-    
-    // Draw with high-quality scaling
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = 'high';
-    ctx.drawImage(bitmap, 0, 0, targetWidth, targetHeight);
-    
-    // Convert to JPEG for better compression (except if transparency needed)
     const compressedBlob = await canvas.convertToBlob({ 
       type: 'image/jpeg', 
       quality 
     });
     
-    // Check size
     const arrayBuffer = await compressedBlob.arrayBuffer();
     
     if (arrayBuffer.byteLength <= maxSizeBytes) {
@@ -306,33 +309,13 @@ async function compressBannerImage(
       return `data:image/jpeg;base64,${btoa(binary)}`;
     }
     
-    // Reduce quality first, then scale
-    if (quality > 0.7) {
-      quality -= 0.1;
-    } else if (scale > 0.6) {
-      scale -= 0.1;
-      quality = 0.9; // Reset quality when scaling down
-    } else {
-      quality -= 0.1;
-    }
-    
+    // Reduce quality
+    quality -= 0.15;
     attempts++;
   }
   
-  // Last resort: aggressive compression
-  const finalWidth = Math.round(width * 0.5);
-  const finalHeight = Math.round(height * 0.5);
-  
-  const finalCanvas = new OffscreenCanvas(finalWidth, finalHeight);
-  const finalCtx = finalCanvas.getContext('2d');
-  
-  if (!finalCtx) throw new Error('Could not get final canvas context');
-  
-  finalCtx.imageSmoothingEnabled = true;
-  finalCtx.imageSmoothingQuality = 'high';
-  finalCtx.drawImage(bitmap, 0, 0, finalWidth, finalHeight);
-  
-  const finalBlob = await finalCanvas.convertToBlob({ type: 'image/jpeg', quality: 0.6 });
+  // Final attempt with minimum quality
+  const finalBlob = await canvas.convertToBlob({ type: 'image/jpeg', quality: 0.5 });
   const finalBuffer = await finalBlob.arrayBuffer();
   const finalBytes = new Uint8Array(finalBuffer);
   

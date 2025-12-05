@@ -2,8 +2,9 @@ import { useState, useCallback, useRef, startTransition } from 'react';
 import { toPng } from 'html-to-image';
 import { toast } from 'sonner';
 
-const MAX_FILE_SIZE_MB = 3;
+const MAX_FILE_SIZE_MB = 1.5;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
+const TARGET_SIZE = 1000; // Fixed 1000x1000 output
 
 interface ExportOptions {
   pixelRatio?: number;
@@ -86,25 +87,23 @@ export const useBannerExport = () => {
   ): Promise<string | null> => {
     if (exportingRef.current) return null;
 
-    const { 
-      pixelRatio = 3, 
-      quality = 1,
-      maxWidth = 4050 // 1350 * 3
-    } = options;
+    // Fixed 1000x1000 at ~74 DPI equivalent (lower pixelRatio for smaller output)
+    const elementWidth = element.offsetWidth;
+    const pixelRatio = Math.min(TARGET_SIZE / elementWidth, 2.5);
 
     setIsExporting(true);
     exportingRef.current = true;
     updateProgress(10);
 
     try {
-      // Step 1: Generate high-quality PNG
+      // Step 1: Generate optimized PNG at target resolution
       updateProgress(20);
       
       const dataUrl = await toPng(element, {
         cacheBust: true,
         pixelRatio,
-        quality,
-        backgroundColor: null,
+        quality: 0.9,
+        backgroundColor: '#000000',
         style: {
           transform: 'scale(1)',
           transformOrigin: 'top left'
@@ -124,43 +123,35 @@ export const useBannerExport = () => {
 
       updateProgress(50);
 
-      // Step 2: Check size and compress if needed
-      const base64Length = dataUrl.length - 'data:image/png;base64,'.length;
-      const estimatedSize = (base64Length * 0.75);
-
-      if (estimatedSize > MAX_FILE_SIZE_BYTES) {
-        // Compress in Web Worker to avoid UI freeze
-        updateProgress(60);
-        
-        try {
-          const compressedUrl = await compressInWorker(
-            dataUrl,
-            MAX_FILE_SIZE_BYTES,
-            0.92
-          );
-          updateProgress(95);
-          
-          startTransition(() => {
-            setProgress(100);
-            setIsExporting(false);
-            exportingRef.current = false;
-          });
-          
-          return compressedUrl;
-        } catch (compressError) {
-          console.warn('Worker compression failed, returning original:', compressError);
-        }
-      }
-
-      updateProgress(95);
+      // Step 2: Always compress to ensure small file size
+      updateProgress(60);
       
-      startTransition(() => {
-        setProgress(100);
-        setIsExporting(false);
-        exportingRef.current = false;
-      });
-
-      return dataUrl;
+      try {
+        const compressedUrl = await compressInWorker(
+          dataUrl,
+          MAX_FILE_SIZE_BYTES,
+          0.85
+        );
+        updateProgress(95);
+        
+        startTransition(() => {
+          setProgress(100);
+          setIsExporting(false);
+          exportingRef.current = false;
+        });
+        
+        return compressedUrl;
+      } catch (compressError) {
+        console.warn('Worker compression failed, returning original:', compressError);
+        
+        startTransition(() => {
+          setProgress(100);
+          setIsExporting(false);
+          exportingRef.current = false;
+        });
+        
+        return dataUrl;
+      }
 
     } catch (error) {
       console.error('Export error:', error);
