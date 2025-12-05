@@ -48,13 +48,14 @@ export default function ProfileEdit() {
   const [formData, setFormData] = useState({
     title: "mr",
     name: "",
-    mobile: "",
-    role: "royal-ambassador",
+    mobile: "", // Empty by default - user must enter
+    role: "", // Empty by default - user must select
     language: "eng",
     gender: "male",
     married: false
   });
   const [customRole, setCustomRole] = useState("");
+  const [roleConfirmed, setRoleConfirmed] = useState(false); // Track if user manually selected role
   
   // PIN state
   const [createPin, setCreatePin] = useState("");
@@ -68,19 +69,37 @@ export default function ProfileEdit() {
     if (profile) {
       const predefinedRoles = ["bronze", "silver", "gold", "platinum", "emerald", "topaz", "ruby-star", "sapphire", "star-sapphire", "diamond", "blue-diamond", "black-diamond", "royal-diamond", "crown-diamond", "ambassador", "royal-ambassador", "crown-ambassador", "brand-ambassador"];
       const isCustomRole = profile.role && !predefinedRoles.includes(profile.role);
+      
       // Extract 10-digit mobile from stored format (e.g., +919876543210 -> 9876543210)
-      const extractedMobile = profile.mobile ? profile.mobile.replace(/^\+91/, '').replace(/\D/g, '').slice(-10) : '';
+      // Only load if it's a real number (not default placeholder)
+      let extractedMobile = '';
+      if (profile.mobile && profile.mobile !== '+000000000000') {
+        const cleaned = profile.mobile.replace(/^\+91/, '').replace(/\D/g, '');
+        // Only use if it's a valid 10-digit number
+        if (cleaned.length >= 10) {
+          extractedMobile = cleaned.slice(-10);
+        }
+      }
+      
+      // Determine if user has previously selected a role
+      const hasValidRole = profile.role && profile.role.trim() !== '' && profile.role !== 'User';
+      
       setFormData({
         title: "mr",
-        name: profile.name || "",
-        mobile: extractedMobile,
-        role: isCustomRole ? "custom" : profile.role || "royal-ambassador",
+        name: profile.name && profile.name !== 'User' ? profile.name : "",
+        mobile: extractedMobile, // Empty if no valid mobile
+        role: hasValidRole ? (isCustomRole ? "custom" : profile.role) : "", // Empty if no valid role
         language: "eng",
         gender: "male",
         married: false
       });
-      if (isCustomRole && profile.role) {
-        setCustomRole(profile.role);
+      
+      // Only mark role as confirmed if user previously had a valid role
+      if (hasValidRole) {
+        setRoleConfirmed(true);
+        if (isCustomRole && profile.role) {
+          setCustomRole(profile.role);
+        }
       }
     }
   }, [profile]);
@@ -170,11 +189,11 @@ export default function ProfileEdit() {
     }
   };
 
-  // Check if profile is complete
+  // Check if profile is complete - requires manual selection of all fields
   const isProfileComplete = () => {
     const hasName = formData.name.trim() !== '' && formData.name !== 'User';
     const hasMobile = formData.mobile && /^\d{10}$/.test(formData.mobile.replace(/\D/g, ''));
-    const hasRole = formData.role && formData.role.trim() !== '';
+    const hasRole = roleConfirmed && formData.role && formData.role.trim() !== '';
     const hasPhotos = photos.length > 0;
     return hasName && hasMobile && hasRole && hasPhotos;
   };
@@ -198,6 +217,10 @@ export default function ProfileEdit() {
     }
     if (!formData.mobile || !/^\d{10}$/.test(formData.mobile.replace(/\D/g, ''))) {
       toast.error("Please enter a valid 10-digit mobile number");
+      return;
+    }
+    if (!roleConfirmed || !formData.role || formData.role.trim() === '') {
+      toast.error("Please select a role");
       return;
     }
     if (formData.role === "custom" && !customRole.trim()) {
@@ -401,12 +424,12 @@ export default function ProfileEdit() {
           {/* Role */}
           <div className="space-y-2">
             <label className="text-sm text-foreground">Role</label>
-            <Select value={formData.role} onValueChange={value => setFormData({
-              ...formData,
-              role: value
-            })}>
+            <Select value={formData.role} onValueChange={value => {
+              setFormData({ ...formData, role: value });
+              setRoleConfirmed(true); // Mark as confirmed when user manually selects
+            }}>
               <SelectTrigger className="gold-border bg-secondary text-foreground h-12 border-b-2 border-t-0 border-x-0 rounded-none">
-                <SelectValue />
+                <SelectValue placeholder="Select Role" />
               </SelectTrigger>
               <SelectContent className="bg-card border-primary">
                 <SelectItem value="custom">Custom Name</SelectItem>
