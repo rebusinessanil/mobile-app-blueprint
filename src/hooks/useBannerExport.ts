@@ -1,21 +1,21 @@
 import { useState, useCallback, useRef, startTransition } from 'react';
-import { toPng } from 'html-to-image';
-import { toast } from 'sonner';
+import { toJpeg } from 'html-to-image';
 
-const MAX_FILE_SIZE_MB = 3;
+// Strict 1000x1000px output at 250 PPI
+const TARGET_SIZE = 1000;
+const MAX_FILE_SIZE_MB = 1.5;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 
 interface ExportOptions {
   pixelRatio?: number;
   quality?: number;
-  maxWidth?: number;
 }
 
 // Compress image in Web Worker to keep main thread free
 const compressInWorker = async (
   dataUrl: string,
   maxSizeBytes: number,
-  initialQuality: number = 0.95
+  initialQuality: number = 0.85
 ): Promise<string> => {
   return new Promise((resolve, reject) => {
     const worker = new Worker(
@@ -26,7 +26,7 @@ const compressInWorker = async (
     const timeout = setTimeout(() => {
       worker.terminate();
       reject(new Error('Compression timeout'));
-    }, 60000);
+    }, 30000);
 
     worker.onmessage = (e) => {
       clearTimeout(timeout);
@@ -48,7 +48,8 @@ const compressInWorker = async (
       type: 'compress',
       dataUrl,
       maxSizeBytes,
-      initialQuality
+      initialQuality,
+      targetSize: TARGET_SIZE
     });
   });
 };
@@ -86,25 +87,24 @@ export const useBannerExport = () => {
   ): Promise<string | null> => {
     if (exportingRef.current) return null;
 
-    const { 
-      pixelRatio = 3, 
-      quality = 1,
-      maxWidth = 4050 // 1350 * 3
-    } = options;
+    // Calculate pixel ratio to achieve 1000px output
+    const elementWidth = element.offsetWidth || 350;
+    const pixelRatio = Math.min(TARGET_SIZE / elementWidth, 2.5);
+    const quality = options.quality ?? 0.85;
 
     setIsExporting(true);
     exportingRef.current = true;
     updateProgress(10);
 
     try {
-      // Step 1: Generate high-quality PNG
+      // Generate JPEG directly for smaller file size (1000x1000 target)
       updateProgress(20);
       
-      const dataUrl = await toPng(element, {
+      const dataUrl = await toJpeg(element, {
         cacheBust: true,
         pixelRatio,
         quality,
-        backgroundColor: null,
+        backgroundColor: '#000000',
         style: {
           transform: 'scale(1)',
           transformOrigin: 'top left'
@@ -122,45 +122,35 @@ export const useBannerExport = () => {
         }
       });
 
-      updateProgress(50);
+      updateProgress(60);
 
-      // Step 2: Check size and compress if needed
-      const base64Length = dataUrl.length - 'data:image/png;base64,'.length;
-      const estimatedSize = (base64Length * 0.75);
-
-      if (estimatedSize > MAX_FILE_SIZE_BYTES) {
-        // Compress in Web Worker to avoid UI freeze
-        updateProgress(60);
+      // Always compress to ensure max 1.5MB and 1000x1000 output
+      try {
+        const compressedUrl = await compressInWorker(
+          dataUrl,
+          MAX_FILE_SIZE_BYTES,
+          0.8
+        );
+        updateProgress(95);
         
-        try {
-          const compressedUrl = await compressInWorker(
-            dataUrl,
-            MAX_FILE_SIZE_BYTES,
-            0.92
-          );
-          updateProgress(95);
-          
-          startTransition(() => {
-            setProgress(100);
-            setIsExporting(false);
-            exportingRef.current = false;
-          });
-          
-          return compressedUrl;
-        } catch (compressError) {
-          console.warn('Worker compression failed, returning original:', compressError);
-        }
+        startTransition(() => {
+          setProgress(100);
+          setIsExporting(false);
+          exportingRef.current = false;
+        });
+        
+        return compressedUrl;
+      } catch (compressError) {
+        console.warn('Worker compression failed, returning original:', compressError);
+        
+        startTransition(() => {
+          setProgress(100);
+          setIsExporting(false);
+          exportingRef.current = false;
+        });
+        
+        return dataUrl;
       }
-
-      updateProgress(95);
-      
-      startTransition(() => {
-        setProgress(100);
-        setIsExporting(false);
-        exportingRef.current = false;
-      });
-
-      return dataUrl;
 
     } catch (error) {
       console.error('Export error:', error);
