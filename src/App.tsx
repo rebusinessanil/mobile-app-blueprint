@@ -68,7 +68,6 @@ const App = () => (
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/otp-verification" element={<OTPVerification />} />
-          <Route path="/profile-setup" element={<AuthGuard><ProfileEdit /></AuthGuard>} />
           <Route path="/auth/callback" element={<AuthCallback />} />
           
           {/* Protected routes - auth required */}

@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState, useRef } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/lib/logger";
 import type { User } from "@supabase/supabase-js";
@@ -10,36 +10,55 @@ interface AuthGuardProps {
 
 export default function AuthGuard({ children }: AuthGuardProps) {
   const navigate = useNavigate();
+  const location = useLocation();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [checkingProfile, setCheckingProfile] = useState(true);
+  const profileCreatedRef = useRef(false);
+
+  // Check if we're on profile-edit route (no loading flash needed)
+  const isProfileRoute = location.pathname === '/profile-edit' || location.pathname === '/profile-setup';
 
   useEffect(() => {
-    // Listen for auth changes FIRST
+    let mounted = true;
+    
+    // Check for existing session FIRST (synchronous-like)
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!mounted) return;
+      
+      if (!session?.user) {
+        // No user, redirect to login immediately
+        navigate("/login", { replace: true });
+        return;
+      }
+      
+      setUser(session.user);
+      setLoading(false);
+    });
+
+    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        if (!mounted) return;
+        
         setUser(session?.user ?? null);
         
-        // Only redirect on explicit sign out, not on session refresh or other events
         if (event === 'SIGNED_OUT') {
           navigate("/login", { replace: true });
         }
       }
     );
 
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, [navigate]);
 
   // Check if user has a profile, create one if it doesn't exist
   useEffect(() => {
     const checkProfile = async () => {
-      if (!user) {
+      if (!user || profileCreatedRef.current) {
         setCheckingProfile(false);
         return;
       }
@@ -57,19 +76,22 @@ export default function AuthGuard({ children }: AuthGuardProps) {
       }
 
       if (!profile) {
-        // Auto-create profile for existing user
+        profileCreatedRef.current = true;
+        // Auto-create profile for new user
+        const userName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'User';
+        const userMobile = user.user_metadata?.mobile || user.phone || '';
+        
         const { error: insertError } = await supabase
           .from('profiles')
           .insert({
             user_id: user.id,
-            name: user.email?.split('@')[0] || 'User',
-            mobile: user.phone || '+000000000000', // Required field
+            name: userName,
+            mobile: userMobile,
+            welcome_popup_seen: false, // New user, will see welcome popup
           });
 
         if (insertError) {
           logger.error('Error creating profile:', insertError);
-          navigate("/profile-setup", { replace: true });
-          return;
         }
       }
 
@@ -79,13 +101,17 @@ export default function AuthGuard({ children }: AuthGuardProps) {
     if (!loading && user) {
       checkProfile();
     }
-  }, [user, loading, navigate]);
+  }, [user, loading]);
 
+  // For profile routes, render immediately without loading flash
+  if (isProfileRoute && user) {
+    return <>{children}</>;
+  }
+
+  // Show minimal loading only for non-profile routes
   if (loading || checkingProfile) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-navy-dark">
-        <div className="animate-pulse text-primary text-xl">Loading...</div>
-      </div>
+      <div className="min-h-screen bg-background" />
     );
   }
 
