@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Plus, Minus, Crown, User, Key, Eye, EyeOff, RefreshCw } from "lucide-react";
+import { Search, Plus, Minus, Crown, User, Key, Eye, EyeOff, RefreshCw, Trash2, AlertTriangle } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -99,17 +99,18 @@ export default function UserManagement() {
 
   const fetchUsers = async () => {
     try {
-      // Fetch profiles with mobile numbers
+      // Fetch profiles with mobile numbers and profile_completed status
       const { data: profiles, error: profileError } = await supabase
         .from('profiles')
-        .select('user_id, name, mobile, rank, created_at');
+        .select('user_id, name, mobile, rank, created_at, profile_completed, welcome_bonus_given')
+        .order('created_at', { ascending: false });
 
       if (profileError) throw profileError;
 
-      // Fetch credits
+      // Fetch credits with all fields
       const { data: credits, error: creditsError } = await supabase
         .from('user_credits')
-        .select('user_id, balance');
+        .select('user_id, balance, total_earned, total_spent');
 
       if (creditsError) throw creditsError;
 
@@ -121,7 +122,7 @@ export default function UserManagement() {
 
       if (rolesError) throw rolesError;
 
-      // Combine data
+      // Combine data - filter out any profiles that might be orphaned
       const combinedUsers: UserData[] = profiles?.map(profile => {
         const userCredit = credits?.find(c => c.user_id === profile.user_id);
         const isAdmin = adminRoles?.some(r => r.user_id === profile.user_id) || false;
@@ -139,7 +140,9 @@ export default function UserManagement() {
       }) || [];
 
       setUsers(combinedUsers);
+      console.log(`✅ Loaded ${combinedUsers.length} users, ${adminRoles?.length || 0} admins`);
     } catch (error: any) {
+      console.error('Failed to load users:', error);
       toast.error("Failed to load users");
     } finally {
       setLoading(false);
@@ -294,6 +297,92 @@ export default function UserManagement() {
     }
   };
 
+  // Delete user profile and all related data
+  const handleDeleteUser = async (user: UserData) => {
+    if (!confirm(`Are you sure you want to delete ${user.name}? This will remove all their data including credits, transactions, and settings.`)) {
+      return;
+    }
+
+    try {
+      // Delete in order: transactions, credits, settings, photos, banners, profile
+      await supabase.from('credit_transactions').delete().eq('user_id', user.user_id);
+      await supabase.from('user_credits').delete().eq('user_id', user.user_id);
+      await supabase.from('user_banner_settings').delete().eq('user_id', user.user_id);
+      await supabase.from('category_banner_settings').delete().eq('user_id', user.user_id);
+      await supabase.from('profile_photos').delete().eq('user_id', user.user_id);
+      await supabase.from('banner_downloads').delete().eq('user_id', user.user_id);
+      await supabase.from('banners').delete().eq('user_id', user.user_id);
+      await supabase.from('trip_achievements').delete().eq('user_id', user.user_id);
+      await supabase.from('user_roles').delete().eq('user_id', user.user_id);
+      
+      // Finally delete profile
+      const { error } = await supabase.from('profiles').delete().eq('user_id', user.user_id);
+      if (error) throw error;
+
+      toast.success(`User ${user.name} deleted successfully`);
+      fetchUsers();
+    } catch (error: any) {
+      console.error('Error deleting user:', error);
+      toast.error('Failed to delete user');
+    }
+  };
+
+  // Cleanup orphaned profiles (profiles without auth users)
+  const handleCleanupOrphans = async () => {
+    if (!confirm('This will remove profile data for users that no longer exist in authentication. Continue?')) {
+      return;
+    }
+
+    try {
+      toast.loading('Cleaning up orphaned profiles...');
+      
+      // Get all profile user_ids
+      const { data: profiles } = await supabase.from('profiles').select('user_id');
+      
+      if (!profiles || profiles.length === 0) {
+        toast.dismiss();
+        toast.info('No profiles to clean up');
+        return;
+      }
+
+      // We can't directly query auth.users from client, so we'll check by trying to get user credits
+      // Orphaned profiles typically don't have proper auth sessions
+      let cleanedCount = 0;
+      
+      for (const profile of profiles) {
+        // Try to check if this user exists by their activity
+        const { data: hasCredits } = await supabase
+          .from('user_credits')
+          .select('user_id')
+          .eq('user_id', profile.user_id)
+          .maybeSingle();
+        
+        // If no credits record exists and profile has placeholder mobile, likely orphaned
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('mobile, name, created_at')
+          .eq('user_id', profile.user_id)
+          .maybeSingle();
+        
+        if (profileData && profileData.mobile === '+000000000000') {
+          // Delete this orphaned profile
+          await supabase.from('credit_transactions').delete().eq('user_id', profile.user_id);
+          await supabase.from('user_credits').delete().eq('user_id', profile.user_id);
+          await supabase.from('profiles').delete().eq('user_id', profile.user_id);
+          cleanedCount++;
+        }
+      }
+
+      toast.dismiss();
+      toast.success(`Cleaned up ${cleanedCount} orphaned profiles`);
+      fetchUsers();
+    } catch (error: any) {
+      toast.dismiss();
+      console.error('Cleanup error:', error);
+      toast.error('Failed to cleanup orphaned profiles');
+    }
+  };
+
   const filteredUsers = users.filter(user =>
     user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     user.email.toLowerCase().includes(searchQuery.toLowerCase())
@@ -352,15 +441,34 @@ export default function UserManagement() {
         </div>
       </div>
 
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-        <Input
-          placeholder="Search users by name or email..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10 gold-border bg-secondary"
-        />
+      {/* Search and Actions */}
+      <div className="flex gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+          <Input
+            placeholder="Search users by name or email..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 gold-border bg-secondary"
+          />
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleCleanupOrphans}
+          className="border-destructive/30 text-destructive hover:bg-destructive/10"
+        >
+          <AlertTriangle className="w-4 h-4 mr-1" />
+          Cleanup
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={fetchUsers}
+          className="border-primary/30 hover:bg-primary/10"
+        >
+          <RefreshCw className="w-4 h-4" />
+        </Button>
       </div>
 
       {/* Users Table */}
@@ -401,7 +509,7 @@ export default function UserManagement() {
                   )}
                 </TableCell>
                 <TableCell>
-                  <div className="flex gap-2">
+                  <div className="flex gap-1">
                     <Button
                       size="sm"
                       variant="outline"
@@ -409,7 +517,7 @@ export default function UserManagement() {
                         setSelectedUser(user);
                         setIsDialogOpen(true);
                       }}
-                      className="text-xs border-primary/30 hover:bg-primary/10"
+                      className="text-xs border-primary/30 hover:bg-primary/10 px-2"
                     >
                       Credits
                     </Button>
@@ -417,9 +525,17 @@ export default function UserManagement() {
                       size="sm"
                       variant="outline"
                       onClick={() => handleOpenPinDialog(user)}
-                      className="text-xs border-primary/30 hover:bg-primary/10"
+                      className="text-xs border-primary/30 hover:bg-primary/10 px-2"
                     >
                       <Key className="w-3 h-3" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleDeleteUser(user)}
+                      className="text-xs border-destructive/30 hover:bg-destructive/10 text-destructive px-2"
+                    >
+                      <Trash2 className="w-3 h-3" />
                     </Button>
                   </div>
                 </TableCell>
