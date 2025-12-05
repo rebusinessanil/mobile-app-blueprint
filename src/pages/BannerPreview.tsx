@@ -1271,17 +1271,22 @@ export default function BannerPreview() {
     setIsDownloading(true);
     const loadingToast = toast.loading("Generating ultra HD banner...");
     try {
-      // Export at EXACT preview dimensions (1350×1350) - no upscaling
+      // STRICT FIXED CANVAS: Force exactly 1350×1350px - no devicePixelRatio influence
+      const FIXED_SIZE = 1350;
       const dataUrl = await toPng(bannerRef.current, {
         cacheBust: true,
-        pixelRatio: 1, // Exact preview size - no enlargement
+        width: FIXED_SIZE,        // Force exact width
+        height: FIXED_SIZE,       // Force exact height
+        canvasWidth: FIXED_SIZE,  // Lock canvas width
+        canvasHeight: FIXED_SIZE, // Lock canvas height
+        pixelRatio: 1,            // No pixel ratio scaling
         quality: 1,
         backgroundColor: null,
-        skipAutoScale: true, // Prevent auto-scaling
-        includeQueryParams: false, // Remove unnecessary metadata
         style: {
           transform: "scale(1)",
-          transformOrigin: "top left"
+          transformOrigin: "top left",
+          width: `${FIXED_SIZE}px`,
+          height: `${FIXED_SIZE}px`
         },
         filter: node => {
           // Exclude UI elements from export
