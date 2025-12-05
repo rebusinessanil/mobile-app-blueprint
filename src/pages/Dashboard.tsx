@@ -203,31 +203,31 @@ export default function Dashboard() {
     <ProfileCompletionGate userId={userId}>
       <div className="min-h-screen bg-navy-dark pb-24 overflow-x-hidden">
       {/* Header */}
-      <header className="sticky top-0 bg-navy-dark/95 backdrop-blur-sm z-40 px-6 py-4 border-b border-primary/20">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center">
-              <Star className="w-6 h-6 text-primary-foreground" />
+      <header className="sticky top-0 bg-navy-dark/95 backdrop-blur-sm z-40 px-4 py-3 border-b border-primary/20">
+        <div className="flex items-center justify-between gap-2 max-w-full">
+          <div className="flex items-center gap-2 min-w-0 flex-shrink">
+            <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center flex-shrink-0">
+              <Star className="w-5 h-5 text-primary-foreground" />
             </div>
-            <div>
-              <h1 className="text-xl font-bold text-foreground">ReBusiness</h1>
-              <p className="text-sm text-muted-foreground">
+            <div className="min-w-0">
+              <h1 className="text-lg font-bold text-foreground leading-tight">ReBusiness</h1>
+              <p className="text-xs text-muted-foreground truncate">
                 Welcome back, {profile?.name || "User"}!
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 flex-shrink-0">
             {/* Wallet Balance */}
             <Link 
               to="/wallet" 
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary/10 border border-primary/30 hover:bg-primary/20 transition-colors"
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-primary/10 border border-primary/30 hover:bg-primary/20 transition-colors"
             >
               <Wallet className="w-4 h-4 text-primary" />
               <span className="text-sm font-bold text-primary">₹{profile?.balance || 0}</span>
             </Link>
             <Sheet open={isProfileOpen} onOpenChange={setIsProfileOpen}>
               <SheetTrigger asChild>
-                <button className="w-10 h-10 rounded-xl border-2 border-primary flex items-center justify-center hover:bg-primary/10 transition-colors">
+                <button className="w-9 h-9 rounded-xl border-2 border-primary flex items-center justify-center hover:bg-primary/10 transition-colors">
                   <Menu className="w-5 h-5 text-primary" />
                 </button>
               </SheetTrigger>
@@ -235,7 +235,7 @@ export default function Dashboard() {
                 <Profile />
               </SheetContent>
             </Sheet>
-            <Link to="/messages" className="relative w-10 h-10 rounded-xl border-2 border-primary flex items-center justify-center hover:bg-primary/10 transition-colors">
+            <Link to="/messages" className="relative w-9 h-9 rounded-xl border-2 border-primary flex items-center justify-center hover:bg-primary/10 transition-colors">
               <Bell className="w-5 h-5 text-primary" />
               <span className="absolute -top-1 -right-1 w-5 h-5 bg-destructive rounded-full text-xs font-bold flex items-center justify-center text-white">
                 2
