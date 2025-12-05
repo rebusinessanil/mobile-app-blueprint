@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import BottomNav from "@/components/BottomNav";
-import { Menu, Bell, Star, Calendar, Zap, Award } from "lucide-react";
+import { Menu, Bell, Star, Calendar, Zap, Award, Wallet } from "lucide-react";
 import { useTemplateCategories, useTemplates } from "@/hooks/useTemplates";
 import { useProfile } from "@/hooks/useProfile";
 import { supabase } from "@/integrations/supabase/client";
@@ -216,7 +216,15 @@ export default function Dashboard() {
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            {/* Wallet Balance */}
+            <Link 
+              to="/wallet" 
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary/10 border border-primary/30 hover:bg-primary/20 transition-colors"
+            >
+              <Wallet className="w-4 h-4 text-primary" />
+              <span className="text-sm font-bold text-primary">₹{profile?.balance || 0}</span>
+            </Link>
             <Sheet open={isProfileOpen} onOpenChange={setIsProfileOpen}>
               <SheetTrigger asChild>
                 <button className="w-10 h-10 rounded-xl border-2 border-primary flex items-center justify-center hover:bg-primary/10 transition-colors">
