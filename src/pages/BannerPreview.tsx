@@ -148,14 +148,9 @@ export default function BannerPreview() {
       container.style.setProperty('--banner-scale', scale.toString());
       container.style.transform = `scale(${scale})`;
     };
-    // Small delay to ensure DOM is ready
-    const timeoutId = setTimeout(updateScale, 100);
     updateScale();
     window.addEventListener('resize', updateScale);
-    return () => {
-      clearTimeout(timeoutId);
-      window.removeEventListener('resize', updateScale);
-    };
+    return () => window.removeEventListener('resize', updateScale);
   }, []);
 
   // Get authenticated user and check admin status
@@ -178,24 +173,17 @@ export default function BannerPreview() {
     });
   }, []);
   const {
-    profile,
-    loading: profileLoading
+    profile
   } = useProfile(userId ?? undefined);
   const {
-    photos: profilePhotos,
-    loading: photosLoading
+    photos: profilePhotos
   } = useProfilePhotos(userId ?? undefined);
   const {
-    settings: bannerSettings,
-    loading: settingsLoading
+    settings: bannerSettings
   } = useBannerSettings(userId ?? undefined);
   const {
-    defaults: bannerDefaults,
-    loading: defaultsLoading
+    defaults: bannerDefaults
   } = useBannerDefaults();
-  
-  // Combined loading state - wait for all critical data before rendering banner
-  const isDataLoading = profileLoading || photosLoading || settingsLoading || defaultsLoading;
 
   // Fetch motivational profile defaults (position and scale for profile picture)
   const {
@@ -1368,19 +1356,6 @@ export default function BannerPreview() {
       setIsDownloading(false);
     }
   };
-
-  // Show loading state until all critical data is loaded
-  if (isDataLoading || !userId) {
-    return (
-      <div className="h-screen overflow-hidden bg-background flex flex-col items-center justify-center">
-        <div className="w-16 h-16 rounded-xl bg-primary/20 flex items-center justify-center mb-4 animate-pulse">
-          <Sparkles className="w-8 h-8 text-primary" />
-        </div>
-        <p className="text-foreground/70 text-sm">Loading banner preview...</p>
-      </div>
-    );
-  }
-
   return <div className="h-screen overflow-hidden bg-background flex flex-col">
       {/* Header - Fixed */}
       <header className="bg-background/95 backdrop-blur-sm z-40 px-4 sm:px-6 py-3 sm:py-4 flex-shrink-0">
@@ -1401,23 +1376,20 @@ export default function BannerPreview() {
       {/* Banner Preview Container - Fixed at top */}
       <div className="px-3 sm:px-4 py-3 sm:py-4 flex-shrink-0 bg-background">
         {/* Display wrapper with responsive scaling */}
-        <div className="relative w-full max-w-[90vw] sm:max-w-[480px] mx-auto">
+        <div className="relative w-full max-w-[100vw] sm:max-w-[520px] mx-auto">
           <div className="border-4 border-primary rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl">
             {/* Scale wrapper for display - maintains 1350×1350 internal canvas */}
             <div style={{
             width: '100%',
-            paddingBottom: '100%',
+            aspectRatio: '1 / 1',
             overflow: 'hidden',
             position: 'relative'
           }}>
               <div style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '1350px',
-              height: '1350px',
               transform: 'scale(var(--banner-scale))',
-              transformOrigin: 'top left'
+              transformOrigin: 'top left',
+              width: '1350px',
+              height: '1350px'
             }} className="banner-scale-container">
                 <div ref={bannerRef} id="banner-canvas" onMouseMove={isAdmin ? handleStickerMouseMove : undefined} onMouseUp={isAdmin ? handleStickerMouseUp : undefined} onMouseLeave={isAdmin ? handleStickerMouseUp : undefined} style={{
                 position: 'relative',
