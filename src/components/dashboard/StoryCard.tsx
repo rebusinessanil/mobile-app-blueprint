@@ -24,8 +24,8 @@ export default function StoryCard({
 
   const content = (
     <div className="gold-border bg-card rounded-2xl overflow-hidden">
-      {/* Fixed aspect ratio container to prevent layout shift */}
-      <div className="w-[72px] h-[72px] relative bg-secondary/30">
+      {/* Responsive aspect ratio container */}
+      <div className="w-full aspect-square relative bg-secondary/30">
         {!imageLoaded && (
           <div className="absolute inset-0 bg-secondary/50 animate-pulse" />
         )}
@@ -62,7 +62,7 @@ export default function StoryCard({
 
   if (isPreview) {
     return (
-      <div className="flex-shrink-0 transition-all opacity-75">
+      <div className="w-full transition-all opacity-75">
         {content}
       </div>
     );
@@ -71,7 +71,7 @@ export default function StoryCard({
   return (
     <Link
       to={linkTo}
-      className="flex-shrink-0 transition-all hover:scale-105 active:scale-95"
+      className="w-full transition-all hover:scale-105 active:scale-95"
     >
       {content}
     </Link>
