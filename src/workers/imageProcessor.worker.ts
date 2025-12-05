@@ -2,15 +2,20 @@
 // This runs entirely off the main thread to prevent UI freezes
 
 interface ProcessImageMessage {
-  type: 'fullProcess';
-  imageData: Uint8ClampedArray;
-  maskData: Float32Array;
-  width: number;
-  height: number;
-  maskWidth: number;
-  maskHeight: number;
-  maxOutputSize: number;
-  isMobile: boolean;
+  type: 'fullProcess' | 'compress';
+  // For fullProcess
+  imageData?: Uint8ClampedArray;
+  maskData?: Float32Array;
+  width?: number;
+  height?: number;
+  maskWidth?: number;
+  maskHeight?: number;
+  maxOutputSize?: number;
+  isMobile?: boolean;
+  // For compress
+  dataUrl?: string;
+  maxSizeBytes?: number;
+  initialQuality?: number;
 }
 
 interface ProcessImageResult {
@@ -19,9 +24,6 @@ interface ProcessImageResult {
   data?: string;
   error?: string;
 }
-
-// Yield to allow other operations every 15ms for smoother performance
-const CHUNK_TIME_MS = 15;
 
 function applyMaskBilinear(
   pixels: Uint8ClampedArray,
@@ -239,11 +241,123 @@ async function processFullImage(
   return `data:image/png;base64,${btoa(binary)}`;
 }
 
+// Compress banner image to max size (3MB default)
+async function compressBannerImage(
+  dataUrl: string,
+  maxSizeBytes: number,
+  initialQuality: number
+): Promise<string> {
+  // Decode base64 to blob
+  const response = await fetch(dataUrl);
+  const blob = await response.blob();
+  
+  // Create image bitmap
+  const bitmap = await createImageBitmap(blob);
+  const { width, height } = bitmap;
+  
+  let quality = initialQuality;
+  let scale = 1;
+  let result = dataUrl;
+  let attempts = 0;
+  const maxAttempts = 5;
+  
+  // Check initial size
+  const initialSize = (dataUrl.length - dataUrl.indexOf(',') - 1) * 0.75;
+  
+  if (initialSize <= maxSizeBytes) {
+    return dataUrl;
+  }
+  
+  // Iteratively reduce quality and/or scale
+  while (attempts < maxAttempts) {
+    const targetWidth = Math.round(width * scale);
+    const targetHeight = Math.round(height * scale);
+    
+    const canvas = new OffscreenCanvas(targetWidth, targetHeight);
+    const ctx = canvas.getContext('2d');
+    
+    if (!ctx) throw new Error('Could not get canvas context');
+    
+    // Draw with high-quality scaling
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(bitmap, 0, 0, targetWidth, targetHeight);
+    
+    // Convert to JPEG for better compression (except if transparency needed)
+    const compressedBlob = await canvas.convertToBlob({ 
+      type: 'image/jpeg', 
+      quality 
+    });
+    
+    // Check size
+    const arrayBuffer = await compressedBlob.arrayBuffer();
+    
+    if (arrayBuffer.byteLength <= maxSizeBytes) {
+      // Convert to base64
+      const bytes = new Uint8Array(arrayBuffer);
+      let binary = '';
+      const chunkSize = 32768;
+      
+      for (let i = 0; i < bytes.length; i += chunkSize) {
+        const chunk = bytes.subarray(i, Math.min(i + chunkSize, bytes.length));
+        binary += String.fromCharCode.apply(null, Array.from(chunk));
+      }
+      
+      return `data:image/jpeg;base64,${btoa(binary)}`;
+    }
+    
+    // Reduce quality first, then scale
+    if (quality > 0.7) {
+      quality -= 0.1;
+    } else if (scale > 0.6) {
+      scale -= 0.1;
+      quality = 0.9; // Reset quality when scaling down
+    } else {
+      quality -= 0.1;
+    }
+    
+    attempts++;
+  }
+  
+  // Last resort: aggressive compression
+  const finalWidth = Math.round(width * 0.5);
+  const finalHeight = Math.round(height * 0.5);
+  
+  const finalCanvas = new OffscreenCanvas(finalWidth, finalHeight);
+  const finalCtx = finalCanvas.getContext('2d');
+  
+  if (!finalCtx) throw new Error('Could not get final canvas context');
+  
+  finalCtx.imageSmoothingEnabled = true;
+  finalCtx.imageSmoothingQuality = 'high';
+  finalCtx.drawImage(bitmap, 0, 0, finalWidth, finalHeight);
+  
+  const finalBlob = await finalCanvas.convertToBlob({ type: 'image/jpeg', quality: 0.6 });
+  const finalBuffer = await finalBlob.arrayBuffer();
+  const finalBytes = new Uint8Array(finalBuffer);
+  
+  let finalBinary = '';
+  const chunkSize = 32768;
+  
+  for (let i = 0; i < finalBytes.length; i += chunkSize) {
+    const chunk = finalBytes.subarray(i, Math.min(i + chunkSize, finalBytes.length));
+    finalBinary += String.fromCharCode.apply(null, Array.from(chunk));
+  }
+  
+  return `data:image/jpeg;base64,${btoa(finalBinary)}`;
+}
+
 self.onmessage = async (e: MessageEvent<ProcessImageMessage>) => {
-  const { type, imageData, maskData, width, height, maskWidth, maskHeight, maxOutputSize, isMobile } = e.data;
+  const { type } = e.data;
   
   try {
-    if (type === 'fullProcess' && imageData && maskData) {
+    if (type === 'fullProcess') {
+      const { imageData, maskData, width, height, maskWidth, maskHeight, maxOutputSize, isMobile } = e.data;
+      
+      if (!imageData || !maskData || !width || !height || !maskWidth || !maskHeight) {
+        throw new Error('Missing required data for fullProcess');
+      }
+      
       const base64 = await processFullImage(
         imageData,
         width,
@@ -251,14 +365,34 @@ self.onmessage = async (e: MessageEvent<ProcessImageMessage>) => {
         maskData,
         maskWidth,
         maskHeight,
-        maxOutputSize,
-        isMobile
+        maxOutputSize || 1024,
+        isMobile || false
       );
       
       const result: ProcessImageResult = {
         type: 'complete',
         success: true,
         data: base64
+      };
+      
+      self.postMessage(result);
+    } else if (type === 'compress') {
+      const { dataUrl, maxSizeBytes, initialQuality } = e.data;
+      
+      if (!dataUrl || !maxSizeBytes) {
+        throw new Error('Missing required data for compress');
+      }
+      
+      const compressed = await compressBannerImage(
+        dataUrl,
+        maxSizeBytes,
+        initialQuality || 0.92
+      );
+      
+      const result: ProcessImageResult = {
+        type: 'complete',
+        success: true,
+        data: compressed
       };
       
       self.postMessage(result);
