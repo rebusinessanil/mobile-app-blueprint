@@ -91,8 +91,11 @@ export const useProfileCompletion = (userId?: string) => {
         }
 
         // Check mobile - extract digits and validate 10-digit format
-        const mobileDigits = profile?.mobile?.replace(/\D/g, '').slice(-10) || '';
-        if (!mobileDigits || mobileDigits.length !== 10) {
+        // Reject placeholder values like +000000000000 or all zeros
+        const rawMobile = profile?.mobile || '';
+        const mobileDigits = rawMobile.replace(/\D/g, '').slice(-10);
+        const isPlaceholder = rawMobile === '+000000000000' || mobileDigits === '0000000000' || /^0+$/.test(mobileDigits);
+        if (!mobileDigits || mobileDigits.length !== 10 || isPlaceholder) {
           missingFields.push('Mobile Number');
         } else {
           completedFields++;
