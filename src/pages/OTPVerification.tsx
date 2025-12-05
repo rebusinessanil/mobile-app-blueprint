@@ -83,8 +83,8 @@ export default function OTPVerification() {
 
       if (data?.user) {
         toast.success("Email verified successfully!");
-        // Navigate to profile setup
-        navigate("/profile-setup", { state: { userId: data.user.id } });
+        // Navigate directly to profile-edit (no flash)
+        navigate("/profile-edit", { replace: true });
       }
     } catch (error: any) {
       console.error("OTP verification error:", error);
