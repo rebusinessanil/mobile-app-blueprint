@@ -148,9 +148,14 @@ export default function BannerPreview() {
       container.style.setProperty('--banner-scale', scale.toString());
       container.style.transform = `scale(${scale})`;
     };
+    // Small delay to ensure DOM is ready
+    const timeoutId = setTimeout(updateScale, 100);
     updateScale();
     window.addEventListener('resize', updateScale);
-    return () => window.removeEventListener('resize', updateScale);
+    return () => {
+      clearTimeout(timeoutId);
+      window.removeEventListener('resize', updateScale);
+    };
   }, []);
 
   // Get authenticated user and check admin status
@@ -1396,20 +1401,23 @@ export default function BannerPreview() {
       {/* Banner Preview Container - Fixed at top */}
       <div className="px-3 sm:px-4 py-3 sm:py-4 flex-shrink-0 bg-background">
         {/* Display wrapper with responsive scaling */}
-        <div className="relative w-full max-w-[100vw] sm:max-w-[520px] mx-auto">
+        <div className="relative w-full max-w-[90vw] sm:max-w-[480px] mx-auto">
           <div className="border-4 border-primary rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl">
             {/* Scale wrapper for display - maintains 1350×1350 internal canvas */}
             <div style={{
             width: '100%',
-            aspectRatio: '1 / 1',
+            paddingBottom: '100%',
             overflow: 'hidden',
             position: 'relative'
           }}>
               <div style={{
-              transform: 'scale(var(--banner-scale))',
-              transformOrigin: 'top left',
+              position: 'absolute',
+              top: 0,
+              left: 0,
               width: '1350px',
-              height: '1350px'
+              height: '1350px',
+              transform: 'scale(var(--banner-scale))',
+              transformOrigin: 'top left'
             }} className="banner-scale-container">
                 <div ref={bannerRef} id="banner-canvas" onMouseMove={isAdmin ? handleStickerMouseMove : undefined} onMouseUp={isAdmin ? handleStickerMouseUp : undefined} onMouseLeave={isAdmin ? handleStickerMouseUp : undefined} style={{
                 position: 'relative',
