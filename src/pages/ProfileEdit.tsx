@@ -304,52 +304,19 @@ export default function ProfileEdit() {
         toast.success("PIN updated successfully!");
       }
 
-      // If profile is complete, create wallet with welcome bonus and set flags
+      // If profile is complete, credit welcome bonus via atomic edge function
       if (isProfileComplete() && userId) {
         try {
-          // Check if welcome_bonus_given is already true - don't give again
-          const { data: profileData } = await supabase
-            .from('profiles')
-            .select('welcome_bonus_given')
-            .eq('user_id', userId)
-            .single();
+          // Call atomic edge function for welcome bonus
+          const { data: bonusResult, error: bonusError } = await supabase.functions.invoke(
+            'credit-welcome-bonus',
+            { body: { user_id: userId } }
+          );
 
-          const bonusAlreadyGiven = profileData?.welcome_bonus_given === true;
-
-          if (!bonusAlreadyGiven) {
-            // Check if user already has credits
-            const { data: existingCredits } = await supabase
-              .from('user_credits')
-              .select('id, balance')
-              .eq('user_id', userId)
-              .single();
-
-            // If no credits exist or balance is 0, create/update with welcome bonus
-            if (!existingCredits || existingCredits.balance === 0) {
-              // Upsert user_credits with welcome bonus
-              await supabase.from('user_credits').upsert({
-                user_id: userId,
-                balance: 199,
-                total_earned: 199,
-                total_spent: 0
-              }, {
-                onConflict: 'user_id'
-              });
-
-              // Create welcome bonus transaction
-              await supabase.from('credit_transactions').insert({
-                user_id: userId,
-                amount: 199,
-                transaction_type: 'admin_credit',
-                description: 'Welcome Bonus Credited'
-              });
-            }
-
-            // Mark welcome_bonus_given = true so it never gives again
-            await supabase.from('profiles').update({
-              welcome_bonus_given: true,
-              welcome_popup_seen: false
-            }).eq('user_id', userId);
+          if (bonusError) {
+            console.error("Error calling welcome bonus function:", bonusError);
+          } else {
+            console.log("Welcome bonus result:", bonusResult);
           }
           
           localStorage.setItem(PROFILE_GATE_BYPASS_KEY, "true");

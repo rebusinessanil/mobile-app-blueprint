@@ -1,5 +1,11 @@
 project_id = "gjlrxikynlbpsvrpwebp"
 
+[functions.credit-welcome-bonus]
+verify_jwt = false
+
+[functions.admin-pin-management]
+verify_jwt = false
+
 [functions.send-otp-email]
 verify_jwt = false
 
