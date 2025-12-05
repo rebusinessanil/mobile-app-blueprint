@@ -1854,7 +1854,7 @@ export default function BannerPreview() {
                             fontSize: '30px',
                             fontWeight: '800',
                             color: '#ffffff',
-                            marginBottom: '4px',
+                            marginBottom: '2px',
                             letterSpacing: '1px',
                             textShadow: '0 2px 6px rgba(0, 0, 0, 0.6)'
                           }}>
@@ -1865,9 +1865,10 @@ export default function BannerPreview() {
                             fontWeight: '700',
                             color: currentVariant.borderColor,
                             letterSpacing: '1px',
-                            textShadow: '0 2px 4px rgba(0, 0, 0, 0.5)'
+                            textShadow: '0 2px 4px rgba(0, 0, 0, 0.5)',
+                            textTransform: 'capitalize'
                           }}>
-                            {displayRank || 'RANK'}
+                            {displayRank?.toLowerCase() || 'Rank'}
                           </div>
                         </div>
                       </div>
