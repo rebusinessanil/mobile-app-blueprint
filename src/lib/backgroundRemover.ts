@@ -1,66 +1,59 @@
-import { pipeline, env } from '@huggingface/transformers';
+import { AutoModel, AutoProcessor, RawImage, env } from '@huggingface/transformers';
 
-// Configure transformers.js for speed
+// Configure transformers.js
 env.allowLocalModels = false;
 env.useBrowserCache = true;
 
-const MAX_IMAGE_DIMENSION = 512; // Smaller for speed
+const MAX_IMAGE_DIMENSION = 1024;
 
-let segmenter: any = null;
-let isLoading = false;
+let model: any = null;
+let processor: any = null;
 
-// Load lightweight segmentation model once
-async function getSegmenter(onProgress?: (stage: string, percent: number) => void) {
-  if (segmenter) return segmenter;
-  if (isLoading) {
-    // Wait for existing load to complete
-    while (isLoading) {
-      await new Promise(r => setTimeout(r, 100));
-    }
-    return segmenter;
-  }
+// Load the RMBG model for high-precision person detection
+async function loadModel(onProgress?: (stage: string, percent: number) => void) {
+  if (model && processor) return { model, processor };
   
-  isLoading = true;
   onProgress?.('Loading AI model...', 10);
   
   try {
-    // Use fast segmentation model optimized for people
-    segmenter = await pipeline(
-      'image-segmentation',
-      'Xenova/segformer-b0-finetuned-ade-512-512',
-      { device: 'webgpu' }
-    );
-    onProgress?.('Model ready', 25);
+    // Use RMBG-1.4 - specifically designed for background removal with clean edges
+    model = await AutoModel.from_pretrained('briaai/RMBG-1.4', {
+      device: 'webgpu',
+      dtype: 'fp32',
+    });
+    
+    processor = await AutoProcessor.from_pretrained('briaai/RMBG-1.4');
+    
+    onProgress?.('Model loaded', 25);
+    return { model, processor };
   } catch (error) {
-    console.log('WebGPU unavailable, using CPU...');
-    segmenter = await pipeline(
-      'image-segmentation',
-      'Xenova/segformer-b0-finetuned-ade-512-512'
-    );
-    onProgress?.('Model ready', 25);
+    console.log('WebGPU not available, falling back to CPU...');
+    
+    model = await AutoModel.from_pretrained('briaai/RMBG-1.4', {
+      device: 'cpu',
+    });
+    
+    processor = await AutoProcessor.from_pretrained('briaai/RMBG-1.4');
+    
+    onProgress?.('Model loaded', 25);
+    return { model, processor };
   }
-  
-  isLoading = false;
-  return segmenter;
 }
 
-function resizeImage(
+function resizeImageIfNeeded(
   canvas: HTMLCanvasElement, 
   ctx: CanvasRenderingContext2D, 
   image: HTMLImageElement
-): { width: number; height: number; scale: number } {
+): { width: number; height: number } {
   let width = image.naturalWidth;
   let height = image.naturalHeight;
-  let scale = 1;
 
   if (width > MAX_IMAGE_DIMENSION || height > MAX_IMAGE_DIMENSION) {
     if (width > height) {
-      scale = MAX_IMAGE_DIMENSION / width;
-      height = Math.round(height * scale);
+      height = Math.round((height * MAX_IMAGE_DIMENSION) / width);
       width = MAX_IMAGE_DIMENSION;
     } else {
-      scale = MAX_IMAGE_DIMENSION / height;
-      width = Math.round(width * scale);
+      width = Math.round((width * MAX_IMAGE_DIMENSION) / height);
       height = MAX_IMAGE_DIMENSION;
     }
   }
@@ -69,35 +62,102 @@ function resizeImage(
   canvas.height = height;
   ctx.drawImage(image, 0, 0, width, height);
   
-  return { width, height, scale };
+  return { width, height };
 }
 
-// Fast mask application without heavy processing
-function applyMaskFast(
-  imageData: ImageData, 
-  maskData: Float32Array | number[], 
-  maskWidth: number, 
-  maskHeight: number,
-  invert: boolean = true
-): void {
+// Apply edge refinement for smoother cutout edges
+function refineEdges(imageData: ImageData, threshold: number = 0.5): void {
   const data = imageData.data;
   const width = imageData.width;
   const height = imageData.height;
   
+  // Create a copy of alpha values for reference
+  const alphaValues = new Float32Array(width * height);
+  for (let i = 0; i < width * height; i++) {
+    alphaValues[i] = data[i * 4 + 3] / 255;
+  }
+  
+  // Apply edge-aware smoothing
+  const smoothedAlpha = new Float32Array(width * height);
+  const kernelRadius = 1;
+  
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
-      const maskX = Math.floor((x / width) * maskWidth);
-      const maskY = Math.floor((y / height) * maskHeight);
-      const maskIdx = maskY * maskWidth + maskX;
+      const idx = y * width + x;
+      const currentAlpha = alphaValues[idx];
       
-      let alpha = maskData[maskIdx] || 0;
-      if (invert) alpha = 1 - alpha;
+      // Check if this is an edge pixel (between 0.1 and 0.9)
+      if (currentAlpha > 0.05 && currentAlpha < 0.95) {
+        // Apply weighted averaging for edge pixels
+        let sum = 0;
+        let weightSum = 0;
+        
+        for (let ky = -kernelRadius; ky <= kernelRadius; ky++) {
+          for (let kx = -kernelRadius; kx <= kernelRadius; kx++) {
+            const nx = x + kx;
+            const ny = y + ky;
+            
+            if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+              const nIdx = ny * width + nx;
+              const neighborAlpha = alphaValues[nIdx];
+              
+              // Weight by distance
+              const dist = Math.sqrt(kx * kx + ky * ky);
+              const weight = 1 / (1 + dist);
+              
+              sum += neighborAlpha * weight;
+              weightSum += weight;
+            }
+          }
+        }
+        
+        // Apply threshold to create cleaner edges
+        const smoothed = sum / weightSum;
+        smoothedAlpha[idx] = smoothed > threshold ? 1 : (smoothed < (1 - threshold) ? 0 : smoothed);
+      } else {
+        // Keep solid areas unchanged
+        smoothedAlpha[idx] = currentAlpha > 0.5 ? 1 : 0;
+      }
+    }
+  }
+  
+  // Apply the smoothed alpha values
+  for (let i = 0; i < width * height; i++) {
+    data[i * 4 + 3] = Math.round(smoothedAlpha[i] * 255);
+  }
+}
+
+// Remove any stray pixels and artifacts
+function removeArtifacts(imageData: ImageData, minRegionSize: number = 50): void {
+  const data = imageData.data;
+  const width = imageData.width;
+  const height = imageData.height;
+  
+  // Simple artifact removal: remove isolated pixels
+  for (let y = 1; y < height - 1; y++) {
+    for (let x = 1; x < width - 1; x++) {
+      const idx = (y * width + x) * 4;
+      const currentAlpha = data[idx + 3];
       
-      // Simple threshold for clean edges
-      alpha = alpha > 0.5 ? 1 : (alpha > 0.3 ? alpha * 2 : 0);
-      
-      const pixelIdx = (y * width + x) * 4;
-      data[pixelIdx + 3] = Math.round(alpha * 255);
+      if (currentAlpha > 128) {
+        // Count opaque neighbors
+        let opaqueNeighbors = 0;
+        const neighbors = [
+          [-1, -1], [0, -1], [1, -1],
+          [-1, 0],          [1, 0],
+          [-1, 1],  [0, 1],  [1, 1]
+        ];
+        
+        for (const [dx, dy] of neighbors) {
+          const nIdx = ((y + dy) * width + (x + dx)) * 4;
+          if (data[nIdx + 3] > 128) opaqueNeighbors++;
+        }
+        
+        // Remove isolated pixels (less than 3 opaque neighbors)
+        if (opaqueNeighbors < 3) {
+          data[idx + 3] = 0;
+        }
+      }
     }
   }
 }
@@ -107,96 +167,106 @@ export const removeBackground = async (
   onProgress?: (stage: string, percent: number) => void
 ): Promise<Blob> => {
   try {
-    console.log('Starting fast background removal...');
-    const startTime = performance.now();
+    console.log('Starting high-precision background removal...');
     
-    // Load model (cached after first use)
-    const seg = await getSegmenter(onProgress);
+    // Load the model
+    const { model: loadedModel, processor: loadedProcessor } = await loadModel(onProgress);
     
-    onProgress?.('Processing image...', 35);
+    onProgress?.('Preparing image...', 30);
     
-    // Create canvas and resize
+    // Create canvas and resize if needed
     const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    const ctx = canvas.getContext('2d');
     if (!ctx) throw new Error('Could not get canvas context');
     
-    const { width, height } = resizeImage(canvas, ctx, imageElement);
-    console.log(`Processing at ${width}x${height}`);
+    const { width, height } = resizeImageIfNeeded(canvas, ctx, imageElement);
+    console.log(`Processing image at ${width}x${height}`);
     
-    // Get image as data URL for the model
-    const imageUrl = canvas.toDataURL('image/jpeg', 0.8);
+    // Load image for the model
+    const imageUrl = canvas.toDataURL('image/png');
+    const rawImage = await RawImage.fromURL(imageUrl);
     
     onProgress?.('Detecting person...', 50);
     
-    // Run segmentation - returns array of segments
-    const result = await seg(imageUrl);
+    // Process with the model
+    const { pixel_values } = await loadedProcessor(rawImage);
+    const { output } = await loadedModel({ input: pixel_values });
     
     onProgress?.('Creating mask...', 70);
     
-    // Find person segment (label contains 'person' or take largest non-background)
-    let personMask = null;
-    let maxScore = 0;
+    // Get the mask from model output
+    const maskData = output[0][0].data;
+    const maskHeight = output[0][0].dims[0];
+    const maskWidth = output[0][0].dims[1];
     
-    for (const segment of result) {
-      const label = segment.label?.toLowerCase() || '';
-      // Prioritize person, human, or similar labels
-      if (label.includes('person') || label.includes('human') || label.includes('people')) {
-        if (segment.score > maxScore) {
-          personMask = segment.mask;
-          maxScore = segment.score;
-        }
-      }
-    }
-    
-    // If no person found, use the segment with highest score that's not background/wall/floor
-    if (!personMask) {
-      const backgroundLabels = ['wall', 'floor', 'ceiling', 'sky', 'building', 'ground', 'grass'];
-      for (const segment of result) {
-        const label = segment.label?.toLowerCase() || '';
-        const isBackground = backgroundLabels.some(bg => label.includes(bg));
-        if (!isBackground && segment.score > maxScore && segment.mask) {
-          personMask = segment.mask;
-          maxScore = segment.score;
-        }
-      }
-    }
-    
-    // Create output with mask applied
+    // Create output canvas at original size
     const outputCanvas = document.createElement('canvas');
     outputCanvas.width = width;
     outputCanvas.height = height;
-    const outputCtx = outputCanvas.getContext('2d', { willReadFrequently: true });
+    const outputCtx = outputCanvas.getContext('2d');
     if (!outputCtx) throw new Error('Could not get output canvas context');
     
+    // Draw the original image
     outputCtx.drawImage(canvas, 0, 0);
-    const outputImageData = outputCtx.getImageData(0, 0, width, height);
     
-    if (personMask?.data) {
-      onProgress?.('Applying mask...', 85);
-      applyMaskFast(
-        outputImageData, 
-        personMask.data, 
-        personMask.width || width, 
-        personMask.height || height,
-        true // Invert to keep person, remove background
-      );
-    } else {
-      // No mask found - return original with slight transparency
-      console.warn('No person detected, returning original');
+    // Get image data to apply mask
+    const outputImageData = outputCtx.getImageData(0, 0, width, height);
+    const pixels = outputImageData.data;
+    
+    // Apply the mask with bilinear interpolation for smoother edges
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        // Map output coordinates to mask coordinates
+        const maskX = (x / width) * maskWidth;
+        const maskY = (y / height) * maskHeight;
+        
+        // Bilinear interpolation for smoother edges
+        const x0 = Math.floor(maskX);
+        const y0 = Math.floor(maskY);
+        const x1 = Math.min(x0 + 1, maskWidth - 1);
+        const y1 = Math.min(y0 + 1, maskHeight - 1);
+        
+        const fx = maskX - x0;
+        const fy = maskY - y0;
+        
+        const v00 = maskData[y0 * maskWidth + x0];
+        const v10 = maskData[y0 * maskWidth + x1];
+        const v01 = maskData[y1 * maskWidth + x0];
+        const v11 = maskData[y1 * maskWidth + x1];
+        
+        // Bilinear interpolation
+        const alpha = (v00 * (1 - fx) * (1 - fy) +
+                      v10 * fx * (1 - fy) +
+                      v01 * (1 - fx) * fy +
+                      v11 * fx * fy);
+        
+        // Apply alpha with slight contrast enhancement for cleaner edges
+        const enhancedAlpha = Math.pow(alpha, 0.8);
+        const pixelIdx = (y * width + x) * 4;
+        pixels[pixelIdx + 3] = Math.round(Math.min(1, Math.max(0, enhancedAlpha)) * 255);
+      }
     }
     
+    onProgress?.('Refining edges...', 85);
+    
+    // Refine edges for smoother cutout
+    refineEdges(outputImageData, 0.4);
+    
+    // Remove artifacts
+    removeArtifacts(outputImageData);
+    
+    // Apply the final processed image data
     outputCtx.putImageData(outputImageData, 0, 0);
     
     onProgress?.('Finalizing...', 95);
     
-    const elapsed = performance.now() - startTime;
-    console.log(`Background removal completed in ${elapsed.toFixed(0)}ms`);
-    
+    // Convert to blob with high quality
     return new Promise((resolve, reject) => {
       outputCanvas.toBlob(
         (blob) => {
           if (blob) {
             onProgress?.('Complete!', 100);
+            console.log('Background removal complete');
             resolve(blob);
           } else {
             reject(new Error('Failed to create output image'));
@@ -229,5 +299,6 @@ export const loadImage = (file: Blob): Promise<HTMLImageElement> => {
 
 // Clear cached model to free memory
 export const clearModel = () => {
-  segmenter = null;
+  model = null;
+  processor = null;
 };
