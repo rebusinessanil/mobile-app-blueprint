@@ -1958,10 +1958,15 @@ export default function BannerPreview() {
               </div>}
           </div>
 
-          {/* Right: Download Button */}
-          <button onClick={handleDownload} disabled={isDownloading} className="cursor-pointer transition-transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0">
-            <img src={downloadIcon} alt="Download" className="h-12 w-auto sm:h-16" />
-          </button>
+          {/* Right: Download Button with Size Indicator */}
+          <div className="flex flex-col items-center gap-1 flex-shrink-0">
+            <button onClick={handleDownload} disabled={isDownloading} className="cursor-pointer transition-transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
+              <img src={downloadIcon} alt="Download" className="h-12 w-auto sm:h-16" />
+            </button>
+            <span className="text-[10px] sm:text-xs text-primary font-medium">
+              {BANNER_SIZE}×{BANNER_SIZE}px • 3-4.5MB
+            </span>
+          </div>
         </div>
       </div>
 
