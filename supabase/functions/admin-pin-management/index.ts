@@ -52,8 +52,7 @@ serve(async (req) => {
     console.log(`[admin-pin-management] Admin ${adminUser.id} performing ${action} on user ${target_user_id}`);
 
     if (action === "check_pin_status") {
-      // Check if user has a PIN set (password exists)
-      // We can't directly check if password is set, but we can check user metadata
+      // Get user data including metadata where PIN is stored
       const { data: userData, error: userError } = await supabase.auth.admin.getUserById(target_user_id);
       
       if (userError || !userData?.user) {
@@ -67,13 +66,16 @@ serve(async (req) => {
       const hasPinSet = userData.user.last_sign_in_at !== null || 
                         userData.user.created_at !== userData.user.updated_at;
 
+      // Get the stored plain PIN from user_metadata (if admin has set it)
+      const storedPin = userData.user.user_metadata?.admin_set_pin || null;
+
       return new Response(
         JSON.stringify({ 
           success: true, 
           has_pin: hasPinSet,
           user_id: target_user_id,
-          // Masked PIN display (we can't show actual PIN as it's hashed)
-          masked_pin: hasPinSet ? "****" : null
+          // Return actual PIN if stored in metadata by admin
+          plain_pin: storedPin
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
@@ -90,9 +92,20 @@ serve(async (req) => {
       // Reset user's PIN (stored as password with prefix)
       const paddedPin = `pin_${new_pin}`;
       
+      // Get existing user metadata first
+      const { data: existingUser } = await supabase.auth.admin.getUserById(target_user_id);
+      const existingMetadata = existingUser?.user?.user_metadata || {};
+      
+      // Update password AND store plain PIN in user_metadata for admin viewing
       const { error: updateError } = await supabase.auth.admin.updateUserById(
         target_user_id,
-        { password: paddedPin }
+        { 
+          password: paddedPin,
+          user_metadata: {
+            ...existingMetadata,
+            admin_set_pin: new_pin // Store plain PIN for admin viewing
+          }
+        }
       );
 
       if (updateError) {
@@ -109,7 +122,8 @@ serve(async (req) => {
         JSON.stringify({ 
           success: true, 
           message: "PIN reset successfully",
-          user_id: target_user_id
+          user_id: target_user_id,
+          plain_pin: new_pin // Return the new PIN
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
