@@ -239,8 +239,14 @@ export default function ProfileEdit() {
     await creditProfileCompletionBonus();
     setShowBonusModal(false);
     setPendingBonusCredit(false);
+    
+    // Set localStorage flag to prevent ProfileCompletionGate from blocking
+    try {
+      localStorage.setItem("rebusiness_profile_completed", "true");
+    } catch {}
+    
     toast.success("199 Credits added to your wallet!");
-    navigate("/dashboard");
+    navigate("/dashboard", { replace: true });
   };
   const handleSave = async () => {
     // Validation

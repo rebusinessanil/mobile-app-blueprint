@@ -91,21 +91,33 @@ export function useWelcomeBonus() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Mark welcome popup as seen
+      // Mark welcome popup as seen and profile completion bonus given
       const { error } = await supabase
         .from('profiles')
-        .update({ welcome_popup_seen: true })
+        .update({ 
+          welcome_popup_seen: true,
+          profile_completion_bonus_given: true 
+        })
         .eq('user_id', user.id);
 
       if (error) {
-        logger.error('Error updating welcome_popup_seen:', error);
+        logger.error('Error updating profile flags:', error);
       }
+
+      // Set localStorage flag to prevent ProfileCompletionGate from blocking
+      try {
+        localStorage.setItem("rebusiness_profile_completed", "true");
+      } catch {}
 
       // Close modal and navigate
       setShowWelcomeModal(false);
       navigate('/dashboard', { replace: true });
     } catch (error) {
       logger.error('Error handling continue:', error);
+      // Even on error, set localStorage and navigate
+      try {
+        localStorage.setItem("rebusiness_profile_completed", "true");
+      } catch {}
       setShowWelcomeModal(false);
       navigate('/dashboard', { replace: true });
     }
