@@ -14,7 +14,8 @@ import { useBannerDefaults } from "@/hooks/useBannerDefaults";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Sticker } from "@/hooks/useStickers";
-import { exportAndDownloadBanner } from "@/lib/bannerExport";
+import { toPng } from "html-to-image";
+import download from "downloadjs";
 import { useRealtimeStickerSync } from "@/hooks/useRealtimeStickerSync";
 import { useWalletDeduction } from "@/hooks/useWalletDeduction";
 import InsufficientBalanceModal from "@/components/InsufficientBalanceModal";
@@ -1266,22 +1267,31 @@ export default function BannerPreview() {
       return;
     }
 
-    // Step 2: Generate optimized banner (1080x1080, JPEG, ≤4.5MB)
+    // Step 2: Generate banner
     setIsDownloading(true);
-    const loadingToast = toast.loading("Generating optimized banner...");
+    const loadingToast = toast.loading("Generating ultra HD banner...");
     try {
-      // Use optimized export pipeline
-      const { dataUrl, sizeMB, filename } = await exportAndDownloadBanner(
-        bannerRef.current,
-        categoryName,
-        {
-          maxWidth: 1080,
-          maxHeight: 1080,
-          targetSizeMB: 4.5,
-          initialQuality: 0.92,
-          minQuality: 0.65,
+      // High quality export settings
+      const dataUrl = await toPng(bannerRef.current, {
+        cacheBust: true,
+        pixelRatio: 3,
+        // Ultra HD Export
+        quality: 1,
+        backgroundColor: null,
+        // Transparent safe
+        style: {
+          transform: "scale(1)",
+          // No scaling issue
+          transformOrigin: "top left"
+        },
+        filter: node => {
+          // WhatsApp button, controls, slots, UI elements hide
+          if (node.classList?.contains("slot-selector") || node.classList?.contains("control-buttons") || node.classList?.contains("whatsapp-float") || node.id === "ignore-download") {
+            return false;
+          }
+          return true;
         }
-      );
+      });
       toast.dismiss(loadingToast);
 
       // Step 3: Deduct wallet balance and save download record with banner URL
@@ -1302,21 +1312,28 @@ export default function BannerPreview() {
         return; // Error toast already shown by hook
       }
 
+      // Step 6: Download the banner after successful deduction
+      const timestamp = new Date().getTime();
+      download(dataUrl, `ReBusiness-Banner-${categoryName}-${timestamp}.png`);
+
+      // Calculate approximate size (base64 size estimation)
+      const sizeMB = (dataUrl.length * 0.75 / (1024 * 1024)).toFixed(2);
+
       // Get updated balance to show in success message
       const {
         data: updatedCredits
       } = await supabase.from("user_credits").select("balance").eq("user_id", userId).single();
       const remainingBalance = updatedCredits?.balance || 0;
-      toast.success(`Banner saved! (${sizeMB.toFixed(2)} MB) • ₹10 deducted`, {
-        description: `Remaining balance: ₹${remainingBalance}. Check Downloads or Gallery to view.`,
-        duration: 5000
+      toast.success(`Banner saved to your device! (${sizeMB} MB) • ₹10 deducted`, {
+        description: `Remaining balance: ₹${remainingBalance}. Check your Downloads or Gallery app to access your banner.`,
+        duration: 6000
       });
     } catch (error) {
       console.error("Banner download failed:", error);
       toast.dismiss(loadingToast);
-      toast.error("Download failed. Please try again.", {
-        description: "Check connection and storage permissions.",
-        duration: 5000
+      toast.error("Download failed. Please try again later.", {
+        description: "Check your internet connection and ensure storage access is allowed. If the issue persists, contact support.",
+        duration: 7000
       });
     } finally {
       setIsDownloading(false);
