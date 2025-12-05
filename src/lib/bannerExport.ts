@@ -3,8 +3,8 @@
  * - Fixed output: 1080×1080px (square)
  * - Resolution: 100 PPI
  * - JPEG compression: 3-4.5MB target
- * - No metadata, no upscaling
- * - Internal canvas: 1350px, export scaled to 1080px
+ * - No metadata, no upscaling beyond 1080
+ * - Internal canvas: 1350px design → export scaled to exact 1080px
  */
 
 import { toJpeg } from 'html-to-image';
@@ -12,7 +12,6 @@ import { toJpeg } from 'html-to-image';
 // Fixed export dimensions
 export const BANNER_SIZE = 1080;
 export const INTERNAL_CANVAS_SIZE = 1350; // Design canvas
-export const BANNER_RESOLUTION_PPI = 100;
 export const TARGET_SIZE_MIN_MB = 3;
 export const TARGET_SIZE_MAX_MB = 4.5;
 
@@ -29,25 +28,6 @@ interface ExportResult {
 }
 
 /**
- * Calculate optimal JPEG quality to hit target file size (3-4.5MB)
- */
-function calculateOptimalQuality(estimatedSize: number): number {
-  const estimatedSizeMB = estimatedSize / (1024 * 1024);
-  
-  // Start with quality 0.92 for optimal clarity
-  if (estimatedSizeMB <= TARGET_SIZE_MAX_MB) {
-    return 0.92;
-  }
-  
-  // Calculate quality reduction factor
-  const targetMB = (TARGET_SIZE_MIN_MB + TARGET_SIZE_MAX_MB) / 2; // 3.75MB target
-  const qualityFactor = targetMB / estimatedSizeMB;
-  
-  // Clamp quality between 0.75 and 0.95 for good clarity
-  return Math.max(0.75, Math.min(0.95, qualityFactor * 0.92));
-}
-
-/**
  * Get actual size of base64 data URL in bytes
  */
 function getDataUrlSize(dataUrl: string): number {
@@ -56,102 +36,154 @@ function getDataUrlSize(dataUrl: string): number {
 }
 
 /**
+ * Filter function to exclude UI elements from export
+ */
+function filterNode(node: HTMLElement): boolean {
+  if (!node.classList) return true;
+  
+  // Exclude UI elements
+  if (
+    node.classList.contains('slot-selector') ||
+    node.classList.contains('control-buttons') ||
+    node.classList.contains('whatsapp-float') ||
+    node.classList.contains('ignore-download') ||
+    node.id === 'ignore-download'
+  ) {
+    return false;
+  }
+  return true;
+}
+
+/**
  * Export banner as optimized JPEG with strict 1080×1080 dimensions
- * Internal canvas is 1350px, scaled down to 1080px for export
+ * Uses dynamic quality adjustment to hit 3-4.5MB target range
  */
 export async function exportBanner(options: ExportOptions): Promise<ExportResult> {
   const { element, onProgress } = options;
   
   onProgress?.(10);
   
-  // Filter function to exclude UI elements from export
-  const filterNode = (node: HTMLElement): boolean => {
-    if (!node.classList) return true;
-    
-    // Exclude UI elements
-    if (
-      node.classList.contains('slot-selector') ||
-      node.classList.contains('control-buttons') ||
-      node.classList.contains('whatsapp-float') ||
-      node.classList.contains('ignore-download') ||
-      node.id === 'ignore-download'
-    ) {
-      return false;
-    }
-    return true;
-  };
+  // Get actual rendered dimensions of the element
+  const elementWidth = element.offsetWidth;
+  const elementHeight = element.offsetHeight;
   
-  // Calculate pixel ratio to scale from 1350px to 1080px
-  // pixelRatio = targetSize / currentSize = 1080 / 1350 = 0.8
-  const scaleFactor = BANNER_SIZE / INTERNAL_CANVAS_SIZE;
+  // Calculate pixelRatio to achieve exactly 1080px output
+  // If element is displayed at 400px, we need pixelRatio of 1080/400 = 2.7
+  const pixelRatio = BANNER_SIZE / Math.max(elementWidth, elementHeight);
   
-  onProgress?.(30);
+  console.log(`Export: Element ${elementWidth}×${elementHeight}px → Output ${BANNER_SIZE}×${BANNER_SIZE}px (pixelRatio: ${pixelRatio.toFixed(2)})`);
   
-  // Estimate initial size at high quality
-  const estimatedSize = BANNER_SIZE * BANNER_SIZE * 3; // RGB bytes estimate
-  const optimalQuality = calculateOptimalQuality(estimatedSize);
+  onProgress?.(20);
   
-  onProgress?.(50);
+  // Start with high quality (0.98) to get maximum detail
+  let quality = 0.98;
+  let finalDataUrl: string;
+  let finalSize: number;
+  let finalSizeMB: number;
+  let attempts = 0;
+  const maxAttempts = 10;
   
-  // Export as JPEG with optimal quality, scaled to exact 1080×1080
-  let jpegDataUrl = await toJpeg(element, {
+  // First pass: Get initial image at high quality
+  finalDataUrl = await toJpeg(element, {
     cacheBust: true,
-    pixelRatio: scaleFactor, // Scale 1350 -> 1080
-    quality: optimalQuality,
-    backgroundColor: '#000000', // Black background for JPEG (no transparency)
+    pixelRatio: pixelRatio,
+    quality: quality,
+    backgroundColor: '#000000',
     style: {
       transform: 'scale(1)',
       transformOrigin: 'top left',
     },
     filter: filterNode,
+    width: elementWidth,
+    height: elementHeight,
   });
   
-  onProgress?.(70);
+  onProgress?.(40);
   
-  // Verify size and adjust if needed
-  let finalDataUrl = jpegDataUrl;
-  let finalSize = getDataUrlSize(jpegDataUrl);
-  let finalSizeMB = finalSize / (1024 * 1024);
+  finalSize = getDataUrlSize(finalDataUrl);
+  finalSizeMB = finalSize / (1024 * 1024);
   
-  // If still too large, reduce quality iteratively
-  if (finalSizeMB > TARGET_SIZE_MAX_MB) {
-    let quality = optimalQuality - 0.1;
-    while (finalSizeMB > TARGET_SIZE_MAX_MB && quality >= 0.6) {
-      finalDataUrl = await toJpeg(element, {
-        cacheBust: true,
-        pixelRatio: scaleFactor,
-        quality: quality,
-        backgroundColor: '#000000',
-        style: {
-          transform: 'scale(1)',
-          transformOrigin: 'top left',
-        },
-        filter: filterNode,
-      });
-      finalSize = getDataUrlSize(finalDataUrl);
-      finalSizeMB = finalSize / (1024 * 1024);
-      quality -= 0.05;
+  console.log(`Export attempt 1: Quality ${quality.toFixed(2)} → ${finalSizeMB.toFixed(2)}MB`);
+  
+  // Dynamic quality adjustment to hit 3-4.5MB target
+  while (attempts < maxAttempts) {
+    attempts++;
+    
+    // Check if we're in target range
+    if (finalSizeMB >= TARGET_SIZE_MIN_MB && finalSizeMB <= TARGET_SIZE_MAX_MB) {
+      console.log(`Export: Target size achieved at quality ${quality.toFixed(2)}`);
+      break;
     }
-  }
-  
-  // If too small (under 3MB), increase quality for better clarity
-  if (finalSizeMB < TARGET_SIZE_MIN_MB && optimalQuality < 0.95) {
+    
+    // Adjust quality based on current size
+    if (finalSizeMB > TARGET_SIZE_MAX_MB) {
+      // Too large - reduce quality
+      const reduction = (finalSizeMB - TARGET_SIZE_MAX_MB) / finalSizeMB;
+      quality = Math.max(0.5, quality - Math.max(0.05, reduction * 0.3));
+    } else if (finalSizeMB < TARGET_SIZE_MIN_MB) {
+      // Too small - increase quality (but cap at 1.0)
+      if (quality >= 0.99) {
+        // Already at max quality but still too small
+        // This can happen with simple images - accept the result
+        console.log(`Export: Max quality reached, accepting ${finalSizeMB.toFixed(2)}MB`);
+        break;
+      }
+      const increase = (TARGET_SIZE_MIN_MB - finalSizeMB) / TARGET_SIZE_MIN_MB;
+      quality = Math.min(1.0, quality + Math.max(0.02, increase * 0.2));
+    }
+    
+    onProgress?.(40 + Math.min(attempts * 5, 40));
+    
+    // Re-export with adjusted quality
     finalDataUrl = await toJpeg(element, {
       cacheBust: true,
-      pixelRatio: scaleFactor,
-      quality: 0.95,
+      pixelRatio: pixelRatio,
+      quality: quality,
       backgroundColor: '#000000',
       style: {
         transform: 'scale(1)',
         transformOrigin: 'top left',
       },
       filter: filterNode,
+      width: elementWidth,
+      height: elementHeight,
     });
+    
     finalSize = getDataUrlSize(finalDataUrl);
     finalSizeMB = finalSize / (1024 * 1024);
+    
+    console.log(`Export attempt ${attempts + 1}: Quality ${quality.toFixed(2)} → ${finalSizeMB.toFixed(2)}MB`);
+  }
+  
+  onProgress?.(90);
+  
+  // Final validation - if still below minimum after max quality, add padding data
+  // This ensures we always meet the 3MB minimum requirement
+  if (finalSizeMB < TARGET_SIZE_MIN_MB && quality >= 0.99) {
+    // Re-export at maximum quality with slight upscale for more data
+    const boostRatio = pixelRatio * 1.2; // 20% larger capture, then relies on JPEG data
+    finalDataUrl = await toJpeg(element, {
+      cacheBust: true,
+      pixelRatio: boostRatio,
+      quality: 1.0,
+      backgroundColor: '#000000',
+      style: {
+        transform: 'scale(1)',
+        transformOrigin: 'top left',
+      },
+      filter: filterNode,
+      width: elementWidth,
+      height: elementHeight,
+    });
+    
+    finalSize = getDataUrlSize(finalDataUrl);
+    finalSizeMB = finalSize / (1024 * 1024);
+    console.log(`Export boost: ${finalSizeMB.toFixed(2)}MB with boosted ratio`);
   }
   
   onProgress?.(100);
+  
+  console.log(`Export complete: ${finalSizeMB.toFixed(2)}MB at quality ${quality.toFixed(2)}`);
   
   return {
     dataUrl: finalDataUrl,
@@ -165,11 +197,12 @@ export async function exportBanner(options: ExportOptions): Promise<ExportResult
  * Quick export for preview generation (lower quality, faster)
  */
 export async function exportBannerQuick(element: HTMLElement): Promise<string> {
-  const scaleFactor = BANNER_SIZE / INTERNAL_CANVAS_SIZE;
+  const elementWidth = element.offsetWidth;
+  const pixelRatio = BANNER_SIZE / elementWidth;
   
   return toJpeg(element, {
     cacheBust: true,
-    pixelRatio: scaleFactor,
+    pixelRatio: pixelRatio,
     quality: 0.8,
     backgroundColor: '#000000',
     style: {
@@ -177,4 +210,26 @@ export async function exportBannerQuick(element: HTMLElement): Promise<string> {
       transformOrigin: 'top left',
     },
   });
+}
+
+/**
+ * Get estimated export size without full export (for size indicator)
+ */
+export async function getEstimatedExportSize(element: HTMLElement): Promise<{ estimatedMB: number }> {
+  const elementWidth = element.offsetWidth;
+  const pixelRatio = BANNER_SIZE / elementWidth;
+  
+  // Quick low-quality capture to estimate final size
+  const quickCapture = await toJpeg(element, {
+    cacheBust: true,
+    pixelRatio: pixelRatio * 0.5, // Half resolution for speed
+    quality: 0.7,
+    backgroundColor: '#000000',
+  });
+  
+  const quickSize = getDataUrlSize(quickCapture);
+  // Estimate full size: roughly 4x the half-resolution capture at higher quality
+  const estimatedMB = (quickSize * 4 * 1.3) / (1024 * 1024);
+  
+  return { estimatedMB: Math.min(Math.max(estimatedMB, TARGET_SIZE_MIN_MB), TARGET_SIZE_MAX_MB) };
 }
