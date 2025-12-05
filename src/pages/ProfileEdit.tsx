@@ -307,36 +307,51 @@ export default function ProfileEdit() {
       // If profile is complete, create wallet with welcome bonus and set flags
       if (isProfileComplete() && userId) {
         try {
-          // Check if user already has credits
-          const {
-            data: existingCredits
-          } = await supabase.from('user_credits').select('id, balance').eq('user_id', userId).single();
+          // Check if welcome_bonus_given is already true - don't give again
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('welcome_bonus_given')
+            .eq('user_id', userId)
+            .single();
 
-          // If no credits exist or balance is 0, create/update with welcome bonus
-          if (!existingCredits || existingCredits.balance === 0) {
-            // Upsert user_credits with welcome bonus
-            await supabase.from('user_credits').upsert({
-              user_id: userId,
-              balance: 199,
-              total_earned: 199,
-              total_spent: 0
-            }, {
-              onConflict: 'user_id'
-            });
+          const bonusAlreadyGiven = profileData?.welcome_bonus_given === true;
 
-            // Create welcome bonus transaction
-            await supabase.from('credit_transactions').insert({
-              user_id: userId,
-              amount: 199,
-              transaction_type: 'admin_credit',
-              description: 'Welcome Bonus Credited'
-            });
+          if (!bonusAlreadyGiven) {
+            // Check if user already has credits
+            const { data: existingCredits } = await supabase
+              .from('user_credits')
+              .select('id, balance')
+              .eq('user_id', userId)
+              .single();
 
-            // Set welcome_popup_seen = false so popup shows on dashboard
+            // If no credits exist or balance is 0, create/update with welcome bonus
+            if (!existingCredits || existingCredits.balance === 0) {
+              // Upsert user_credits with welcome bonus
+              await supabase.from('user_credits').upsert({
+                user_id: userId,
+                balance: 199,
+                total_earned: 199,
+                total_spent: 0
+              }, {
+                onConflict: 'user_id'
+              });
+
+              // Create welcome bonus transaction
+              await supabase.from('credit_transactions').insert({
+                user_id: userId,
+                amount: 199,
+                transaction_type: 'admin_credit',
+                description: 'Welcome Bonus Credited'
+              });
+            }
+
+            // Mark welcome_bonus_given = true so it never gives again
             await supabase.from('profiles').update({
+              welcome_bonus_given: true,
               welcome_popup_seen: false
             }).eq('user_id', userId);
           }
+          
           localStorage.setItem(PROFILE_GATE_BYPASS_KEY, "true");
         } catch (e) {
           console.error("Error setting up welcome bonus:", e);
@@ -422,10 +437,22 @@ export default function ProfileEdit() {
           {/* Mobile Number */}
           <div className="space-y-2">
             <label className="text-sm text-foreground">Mobile Number</label>
-            <Input type="tel" value={formData.mobile} onChange={e => setFormData({
-              ...formData,
-              mobile: e.target.value
-            })} className="gold-border bg-secondary text-foreground h-12 border-b-2 border-t-0 border-x-0 rounded-none" placeholder="Enter mobile number" />
+            <Input 
+              type="tel" 
+              inputMode="numeric"
+              maxLength={10}
+              value={formData.mobile} 
+              onChange={e => {
+                // Only allow digits, max 10
+                const value = e.target.value.replace(/\D/g, '').slice(0, 10);
+                setFormData({
+                  ...formData,
+                  mobile: value
+                });
+              }} 
+              className="gold-border bg-secondary text-foreground h-12 border-b-2 border-t-0 border-x-0 rounded-none" 
+              placeholder="Enter 10-digit mobile number" 
+            />
           </div>
 
           {/* Role */}
