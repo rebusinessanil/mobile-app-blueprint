@@ -7,7 +7,7 @@ import UplineCarousel from "@/components/UplineCarousel";
 import BackgroundRemoverModal from "@/components/BackgroundRemoverModal";
 import ImageCropper from "@/components/ImageCropper";
 import { toast } from "sonner";
-import { removeBackground, loadImage } from "@/lib/backgroundRemover";
+import { useBackgroundRemoval } from "@/hooks/useBackgroundRemoval";
 import { useProfile } from "@/hooks/useProfile";
 import { useBannerSettings } from "@/hooks/useBannerSettings";
 import { useTemplates, useTemplateCategories } from "@/hooks/useTemplates";
@@ -22,9 +22,8 @@ interface Upline {
 export default function FestivalBannerCreate() {
   const navigate = useNavigate();
   const location = useLocation();
-  const festivalId = location.state?.festivalId; // Get festivalId from navigation state
+  const festivalId = location.state?.festivalId;
   
-  // CRITICAL: Redirect if no festivalId - prevents template isolation issues
   useEffect(() => {
     if (!festivalId) {
       console.error('❌ No festivalId provided - redirecting to festival selection');
@@ -40,31 +39,10 @@ export default function FestivalBannerCreate() {
   const { categories } = useTemplateCategories();
   const festivalCategory = categories?.find(cat => cat.slug === 'festival');
   
-  // CRITICAL: Fetch templates ONLY by festivalId - strict isolation, no category fallback
   const { templates } = useTemplates(
-    undefined, // categoryId - not used for festival
-    undefined, // tripId
-    undefined, // rankId
-    undefined, // birthdayId
-    undefined, // anniversaryId
-    undefined, // motivationalBannerId
-    festivalId // MUST have festivalId - no fallback to prevent cross-contamination
+    undefined, undefined, undefined, undefined, undefined, undefined, festivalId
   );
 
-  // Debug logging
-  useEffect(() => {
-    if (festivalId) {
-      console.log('🎉 Festival ID:', festivalId);
-      console.log('📋 Templates fetched:', templates?.length || 0);
-      if (templates && templates.length > 0) {
-        console.log('✅ First template ID:', templates[0].id);
-        console.log('✅ Template festival_id:', templates[0].festival_id);
-      }
-    } else {
-      console.warn('⚠️ No festivalId provided - templates may not load correctly');
-    }
-  }, [festivalId, templates]);
-  
   const [uplines, setUplines] = useState<Upline[]>([]);
   const [formData, setFormData] = useState({
     name: "",
@@ -75,9 +53,12 @@ export default function FestivalBannerCreate() {
   const [photo, setPhoto] = useState<string | null>(null);
   const [tempPhoto, setTempPhoto] = useState<string | null>(null);
   const [showCropper, setShowCropper] = useState(false);
-  const [showBgRemover, setShowBgRemover] = useState(false);
-  const [processingBg, setProcessingBg] = useState(false);
   const [slotStickers, setSlotStickers] = useState<Record<number, string[]>>({});
+
+  // Unified background removal hook
+  const bgRemoval = useBackgroundRemoval({
+    onSuccess: (processedUrl) => setPhoto(processedUrl)
+  });
 
   useEffect(() => {
     const getUser = async () => {
@@ -116,7 +97,7 @@ export default function FestivalBannerCreate() {
     setPhoto(croppedImage);
     setShowCropper(false);
     setTempPhoto(null);
-    setShowBgRemover(true);
+    bgRemoval.openModal(croppedImage);
   };
 
   const handleCropCancel = () => {
@@ -125,31 +106,18 @@ export default function FestivalBannerCreate() {
   };
 
   const handleKeepBackground = () => {
-    setShowBgRemover(false);
+    bgRemoval.closeModal();
   };
 
   const handleRemoveBackground = async () => {
-    if (!photo) return;
-    setShowBgRemover(false);
-    setProcessingBg(true);
-    try {
-      const img = await loadImage(await fetch(photo).then(r => r.blob()));
-      const processedBlob = await removeBackground(img);
-      const reader = new FileReader();
-      reader.onload = () => {
-        setPhoto(reader.result as string);
-        toast.success("Background removed successfully!");
-      };
-      reader.readAsDataURL(processedBlob);
-    } catch (error) {
-      console.error("Background removal error:", error);
-      toast.error("Failed to remove background. Keeping original image.");
-    } finally {
-      setProcessingBg(false);
-    }
+    await bgRemoval.processRemoval();
   };
 
   const handleCreate = async () => {
+    if (bgRemoval.isProcessing) {
+      toast.warning("Please wait for background removal to complete");
+      return;
+    }
     if (!formData.name) {
       toast.error("Please enter Name");
       return;
@@ -163,37 +131,22 @@ export default function FestivalBannerCreate() {
       return;
     }
 
-    // CRITICAL: Validate festivalId exists for proper slot isolation
     if (!festivalId) {
       toast.error("Festival selection is required");
-      console.error('❌ No festivalId - cannot proceed without strict festival isolation');
       return;
     }
 
-    // Get the first template for this specific festival
     const firstTemplate = templates && templates.length > 0 ? templates[0] : null;
 
     if (!firstTemplate) {
       toast.error("No templates available for this festival");
-      console.error('❌ No templates found for festivalId:', festivalId);
       return;
     }
 
-    // Validate template belongs to this festival
     if (firstTemplate.festival_id !== festivalId) {
       toast.error("Template mismatch - please try again");
-      console.error('❌ Template festival_id mismatch:', {
-        templateFestivalId: firstTemplate.festival_id,
-        expectedFestivalId: festivalId
-      });
       return;
     }
-
-    console.log('✅ Creating banner with strict festival isolation:', {
-      festivalId,
-      templateId: firstTemplate.id,
-      templateFestivalId: firstTemplate.festival_id
-    });
 
     navigate("/banner-preview", {
       state: {
@@ -207,14 +160,18 @@ export default function FestivalBannerCreate() {
         uplines,
         slotStickers,
         templates,
-        templateId: firstTemplate.id, // CRITICAL: Pass correct templateId for 16-slot background isolation
-        festivalId: festivalId, // Pass festivalId for additional validation
-        rankId: undefined // Festival doesn't use rankId - prevents rank background bleed
+        templateId: firstTemplate.id,
+        festivalId: festivalId,
+        rankId: undefined
       }
     });
   };
 
   const handleReset = () => {
+    if (bgRemoval.isProcessing) {
+      toast.warning("Please wait for background removal to complete");
+      return;
+    }
     setFormData({
       name: "",
       teamCity: "",
@@ -241,7 +198,11 @@ export default function FestivalBannerCreate() {
     <div className="min-h-screen bg-navy-dark pb-6">
       <header className="sticky top-0 bg-navy-dark/95 backdrop-blur-sm z-40 px-6 py-4 border-b border-primary/20">
         <div className="flex items-center justify-between">
-          <button onClick={() => navigate("/categories")} className="w-10 h-10 rounded-xl border-2 border-primary flex items-center justify-center hover:bg-primary/10 transition-colors">
+          <button 
+            onClick={() => !bgRemoval.isProcessing && navigate("/categories")} 
+            className="w-10 h-10 rounded-xl border-2 border-primary flex items-center justify-center hover:bg-primary/10 transition-colors"
+            disabled={bgRemoval.isProcessing}
+          >
             <ArrowLeft className="w-5 h-5 text-primary" />
           </button>
         </div>
@@ -329,11 +290,6 @@ export default function FestivalBannerCreate() {
               {photo ? (
                 <div className="relative w-full h-48 gold-border rounded-2xl overflow-hidden bg-secondary">
                   <img src={photo} alt="Uploaded" className="w-full h-full object-cover" />
-                  {processingBg && (
-                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                      <div className="text-white text-sm">Processing...</div>
-                    </div>
-                  )}
                 </div>
               ) : (
                 <label className="w-full h-48 gold-border bg-secondary/50 rounded-2xl flex flex-col items-center justify-center gap-3 cursor-pointer hover:gold-glow transition-all">
@@ -348,10 +304,19 @@ export default function FestivalBannerCreate() {
         </div>
 
         <div className="flex gap-3">
-          <Button onClick={handleReset} variant="outline" className="flex-1 h-12 border-2 border-primary text-foreground hover:bg-primary/10">
+          <Button 
+            onClick={handleReset} 
+            variant="outline" 
+            className="flex-1 h-12 border-2 border-primary text-foreground hover:bg-primary/10"
+            disabled={bgRemoval.isProcessing}
+          >
             RESET
           </Button>
-          <Button onClick={handleCreate} className="flex-1 h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-bold">
+          <Button 
+            onClick={handleCreate} 
+            className="flex-1 h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-bold"
+            disabled={bgRemoval.isProcessing}
+          >
             CREATE
           </Button>
         </div>
@@ -373,10 +338,13 @@ export default function FestivalBannerCreate() {
       )}
 
       <BackgroundRemoverModal 
-        open={showBgRemover} 
+        open={bgRemoval.showModal} 
         onKeep={handleKeepBackground} 
         onRemove={handleRemoveBackground} 
-        onClose={() => setShowBgRemover(false)} 
+        onClose={bgRemoval.closeModal}
+        isProcessing={bgRemoval.isProcessing}
+        progress={bgRemoval.progress}
+        progressText={bgRemoval.progressText}
       />
     </div>
   );
