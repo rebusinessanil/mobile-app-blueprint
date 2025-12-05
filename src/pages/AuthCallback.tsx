@@ -39,8 +39,20 @@ export default function AuthCallback() {
           }
 
         if (data?.session?.access_token && data?.session?.refresh_token) {
-          logger.log("Session created via code exchange, redirecting to profile-edit");
-          if (isMounted) navigate("/profile-edit", { replace: true });
+          // Check if profile is already complete
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('profile_completed')
+            .eq('user_id', data.session.user.id)
+            .single();
+          
+          if (profileData?.profile_completed) {
+            logger.log("Profile complete, redirecting to dashboard");
+            if (isMounted) navigate("/dashboard", { replace: true });
+          } else {
+            logger.log("Session created via code exchange, redirecting to profile-edit");
+            if (isMounted) navigate("/profile-edit", { replace: true });
+          }
           return;
         }
         }
@@ -60,8 +72,20 @@ export default function AuthCallback() {
           }
 
         if (data?.session) {
-          logger.log("Session set from tokens, redirecting to profile-edit");
-          if (isMounted) navigate("/profile-edit", { replace: true });
+          // Check if profile is already complete
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('profile_completed')
+            .eq('user_id', data.session.user.id)
+            .single();
+          
+          if (profileData?.profile_completed) {
+            logger.log("Profile complete, redirecting to dashboard");
+            if (isMounted) navigate("/dashboard", { replace: true });
+          } else {
+            logger.log("Session set from tokens, redirecting to profile-edit");
+            if (isMounted) navigate("/profile-edit", { replace: true });
+          }
           return;
         }
         }
@@ -69,8 +93,20 @@ export default function AuthCallback() {
         // Check if session already exists
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.access_token && session?.refresh_token) {
-          logger.log("Existing session found, redirecting to profile-edit");
-          if (isMounted) navigate("/profile-edit", { replace: true });
+          // Check if profile is already complete
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('profile_completed')
+            .eq('user_id', session.user.id)
+            .single();
+          
+          if (profileData?.profile_completed) {
+            logger.log("Profile complete, redirecting to dashboard");
+            if (isMounted) navigate("/dashboard", { replace: true });
+          } else {
+            logger.log("Existing session found, redirecting to profile-edit");
+            if (isMounted) navigate("/profile-edit", { replace: true });
+          }
           return;
         }
 

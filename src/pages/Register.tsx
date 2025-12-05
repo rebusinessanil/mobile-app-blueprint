@@ -100,11 +100,13 @@ export default function Register() {
       if (data?.user) {
         toast.success("Registration successful! Check your email for OTP.");
 
-        // Navigate to OTP verification
+        // Navigate to OTP verification with all registration data
         navigate("/otp-verification", {
           state: {
             email: formData.email,
             name: formData.fullName,
+            mobile: formattedMobile,
+            pin: pinCode,
             password: password
           }
         });

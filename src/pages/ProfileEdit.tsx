@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft, FileText, Award, Check, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,13 @@ import { supabase } from "@/integrations/supabase/client";
 const PROFILE_GATE_BYPASS_KEY = "rebusiness_profile_completed";
 export default function ProfileEdit() {
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Get prefilled data from registration flow
+  const prefillName = location.state?.prefillName;
+  const prefillMobile = location.state?.prefillMobile;
+  const prefillPin = location.state?.prefillPin;
+  
   const [photos, setPhotos] = useState<string[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -64,7 +71,7 @@ export default function ProfileEdit() {
   const [showCreatePin, setShowCreatePin] = useState(false);
   const [showConfirmPin, setShowConfirmPin] = useState(false);
 
-  // Load profile data when available
+  // Load profile data when available, with prefill from registration
   useEffect(() => {
     if (profile) {
       const predefinedRoles = ["bronze", "silver", "gold", "platinum", "emerald", "topaz", "ruby-star", "sapphire", "star-sapphire", "diamond", "blue-diamond", "black-diamond", "royal-diamond", "crown-diamond", "ambassador", "royal-ambassador", "crown-ambassador", "brand-ambassador"];
@@ -81,15 +88,25 @@ export default function ProfileEdit() {
         }
       }
 
+      // Use prefilled data from registration if available, otherwise use profile data
+      const finalName = prefillName || (profile.name && profile.name !== 'User' ? profile.name : "");
+      
+      // For mobile, prefer prefill, then extracted profile mobile
+      let finalMobile = extractedMobile;
+      if (prefillMobile) {
+        const cleanedPrefill = prefillMobile.replace(/^\+91/, '').replace(/\D/g, '');
+        if (cleanedPrefill.length >= 10) {
+          finalMobile = cleanedPrefill.slice(-10);
+        }
+      }
+
       // Determine if user has previously selected a role
       const hasValidRole = profile.role && profile.role.trim() !== '' && profile.role !== 'User';
       setFormData({
         title: "mr",
-        name: profile.name && profile.name !== 'User' ? profile.name : "",
-        mobile: extractedMobile,
-        // Empty if no valid mobile
+        name: finalName,
+        mobile: finalMobile,
         role: hasValidRole ? isCustomRole ? "custom" : profile.role : "",
-        // Empty if no valid role
         language: "eng",
         gender: "male",
         married: false
@@ -103,7 +120,15 @@ export default function ProfileEdit() {
         }
       }
     }
-  }, [profile]);
+  }, [profile, prefillName, prefillMobile]);
+
+  // Pre-fill PIN from registration
+  useEffect(() => {
+    if (prefillPin && prefillPin.length === 4) {
+      setCreatePin(prefillPin);
+      setConfirmPin(prefillPin);
+    }
+  }, [prefillPin]);
 
   // Load profile photos - always sync with backend data
   useEffect(() => {
