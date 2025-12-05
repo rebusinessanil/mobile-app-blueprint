@@ -76,6 +76,10 @@ export default function Login() {
     }, { showToast: true, retryOnFail: true });
 
     if (result.success && result.data?.user) {
+      // Set bypass flag to skip profile completion checks
+      try {
+        localStorage.setItem("rebusiness_profile_completed", "true");
+      } catch {}
       toast.success("Login successful!");
       navigate("/dashboard", { replace: true });
     }
