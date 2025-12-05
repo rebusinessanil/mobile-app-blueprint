@@ -72,22 +72,8 @@ export default function Login() {
         return;
       }
       if (data.user) {
-        // Check if profile is complete
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('profile_completed')
-          .eq('user_id', data.user.id)
-          .single();
-        
         toast.success("Login successful!");
-        
-        if (profileData?.profile_completed) {
-          // Profile complete - go to dashboard
-          navigate("/dashboard", { replace: true });
-        } else {
-          // Profile incomplete - go to profile-edit
-          navigate("/profile-edit", { replace: true });
-        }
+        navigate("/dashboard", { replace: true });
       }
     } catch (error) {
       // Security: Don't log sensitive login data
