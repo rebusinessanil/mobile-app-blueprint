@@ -42,36 +42,11 @@ export default function BonanzaBannerCreate() {
   const [tempPhoto, setTempPhoto] = useState<string | null>(null);
   const [showCropper, setShowCropper] = useState(false);
   const [slotStickers, setSlotStickers] = useState<Record<number, string[]>>({});
-  const [profileLoaded, setProfileLoaded] = useState(false);
 
   // Unified background removal hook
   const bgRemoval = useBackgroundRemoval({
     onSuccess: (processedUrl) => setPhoto(processedUrl)
   });
-
-  useEffect(() => {
-    const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        setUserId(user.id);
-      }
-    };
-    getUser();
-  }, []);
-
-  // Auto-fill user details from profile
-  useEffect(() => {
-    if (profile && !profileLoaded) {
-      setFormData(prev => ({
-        ...prev,
-        name: profile.name || prev.name,
-      }));
-      if (profile.profile_photo && !photo) {
-        setPhoto(profile.profile_photo);
-      }
-      setProfileLoaded(true);
-    }
-  }, [profile, profileLoaded, photo]);
 
   // Auto-fill trip name when trip is loaded
   useEffect(() => {
@@ -82,6 +57,16 @@ export default function BonanzaBannerCreate() {
       }));
     }
   }, [trip]);
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUserId(user.id);
+      }
+    };
+    getUser();
+  }, []);
 
   useEffect(() => {
     if (bannerSettings && uplines.length === 0) {

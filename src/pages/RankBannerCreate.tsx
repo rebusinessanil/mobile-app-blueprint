@@ -38,7 +38,6 @@ export default function RankBannerCreate() {
   const [tempPhoto, setTempPhoto] = useState<string | null>(null);
   const [showCropper, setShowCropper] = useState(false);
   const [slotStickers, setSlotStickers] = useState<Record<number, string[]>>({});
-  const [profileLoaded, setProfileLoaded] = useState(false);
 
   // Unified background removal hook
   const bgRemoval = useBackgroundRemoval({
@@ -54,21 +53,6 @@ export default function RankBannerCreate() {
     };
     getUser();
   }, []);
-
-  // Auto-fill user details from profile (name, photo)
-  useEffect(() => {
-    if (profile && !profileLoaded) {
-      setFormData(prev => ({
-        ...prev,
-        name: profile.name || prev.name,
-      }));
-      // Auto-load profile photo if available
-      if (profile.profile_photo && !photo) {
-        setPhoto(profile.profile_photo);
-      }
-      setProfileLoaded(true);
-    }
-  }, [profile, profileLoaded, photo]);
 
   useEffect(() => {
     if (bannerSettings && uplines.length === 0) {
