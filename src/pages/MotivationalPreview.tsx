@@ -81,8 +81,8 @@ export default function MotivationalPreview() {
 
   // Loading state
   return (
-    <div className="min-h-screen bg-navy-dark flex items-center justify-center">
-      <div className="text-center">
+    <div className="min-h-screen bg-background flex items-center justify-center px-4 sm:px-6">
+      <div className="text-center max-w-screen-md mx-auto">
         <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
         <p className="text-muted-foreground">Loading motivational banner...</p>
       </div>

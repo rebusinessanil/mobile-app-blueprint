@@ -153,7 +153,7 @@ export default function StoryBannerCreate() {
     <div className="min-h-screen bg-background pb-20">
       {/* Header */}
       <div className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
-        <div className="flex items-center justify-between px-4 py-3">
+        <div className="max-w-screen-md mx-auto flex items-center justify-between px-4 sm:px-6 py-3">
           <button onClick={() => navigate("/dashboard")} className="p-2 hover:bg-accent rounded-lg transition-colors">
             <ArrowLeft className="w-5 h-5" />
           </button>
@@ -162,7 +162,7 @@ export default function StoryBannerCreate() {
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto p-4 space-y-6">
+      <div className="max-w-screen-md mx-auto px-4 sm:px-6 py-4 space-y-6">
         {/* Story Preview */}
         <div className="gold-border bg-card rounded-2xl overflow-hidden">
           <div className="aspect-[9/16] relative">

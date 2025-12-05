@@ -6,8 +6,8 @@ export default function ComingSoon() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-navy-dark flex items-center justify-center px-6">
-      <div className="gold-border bg-card p-8 rounded-3xl max-w-md w-full text-center space-y-6">
+    <div className="min-h-screen bg-background flex items-center justify-center px-4 sm:px-6">
+      <div className="gold-border bg-card p-6 sm:p-8 rounded-3xl max-w-md w-full text-center space-y-6">
         <div className="w-20 h-20 bg-primary/20 rounded-full flex items-center justify-center mx-auto">
           <Clock className="w-10 h-10 text-primary" />
         </div>
