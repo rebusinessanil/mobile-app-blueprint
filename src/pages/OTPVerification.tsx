@@ -11,6 +11,8 @@ export default function OTPVerification() {
   const location = useLocation();
   const email = location.state?.email;
   const name = location.state?.name;
+  const mobile = location.state?.mobile;
+  const pin = location.state?.pin;
   
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [isVerifying, setIsVerifying] = useState(false);
@@ -82,9 +84,30 @@ export default function OTPVerification() {
       if (error) throw error;
 
       if (data?.user) {
+        // Check if profile is already complete (returning user)
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('profile_completed')
+          .eq('user_id', data.user.id)
+          .single();
+        
         toast.success("Email verified successfully!");
-        // Navigate directly to profile-edit (no flash)
-        navigate("/profile-edit", { replace: true });
+        
+        if (profileData?.profile_completed) {
+          // Existing user with complete profile - go to dashboard
+          navigate("/dashboard", { replace: true });
+        } else {
+          // New user or incomplete profile - go to profile-edit with prefilled data
+          navigate("/profile-edit", { 
+            replace: true,
+            state: {
+              prefillName: name,
+              prefillEmail: email,
+              prefillMobile: mobile,
+              prefillPin: pin
+            }
+          });
+        }
       }
     } catch (error: any) {
       console.error("OTP verification error:", error);
