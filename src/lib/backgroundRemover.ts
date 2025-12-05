@@ -100,15 +100,17 @@ export const removeBackground = async (
     
     onProgress?.('Creating mask...', 70);
     
-    // Find person/human segments or use the largest foreground segment
+    // Find person/human segments - these are what we want to KEEP
     const personLabels = ['person', 'people', 'human', 'man', 'woman', 'child', 'boy', 'girl'];
     let personMask = results.find((r: any) => 
       personLabels.some(label => r.label?.toLowerCase().includes(label))
     );
     
+    let isPersonMask = !!personMask;
+    
     // If no person found, use any foreground segment (not wall, floor, ceiling, sky, etc.)
     if (!personMask) {
-      const backgroundLabels = ['wall', 'floor', 'ceiling', 'sky', 'building', 'tree', 'grass', 'road', 'sidewalk', 'water'];
+      const backgroundLabels = ['wall', 'floor', 'ceiling', 'sky', 'building', 'tree', 'grass', 'road', 'sidewalk', 'water', 'ground', 'field', 'mountain'];
       personMask = results.find((r: any) => 
         !backgroundLabels.some(label => r.label?.toLowerCase().includes(label))
       );
@@ -122,6 +124,8 @@ export const removeBackground = async (
     if (!personMask?.mask) {
       throw new Error('Could not detect subject in image');
     }
+    
+    console.log('Using segment:', personMask.label, 'isPerson:', isPersonMask);
     
     onProgress?.('Applying mask...', 85);
     
@@ -139,10 +143,16 @@ export const removeBackground = async (
     const pixels = outputImageData.data;
     const maskData = personMask.mask.data;
     
-    // Apply mask to alpha channel - INVERT to keep the subject
+    // Apply mask to alpha channel
+    // For person segments: mask value IS the person, so use it directly (high = visible)
+    // For background segments: we need to invert (high = background = transparent)
     for (let i = 0; i < maskData.length; i++) {
-      // Invert: 1 - maskValue keeps the detected subject
-      const alpha = Math.round((1 - maskData[i]) * 255);
+      const maskValue = maskData[i];
+      // Person mask: high values = person = keep visible
+      // Non-person mask: high values = that object = invert to remove background
+      const alpha = isPersonMask 
+        ? Math.round(maskValue * 255)  // Keep person (high mask = visible)
+        : Math.round((1 - maskValue) * 255);  // Remove background
       pixels[i * 4 + 3] = alpha;
     }
     
