@@ -38,11 +38,11 @@ export default function AuthCallback() {
             return;
           }
 
-          if (data?.session?.access_token && data?.session?.refresh_token) {
-            logger.log("Session created via code exchange, redirecting to profile-setup");
-            if (isMounted) navigate("/profile-setup", { replace: true });
-            return;
-          }
+        if (data?.session?.access_token && data?.session?.refresh_token) {
+          logger.log("Session created via code exchange, redirecting to profile-edit");
+          if (isMounted) navigate("/profile-edit", { replace: true });
+          return;
+        }
         }
 
         // Handle implicit grant flow (tokens in hash) - FALLBACK
@@ -59,18 +59,18 @@ export default function AuthCallback() {
             return;
           }
 
-          if (data?.session) {
-            logger.log("Session set from tokens, redirecting to profile-setup");
-            if (isMounted) navigate("/profile-setup", { replace: true });
-            return;
-          }
+        if (data?.session) {
+          logger.log("Session set from tokens, redirecting to profile-edit");
+          if (isMounted) navigate("/profile-edit", { replace: true });
+          return;
+        }
         }
 
         // Check if session already exists
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.access_token && session?.refresh_token) {
-          logger.log("Existing session found, redirecting to profile-setup");
-          if (isMounted) navigate("/profile-setup", { replace: true });
+          logger.log("Existing session found, redirecting to profile-edit");
+          if (isMounted) navigate("/profile-edit", { replace: true });
           return;
         }
 
