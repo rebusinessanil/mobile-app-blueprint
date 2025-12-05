@@ -594,7 +594,7 @@ export default function ProfileEdit() {
             {(!formData.mobile || !/^\d{10}$/.test(formData.mobile.replace(/\D/g, ''))) && <p className="text-sm text-destructive">• Valid 10-digit mobile required</p>}
             {(!roleConfirmed || !formData.role) && <p className="text-sm text-destructive">• Please select a role</p>}
             {photos.length === 0 && <p className="text-sm text-destructive">• At least 1 profile photo required</p>}
-            {!isPinValid()}
+            {!isPinValid() && <p className="text-sm text-destructive">• Valid 4-digit PIN required</p>}
           </div>}
       </div>
     </div>

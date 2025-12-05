@@ -212,4 +212,47 @@
     min-height: 44px;
     min-width: 44px;
   }
+  
+  /* Cross-device consistency utilities */
+  .responsive-container {
+    @apply w-full max-w-md mx-auto px-4 sm:px-6;
+  }
+  
+  .responsive-card {
+    @apply w-full rounded-2xl p-4 sm:p-6;
+  }
+  
+  .responsive-header {
+    @apply sticky top-0 z-40 px-4 sm:px-6 py-4;
+  }
+  
+  .responsive-input {
+    @apply h-12 sm:h-14 text-base sm:text-lg;
+  }
+  
+  .responsive-button {
+    @apply h-12 sm:h-14 text-base sm:text-lg font-semibold;
+  }
+  
+  /* Safe area for mobile devices */
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top, 0);
+  }
+  
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+  
+  /* Prevent text selection on interactive elements */
+  .no-select {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  /* Smooth scrolling for all devices */
+  .smooth-scroll {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
 }
