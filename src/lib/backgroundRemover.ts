@@ -6,12 +6,14 @@ env.useBrowserCache = true;
 
 const MAX_IMAGE_DIMENSION = 512;
 const FEATHER_RADIUS = 3;
-const EDGE_THRESHOLD = 0.15;
+const EDGE_THRESHOLD = 0.12;
+const ALPHA_CUTOFF_LOW = 15;
+const ALPHA_CUTOFF_HIGH = 240;
 
 let segmenter: any = null;
 let isLoadingModel = false;
 
-// Load RMBG-1.4 model optimized for person detection
+// Load RMBG-1.4 model optimized for person/portrait detection
 async function getSegmenter(onProgress?: (stage: string, percent: number) => void) {
   if (segmenter) return segmenter;
   
@@ -26,7 +28,7 @@ async function getSegmenter(onProgress?: (stage: string, percent: number) => voi
   onProgress?.('Loading AI model...', 10);
   
   try {
-    // RMBG-1.4 - purpose-built for background removal with person focus
+    // RMBG-1.4 - purpose-built for background removal with person/portrait focus
     segmenter = await pipeline(
       'image-segmentation',
       'briaai/RMBG-1.4',
@@ -126,14 +128,12 @@ function bilinearInterpolate(
   return dstData;
 }
 
-// Apply morphological closing to fill small holes
+// Apply morphological closing to fill small holes in person region
 function morphologicalClose(alpha: Float32Array, width: number, height: number, radius: number): Float32Array {
   const result = new Float32Array(alpha.length);
-  
-  // Dilate then erode
   const dilated = new Float32Array(alpha.length);
   
-  // Dilation
+  // Dilation pass
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       let maxVal = 0;
@@ -150,7 +150,7 @@ function morphologicalClose(alpha: Float32Array, width: number, height: number, 
     }
   }
   
-  // Erosion
+  // Erosion pass
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       let minVal = 1;
@@ -170,7 +170,7 @@ function morphologicalClose(alpha: Float32Array, width: number, height: number, 
   return result;
 }
 
-// Enhanced edge detection and refinement
+// Enhanced edge detection and refinement for portrait cutouts
 function refineEdges(imageData: ImageData): void {
   const data = imageData.data;
   const width = imageData.width;
@@ -184,14 +184,14 @@ function refineEdges(imageData: ImageData): void {
   // Apply morphological closing to fill small holes
   const closed = morphologicalClose(tempAlpha, width, height, 2);
   
-  // Edge refinement with gradient-based sharpening
+  // Edge refinement with Sobel gradient-based sharpening
   for (let y = 1; y < height - 1; y++) {
     for (let x = 1; x < width - 1; x++) {
       const idx = y * width + x;
       const alpha = closed[idx];
       
       if (alpha > EDGE_THRESHOLD && alpha < (1 - EDGE_THRESHOLD)) {
-        // Sobel gradient
+        // Sobel gradient calculation
         const gx = 
           -closed[idx - width - 1] + closed[idx - width + 1] +
           -2 * closed[idx - 1] + 2 * closed[idx + 1] +
@@ -204,11 +204,12 @@ function refineEdges(imageData: ImageData): void {
         const gradMag = Math.sqrt(gx * gx + gy * gy);
         
         // Sharpen based on gradient magnitude
-        if (gradMag > 0.4) {
+        if (gradMag > 0.35) {
+          // Strong edge - make crisp
           data[idx * 4 + 3] = alpha > 0.5 ? 255 : 0;
         } else {
-          // Smooth sigmoid transition for soft edges
-          const smoothed = 1 / (1 + Math.exp(-12 * (alpha - 0.5)));
+          // Smooth sigmoid transition for soft edges (hair, etc.)
+          const smoothed = 1 / (1 + Math.exp(-14 * (alpha - 0.5)));
           data[idx * 4 + 3] = Math.round(smoothed * 255);
         }
       } else {
@@ -218,17 +219,17 @@ function refineEdges(imageData: ImageData): void {
   }
 }
 
-// Remove stray artifacts and isolated pixels
+// Remove stray artifacts and isolated pixels (background remnants)
 function removeArtifacts(imageData: ImageData): void {
   const data = imageData.data;
   const width = imageData.width;
   const height = imageData.height;
   
-  // Hard threshold pass
+  // Hard threshold pass - eliminate very faint/strong alpha
   for (let i = 0; i < width * height; i++) {
     const alpha = data[i * 4 + 3];
-    if (alpha < 20) data[i * 4 + 3] = 0;
-    else if (alpha > 235) data[i * 4 + 3] = 255;
+    if (alpha < ALPHA_CUTOFF_LOW) data[i * 4 + 3] = 0;
+    else if (alpha > ALPHA_CUTOFF_HIGH) data[i * 4 + 3] = 255;
   }
   
   // Copy alpha for neighborhood analysis
@@ -237,7 +238,7 @@ function removeArtifacts(imageData: ImageData): void {
     tempAlpha[i] = data[i * 4 + 3];
   }
   
-  // Remove isolated clusters
+  // Remove isolated clusters (stray background pixels)
   for (let y = 3; y < height - 3; y++) {
     for (let x = 3; x < width - 3; x++) {
       const idx = y * width + x;
@@ -256,7 +257,7 @@ function removeArtifacts(imageData: ImageData): void {
         }
         
         // Remove if too isolated
-        if (opaqueNeighbors < 8 && alpha < 200) {
+        if (opaqueNeighbors < 10 && alpha < 200) {
           data[idx * 4 + 3] = 0;
         }
       }
@@ -264,7 +265,7 @@ function removeArtifacts(imageData: ImageData): void {
   }
 }
 
-// Gaussian-like feathering for smooth edges
+// Gaussian-like feathering for smooth portrait edges
 function applyFeathering(imageData: ImageData, radius: number): void {
   const data = imageData.data;
   const width = imageData.width;
@@ -307,20 +308,20 @@ function applyFeathering(imageData: ImageData, radius: number): void {
     }
   }
   
-  // Blend feathered edges while preserving solid regions
+  // Blend feathered edges while preserving solid person regions
   for (let i = 0; i < width * height; i++) {
     const originalAlpha = data[i * 4 + 3] / 255;
     const featheredAlpha = alphaChannel[i];
     
     let finalAlpha;
-    if (originalAlpha > 0.92) {
-      // Keep solid foreground
+    if (originalAlpha > 0.93) {
+      // Keep solid foreground (person body)
       finalAlpha = originalAlpha;
-    } else if (originalAlpha < 0.08) {
+    } else if (originalAlpha < 0.07) {
       // Aggressively remove background remnants
-      finalAlpha = featheredAlpha * 0.2;
+      finalAlpha = featheredAlpha * 0.15;
     } else {
-      // Smooth transition zone
+      // Smooth transition zone (hair, edges)
       finalAlpha = featheredAlpha;
     }
     
@@ -339,7 +340,7 @@ function fillHoles(imageData: ImageData): void {
       const idx = y * width + x;
       const alpha = data[idx * 4 + 3];
       
-      if (alpha < 60) {
+      if (alpha < 50) {
         let opaqueCount = 0;
         let totalCount = 0;
         
@@ -351,8 +352,8 @@ function fillHoles(imageData: ImageData): void {
           }
         }
         
-        // Fill if surrounded by opaque pixels
-        if (opaqueCount > totalCount * 0.65) {
+        // Fill if surrounded by opaque pixels (inside person)
+        if (opaqueCount > totalCount * 0.6) {
           data[idx * 4 + 3] = 255;
         }
       }
@@ -360,7 +361,7 @@ function fillHoles(imageData: ImageData): void {
   }
 }
 
-// Clean up mask edges to remove color bleeding
+// Clean up mask edges to remove color bleeding from background
 function cleanupMaskEdges(imageData: ImageData): void {
   const data = imageData.data;
   const width = imageData.width;
@@ -371,9 +372,8 @@ function cleanupMaskEdges(imageData: ImageData): void {
       const idx = (y * width + x) * 4;
       const alpha = data[idx + 3];
       
-      // For semi-transparent edge pixels, reduce color contribution
+      // For semi-transparent edge pixels
       if (alpha > 0 && alpha < 200) {
-        // Check if this is likely an edge pixel
         const neighbors = [
           data[((y - 1) * width + x) * 4 + 3],
           data[((y + 1) * width + x) * 4 + 3],
@@ -381,12 +381,64 @@ function cleanupMaskEdges(imageData: ImageData): void {
           data[(y * width + x + 1) * 4 + 3]
         ];
         
-        const hasTransparentNeighbor = neighbors.some(n => n < 50);
-        const hasOpaqueNeighbor = neighbors.some(n => n > 200);
+        const hasTransparentNeighbor = neighbors.some(n => n < 40);
+        const hasOpaqueNeighbor = neighbors.some(n => n > 210);
         
         if (hasTransparentNeighbor && hasOpaqueNeighbor) {
           // Edge pixel - slightly boost alpha for cleaner cutout
-          data[idx + 3] = Math.min(255, Math.round(alpha * 1.2));
+          data[idx + 3] = Math.min(255, Math.round(alpha * 1.15));
+        }
+      }
+    }
+  }
+}
+
+// Final cleanup pass - remove any remaining background haze
+function finalCleanup(imageData: ImageData): void {
+  const data = imageData.data;
+  const width = imageData.width;
+  const height = imageData.height;
+  
+  // Remove very low alpha values that appear as haze
+  for (let i = 0; i < width * height; i++) {
+    const alpha = data[i * 4 + 3];
+    if (alpha > 0 && alpha < 25) {
+      data[i * 4 + 3] = 0;
+    }
+  }
+  
+  // Edge pass - ensure clean transition at boundaries
+  const tempAlpha = new Uint8Array(width * height);
+  for (let i = 0; i < width * height; i++) {
+    tempAlpha[i] = data[i * 4 + 3];
+  }
+  
+  for (let y = 1; y < height - 1; y++) {
+    for (let x = 1; x < width - 1; x++) {
+      const idx = y * width + x;
+      const alpha = tempAlpha[idx];
+      
+      if (alpha > 0 && alpha < 255) {
+        // Count opaque vs transparent neighbors
+        let transparentCount = 0;
+        let opaqueCount = 0;
+        
+        for (let dy = -1; dy <= 1; dy++) {
+          for (let dx = -1; dx <= 1; dx++) {
+            if (dx === 0 && dy === 0) continue;
+            const nAlpha = tempAlpha[(y + dy) * width + (x + dx)];
+            if (nAlpha < 30) transparentCount++;
+            if (nAlpha > 225) opaqueCount++;
+          }
+        }
+        
+        // If mostly surrounded by transparent, make transparent
+        if (transparentCount >= 5 && opaqueCount <= 2) {
+          data[idx * 4 + 3] = 0;
+        }
+        // If mostly surrounded by opaque, make opaque
+        else if (opaqueCount >= 5 && transparentCount <= 2) {
+          data[idx * 4 + 3] = 255;
         }
       }
     }
@@ -421,7 +473,7 @@ export const removeBackground = async (
     let bestMask = results[0];
     
     // Find person-specific segment if available
-    const personLabels = ['person', 'foreground', 'subject', 'human'];
+    const personLabels = ['person', 'foreground', 'subject', 'human', 'portrait'];
     for (const result of results) {
       if (result.label && personLabels.some(l => result.label.toLowerCase().includes(l))) {
         bestMask = result;
@@ -474,12 +526,13 @@ export const removeBackground = async (
     
     onProgress?.('Refining edges...', 85);
     
-    // Multi-pass post-processing for clean edges
+    // Multi-pass post-processing for artifact-free portrait cutouts
     fillHoles(outputImageData);
     removeArtifacts(outputImageData);
     refineEdges(outputImageData);
     cleanupMaskEdges(outputImageData);
     applyFeathering(outputImageData, FEATHER_RADIUS);
+    finalCleanup(outputImageData);
     
     outputCtx.putImageData(outputImageData, 0, 0);
     
