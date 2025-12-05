@@ -161,18 +161,15 @@ export default function Wallet() {
         });
       }
 
-      // Calculate Total Spent: All debits - Last Recharge amount
-      const totalDebits = txns
+      // Calculate Total Spent: Sum of all debit transactions
+      const totalSpent = txns
         ?.filter(t => t.transaction_type === "spent" || t.transaction_type === "debit")
         .reduce((sum, t) => sum + Math.abs(t.amount), 0) || 0;
-      
-      const lastRechargeAmount = rechargeData?.amount || 0;
-      const calculatedTotalSpent = Math.max(0, totalDebits - lastRechargeAmount);
 
       setBalance({
         balance: credits?.balance || 0,
         total_earned: credits?.total_earned || 0,
-        total_spent: calculatedTotalSpent,
+        total_spent: totalSpent,
       });
     } catch (error) {
       console.error("Error fetching wallet data:", error);
