@@ -2,10 +2,27 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/lib/logger";
+import { WifiOff } from "lucide-react";
 
 export default function AuthCallback() {
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
+  const [isOffline, setIsOffline] = useState(false);
+
+  useEffect(() => {
+    // Check online status
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+    
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    setIsOffline(!navigator.onLine);
+    
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -114,9 +131,13 @@ export default function AuthCallback() {
         logger.log("No auth data found, redirecting to register");
         if (isMounted) navigate("/register", { replace: true });
 
-      } catch (err) {
+      } catch (err: any) {
         logger.error("Auth callback error:", err);
-        if (isMounted) setError("An unexpected error occurred during authentication");
+        if (err.message?.includes("fetch") || err.message?.includes("network") || !navigator.onLine) {
+          if (isMounted) setError("Server not reachable. Please check your internet connection and try again.");
+        } else {
+          if (isMounted) setError("An unexpected error occurred during authentication");
+        }
       }
     };
 
@@ -129,8 +150,8 @@ export default function AuthCallback() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-navy-dark flex items-center justify-center p-4">
-        <div className="bg-card border border-border rounded-2xl p-6 max-w-md w-full text-center">
+      <div className="min-h-screen bg-navy-dark flex items-center justify-center p-4 safe-area-top safe-area-bottom">
+        <div className="bg-card border border-border rounded-2xl p-4 sm:p-6 max-w-md w-full text-center">
           <div className="w-16 h-16 bg-destructive/20 rounded-full flex items-center justify-center mx-auto mb-4">
             <span className="text-destructive text-2xl">✕</span>
           </div>
@@ -138,7 +159,7 @@ export default function AuthCallback() {
           <p className="text-muted-foreground mb-4">{error}</p>
           <button
             onClick={() => navigate("/register", { replace: true })}
-            className="w-full bg-primary text-primary-foreground py-3 rounded-xl font-medium hover:bg-primary/90 transition-colors"
+            className="w-full bg-primary text-primary-foreground py-3 rounded-xl font-medium hover:bg-primary/90 transition-colors touch-target"
           >
             Back to Register
           </button>
@@ -148,7 +169,14 @@ export default function AuthCallback() {
   }
 
   return (
-    <div className="min-h-screen bg-navy-dark flex items-center justify-center">
+    <div className="min-h-screen bg-navy-dark flex items-center justify-center safe-area-top safe-area-bottom">
+      {/* Offline indicator */}
+      {isOffline && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-4 py-2 bg-destructive/90 text-white rounded-full text-sm animate-pulse">
+          <WifiOff className="w-4 h-4" />
+          <span>No connection</span>
+        </div>
+      )}
       <div className="text-center">
         <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
         <p className="text-foreground text-lg">Processing Sign-Up...</p>

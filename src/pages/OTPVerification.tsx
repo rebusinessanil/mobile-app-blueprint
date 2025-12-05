@@ -1,14 +1,16 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, WifiOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useSupabaseConnection } from "@/hooks/useSupabaseConnection";
 
 export default function OTPVerification() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { checkConnection, isConnected } = useSupabaseConnection();
   const email = location.state?.email;
   const name = location.state?.name;
   const mobile = location.state?.mobile;
@@ -72,6 +74,13 @@ export default function OTPVerification() {
       return;
     }
 
+    // Check connection before verifying
+    const connectionOk = await checkConnection();
+    if (!connectionOk) {
+      toast.error("Server not reachable. Please check your internet connection and try again.");
+      return;
+    }
+
     setIsVerifying(true);
 
     try {
@@ -111,7 +120,11 @@ export default function OTPVerification() {
       }
     } catch (error: any) {
       console.error("OTP verification error:", error);
-      toast.error(error.message || "Invalid verification code");
+      if (error.message?.includes("fetch") || error.message?.includes("network")) {
+        toast.error("Server not reachable. Please check your internet connection and try again.");
+      } else {
+        toast.error(error.message || "Invalid verification code");
+      }
       setOtp(["", "", "", "", "", ""]);
       inputRefs.current[0]?.focus();
     } finally {
@@ -121,6 +134,13 @@ export default function OTPVerification() {
 
   const handleResendOTP = async () => {
     if (!canResend) return;
+
+    // Check connection before resending
+    const connectionOk = await checkConnection();
+    if (!connectionOk) {
+      toast.error("Server not reachable. Please check your internet connection and try again.");
+      return;
+    }
 
     setIsResending(true);
 
@@ -143,14 +163,26 @@ export default function OTPVerification() {
       inputRefs.current[0]?.focus();
     } catch (error: any) {
       console.error("Resend OTP error:", error);
-      toast.error(error.message || "Failed to resend code");
+      if (error.message?.includes("fetch") || error.message?.includes("network")) {
+        toast.error("Server not reachable. Please check your internet connection and try again.");
+      } else {
+        toast.error(error.message || "Failed to resend code");
+      }
     } finally {
       setIsResending(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-navy-dark to-navy flex items-center justify-center p-6">
+    <div className="min-h-screen bg-gradient-to-br from-navy-dark to-navy flex items-center justify-center p-4 sm:p-6 safe-area-top safe-area-bottom">
+      {/* Connection status indicator */}
+      {!isConnected && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-4 py-2 bg-destructive/90 text-white rounded-full text-sm animate-pulse">
+          <WifiOff className="w-4 h-4" />
+          <span>No connection</span>
+        </div>
+      )}
+      
       {/* Background decoration */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 left-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl" />
@@ -161,7 +193,7 @@ export default function OTPVerification() {
         {/* Back button */}
         <button
           onClick={() => navigate("/register")}
-          className="mb-6 flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+          className="mb-6 flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors touch-target"
         >
           <ArrowLeft className="w-5 h-5" />
           <span>Back to Registration</span>
