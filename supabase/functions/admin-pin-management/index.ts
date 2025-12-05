@@ -52,7 +52,7 @@ serve(async (req) => {
     console.log(`[admin-pin-management] Admin ${adminUser.id} performing ${action} on user ${target_user_id}`);
 
     if (action === "check_pin_status") {
-      // Get user data including metadata where PIN is stored
+      // Get user data including metadata where PIN status is stored
       const { data: userData, error: userError } = await supabase.auth.admin.getUserById(target_user_id);
       
       if (userError || !userData?.user) {
@@ -66,16 +66,16 @@ serve(async (req) => {
       const hasPinSet = userData.user.last_sign_in_at !== null || 
                         userData.user.created_at !== userData.user.updated_at;
 
-      // Get the stored plain PIN from user_metadata (if admin has set it)
-      const storedPin = userData.user.user_metadata?.admin_set_pin || null;
+      // Check if admin has reset the PIN (boolean flag only, no plain PIN)
+      const adminResetPin = userData.user.user_metadata?.admin_reset_pin === true;
 
       return new Response(
         JSON.stringify({ 
           success: true, 
           has_pin: hasPinSet,
-          user_id: target_user_id,
-          // Return actual PIN if stored in metadata by admin
-          plain_pin: storedPin
+          admin_reset: adminResetPin,
+          user_id: target_user_id
+          // Note: plain_pin is intentionally NOT returned for security
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
@@ -96,14 +96,18 @@ serve(async (req) => {
       const { data: existingUser } = await supabase.auth.admin.getUserById(target_user_id);
       const existingMetadata = existingUser?.user?.user_metadata || {};
       
-      // Update password AND store plain PIN in user_metadata for admin viewing
+      // Remove any previously stored plain PIN and set boolean flag only
+      const { admin_set_pin, ...cleanMetadata } = existingMetadata;
+      
+      // Update password and set boolean flag (NOT the plain PIN)
       const { error: updateError } = await supabase.auth.admin.updateUserById(
         target_user_id,
         { 
           password: paddedPin,
           user_metadata: {
-            ...existingMetadata,
-            admin_set_pin: new_pin // Store plain PIN for admin viewing
+            ...cleanMetadata,
+            admin_reset_pin: true,  // Boolean flag only - indicates admin has reset PIN
+            admin_reset_at: new Date().toISOString()  // Timestamp for audit
           }
         }
       );
@@ -122,8 +126,8 @@ serve(async (req) => {
         JSON.stringify({ 
           success: true, 
           message: "PIN reset successfully",
-          user_id: target_user_id,
-          plain_pin: new_pin // Return the new PIN
+          user_id: target_user_id
+          // Note: plain_pin is intentionally NOT returned for security
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
