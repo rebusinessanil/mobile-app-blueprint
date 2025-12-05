@@ -173,17 +173,24 @@ export default function BannerPreview() {
     });
   }, []);
   const {
-    profile
+    profile,
+    loading: profileLoading
   } = useProfile(userId ?? undefined);
   const {
-    photos: profilePhotos
+    photos: profilePhotos,
+    loading: photosLoading
   } = useProfilePhotos(userId ?? undefined);
   const {
-    settings: bannerSettings
+    settings: bannerSettings,
+    loading: settingsLoading
   } = useBannerSettings(userId ?? undefined);
   const {
-    defaults: bannerDefaults
+    defaults: bannerDefaults,
+    loading: defaultsLoading
   } = useBannerDefaults();
+  
+  // Combined loading state - wait for all critical data before rendering banner
+  const isDataLoading = profileLoading || photosLoading || settingsLoading || defaultsLoading;
 
   // Fetch motivational profile defaults (position and scale for profile picture)
   const {
@@ -1356,6 +1363,19 @@ export default function BannerPreview() {
       setIsDownloading(false);
     }
   };
+
+  // Show loading state until all critical data is loaded
+  if (isDataLoading || !userId) {
+    return (
+      <div className="h-screen overflow-hidden bg-background flex flex-col items-center justify-center">
+        <div className="w-16 h-16 rounded-xl bg-primary/20 flex items-center justify-center mb-4 animate-pulse">
+          <Sparkles className="w-8 h-8 text-primary" />
+        </div>
+        <p className="text-foreground/70 text-sm">Loading banner preview...</p>
+      </div>
+    );
+  }
+
   return <div className="h-screen overflow-hidden bg-background flex flex-col">
       {/* Header - Fixed */}
       <header className="bg-background/95 backdrop-blur-sm z-40 px-4 sm:px-6 py-3 sm:py-4 flex-shrink-0">
