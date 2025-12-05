@@ -15,15 +15,34 @@ const getMaxDimension = () => isMobile() ? 384 : 1024;
 
 let model: any = null;
 let processor: any = null;
+let imageWorker: Worker | null = null;
 
-// nextTick-style yield to UI thread to prevent freezing
-const nextTick = () => new Promise<void>(resolve => {
-  if (typeof requestAnimationFrame !== 'undefined') {
-    requestAnimationFrame(() => setTimeout(resolve, 0));
-  } else {
-    setTimeout(resolve, 0);
+// RAF-based yield to UI thread - yields every 20ms
+const yieldToUI = async (): Promise<void> => {
+  return new Promise(resolve => {
+    requestAnimationFrame(() => {
+      setTimeout(resolve, 0);
+    });
+  });
+};
+
+// Initialize web worker for heavy processing
+const getImageWorker = (): Worker | null => {
+  if (typeof Worker === 'undefined') return null;
+  
+  if (!imageWorker) {
+    try {
+      imageWorker = new Worker(
+        new URL('../workers/imageProcessor.worker.ts', import.meta.url),
+        { type: 'module' }
+      );
+    } catch (e) {
+      console.warn('Web Worker not available, using main thread fallback');
+      return null;
+    }
   }
-});
+  return imageWorker;
+};
 
 // Load the RMBG model for high-precision person detection
 async function loadModel(onProgress?: (stage: string, percent: number) => void) {
@@ -90,23 +109,27 @@ async function refineEdges(imageData: ImageData, threshold: number = 0.5): Promi
   const height = imageData.height;
   const totalPixels = width * height;
   
-  // Pre-allocate arrays
   const alphaValues = new Float32Array(totalPixels);
   const smoothedAlpha = new Float32Array(totalPixels);
   
-  // Extract alpha values
   for (let i = 0; i < totalPixels; i++) {
     alphaValues[i] = data[i * 4 + 3] / 255;
   }
   
   const kernelRadius = 1;
+  let lastYield = performance.now();
   
   for (let idx = 0; idx < totalPixels; idx++) {
+    // Yield every 20ms
+    if (performance.now() - lastYield > 20) {
+      await yieldToUI();
+      lastYield = performance.now();
+    }
+    
     const y = Math.floor(idx / width);
     const x = idx % width;
     const currentAlpha = alphaValues[idx];
     
-    // Check if this is an edge pixel (between 0.1 and 0.9)
     if (currentAlpha > 0.05 && currentAlpha < 0.95) {
       let sum = 0;
       let weightSum = 0;
@@ -134,7 +157,6 @@ async function refineEdges(imageData: ImageData, threshold: number = 0.5): Promi
     }
   }
   
-  // Apply smoothed alpha values
   for (let i = 0; i < totalPixels; i++) {
     data[i * 4 + 3] = Math.round(smoothedAlpha[i] * 255);
   }
@@ -152,7 +174,15 @@ async function removeArtifacts(imageData: ImageData): Promise<void> {
     [-1, 1],  [0, 1],  [1, 1]
   ];
   
+  let lastYield = performance.now();
+  
   for (let y = 1; y < height - 1; y++) {
+    // Yield every 20ms
+    if (performance.now() - lastYield > 20) {
+      await yieldToUI();
+      lastYield = performance.now();
+    }
+    
     for (let x = 1; x < width - 1; x++) {
       const idx = (y * width + x) * 4;
       const currentAlpha = data[idx + 3];
@@ -186,23 +216,27 @@ async function applyMaskChunked(
   const totalPixels = width * height;
   const mobile = isMobile();
   
-  // Split into 3 chunks for mobile, single pass for desktop
   const numChunks = mobile ? 3 : 1;
   const chunkSize = Math.ceil(totalPixels / numChunks);
   
   for (let chunk = 0; chunk < numChunks; chunk++) {
     const startIdx = chunk * chunkSize;
     const endIdx = Math.min(startIdx + chunkSize, totalPixels);
+    let lastYield = performance.now();
     
     for (let idx = startIdx; idx < endIdx; idx++) {
+      // Yield every 20ms using RAF
+      if (performance.now() - lastYield > 20) {
+        await yieldToUI();
+        lastYield = performance.now();
+      }
+      
       const y = Math.floor(idx / width);
       const x = idx % width;
       
-      // Map output coordinates to mask coordinates
       const maskX = (x / width) * maskWidth;
       const maskY = (y / height) * maskHeight;
       
-      // Bilinear interpolation for smoother edges
       const x0 = Math.floor(maskX);
       const y0 = Math.floor(maskY);
       const x1 = Math.min(x0 + 1, maskWidth - 1);
@@ -216,23 +250,20 @@ async function applyMaskChunked(
       const v01 = maskData[y1 * maskWidth + x0];
       const v11 = maskData[y1 * maskWidth + x1];
       
-      // Bilinear interpolation
       const alpha = (v00 * (1 - fx) * (1 - fy) +
                     v10 * fx * (1 - fy) +
                     v01 * (1 - fx) * fy +
                     v11 * fx * fy);
       
-      // Apply alpha with slight contrast enhancement for cleaner edges
       const enhancedAlpha = Math.pow(alpha, 0.8);
       const pixelIdx = idx * 4;
       pixels[pixelIdx + 3] = Math.round(Math.min(1, Math.max(0, enhancedAlpha)) * 255);
     }
     
-    // Yield to UI after each chunk on mobile
     if (mobile && chunk < numChunks - 1) {
       const progress = 55 + Math.round(((chunk + 1) / numChunks) * 25);
       onProgress?.('Creating mask...', progress);
-      await nextTick();
+      await yieldToUI();
     }
   }
 }
@@ -242,12 +273,58 @@ function applySimpleMaskCleanup(imageData: ImageData): void {
   const data = imageData.data;
   const totalPixels = imageData.width * imageData.height;
   
-  // Simple threshold cleanup - very fast
   for (let i = 0; i < totalPixels; i++) {
     const alpha = data[i * 4 + 3];
-    // Hard threshold for clean edges without heavy processing
     data[i * 4 + 3] = alpha > 128 ? 255 : 0;
   }
+}
+
+// Process image in Web Worker for mobile
+async function processInWorker(
+  imageData: ImageData,
+  maskData: Float32Array,
+  maskWidth: number,
+  maskHeight: number,
+  onProgress?: (stage: string, percent: number) => void
+): Promise<string> {
+  const worker = getImageWorker();
+  
+  if (!worker) {
+    throw new Error('Worker not available');
+  }
+  
+  return new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      reject(new Error('Worker timeout'));
+    }, 60000); // 60 second timeout
+    
+    worker.onmessage = (e) => {
+      clearTimeout(timeout);
+      if (e.data.success) {
+        onProgress?.('Complete!', 100);
+        resolve(e.data.data);
+      } else {
+        reject(new Error(e.data.error || 'Worker processing failed'));
+      }
+    };
+    
+    worker.onerror = (e) => {
+      clearTimeout(timeout);
+      reject(new Error('Worker error: ' + e.message));
+    };
+    
+    // Transfer image data to worker
+    worker.postMessage({
+      type: 'processAndConvert',
+      imageData: new Uint8ClampedArray(imageData.data),
+      maskData: maskData,
+      width: imageData.width,
+      height: imageData.height,
+      maskWidth: maskWidth,
+      maskHeight: maskHeight,
+      maxOutputSize: 1024
+    });
+  });
 }
 
 export const removeBackground = async (
@@ -257,15 +334,13 @@ export const removeBackground = async (
   const mobile = isMobile();
   
   try {
-    console.log('Starting background removal...', mobile ? '(mobile: 384px, fp16, no edge-refine)' : '(desktop: 1024px, fp32, full)');
+    console.log('Starting background removal...', mobile ? '(mobile: 384px, fp16, worker)' : '(desktop: 1024px, fp32, full)');
     
-    // Load the model
     const { model: loadedModel, processor: loadedProcessor } = await loadModel(onProgress);
     
     onProgress?.('Preparing image...', 30);
-    await nextTick();
+    await yieldToUI();
     
-    // Create canvas and resize if needed
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     if (!ctx) throw new Error('Could not get canvas context');
@@ -273,29 +348,26 @@ export const removeBackground = async (
     const { width, height } = resizeImageIfNeeded(canvas, ctx, imageElement);
     console.log(`Processing image at ${width}x${height}`);
     
-    // Load image for the model - use JPEG on mobile for smaller tensor size
     const imageFormat = mobile ? 'image/jpeg' : 'image/png';
     const imageQuality = mobile ? 0.8 : 1.0;
     const imageUrl = canvas.toDataURL(imageFormat, imageQuality);
     
-    await nextTick();
+    await yieldToUI();
     const rawImage = await RawImage.fromURL(imageUrl);
     
     onProgress?.('Detecting person...', 45);
-    await nextTick();
+    await yieldToUI();
     
-    // Process with the model - person-only detection via RMBG-1.4
     const { pixel_values } = await loadedProcessor(rawImage);
     
     onProgress?.('Processing...', 50);
-    await nextTick();
+    await yieldToUI();
     
     const { output } = await loadedModel({ input: pixel_values });
     
     onProgress?.('Creating mask...', 55);
-    await nextTick();
+    await yieldToUI();
     
-    // Get the mask from model output
     const maskData = output[0][0].data;
     const maskHeight = output[0][0].dims[0];
     const maskWidth = output[0][0].dims[1];
@@ -307,23 +379,40 @@ export const removeBackground = async (
     const outputCtx = outputCanvas.getContext('2d');
     if (!outputCtx) throw new Error('Could not get output canvas context');
     
-    // Draw the original image
     outputCtx.drawImage(canvas, 0, 0);
-    
-    // Get image data to apply mask
     const outputImageData = outputCtx.getImageData(0, 0, width, height);
-    const pixels = outputImageData.data;
     
-    // Apply the mask with 3 async chunks for mobile
+    // Try to use Web Worker on mobile for final processing
+    if (mobile) {
+      try {
+        onProgress?.('Finalizing in background...', 85);
+        
+        const base64Result = await processInWorker(
+          outputImageData,
+          maskData,
+          maskWidth,
+          maskHeight,
+          onProgress
+        );
+        
+        // Convert base64 back to blob
+        const response = await fetch(base64Result);
+        return await response.blob();
+      } catch (workerError) {
+        console.warn('Worker failed, falling back to main thread:', workerError);
+        // Fall through to main thread processing
+      }
+    }
+    
+    // Main thread fallback (or desktop path)
+    const pixels = outputImageData.data;
     await applyMaskChunked(pixels, width, height, maskData, maskWidth, maskHeight, onProgress);
     
     if (mobile) {
-      // Mobile: Skip edge refinement and artifacts, use simple cleanup instead
       onProgress?.('Finalizing...', 90);
-      await nextTick();
+      await yieldToUI();
       applySimpleMaskCleanup(outputImageData);
     } else {
-      // Desktop: Full edge refinement and artifact removal
       onProgress?.('Refining edges...', 80);
       await refineEdges(outputImageData, 0.4);
       
@@ -331,13 +420,11 @@ export const removeBackground = async (
       await removeArtifacts(outputImageData);
     }
     
-    // Apply the final processed image data
     outputCtx.putImageData(outputImageData, 0, 0);
     
     onProgress?.('Finalizing...', 95);
-    await nextTick();
+    await yieldToUI();
     
-    // Convert to blob with high quality
     return new Promise((resolve, reject) => {
       outputCanvas.toBlob(
         (blob) => {
@@ -374,8 +461,12 @@ export const loadImage = (file: Blob): Promise<HTMLImageElement> => {
   });
 };
 
-// Clear cached model to free memory
+// Clear cached model and worker to free memory
 export const clearModel = () => {
   model = null;
   processor = null;
+  if (imageWorker) {
+    imageWorker.terminate();
+    imageWorker = null;
+  }
 };
