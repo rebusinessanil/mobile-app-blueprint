@@ -4,7 +4,8 @@ import { pipeline, env } from '@huggingface/transformers';
 env.allowLocalModels = false;
 env.useBrowserCache = true;
 
-const MAX_IMAGE_DIMENSION = 512; // Smaller for faster processing
+const MAX_IMAGE_DIMENSION = 512;
+const FEATHER_RADIUS = 3; // Feather pixels for smooth edges
 
 let segmenter: any = null;
 let isLoadingModel = false;
@@ -14,7 +15,6 @@ async function getSegmenter(onProgress?: (stage: string, percent: number) => voi
   if (segmenter) return segmenter;
   
   if (isLoadingModel) {
-    // Wait for existing load to complete
     while (isLoadingModel) {
       await new Promise(resolve => setTimeout(resolve, 100));
     }
@@ -25,13 +25,10 @@ async function getSegmenter(onProgress?: (stage: string, percent: number) => voi
   onProgress?.('Loading AI model...', 10);
   
   try {
-    // Use segformer - fast and reliable for background removal
     segmenter = await pipeline(
       'image-segmentation',
       'Xenova/segformer-b0-finetuned-ade-512-512',
-      { 
-        device: 'webgpu',
-      }
+      { device: 'webgpu' }
     );
     onProgress?.('Model ready', 20);
   } catch (error) {
@@ -55,7 +52,6 @@ function resizeImage(image: HTMLImageElement): HTMLCanvasElement {
   let width = image.naturalWidth;
   let height = image.naturalHeight;
 
-  // Resize for faster processing
   if (width > MAX_IMAGE_DIMENSION || height > MAX_IMAGE_DIMENSION) {
     if (width > height) {
       height = Math.round((height * MAX_IMAGE_DIMENSION) / width);
@@ -73,6 +69,148 @@ function resizeImage(image: HTMLImageElement): HTMLCanvasElement {
   return canvas;
 }
 
+// Apply Gaussian-like feathering for smooth edges
+function applyFeathering(imageData: ImageData, radius: number): void {
+  const data = imageData.data;
+  const width = imageData.width;
+  const height = imageData.height;
+  const alphaChannel = new Float32Array(width * height);
+  
+  // Extract alpha channel
+  for (let i = 0; i < width * height; i++) {
+    alphaChannel[i] = data[i * 4 + 3] / 255;
+  }
+  
+  // Apply box blur to alpha channel (faster approximation of Gaussian)
+  const blurred = new Float32Array(width * height);
+  
+  for (let pass = 0; pass < 2; pass++) {
+    const source = pass === 0 ? alphaChannel : blurred;
+    const target = pass === 0 ? blurred : alphaChannel;
+    
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        let sum = 0;
+        let count = 0;
+        
+        for (let dy = -radius; dy <= radius; dy++) {
+          for (let dx = -radius; dx <= radius; dx++) {
+            const nx = x + dx;
+            const ny = y + dy;
+            
+            if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+              sum += source[ny * width + nx];
+              count++;
+            }
+          }
+        }
+        
+        target[y * width + x] = sum / count;
+      }
+    }
+  }
+  
+  // Write back feathered alpha
+  for (let i = 0; i < width * height; i++) {
+    const originalAlpha = data[i * 4 + 3] / 255;
+    // Blend feathered edges while preserving solid areas
+    const featheredAlpha = alphaChannel[i];
+    
+    // Use original alpha for solid areas, feathered for edges
+    let finalAlpha;
+    if (originalAlpha > 0.9) {
+      finalAlpha = originalAlpha; // Keep solid
+    } else if (originalAlpha < 0.1) {
+      finalAlpha = featheredAlpha * 0.5; // Reduce stray pixels
+    } else {
+      finalAlpha = featheredAlpha; // Smooth edges
+    }
+    
+    data[i * 4 + 3] = Math.round(Math.min(1, Math.max(0, finalAlpha)) * 255);
+  }
+}
+
+// Remove stray pixels and clean up mask
+function cleanupMask(imageData: ImageData): void {
+  const data = imageData.data;
+  const width = imageData.width;
+  const height = imageData.height;
+  
+  // Threshold very low alpha values to remove noise
+  for (let i = 0; i < width * height; i++) {
+    const alpha = data[i * 4 + 3];
+    if (alpha < 30) {
+      data[i * 4 + 3] = 0; // Remove very faint pixels
+    } else if (alpha > 225) {
+      data[i * 4 + 3] = 255; // Solidify nearly opaque pixels
+    }
+  }
+  
+  // Remove isolated pixels (noise cleanup)
+  const tempAlpha = new Uint8Array(width * height);
+  for (let i = 0; i < width * height; i++) {
+    tempAlpha[i] = data[i * 4 + 3];
+  }
+  
+  for (let y = 1; y < height - 1; y++) {
+    for (let x = 1; x < width - 1; x++) {
+      const idx = y * width + x;
+      const alpha = tempAlpha[idx];
+      
+      if (alpha > 0) {
+        // Count opaque neighbors
+        let opaqueNeighbors = 0;
+        for (let dy = -1; dy <= 1; dy++) {
+          for (let dx = -1; dx <= 1; dx++) {
+            if (dx === 0 && dy === 0) continue;
+            const nIdx = (y + dy) * width + (x + dx);
+            if (tempAlpha[nIdx] > 128) opaqueNeighbors++;
+          }
+        }
+        
+        // Remove isolated pixels (less than 3 neighbors)
+        if (opaqueNeighbors < 3 && alpha < 200) {
+          data[idx * 4 + 3] = 0;
+        }
+      }
+    }
+  }
+}
+
+// Fill small holes in the mask
+function fillHoles(imageData: ImageData): void {
+  const data = imageData.data;
+  const width = imageData.width;
+  const height = imageData.height;
+  
+  for (let y = 2; y < height - 2; y++) {
+    for (let x = 2; x < width - 2; x++) {
+      const idx = y * width + x;
+      const alpha = data[idx * 4 + 3];
+      
+      if (alpha < 50) {
+        // Count surrounding opaque pixels in a larger area
+        let opaqueCount = 0;
+        let totalCount = 0;
+        
+        for (let dy = -2; dy <= 2; dy++) {
+          for (let dx = -2; dx <= 2; dx++) {
+            if (dx === 0 && dy === 0) continue;
+            const nIdx = (y + dy) * width + (x + dx);
+            totalCount++;
+            if (data[nIdx * 4 + 3] > 200) opaqueCount++;
+          }
+        }
+        
+        // Fill if surrounded by mostly opaque pixels (hole filling)
+        if (opaqueCount > totalCount * 0.7) {
+          data[idx * 4 + 3] = 255;
+        }
+      }
+    }
+  }
+}
+
 export const removeBackground = async (
   imageElement: HTMLImageElement,
   onProgress?: (stage: string, percent: number) => void
@@ -80,15 +218,15 @@ export const removeBackground = async (
   const startTime = performance.now();
   
   try {
-    console.log('Starting fast background removal...');
+    console.log('Starting background removal...');
     
     // Step 1: Load model (cached after first use)
     const model = await getSegmenter(onProgress);
     
-    // Step 2: Prepare image quickly
+    // Step 2: Prepare image
     onProgress?.('Preparing image...', 30);
     const canvas = resizeImage(imageElement);
-    const imageData = canvas.toDataURL('image/jpeg', 0.8);
+    const imageData = canvas.toDataURL('image/jpeg', 0.85);
     
     // Step 3: Run segmentation
     onProgress?.('Detecting person...', 50);
@@ -98,9 +236,9 @@ export const removeBackground = async (
       throw new Error('No segmentation results');
     }
     
-    onProgress?.('Creating mask...', 70);
+    onProgress?.('Creating mask...', 65);
     
-    // Find person/human segments - these are what we want to KEEP
+    // Find person segments
     const personLabels = ['person', 'people', 'human', 'man', 'woman', 'child', 'boy', 'girl'];
     let personMask = results.find((r: any) => 
       personLabels.some(label => r.label?.toLowerCase().includes(label))
@@ -108,15 +246,14 @@ export const removeBackground = async (
     
     let isPersonMask = !!personMask;
     
-    // If no person found, use any foreground segment (not wall, floor, ceiling, sky, etc.)
+    // Fallback to foreground segments
     if (!personMask) {
-      const backgroundLabels = ['wall', 'floor', 'ceiling', 'sky', 'building', 'tree', 'grass', 'road', 'sidewalk', 'water', 'ground', 'field', 'mountain'];
+      const backgroundLabels = ['wall', 'floor', 'ceiling', 'sky', 'building', 'tree', 'grass', 'road', 'sidewalk', 'water', 'ground', 'field', 'mountain', 'sea', 'river'];
       personMask = results.find((r: any) => 
         !backgroundLabels.some(label => r.label?.toLowerCase().includes(label))
       );
     }
     
-    // Fall back to first result if nothing else works
     if (!personMask && results[0]?.mask) {
       personMask = results[0];
     }
@@ -127,9 +264,9 @@ export const removeBackground = async (
     
     console.log('Using segment:', personMask.label, 'isPerson:', isPersonMask);
     
-    onProgress?.('Applying mask...', 85);
+    onProgress?.('Processing mask...', 75);
     
-    // Create output canvas
+    // Create output canvas at original size for quality
     const outputCanvas = document.createElement('canvas');
     outputCanvas.width = canvas.width;
     outputCanvas.height = canvas.height;
@@ -144,20 +281,20 @@ export const removeBackground = async (
     const maskData = personMask.mask.data;
     
     // Apply mask to alpha channel
-    // For person segments: mask value IS the person, so use it directly (high = visible)
-    // For background segments: we need to invert (high = background = transparent)
     for (let i = 0; i < maskData.length; i++) {
       const maskValue = maskData[i];
-      // Person mask: high values = person = keep visible
-      // Non-person mask: high values = that object = invert to remove background
       const alpha = isPersonMask 
-        ? Math.round(maskValue * 255)  // Keep person (high mask = visible)
-        : Math.round((1 - maskValue) * 255);  // Remove background
+        ? Math.round(maskValue * 255)
+        : Math.round((1 - maskValue) * 255);
       pixels[i * 4 + 3] = alpha;
     }
     
-    // Quick edge smoothing
-    smoothEdges(outputImageData);
+    onProgress?.('Smoothing edges...', 85);
+    
+    // Apply post-processing for clean edges
+    fillHoles(outputImageData);
+    cleanupMask(outputImageData);
+    applyFeathering(outputImageData, FEATHER_RADIUS);
     
     outputCtx.putImageData(outputImageData, 0, 0);
     
@@ -166,7 +303,6 @@ export const removeBackground = async (
     const elapsed = performance.now() - startTime;
     console.log(`Background removal completed in ${(elapsed / 1000).toFixed(2)}s`);
     
-    // Convert to blob
     return new Promise((resolve, reject) => {
       outputCanvas.toBlob(
         (blob) => blob ? resolve(blob) : reject(new Error('Failed to create blob')),
@@ -179,34 +315,6 @@ export const removeBackground = async (
     throw error;
   }
 };
-
-// Simple edge smoothing - fast and effective
-function smoothEdges(imageData: ImageData): void {
-  const data = imageData.data;
-  const width = imageData.width;
-  const height = imageData.height;
-  
-  // Single pass smoothing for speed
-  for (let y = 1; y < height - 1; y++) {
-    for (let x = 1; x < width - 1; x++) {
-      const idx = (y * width + x) * 4;
-      const alpha = data[idx + 3];
-      
-      // Only smooth edge pixels (not fully transparent or opaque)
-      if (alpha > 10 && alpha < 245) {
-        // Average with neighbors
-        const neighbors = [
-          data[((y - 1) * width + x) * 4 + 3],
-          data[((y + 1) * width + x) * 4 + 3],
-          data[(y * width + x - 1) * 4 + 3],
-          data[(y * width + x + 1) * 4 + 3],
-        ];
-        const avg = (alpha + neighbors.reduce((a, b) => a + b, 0)) / 5;
-        data[idx + 3] = Math.round(avg);
-      }
-    }
-  }
-}
 
 export const loadImage = (file: Blob): Promise<HTMLImageElement> => {
   return new Promise((resolve, reject) => {
@@ -223,7 +331,6 @@ export const loadImage = (file: Blob): Promise<HTMLImageElement> => {
   });
 };
 
-// Clear cached model to free memory
 export const clearModel = () => {
   segmenter = null;
 };
