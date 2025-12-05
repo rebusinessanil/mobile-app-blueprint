@@ -14,8 +14,8 @@ import { useBannerDefaults } from "@/hooks/useBannerDefaults";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Sticker } from "@/hooks/useStickers";
+import { toPng } from "html-to-image";
 import download from "downloadjs";
-import { exportBanner, BANNER_SIZE, INTERNAL_CANVAS_SIZE } from "@/lib/bannerExport";
 import { useRealtimeStickerSync } from "@/hooks/useRealtimeStickerSync";
 import { useWalletDeduction } from "@/hooks/useWalletDeduction";
 import InsufficientBalanceModal from "@/components/InsufficientBalanceModal";
@@ -115,8 +115,8 @@ export default function BannerPreview() {
       const newX = e.clientX - profileDragStart.x;
       const newY = e.clientY - profileDragStart.y;
 
-      // Boundary constraints: keep within canvas (0 to 1350px width)
-      const maxWidth = INTERNAL_CANVAS_SIZE - 1026 * profilePicScale * 0.75; // 3:4 aspect ratio width
+      // Boundary constraints: keep within canvas (0 to 1350px width, -675 to 675px height offset)
+      const maxWidth = 1350 - 1026 * profilePicScale * 0.75; // 3:4 aspect ratio width
       const constrainedX = Math.max(0, Math.min(newX, maxWidth));
       const constrainedY = Math.max(-500, Math.min(newY, 500));
       setProfilePicPosition({
@@ -136,7 +136,7 @@ export default function BannerPreview() {
     };
   }, [isDraggingProfile, profileDragStart, profilePicScale]);
 
-  // Compute scale factor for display - fixed 1350×1350 internal canvas, exports to 1080×1080
+  // Compute scale factor for display
   useEffect(() => {
     const updateScale = () => {
       const container = document.querySelector('.banner-scale-container') as HTMLElement;
@@ -144,7 +144,7 @@ export default function BannerPreview() {
       const parent = container.parentElement;
       if (!parent) return;
       const parentWidth = parent.clientWidth;
-      const scale = parentWidth / INTERNAL_CANVAS_SIZE; // 1350px internal design
+      const scale = parentWidth / 1350;
       container.style.setProperty('--banner-scale', scale.toString());
       container.style.transform = `scale(${scale})`;
     };
@@ -993,7 +993,7 @@ export default function BannerPreview() {
     if (!isAdmin || !isDragMode || !selectedStickerId || !dragStartPos || !bannerRef.current) return;
     const banner = bannerRef.current;
     const rect = banner.getBoundingClientRect();
-    const scale = rect.width / INTERNAL_CANVAS_SIZE; // Account for display scaling (1350px)
+    const scale = rect.width / 1350; // Account for display scaling
 
     // Calculate new position relative to banner
     const deltaX = (e.clientX - dragStartPos.x) / scale;
@@ -1007,14 +1007,14 @@ export default function BannerPreview() {
       Object.keys(newImages).forEach(slot => {
         newImages[parseInt(slot)] = newImages[parseInt(slot)].map(sticker => {
           if (sticker.id === selectedStickerId) {
-            const currentX = (sticker.position_x ?? 77) / 100 * INTERNAL_CANVAS_SIZE;
-            const currentY = (sticker.position_y ?? 62) / 100 * INTERNAL_CANVAS_SIZE;
-            const newX = Math.max(0, Math.min(INTERNAL_CANVAS_SIZE, currentX + deltaX));
-            const newY = Math.max(0, Math.min(INTERNAL_CANVAS_SIZE, currentY + deltaY));
+            const currentX = (sticker.position_x ?? 77) / 100 * 1350;
+            const currentY = (sticker.position_y ?? 62) / 100 * 1350;
+            const newX = Math.max(0, Math.min(1350, currentX + deltaX));
+            const newY = Math.max(0, Math.min(1350, currentY + deltaY));
             return {
               ...sticker,
-              position_x: newX / INTERNAL_CANVAS_SIZE * 100,
-              position_y: newY / INTERNAL_CANVAS_SIZE * 100
+              position_x: newX / 1350 * 100,
+              position_y: newY / 1350 * 100
             };
           }
           return sticker;
@@ -1267,19 +1267,29 @@ export default function BannerPreview() {
       return;
     }
 
-    // Step 2: Generate banner with strict 1080×1080px export
+    // Step 2: Generate banner
     setIsDownloading(true);
-    const loadingToast = toast.loading("Generating banner (1080×1080px)...");
+    const loadingToast = toast.loading("Generating ultra HD banner...");
     try {
-      // Use optimized export system - fixed 1080×1080px, JPEG compression
-      const { dataUrl, sizeMB } = await exportBanner({
-        element: bannerRef.current,
-        onProgress: (progress) => {
-          if (progress === 50) {
-            toast.loading("Optimizing image quality...", { id: loadingToast });
-          } else if (progress === 80) {
-            toast.loading("Compressing for optimal size...", { id: loadingToast });
+      // High quality export settings
+      const dataUrl = await toPng(bannerRef.current, {
+        cacheBust: true,
+        pixelRatio: 3,
+        // Ultra HD Export
+        quality: 1,
+        backgroundColor: null,
+        // Transparent safe
+        style: {
+          transform: "scale(1)",
+          // No scaling issue
+          transformOrigin: "top left"
+        },
+        filter: node => {
+          // WhatsApp button, controls, slots, UI elements hide
+          if (node.classList?.contains("slot-selector") || node.classList?.contains("control-buttons") || node.classList?.contains("whatsapp-float") || node.id === "ignore-download") {
+            return false;
           }
+          return true;
         }
       });
       toast.dismiss(loadingToast);
@@ -1304,22 +1314,25 @@ export default function BannerPreview() {
 
       // Step 6: Download the banner after successful deduction
       const timestamp = new Date().getTime();
-      download(dataUrl, `ReBusiness-Banner-${categoryName}-${timestamp}.jpg`);
+      download(dataUrl, `ReBusiness-Banner-${categoryName}-${timestamp}.png`);
+
+      // Calculate approximate size (base64 size estimation)
+      const sizeMB = (dataUrl.length * 0.75 / (1024 * 1024)).toFixed(2);
 
       // Get updated balance to show in success message
       const {
         data: updatedCredits
       } = await supabase.from("user_credits").select("balance").eq("user_id", userId).single();
       const remainingBalance = updatedCredits?.balance || 0;
-      toast.success(`Banner saved! ${BANNER_SIZE}×${BANNER_SIZE}px (${sizeMB} MB) • ₹10 deducted`, {
-        description: `Remaining balance: ₹${remainingBalance}. Check your Downloads or Gallery app.`,
+      toast.success(`Banner saved to your device! (${sizeMB} MB) • ₹10 deducted`, {
+        description: `Remaining balance: ₹${remainingBalance}. Check your Downloads or Gallery app to access your banner.`,
         duration: 6000
       });
     } catch (error) {
       console.error("Banner download failed:", error);
       toast.dismiss(loadingToast);
       toast.error("Download failed. Please try again later.", {
-        description: "Check your internet connection and ensure storage access is allowed.",
+        description: "Check your internet connection and ensure storage access is allowed. If the issue persists, contact support.",
         duration: 7000
       });
     } finally {
@@ -1348,7 +1361,7 @@ export default function BannerPreview() {
         {/* Display wrapper with responsive scaling */}
         <div className="relative w-full max-w-[100vw] sm:max-w-[520px] mx-auto">
           <div className="border-4 border-primary rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl">
-            {/* Scale wrapper for display - maintains 1350×1350 internal canvas, exports to 1080×1080 */}
+            {/* Scale wrapper for display - maintains 1350×1350 internal canvas */}
             <div style={{
             width: '100%',
             aspectRatio: '1 / 1',
@@ -1358,13 +1371,13 @@ export default function BannerPreview() {
               <div style={{
               transform: 'scale(var(--banner-scale))',
               transformOrigin: 'top left',
-              width: `${INTERNAL_CANVAS_SIZE}px`,
-              height: `${INTERNAL_CANVAS_SIZE}px`
+              width: '1350px',
+              height: '1350px'
             }} className="banner-scale-container">
                 <div ref={bannerRef} id="banner-canvas" onMouseMove={isAdmin ? handleStickerMouseMove : undefined} onMouseUp={isAdmin ? handleStickerMouseUp : undefined} onMouseLeave={isAdmin ? handleStickerMouseUp : undefined} style={{
                 position: 'relative',
-                width: `${INTERNAL_CANVAS_SIZE}px`,
-                height: `${INTERNAL_CANVAS_SIZE}px`,
+                width: '1350px',
+                height: '1350px',
                 background: templateColors[selectedTemplate].bgGradient,
                 overflow: 'hidden',
                 cursor: isAdmin && isDragMode ? 'crosshair' : 'default'
@@ -1958,15 +1971,10 @@ export default function BannerPreview() {
               </div>}
           </div>
 
-          {/* Right: Download Button with Size Indicator */}
-          <div className="flex flex-col items-center gap-1 flex-shrink-0">
-            <button onClick={handleDownload} disabled={isDownloading} className="cursor-pointer transition-transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
-              <img src={downloadIcon} alt="Download" className="h-12 w-auto sm:h-16" />
-            </button>
-            <span className="text-[10px] sm:text-xs text-primary font-medium">
-              {BANNER_SIZE}×{BANNER_SIZE}px • 3-4.5MB
-            </span>
-          </div>
+          {/* Right: Download Button */}
+          <button onClick={handleDownload} disabled={isDownloading} className="cursor-pointer transition-transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0">
+            <img src={downloadIcon} alt="Download" className="h-12 w-auto sm:h-16" />
+          </button>
         </div>
       </div>
 
