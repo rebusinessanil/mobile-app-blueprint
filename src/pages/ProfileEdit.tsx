@@ -269,11 +269,49 @@ export default function ProfileEdit() {
         toast.success("PIN updated successfully!");
       }
 
-      // If profile is complete, set localStorage bypass and redirect to dashboard
-      if (isProfileComplete()) {
+      // If profile is complete, create wallet with welcome bonus and set flags
+      if (isProfileComplete() && userId) {
         try {
+          // Check if user already has credits
+          const { data: existingCredits } = await supabase
+            .from('user_credits')
+            .select('id, balance')
+            .eq('user_id', userId)
+            .single();
+
+          // If no credits exist or balance is 0, create/update with welcome bonus
+          if (!existingCredits || existingCredits.balance === 0) {
+            // Upsert user_credits with welcome bonus
+            await supabase
+              .from('user_credits')
+              .upsert({
+                user_id: userId,
+                balance: 199,
+                total_earned: 199,
+                total_spent: 0
+              }, { onConflict: 'user_id' });
+
+            // Create welcome bonus transaction
+            await supabase
+              .from('credit_transactions')
+              .insert({
+                user_id: userId,
+                amount: 199,
+                transaction_type: 'admin_credit',
+                description: 'Welcome Bonus Credited'
+              });
+
+            // Set welcome_popup_seen = false so popup shows on dashboard
+            await supabase
+              .from('profiles')
+              .update({ welcome_popup_seen: false })
+              .eq('user_id', userId);
+          }
+
           localStorage.setItem(PROFILE_GATE_BYPASS_KEY, "true");
-        } catch {}
+        } catch (e) {
+          console.error("Error setting up welcome bonus:", e);
+        }
       }
       
       toast.success("Profile updated successfully!");
