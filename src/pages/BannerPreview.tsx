@@ -1866,7 +1866,8 @@ export default function BannerPreview() {
                             color: currentVariant.borderColor,
                             letterSpacing: '1px',
                             textShadow: '0 2px 4px rgba(0, 0, 0, 0.5)',
-                            textTransform: 'capitalize'
+                            textTransform: 'capitalize',
+                            marginTop: '-4px'
                           }}>
                             {displayRank?.toLowerCase() || 'Rank'}
                           </div>
