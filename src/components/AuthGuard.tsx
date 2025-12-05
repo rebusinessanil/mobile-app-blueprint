@@ -23,7 +23,7 @@ export default function AuthGuard({ children }: AuthGuardProps) {
     let mounted = true;
     
     // Check for existing session FIRST (synchronous-like)
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!mounted) return;
       
       if (!session?.user) {
@@ -33,6 +33,22 @@ export default function AuthGuard({ children }: AuthGuardProps) {
       }
       
       setUser(session.user);
+      
+      // Check if profile is already complete - redirect to dashboard immediately
+      if (!isProfileRoute) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('profile_completed')
+          .eq('user_id', session.user.id)
+          .single();
+        
+        // If profile is complete, allow access; if on profile-edit, redirect to dashboard
+        if (profile?.profile_completed === true && location.pathname === '/profile-edit') {
+          navigate("/dashboard", { replace: true });
+          return;
+        }
+      }
+      
       setLoading(false);
     });
 
@@ -53,7 +69,7 @@ export default function AuthGuard({ children }: AuthGuardProps) {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [navigate]);
+  }, [navigate, location.pathname, isProfileRoute]);
 
   // Check if user has a profile, create one if it doesn't exist
   useEffect(() => {
