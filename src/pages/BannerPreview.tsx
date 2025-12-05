@@ -14,7 +14,7 @@ import { useBannerDefaults } from "@/hooks/useBannerDefaults";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Sticker } from "@/hooks/useStickers";
-import { useBannerExport } from "@/hooks/useBannerExport";
+import { toPng } from "html-to-image";
 import download from "downloadjs";
 import { useRealtimeStickerSync } from "@/hooks/useRealtimeStickerSync";
 import { useWalletDeduction } from "@/hooks/useWalletDeduction";
@@ -107,13 +107,6 @@ export default function BannerPreview() {
     checkAndDeductBalance,
     isProcessing: isProcessingWallet
   } = useWalletDeduction();
-
-  // Banner export hook with 3MB compression
-  const {
-    exportBanner,
-    isExporting: isExportingBanner,
-    getFileSizeMB
-  } = useBannerExport();
 
   // Handle profile picture drag (admin only, motivational only)
   useEffect(() => {
@@ -1274,19 +1267,31 @@ export default function BannerPreview() {
       return;
     }
 
-    // Step 2: Generate banner using optimized export hook (with 3MB compression)
+    // Step 2: Generate banner
     setIsDownloading(true);
     const loadingToast = toast.loading("Generating ultra HD banner...");
     try {
-      const dataUrl = await exportBanner(bannerRef.current, {
+      // High quality export settings
+      const dataUrl = await toPng(bannerRef.current, {
+        cacheBust: true,
         pixelRatio: 3,
-        quality: 1
+        // Ultra HD Export
+        quality: 1,
+        backgroundColor: null,
+        // Transparent safe
+        style: {
+          transform: "scale(1)",
+          // No scaling issue
+          transformOrigin: "top left"
+        },
+        filter: node => {
+          // WhatsApp button, controls, slots, UI elements hide
+          if (node.classList?.contains("slot-selector") || node.classList?.contains("control-buttons") || node.classList?.contains("whatsapp-float") || node.id === "ignore-download") {
+            return false;
+          }
+          return true;
+        }
       });
-
-      if (!dataUrl) {
-        throw new Error("Export failed");
-      }
-
       toast.dismiss(loadingToast);
 
       // Step 3: Deduct wallet balance and save download record with banner URL
@@ -1309,11 +1314,10 @@ export default function BannerPreview() {
 
       // Step 6: Download the banner after successful deduction
       const timestamp = new Date().getTime();
-      const fileExtension = dataUrl.includes('image/jpeg') ? 'jpg' : 'png';
-      download(dataUrl, `ReBusiness-Banner-${categoryName}-${timestamp}.${fileExtension}`);
+      download(dataUrl, `ReBusiness-Banner-${categoryName}-${timestamp}.png`);
 
-      // Calculate size using hook helper
-      const sizeMB = getFileSizeMB(dataUrl);
+      // Calculate approximate size (base64 size estimation)
+      const sizeMB = (dataUrl.length * 0.75 / (1024 * 1024)).toFixed(2);
 
       // Get updated balance to show in success message
       const {
