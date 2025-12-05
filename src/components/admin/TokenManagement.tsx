@@ -119,14 +119,14 @@ export default function TokenManagement() {
   }
 
   const getTransactionIcon = (type: string) => {
-    if (type.includes('earned') || type.includes('grant')) {
+    if (type.includes('earned') || type.includes('grant') || type.includes('admin_credit') || type.includes('credit')) {
       return <TrendingUp className="w-4 h-4 text-green-500" />;
     }
     return <TrendingDown className="w-4 h-4 text-red-500" />;
   };
 
   const getTransactionColor = (type: string) => {
-    if (type.includes('earned') || type.includes('grant')) {
+    if (type.includes('earned') || type.includes('grant') || type.includes('admin_credit') || type.includes('credit')) {
       return 'text-green-500';
     }
     return 'text-red-500';
