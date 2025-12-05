@@ -201,7 +201,7 @@ export default function Dashboard() {
 
   return (
     <ProfileCompletionGate userId={userId}>
-      <div className="min-h-screen bg-navy-dark pb-24">
+      <div className="min-h-screen bg-navy-dark pb-24 overflow-x-hidden">
       {/* Header */}
       <header className="sticky top-0 bg-navy-dark/95 backdrop-blur-sm z-40 px-6 py-4 border-b border-primary/20">
         <div className="flex items-center justify-between">
@@ -275,8 +275,8 @@ export default function Dashboard() {
                 </Link>
               </div>
 
-              {/* Rank Promotion - 3 per row with 12px gap */}
-              {isRankPromotion ? <div className="flex gap-3 overflow-x-auto pb-2 pl-4 pr-4 scrollbar-hide scroll-smooth">
+              {/* Rank Promotion - responsive grid */}
+              {isRankPromotion ? <div className="grid grid-cols-3 gap-3 px-4">
                   {getRankTemplates().map(template => {
               const rank = ranks.find(r => r.id === template.rank_id);
               return <BannerCard 
@@ -289,8 +289,8 @@ export default function Dashboard() {
                 linkTo={`/rank-banner-create/${template.rank_id}`}
               />;
             })}
-                </div> : isBonanzaPromotion ? (/* Bonanza Trips - 3 per row */
-          <div className="flex gap-3 overflow-x-auto pb-2 pl-4 pr-4 scrollbar-hide scroll-smooth">
+                </div> : isBonanzaPromotion ? (/* Bonanza Trips - responsive grid */
+          <div className="grid grid-cols-3 gap-3 px-4">
                   {getTripTemplates().map(template => {
               const trip = trips.find(t => t.id === template.trip_id);
               return <BannerCard 
@@ -303,8 +303,8 @@ export default function Dashboard() {
                 linkTo={`/banner-create/bonanza?tripId=${template.trip_id}`}
               />;
             })}
-                </div>) : isBirthday ? (/* Birthday - 3 per row */
-          <div className="flex gap-3 overflow-x-auto pb-2 pl-4 pr-4 scrollbar-hide scroll-smooth">
+                </div>) : isBirthday ? (/* Birthday - responsive grid */
+          <div className="grid grid-cols-3 gap-3 px-4">
                   {getBirthdayTemplates().map(template => {
               const birthday = birthdays.find(b => b.id === template.birthday_id);
               return <BannerCard 
@@ -317,8 +317,8 @@ export default function Dashboard() {
                 linkTo={`/banner-create/birthday?birthdayId=${template.birthday_id}`}
               />;
             })}
-                </div>) : isAnniversary ? (/* Anniversary - 3 per row */
-          <div className="flex gap-3 overflow-x-auto pb-2 pl-4 pr-4 scrollbar-hide scroll-smooth">
+                </div>) : isAnniversary ? (/* Anniversary - responsive grid */
+          <div className="grid grid-cols-3 gap-3 px-4">
                   {getAnniversaryTemplates().map(template => {
               const anniversary = anniversaries.find(a => a.id === template.anniversary_id);
               return <BannerCard 
@@ -331,8 +331,8 @@ export default function Dashboard() {
                 linkTo={`/banner-create/anniversary?anniversaryId=${template.anniversary_id}`}
               />;
             })}
-                </div>) : isMotivational ? (/* Motivational - 3 per row */
-          <div className="flex gap-3 overflow-x-auto pb-2 pl-4 pr-4 scrollbar-hide scroll-smooth">
+                </div>) : isMotivational ? (/* Motivational - responsive grid */
+          <div className="grid grid-cols-3 gap-3 px-4">
                   {getMotivationalBannerTemplates().map(template => {
               const motivationalBanner = motivationalBanners.find(mb => mb.id === template.motivational_banner_id);
               return <BannerCard 
@@ -345,8 +345,8 @@ export default function Dashboard() {
                 linkTo={`/motivational-preview/${template.motivational_banner_id}`}
               />;
             })}
-                </div>) : isFestival ? (/* Festival - 3 per row */
-          <div className="flex gap-3 overflow-x-auto pb-2 pl-4 pr-4 scrollbar-hide scroll-smooth">
+                </div>) : isFestival ? (/* Festival - responsive grid */
+          <div className="grid grid-cols-3 gap-3 px-4">
                   {getFestivalTemplates().map(template => {
               const festival = festivals.find(f => f.id === template.festival_id);
               return <BannerCard 
@@ -360,8 +360,8 @@ export default function Dashboard() {
                 linkTo={`/festival-preview/${template.festival_id}`}
               />;
             })}
-                </div>) : (/* Template Scroll - 3 per row */
-          <div className="flex gap-3 overflow-x-auto pb-2 pl-4 pr-4 scrollbar-hide scroll-smooth">
+                </div>) : (/* Template - responsive grid */
+          <div className="grid grid-cols-3 gap-3 px-4">
                   {categoryTemplates.length > 0 ? categoryTemplates.map(template => {
               const getCategoryRoute = () => {
                 const routeMap: Record<string, string> = {
@@ -383,7 +383,7 @@ export default function Dashboard() {
                 fallbackGradient="bg-gradient-to-br from-secondary to-card"
                 linkTo={getCategoryRoute()}
               />;
-            }) : <div className="w-[calc(33.333%-8px)] min-w-[110px] max-w-[140px] gold-border bg-card rounded-2xl overflow-hidden flex-shrink-0 p-4">
+            }) : <div className="col-span-3 gold-border bg-card rounded-2xl overflow-hidden p-4">
                       <p className="text-xs text-muted-foreground text-center">No templates yet</p>
                     </div>}
                 </div>)}

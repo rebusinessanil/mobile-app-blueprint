@@ -26,16 +26,13 @@ function StoriesSectionContent({ festivals, storiesEvents, generatedStories }: S
         <h2 className="text-lg font-bold text-foreground">Stories</h2>
       </div>
 
-      {/* Horizontal Scroll Container */}
-      <div 
-        className="flex gap-3 overflow-x-auto pb-2 pl-4 pr-4 scrollbar-hide scroll-smooth"
-        style={{ scrollSnapType: 'x mandatory' }}
-      >
+      {/* Grid Container - Vertical scroll only */}
+      <div className="px-4 space-y-4">
         {/* Festival Stories */}
         {festivals.length > 0 && (
-          <div className="flex-shrink-0 space-y-1.5" style={{ scrollSnapAlign: 'start' }}>
+          <div className="space-y-1.5">
             <h3 className="text-xs font-semibold text-primary">Festival</h3>
-            <div className="flex gap-2">
+            <div className="grid grid-cols-4 gap-2">
               {festivals.slice(0, 8).map((festival) => (
                 <StoryCard
                   key={festival.id}
@@ -52,9 +49,9 @@ function StoriesSectionContent({ festivals, storiesEvents, generatedStories }: S
 
         {/* Birthday Stories */}
         {birthdayEvents.length > 0 && (
-          <div className="flex-shrink-0 space-y-1.5" style={{ scrollSnapAlign: 'start' }}>
+          <div className="space-y-1.5">
             <h3 className="text-xs font-semibold text-primary">Birthday</h3>
-            <div className="flex gap-2">
+            <div className="grid grid-cols-4 gap-2">
               {birthdayEvents.slice(0, 8).map((event) => (
                 <StoryCard
                   key={event.id}
@@ -71,9 +68,9 @@ function StoriesSectionContent({ festivals, storiesEvents, generatedStories }: S
 
         {/* Anniversary Stories */}
         {anniversaryEvents.length > 0 && (
-          <div className="flex-shrink-0 space-y-1.5" style={{ scrollSnapAlign: 'start' }}>
+          <div className="space-y-1.5">
             <h3 className="text-xs font-semibold text-primary">Anniversary</h3>
-            <div className="flex gap-2">
+            <div className="grid grid-cols-4 gap-2">
               {anniversaryEvents.slice(0, 8).map((event) => (
                 <StoryCard
                   key={event.id}
@@ -90,9 +87,9 @@ function StoriesSectionContent({ festivals, storiesEvents, generatedStories }: S
 
         {/* Auto Generated Stories */}
         {activeStories.length > 0 && (
-          <div className="flex-shrink-0 space-y-1.5" style={{ scrollSnapAlign: 'start' }}>
+          <div className="space-y-1.5">
             <h3 className="text-xs font-semibold text-primary">Auto Generated</h3>
-            <div className="flex gap-2">
+            <div className="grid grid-cols-4 gap-2">
               {activeStories.slice(0, 8).map((story) => (
                 <StoryCard
                   key={story.id}
@@ -109,9 +106,9 @@ function StoriesSectionContent({ festivals, storiesEvents, generatedStories }: S
 
         {/* Preview Stories */}
         {previewStories.length > 0 && (
-          <div className="flex-shrink-0 space-y-1.5" style={{ scrollSnapAlign: 'start' }}>
+          <div className="space-y-1.5">
             <h3 className="text-xs font-semibold text-primary">Coming Soon</h3>
-            <div className="flex gap-2">
+            <div className="grid grid-cols-4 gap-2">
               {previewStories.slice(0, 8).map((story) => (
                 <StoryCard
                   key={story.id}
@@ -129,9 +126,9 @@ function StoriesSectionContent({ festivals, storiesEvents, generatedStories }: S
 
         {/* Other Events */}
         {otherEvents.length > 0 && (
-          <div className="flex-shrink-0 space-y-1.5" style={{ scrollSnapAlign: 'start' }}>
+          <div className="space-y-1.5">
             <h3 className="text-xs font-semibold text-primary">Events</h3>
-            <div className="flex gap-2">
+            <div className="grid grid-cols-4 gap-2">
               {otherEvents.slice(0, 8).map((event) => (
                 <StoryCard
                   key={event.id}
