@@ -1271,21 +1271,20 @@ export default function BannerPreview() {
     setIsDownloading(true);
     const loadingToast = toast.loading("Generating ultra HD banner...");
     try {
-      // High quality export settings
+      // Export at EXACT preview dimensions (1350×1350) - no upscaling
       const dataUrl = await toPng(bannerRef.current, {
         cacheBust: true,
-        pixelRatio: 3,
-        // Ultra HD Export
+        pixelRatio: 1, // Exact preview size - no enlargement
         quality: 1,
         backgroundColor: null,
-        // Transparent safe
+        skipAutoScale: true, // Prevent auto-scaling
+        includeQueryParams: false, // Remove unnecessary metadata
         style: {
           transform: "scale(1)",
-          // No scaling issue
           transformOrigin: "top left"
         },
         filter: node => {
-          // WhatsApp button, controls, slots, UI elements hide
+          // Exclude UI elements from export
           if (node.classList?.contains("slot-selector") || node.classList?.contains("control-buttons") || node.classList?.contains("whatsapp-float") || node.id === "ignore-download") {
             return false;
           }
