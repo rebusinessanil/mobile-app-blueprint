@@ -25,7 +25,7 @@ export default function BannerCard({
   return (
     <Link
       to={linkTo}
-      className="w-full gold-border bg-card rounded-2xl overflow-hidden hover:gold-glow transition-all active:scale-95"
+      className="w-[calc(33.333%-8px)] min-w-[110px] max-w-[140px] gold-border bg-card rounded-2xl overflow-hidden flex-shrink-0 hover:gold-glow transition-all active:scale-95"
     >
       {/* Fixed aspect ratio container to prevent layout shift */}
       <div className="aspect-[4/3] relative bg-secondary/30">
