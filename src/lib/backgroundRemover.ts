@@ -1,16 +1,16 @@
-import { pipeline, env } from '@huggingface/transformers';
+import { pipeline, env, RawImage } from '@huggingface/transformers';
 
 // Configure transformers.js for optimal performance
 env.allowLocalModels = false;
 env.useBrowserCache = true;
 
 const MAX_IMAGE_DIMENSION = 512;
-const FEATHER_RADIUS = 3; // Feather pixels for smooth edges
+const FEATHER_RADIUS = 3;
 
 let segmenter: any = null;
 let isLoadingModel = false;
 
-// Load the segmentation model once and cache it
+// Load the RMBG-1.4 model (optimized for person detection)
 async function getSegmenter(onProgress?: (stage: string, percent: number) => void) {
   if (segmenter) return segmenter;
   
@@ -25,18 +25,28 @@ async function getSegmenter(onProgress?: (stage: string, percent: number) => voi
   onProgress?.('Loading AI model...', 10);
   
   try {
+    // Use briaai/RMBG-1.4 - purpose-built for background removal with person focus
     segmenter = await pipeline(
       'image-segmentation',
-      'Xenova/segformer-b0-finetuned-ade-512-512',
+      'briaai/RMBG-1.4',
       { device: 'webgpu' }
     );
     onProgress?.('Model ready', 20);
   } catch (error) {
-    console.log('WebGPU not available, using CPU...');
-    segmenter = await pipeline(
-      'image-segmentation',
-      'Xenova/segformer-b0-finetuned-ade-512-512'
-    );
+    console.log('WebGPU not available, trying CPU with RMBG...');
+    try {
+      segmenter = await pipeline(
+        'image-segmentation',
+        'briaai/RMBG-1.4'
+      );
+    } catch (e) {
+      // Fallback to segformer if RMBG fails
+      console.log('RMBG failed, falling back to segformer...');
+      segmenter = await pipeline(
+        'image-segmentation',
+        'Xenova/segformer-b0-finetuned-ade-512-512'
+      );
+    }
     onProgress?.('Model ready', 20);
   } finally {
     isLoadingModel = false;
@@ -64,9 +74,152 @@ function resizeImage(image: HTMLImageElement): HTMLCanvasElement {
 
   canvas.width = width;
   canvas.height = height;
+  
+  // Use high-quality image smoothing
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
   ctx.drawImage(image, 0, 0, width, height);
   
   return canvas;
+}
+
+// Bilinear interpolation for smoother mask scaling
+function bilinearInterpolate(
+  srcData: Float32Array | number[],
+  srcWidth: number,
+  srcHeight: number,
+  dstWidth: number,
+  dstHeight: number
+): Float32Array {
+  const dstData = new Float32Array(dstWidth * dstHeight);
+  
+  const xRatio = srcWidth / dstWidth;
+  const yRatio = srcHeight / dstHeight;
+  
+  for (let y = 0; y < dstHeight; y++) {
+    for (let x = 0; x < dstWidth; x++) {
+      const srcX = x * xRatio;
+      const srcY = y * yRatio;
+      
+      const x0 = Math.floor(srcX);
+      const y0 = Math.floor(srcY);
+      const x1 = Math.min(x0 + 1, srcWidth - 1);
+      const y1 = Math.min(y0 + 1, srcHeight - 1);
+      
+      const xFrac = srcX - x0;
+      const yFrac = srcY - y0;
+      
+      const v00 = srcData[y0 * srcWidth + x0] || 0;
+      const v10 = srcData[y0 * srcWidth + x1] || 0;
+      const v01 = srcData[y1 * srcWidth + x0] || 0;
+      const v11 = srcData[y1 * srcWidth + x1] || 0;
+      
+      // Bilinear interpolation formula
+      const value = 
+        v00 * (1 - xFrac) * (1 - yFrac) +
+        v10 * xFrac * (1 - yFrac) +
+        v01 * (1 - xFrac) * yFrac +
+        v11 * xFrac * yFrac;
+      
+      dstData[y * dstWidth + x] = value;
+    }
+  }
+  
+  return dstData;
+}
+
+// Apply edge refinement for cleaner cutouts
+function refineEdges(imageData: ImageData): void {
+  const data = imageData.data;
+  const width = imageData.width;
+  const height = imageData.height;
+  
+  // Find edge pixels and refine them
+  const tempAlpha = new Float32Array(width * height);
+  for (let i = 0; i < width * height; i++) {
+    tempAlpha[i] = data[i * 4 + 3] / 255;
+  }
+  
+  // Edge detection and refinement pass
+  for (let y = 1; y < height - 1; y++) {
+    for (let x = 1; x < width - 1; x++) {
+      const idx = y * width + x;
+      const alpha = tempAlpha[idx];
+      
+      // Check if this is an edge pixel (partial transparency)
+      if (alpha > 0.1 && alpha < 0.9) {
+        // Calculate gradient magnitude
+        const left = tempAlpha[idx - 1];
+        const right = tempAlpha[idx + 1];
+        const top = tempAlpha[idx - width];
+        const bottom = tempAlpha[idx + width];
+        
+        const gradX = right - left;
+        const gradY = bottom - top;
+        const gradMag = Math.sqrt(gradX * gradX + gradY * gradY);
+        
+        // Sharpen edges based on gradient
+        if (gradMag > 0.3) {
+          // This is a strong edge - keep it sharp
+          data[idx * 4 + 3] = alpha > 0.5 ? 255 : 0;
+        } else {
+          // Smooth transition - apply sigmoid for smoother falloff
+          const smoothed = 1 / (1 + Math.exp(-10 * (alpha - 0.5)));
+          data[idx * 4 + 3] = Math.round(smoothed * 255);
+        }
+      }
+    }
+  }
+}
+
+// Remove artifacts and stray pixels
+function removeArtifacts(imageData: ImageData): void {
+  const data = imageData.data;
+  const width = imageData.width;
+  const height = imageData.height;
+  
+  // First pass: threshold very low/high alpha
+  for (let i = 0; i < width * height; i++) {
+    const alpha = data[i * 4 + 3];
+    if (alpha < 25) {
+      data[i * 4 + 3] = 0;
+    } else if (alpha > 230) {
+      data[i * 4 + 3] = 255;
+    }
+  }
+  
+  // Second pass: remove isolated pixels
+  const tempAlpha = new Uint8Array(width * height);
+  for (let i = 0; i < width * height; i++) {
+    tempAlpha[i] = data[i * 4 + 3];
+  }
+  
+  for (let y = 2; y < height - 2; y++) {
+    for (let x = 2; x < width - 2; x++) {
+      const idx = y * width + x;
+      const alpha = tempAlpha[idx];
+      
+      if (alpha > 0) {
+        let opaqueNeighbors = 0;
+        let totalChecked = 0;
+        
+        // Check 5x5 neighborhood
+        for (let dy = -2; dy <= 2; dy++) {
+          for (let dx = -2; dx <= 2; dx++) {
+            if (dx === 0 && dy === 0) continue;
+            const nIdx = (y + dy) * width + (x + dx);
+            totalChecked++;
+            if (tempAlpha[nIdx] > 100) opaqueNeighbors++;
+          }
+        }
+        
+        // Remove if too isolated
+        if (opaqueNeighbors < 6 && alpha < 180) {
+          data[idx * 4 + 3] = 0;
+        }
+      }
+    }
+  }
 }
 
 // Apply Gaussian-like feathering for smooth edges
@@ -76,12 +229,11 @@ function applyFeathering(imageData: ImageData, radius: number): void {
   const height = imageData.height;
   const alphaChannel = new Float32Array(width * height);
   
-  // Extract alpha channel
   for (let i = 0; i < width * height; i++) {
     alphaChannel[i] = data[i * 4 + 3] / 255;
   }
   
-  // Apply box blur to alpha channel (faster approximation of Gaussian)
+  // Box blur approximation (2 passes)
   const blurred = new Float32Array(width * height);
   
   for (let pass = 0; pass < 2; pass++) {
@@ -110,70 +262,21 @@ function applyFeathering(imageData: ImageData, radius: number): void {
     }
   }
   
-  // Write back feathered alpha
+  // Blend feathered edges while preserving solid areas
   for (let i = 0; i < width * height; i++) {
     const originalAlpha = data[i * 4 + 3] / 255;
-    // Blend feathered edges while preserving solid areas
     const featheredAlpha = alphaChannel[i];
     
-    // Use original alpha for solid areas, feathered for edges
     let finalAlpha;
     if (originalAlpha > 0.9) {
-      finalAlpha = originalAlpha; // Keep solid
+      finalAlpha = originalAlpha;
     } else if (originalAlpha < 0.1) {
-      finalAlpha = featheredAlpha * 0.5; // Reduce stray pixels
+      finalAlpha = featheredAlpha * 0.3;
     } else {
-      finalAlpha = featheredAlpha; // Smooth edges
+      finalAlpha = featheredAlpha;
     }
     
     data[i * 4 + 3] = Math.round(Math.min(1, Math.max(0, finalAlpha)) * 255);
-  }
-}
-
-// Remove stray pixels and clean up mask
-function cleanupMask(imageData: ImageData): void {
-  const data = imageData.data;
-  const width = imageData.width;
-  const height = imageData.height;
-  
-  // Threshold very low alpha values to remove noise
-  for (let i = 0; i < width * height; i++) {
-    const alpha = data[i * 4 + 3];
-    if (alpha < 30) {
-      data[i * 4 + 3] = 0; // Remove very faint pixels
-    } else if (alpha > 225) {
-      data[i * 4 + 3] = 255; // Solidify nearly opaque pixels
-    }
-  }
-  
-  // Remove isolated pixels (noise cleanup)
-  const tempAlpha = new Uint8Array(width * height);
-  for (let i = 0; i < width * height; i++) {
-    tempAlpha[i] = data[i * 4 + 3];
-  }
-  
-  for (let y = 1; y < height - 1; y++) {
-    for (let x = 1; x < width - 1; x++) {
-      const idx = y * width + x;
-      const alpha = tempAlpha[idx];
-      
-      if (alpha > 0) {
-        // Count opaque neighbors
-        let opaqueNeighbors = 0;
-        for (let dy = -1; dy <= 1; dy++) {
-          for (let dx = -1; dx <= 1; dx++) {
-            if (dx === 0 && dy === 0) continue;
-            const nIdx = (y + dy) * width + (x + dx);
-            if (tempAlpha[nIdx] > 128) opaqueNeighbors++;
-          }
-        }
-        
-        // Remove isolated pixels (less than 3 neighbors)
-        if (opaqueNeighbors < 3 && alpha < 200) {
-          data[idx * 4 + 3] = 0;
-        }
-      }
-    }
   }
 }
 
@@ -189,7 +292,6 @@ function fillHoles(imageData: ImageData): void {
       const alpha = data[idx * 4 + 3];
       
       if (alpha < 50) {
-        // Count surrounding opaque pixels in a larger area
         let opaqueCount = 0;
         let totalCount = 0;
         
@@ -202,7 +304,6 @@ function fillHoles(imageData: ImageData): void {
           }
         }
         
-        // Fill if surrounded by mostly opaque pixels (hole filling)
         if (opaqueCount > totalCount * 0.7) {
           data[idx * 4 + 3] = 255;
         }
@@ -218,7 +319,7 @@ export const removeBackground = async (
   const startTime = performance.now();
   
   try {
-    console.log('Starting background removal...');
+    console.log('Starting background removal with RMBG-1.4...');
     
     // Step 1: Load model (cached after first use)
     const model = await getSegmenter(onProgress);
@@ -226,7 +327,7 @@ export const removeBackground = async (
     // Step 2: Prepare image
     onProgress?.('Preparing image...', 30);
     const canvas = resizeImage(imageElement);
-    const imageData = canvas.toDataURL('image/jpeg', 0.85);
+    const imageData = canvas.toDataURL('image/jpeg', 0.9);
     
     // Step 3: Run segmentation
     onProgress?.('Detecting person...', 50);
@@ -238,62 +339,71 @@ export const removeBackground = async (
     
     onProgress?.('Creating mask...', 65);
     
-    // Find person segments
-    const personLabels = ['person', 'people', 'human', 'man', 'woman', 'child', 'boy', 'girl'];
-    let personMask = results.find((r: any) => 
-      personLabels.some(label => r.label?.toLowerCase().includes(label))
-    );
+    // RMBG-1.4 returns direct mask for foreground (person)
+    let bestMask = results[0];
     
-    let isPersonMask = !!personMask;
-    
-    // Fallback to foreground segments
-    if (!personMask) {
-      const backgroundLabels = ['wall', 'floor', 'ceiling', 'sky', 'building', 'tree', 'grass', 'road', 'sidewalk', 'water', 'ground', 'field', 'mountain', 'sea', 'river'];
-      personMask = results.find((r: any) => 
-        !backgroundLabels.some(label => r.label?.toLowerCase().includes(label))
-      );
+    // Try to find person-specific segment if available
+    const personLabels = ['person', 'foreground', 'subject', 'human'];
+    for (const result of results) {
+      if (result.label && personLabels.some(l => result.label.toLowerCase().includes(l))) {
+        bestMask = result;
+        break;
+      }
     }
     
-    if (!personMask && results[0]?.mask) {
-      personMask = results[0];
-    }
-    
-    if (!personMask?.mask) {
+    if (!bestMask?.mask) {
       throw new Error('Could not detect subject in image');
     }
     
-    console.log('Using segment:', personMask.label, 'isPerson:', isPersonMask);
+    console.log('Using segment:', bestMask.label || 'foreground');
     
     onProgress?.('Processing mask...', 75);
     
-    // Create output canvas at original size for quality
+    // Create output canvas
     const outputCanvas = document.createElement('canvas');
     outputCanvas.width = canvas.width;
     outputCanvas.height = canvas.height;
     const outputCtx = outputCanvas.getContext('2d')!;
     
-    // Draw original image
+    // Draw original image with high quality
+    outputCtx.imageSmoothingEnabled = true;
+    outputCtx.imageSmoothingQuality = 'high';
     outputCtx.drawImage(canvas, 0, 0);
     
     // Get image data and apply mask
     const outputImageData = outputCtx.getImageData(0, 0, outputCanvas.width, outputCanvas.height);
     const pixels = outputImageData.data;
-    const maskData = personMask.mask.data;
+    const maskData = bestMask.mask.data;
+    const maskWidth = bestMask.mask.width;
+    const maskHeight = bestMask.mask.height;
     
-    // Apply mask to alpha channel
-    for (let i = 0; i < maskData.length; i++) {
-      const maskValue = maskData[i];
-      const alpha = isPersonMask 
-        ? Math.round(maskValue * 255)
-        : Math.round((1 - maskValue) * 255);
-      pixels[i * 4 + 3] = alpha;
+    // Use bilinear interpolation if mask size differs from output
+    let interpolatedMask: Float32Array;
+    if (maskWidth !== outputCanvas.width || maskHeight !== outputCanvas.height) {
+      interpolatedMask = bilinearInterpolate(
+        maskData,
+        maskWidth,
+        maskHeight,
+        outputCanvas.width,
+        outputCanvas.height
+      );
+    } else {
+      interpolatedMask = new Float32Array(maskData);
+    }
+    
+    // Apply mask - RMBG outputs foreground mask directly (person = white)
+    for (let i = 0; i < interpolatedMask.length; i++) {
+      const maskValue = interpolatedMask[i];
+      // RMBG mask: high value = foreground (keep), low value = background (remove)
+      pixels[i * 4 + 3] = Math.round(maskValue * 255);
     }
     
     onProgress?.('Smoothing edges...', 85);
     
     // Apply post-processing for clean edges
     fillHoles(outputImageData);
-    cleanupMask(outputImageData);
+    removeArtifacts(outputImageData);
+    refineEdges(outputImageData);
     applyFeathering(outputImageData, FEATHER_RADIUS);
     
     outputCtx.putImageData(outputImageData, 0, 0);
