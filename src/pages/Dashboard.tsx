@@ -201,7 +201,7 @@ export default function Dashboard() {
 
   return (
     <ProfileCompletionGate userId={userId}>
-      <div className="min-h-screen bg-navy-dark pb-24">
+      <div className="min-h-screen bg-navy-dark pb-24 overflow-x-hidden">
       {/* Header */}
       <header className="sticky top-0 bg-navy-dark/95 backdrop-blur-sm z-40 px-6 py-4 border-b border-primary/20">
         <div className="flex items-center justify-between">
