@@ -12,14 +12,14 @@ const BirthdaysSelection = () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-background pb-20">
         <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-lg border-b border-border/50">
-          <div className="container mx-auto px-4 py-4">
+          <div className="max-w-screen-md mx-auto px-4 sm:px-6 py-4">
             <h1 className="text-2xl font-semibold text-foreground">Birthday Celebrations</h1>
             <p className="text-sm text-muted-foreground mt-1">Select a birthday theme</p>
           </div>
         </div>
         
-        <div className="container mx-auto px-4 py-6">
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+        <div className="max-w-screen-md mx-auto px-4 sm:px-6 py-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
             {[...Array(6)].map((_, i) => (
               <Skeleton key={i} className="h-48 rounded-xl" />
             ))}
@@ -32,19 +32,19 @@ const BirthdaysSelection = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-background pb-20">
       <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-lg border-b border-border/50">
-        <div className="container mx-auto px-4 py-4">
+        <div className="max-w-screen-md mx-auto px-4 sm:px-6 py-4">
           <h1 className="text-2xl font-semibold text-foreground">Birthday Celebrations</h1>
           <p className="text-sm text-muted-foreground mt-1">Select a birthday theme</p>
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-6">
+      <div className="max-w-screen-md mx-auto px-4 sm:px-6 py-6">
         {birthdays.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-muted-foreground">No birthday themes available</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
             {birthdays.map((birthday) => (
               <Card
                 key={birthday.id}

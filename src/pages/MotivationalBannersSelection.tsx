@@ -9,23 +9,23 @@ const MotivationalBannersSelection = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center px-4 sm:px-6">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background p-4">
-      <div className="max-w-6xl mx-auto">
-        <h1 className="text-3xl font-bold text-foreground mb-2">
+    <div className="min-h-screen bg-background p-4 sm:p-6">
+      <div className="max-w-screen-md mx-auto">
+        <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">
           Motivational Banners
         </h1>
         <p className="text-muted-foreground mb-6">
           Select a motivational banner theme to create your banner
         </p>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
           {motivationalBanners.map((banner) => (
             <Card
               key={banner.id}
