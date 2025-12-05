@@ -4,7 +4,7 @@ import whatsappIcon from "@/assets/whatsapp-icon.png";
 import { supabase } from "@/integrations/supabase/client";
 import { useLocation } from "react-router-dom";
 
-const SUPPORT_NUMBER = "917734990045";
+const SUPPORT_NUMBER = "917734990035";
 const HIDDEN_KEY = "whatsapp_support_hidden";
 
 export default function WhatsAppSupport() {
