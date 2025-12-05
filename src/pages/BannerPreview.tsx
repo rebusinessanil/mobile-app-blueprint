@@ -1842,7 +1842,7 @@ export default function BannerPreview() {
                         {/* User Info Centered */}
                         <div style={{
                           position: 'absolute',
-                          left: '30%',
+                          left: '24%',
                           transform: 'translateX(-50%)',
                           display: 'flex',
                           flexDirection: 'column',
