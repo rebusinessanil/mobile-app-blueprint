@@ -51,36 +51,62 @@ export default function Login() {
       return;
     }
     setLoading(true);
-    try {
-      // Pad PIN with prefix to match saved password format
-      const paddedPassword = PIN_PREFIX + pinString;
+    
+    // Retry logic for network issues
+    const maxRetries = 2;
+    let lastError: Error | null = null;
+    
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        // Pad PIN with prefix to match saved password format
+        const paddedPassword = PIN_PREFIX + pinString;
 
-      // Sign in with email and padded PIN as password
-      const {
-        data,
-        error
-      } = await supabase.auth.signInWithPassword({
-        email: emailOrMobile.trim(),
-        password: paddedPassword
-      });
-      if (error) {
-        if (error.message.includes("Invalid login credentials")) {
-          toast.error("Invalid email or PIN. Please try again.");
-        } else {
-          toast.error(error.message);
+        // Sign in with email and padded PIN as password
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: emailOrMobile.trim(),
+          password: paddedPassword
+        });
+        
+        if (error) {
+          if (error.message.includes("Invalid login credentials")) {
+            toast.error("Invalid email or PIN. Please try again.");
+          } else if (error.message.includes("Email not confirmed")) {
+            toast.error("Please verify your email before logging in.");
+          } else {
+            toast.error(error.message);
+          }
+          setLoading(false);
+          return;
         }
-        return;
+        
+        if (data.user) {
+          toast.success("Login successful!");
+          navigate("/dashboard", { replace: true });
+          return;
+        }
+      } catch (error: any) {
+        lastError = error;
+        // Check if it's a network error (Failed to fetch)
+        if (error?.message?.includes("Failed to fetch") || error?.name === "TypeError") {
+          if (attempt < maxRetries) {
+            // Wait before retry (exponential backoff)
+            await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
+            continue;
+          }
+        } else {
+          // Non-network error, don't retry
+          break;
+        }
       }
-      if (data.user) {
-        toast.success("Login successful!");
-        navigate("/dashboard", { replace: true });
-      }
-    } catch (error) {
-      // Security: Don't log sensitive login data
-      toast.error("An unexpected error occurred. Please try again.");
-    } finally {
-      setLoading(false);
     }
+    
+    // All retries failed
+    if (lastError?.message?.includes("Failed to fetch") || lastError?.name === "TypeError") {
+      toast.error("Network error. Please check your internet connection and try again.");
+    } else {
+      toast.error("An unexpected error occurred. Please try again.");
+    }
+    setLoading(false);
   };
   return <div className="min-h-screen bg-navy-dark flex items-center justify-center p-6">
       <div className="w-full max-w-md">
