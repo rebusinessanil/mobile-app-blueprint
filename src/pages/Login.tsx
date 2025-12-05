@@ -7,19 +7,22 @@ import { Lock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { z } from "zod";
-import whatsappIcon from "@/assets/whatsapp-icon.png";
+import { useSupabaseConnection } from "@/hooks/useSupabaseConnection";
 
 // Zod validation schema for login
 const loginSchema = z.object({
   email: z.string().trim().email("Please enter a valid email address").max(255, "Email must be less than 255 characters"),
   pin: z.string().length(4, "PIN must be exactly 4 digits").regex(/^\d{4}$/, "PIN must contain only numbers")
 });
+
 export default function Login() {
   const navigate = useNavigate();
   const [emailOrMobile, setEmailOrMobile] = useState("");
   const [pin, setPin] = useState(["", "", "", ""]);
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
+  const { withConnectionCheck, isChecking } = useSupabaseConnection();
+
   const handlePinChange = (index: number, value: string) => {
     if (value.length <= 1 && /^\d*$/.test(value)) {
       const newPin = [...pin];
@@ -30,13 +33,16 @@ export default function Login() {
       }
     }
   };
+
   const handlePinKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Backspace' && !pin[index] && index > 0) {
       document.getElementById(`pin-${index - 1}`)?.focus();
     }
   };
+
   // PIN prefix to meet Supabase 6-character minimum password requirement
   const PIN_PREFIX = "pin_";
+
   const handleLogin = async () => {
     const pinString = pin.join("");
 
@@ -45,67 +51,35 @@ export default function Login() {
       email: emailOrMobile,
       pin: pinString
     });
+
     if (!validationResult.success) {
       const firstError = validationResult.error.errors[0];
       toast.error(firstError.message);
       return;
     }
-    setLoading(true);
-    
-    // Retry logic for network issues
-    const maxRetries = 2;
-    let lastError: Error | null = null;
-    
-    for (let attempt = 0; attempt <= maxRetries; attempt++) {
-      try {
-        // Pad PIN with prefix to match saved password format
-        const paddedPassword = PIN_PREFIX + pinString;
 
-        // Sign in with email and padded PIN as password
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email: emailOrMobile.trim(),
-          password: paddedPassword
-        });
-        
-        if (error) {
-          if (error.message.includes("Invalid login credentials")) {
-            toast.error("Invalid email or PIN. Please try again.");
-          } else if (error.message.includes("Email not confirmed")) {
-            toast.error("Please verify your email before logging in.");
-          } else {
-            toast.error(error.message);
-          }
-          setLoading(false);
-          return;
-        }
-        
-        if (data.user) {
-          toast.success("Login successful!");
-          navigate("/dashboard", { replace: true });
-          return;
-        }
-      } catch (error: any) {
-        lastError = error;
-        // Check if it's a network error (Failed to fetch)
-        if (error?.message?.includes("Failed to fetch") || error?.name === "TypeError") {
-          if (attempt < maxRetries) {
-            // Wait before retry (exponential backoff)
-            await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
-            continue;
-          }
-        } else {
-          // Non-network error, don't retry
-          break;
-        }
+    setLoading(true);
+
+    const paddedPassword = PIN_PREFIX + pinString;
+
+    const result = await withConnectionCheck(async () => {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: emailOrMobile.trim(),
+        password: paddedPassword
+      });
+
+      if (error) {
+        throw error;
       }
+
+      return data;
+    }, { showToast: true, retryOnFail: true });
+
+    if (result.success && result.data?.user) {
+      toast.success("Login successful!");
+      navigate("/dashboard", { replace: true });
     }
-    
-    // All retries failed
-    if (lastError?.message?.includes("Failed to fetch") || lastError?.name === "TypeError") {
-      toast.error("Network error. Please check your internet connection and try again.");
-    } else {
-      toast.error("An unexpected error occurred. Please try again.");
-    }
+
     setLoading(false);
   };
   return <div className="min-h-screen bg-navy-dark flex items-center justify-center p-6">

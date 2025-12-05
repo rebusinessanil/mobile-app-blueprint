@@ -3,10 +3,11 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { UserPlus, MessageCircle } from "lucide-react";
+import { UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { z } from "zod";
+import { useSupabaseConnection } from "@/hooks/useSupabaseConnection";
 
 // Zod validation schema for registration
 const registrationSchema = z.object({
@@ -15,9 +16,11 @@ const registrationSchema = z.object({
   mobile: z.string().trim().min(10, "Mobile number must be at least 10 digits").max(16, "Mobile number is too long"),
   pin: z.string().length(4, "PIN must be exactly 4 digits").regex(/^\d{4}$/, "PIN must contain only numbers")
 });
+
 export default function Register() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const { withConnectionCheck } = useSupabaseConnection();
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -28,6 +31,7 @@ export default function Register() {
     agreeToTerms: false
   });
   const [pin, setPin] = useState(["", "", "", ""]);
+
   const handlePinChange = (index: number, value: string) => {
     if (value.length <= 1 && /^\d*$/.test(value)) {
       const newPin = [...pin];
@@ -38,6 +42,7 @@ export default function Register() {
       }
     }
   };
+
   const handleSendOTP = async () => {
     const pinCode = pin.join("");
 
@@ -48,6 +53,7 @@ export default function Register() {
       mobile: formData.mobile,
       pin: pinCode
     });
+
     if (!validationResult.success) {
       const firstError = validationResult.error.errors[0];
       toast.error(firstError.message);
@@ -59,6 +65,7 @@ export default function Register() {
     const e164Pattern = /^\+[1-9]\d{9,14}$/;
     const plainPattern = /^\d{10}$/;
     let formattedMobile = mobileNumber;
+
     if (e164Pattern.test(mobileNumber)) {
       formattedMobile = mobileNumber;
     } else if (plainPattern.test(mobileNumber)) {
@@ -67,56 +74,55 @@ export default function Register() {
       toast.error("Please enter a valid mobile number (10 digits or +[country code][number])");
       return;
     }
+
     if (!formData.agreeToTerms) {
       toast.error("Please agree to the Terms & Conditions");
       return;
     }
-    setIsLoading(true);
-    try {
-      // Create password from PIN (you may want to add more complexity)
-      const password = `ReBiz${pinCode}${Date.now()}`;
 
-      // Sign up with Supabase
-      const {
-        data,
-        error
-      } = await supabase.auth.signUp({
+    setIsLoading(true);
+
+    // Create password from PIN
+    const password = `ReBiz${pinCode}${Date.now()}`;
+
+    const result = await withConnectionCheck(async () => {
+      const { data, error } = await supabase.auth.signUp({
         email: formData.email,
         password: password,
         phone: formattedMobile,
-        // Store phone in auth.users table for Supabase dashboard
         options: {
           emailRedirectTo: `${window.location.origin}/`,
           data: {
             full_name: formData.fullName,
             mobile: formattedMobile,
-            // Store in E.164 format
-            whatsapp: formData.differentWhatsApp ? formData.whatsappNumber.startsWith('+') ? formData.whatsappNumber : `+91${formData.whatsappNumber}` : formattedMobile,
+            whatsapp: formData.differentWhatsApp 
+              ? formData.whatsappNumber.startsWith('+') 
+                ? formData.whatsappNumber 
+                : `+91${formData.whatsappNumber}` 
+              : formattedMobile,
             gender: formData.gender
           }
         }
       });
-      if (error) throw error;
-      if (data?.user) {
-        toast.success("Registration successful! Check your email for OTP.");
 
-        // Navigate to OTP verification with all registration data
-        navigate("/otp-verification", {
-          state: {
-            email: formData.email,
-            name: formData.fullName,
-            mobile: formattedMobile,
-            pin: pinCode,
-            password: password
-          }
-        });
-      }
-    } catch (error: any) {
-      // Security: Don't log sensitive registration data
-      toast.error(error.message || "Registration failed. Please try again.");
-    } finally {
-      setIsLoading(false);
+      if (error) throw error;
+      return data;
+    }, { showToast: true, retryOnFail: true });
+
+    if (result.success && result.data?.user) {
+      toast.success("Registration successful! Check your email for OTP.");
+      navigate("/otp-verification", {
+        state: {
+          email: formData.email,
+          name: formData.fullName,
+          mobile: formattedMobile,
+          pin: pinCode,
+          password: password
+        }
+      });
     }
+
+    setIsLoading(false);
   };
   return <div className="h-screen bg-navy-dark flex items-center justify-center p-3 overflow-hidden">
       <div className="w-full max-w-md">
