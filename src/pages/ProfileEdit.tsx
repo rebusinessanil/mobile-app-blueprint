@@ -189,13 +189,24 @@ export default function ProfileEdit() {
     }
   };
 
-  // Check if profile is complete - requires manual selection of all fields
+  // Check if PIN is valid
+  const isPinValid = () => {
+    return createPin.length === 4 && /^\d{4}$/.test(createPin) && confirmPin === createPin;
+  };
+
+  // Check if profile is complete - requires manual selection of all fields + valid PIN
   const isProfileComplete = () => {
     const hasName = formData.name.trim() !== '' && formData.name !== 'User';
     const hasMobile = formData.mobile && /^\d{10}$/.test(formData.mobile.replace(/\D/g, ''));
     const hasRole = roleConfirmed && formData.role && formData.role.trim() !== '';
     const hasPhotos = photos.length > 0;
-    return hasName && hasMobile && hasRole && hasPhotos;
+    const hasValidPin = isPinValid();
+    return hasName && hasMobile && hasRole && hasPhotos && hasValidPin;
+  };
+
+  // Check if save button should be disabled
+  const isSaveDisabled = () => {
+    return loading || !userId || !isProfileComplete();
   };
   const handleSave = async () => {
     // Validation
@@ -228,17 +239,16 @@ export default function ProfileEdit() {
       return;
     }
     
-    // PIN validation (optional field, but if filled, must be complete and match)
-    if (createPin.length > 0) {
-      if (createPin.length !== 4) {
-        toast.error("PIN must be 4 digits");
-        return;
-      }
-      if (confirmPin !== createPin) {
-        toast.error("PIN does not match");
-        setPinError("PIN does not match");
-        return;
-      }
+    // PIN validation - MANDATORY for profile completion
+    if (createPin.length !== 4 || !/^\d{4}$/.test(createPin)) {
+      toast.error("Please set a valid 4-digit PIN");
+      setPinError("PIN must be exactly 4 digits");
+      return;
+    }
+    if (confirmPin !== createPin) {
+      toast.error("PIN does not match");
+      setPinError("PIN does not match");
+      return;
     }
     
     setLoading(true);
@@ -477,10 +487,13 @@ export default function ProfileEdit() {
             </div>
           </div>
 
-          {/* Create PIN Section */}
-          <div className="space-y-4 pt-4">
+          {/* Create PIN Section - REQUIRED */}
+          <div className="space-y-4 pt-4 border-t border-primary/20">
             <div className="space-y-2">
-              <label className="text-sm text-foreground">Create PIN</label>
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-foreground">Create PIN</label>
+                <span className="text-xs text-destructive font-medium">* Required</span>
+              </div>
               <div className="relative">
                 <Input
                   type={showCreatePin ? "text" : "password"}
@@ -588,9 +601,20 @@ export default function ProfileEdit() {
         </div>
 
         {/* Save Button */}
-        <Button onClick={handleSave} disabled={loading || !userId} className="w-full h-14 bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-lg rounded-2xl disabled:opacity-50 disabled:cursor-not-allowed">
+        <Button onClick={handleSave} disabled={isSaveDisabled()} className="w-full h-14 bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-lg rounded-2xl disabled:opacity-50 disabled:cursor-not-allowed">
           {loading ? "Saving..." : "SAVE"}
         </Button>
+        
+        {/* Validation hints when button is disabled */}
+        {!loading && userId && !isProfileComplete() && (
+          <div className="text-center mt-3 space-y-1">
+            {!formData.name.trim() && <p className="text-sm text-destructive">• Name is required</p>}
+            {(!formData.mobile || !/^\d{10}$/.test(formData.mobile.replace(/\D/g, ''))) && <p className="text-sm text-destructive">• Valid 10-digit mobile required</p>}
+            {(!roleConfirmed || !formData.role) && <p className="text-sm text-destructive">• Please select a role</p>}
+            {photos.length === 0 && <p className="text-sm text-destructive">• At least 1 profile photo required</p>}
+            {!isPinValid() && <p className="text-sm text-destructive">• 4-digit PIN required</p>}
+          </div>
+        )}
       </div>
     </div>
   </>;
