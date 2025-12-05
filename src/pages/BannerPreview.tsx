@@ -1737,7 +1737,7 @@ export default function BannerPreview() {
                             letterSpacing: '0.5px',
                             textShadow: '0 2px 8px rgba(0, 0, 0, 0.6)'
                           }}>
-                            +91 7734990035
+                            {displayContact ? `+91 ${displayContact}` : ''}
                           </div>
                         </div>
                       </div>
