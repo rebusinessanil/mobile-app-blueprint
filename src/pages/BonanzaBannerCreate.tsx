@@ -42,21 +42,12 @@ export default function BonanzaBannerCreate() {
   const [tempPhoto, setTempPhoto] = useState<string | null>(null);
   const [showCropper, setShowCropper] = useState(false);
   const [slotStickers, setSlotStickers] = useState<Record<number, string[]>>({});
+  const [profileLoaded, setProfileLoaded] = useState(false);
 
   // Unified background removal hook
   const bgRemoval = useBackgroundRemoval({
     onSuccess: (processedUrl) => setPhoto(processedUrl)
   });
-
-  // Auto-fill trip name when trip is loaded
-  useEffect(() => {
-    if (trip && !formData.tripName) {
-      setFormData(prev => ({
-        ...prev,
-        tripName: trip.title
-      }));
-    }
-  }, [trip]);
 
   useEffect(() => {
     const getUser = async () => {
@@ -67,6 +58,30 @@ export default function BonanzaBannerCreate() {
     };
     getUser();
   }, []);
+
+  // Auto-fill user details from profile
+  useEffect(() => {
+    if (profile && !profileLoaded) {
+      setFormData(prev => ({
+        ...prev,
+        name: profile.name || prev.name,
+      }));
+      if (profile.profile_photo && !photo) {
+        setPhoto(profile.profile_photo);
+      }
+      setProfileLoaded(true);
+    }
+  }, [profile, profileLoaded, photo]);
+
+  // Auto-fill trip name when trip is loaded
+  useEffect(() => {
+    if (trip && !formData.tripName) {
+      setFormData(prev => ({
+        ...prev,
+        tripName: trip.title
+      }));
+    }
+  }, [trip]);
 
   useEffect(() => {
     if (bannerSettings && uplines.length === 0) {
