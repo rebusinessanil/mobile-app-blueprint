@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft, ImagePlus } from "lucide-react";
+import { ArrowLeft, ImagePlus, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -8,13 +8,12 @@ import UplineCarousel from "@/components/UplineCarousel";
 import BackgroundRemoverModal from "@/components/BackgroundRemoverModal";
 import ImageCropper from "@/components/ImageCropper";
 import { toast } from "sonner";
-import { removeBackground, loadImage } from "@/lib/backgroundRemover";
+import { useBackgroundRemoval } from "@/hooks/useBackgroundRemoval";
 import { useProfile } from "@/hooks/useProfile";
 import { useBannerSettings } from "@/hooks/useBannerSettings";
 import { useMotivationalBanner } from "@/hooks/useMotivationalBanners";
 import { useTemplates } from "@/hooks/useTemplates";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2 } from "lucide-react";
 
 interface Upline {
   id: string;
@@ -46,9 +45,12 @@ export default function MotivationalBannerCreate() {
   const [photo, setPhoto] = useState<string | null>(null);
   const [tempPhoto, setTempPhoto] = useState<string | null>(null);
   const [showCropper, setShowCropper] = useState(false);
-  const [showBgRemover, setShowBgRemover] = useState(false);
-  const [processingBg, setProcessingBg] = useState(false);
   const [slotStickers, setSlotStickers] = useState<Record<number, string[]>>({});
+
+  // Unified background removal hook
+  const bgRemoval = useBackgroundRemoval({
+    onSuccess: (processedUrl) => setPhoto(processedUrl)
+  });
 
   useEffect(() => {
     const getUser = async () => {
@@ -104,7 +106,7 @@ export default function MotivationalBannerCreate() {
     setPhoto(croppedImage);
     setShowCropper(false);
     setTempPhoto(null);
-    setShowBgRemover(true);
+    bgRemoval.openModal(croppedImage);
   };
 
   const handleCropCancel = () => {
@@ -113,31 +115,18 @@ export default function MotivationalBannerCreate() {
   };
 
   const handleKeepBackground = () => {
-    setShowBgRemover(false);
+    bgRemoval.closeModal();
   };
 
   const handleRemoveBackground = async () => {
-    if (!photo) return;
-    setShowBgRemover(false);
-    setProcessingBg(true);
-    try {
-      const img = await loadImage(await fetch(photo).then(r => r.blob()));
-      const processedBlob = await removeBackground(img);
-      const reader = new FileReader();
-      reader.onload = () => {
-        setPhoto(reader.result as string);
-        toast.success("Background removed successfully!");
-      };
-      reader.readAsDataURL(processedBlob);
-    } catch (error) {
-      console.error("Background removal error:", error);
-      toast.error("Failed to remove background. Keeping original image.");
-    } finally {
-      setProcessingBg(false);
-    }
+    await bgRemoval.processRemoval();
   };
 
   const handleCreate = async () => {
+    if (bgRemoval.isProcessing) {
+      toast.warning("Please wait for background removal to complete");
+      return;
+    }
     if (!formData.name) {
       toast.error("Please enter Name");
       return;
@@ -151,7 +140,6 @@ export default function MotivationalBannerCreate() {
       return;
     }
 
-    // Get the first template for this motivational banner if available
     const firstTemplate = templates && templates.length > 0 ? templates[0] : null;
 
     navigate("/banner-preview", {
@@ -168,13 +156,17 @@ export default function MotivationalBannerCreate() {
         slotStickers,
         templates,
         templateId: firstTemplate?.id || undefined,
-        motivationalBannerId: motivationalBannerId, // Pass motivationalBannerId for profile defaults
-        rankId: undefined // Motivational doesn't use rankId
+        motivationalBannerId: motivationalBannerId,
+        rankId: undefined
       }
     });
   };
 
   const handleReset = () => {
+    if (bgRemoval.isProcessing) {
+      toast.warning("Please wait for background removal to complete");
+      return;
+    }
     setFormData({
       name: "",
       teamCity: "",
@@ -202,7 +194,11 @@ export default function MotivationalBannerCreate() {
     <div className="min-h-screen bg-navy-dark pb-6">
       <header className="sticky top-0 bg-navy-dark/95 backdrop-blur-sm z-40 px-6 py-4 border-b border-primary/20">
         <div className="flex items-center justify-between">
-          <button onClick={() => navigate("/categories")} className="w-10 h-10 rounded-xl border-2 border-primary flex items-center justify-center hover:bg-primary/10 transition-colors">
+          <button 
+            onClick={() => !bgRemoval.isProcessing && navigate("/categories")} 
+            className="w-10 h-10 rounded-xl border-2 border-primary flex items-center justify-center hover:bg-primary/10 transition-colors"
+            disabled={bgRemoval.isProcessing}
+          >
             <ArrowLeft className="w-5 h-5 text-primary" />
           </button>
         </div>
@@ -290,11 +286,6 @@ export default function MotivationalBannerCreate() {
               {photo ? (
                 <div className="relative w-full h-48 gold-border rounded-2xl overflow-hidden bg-secondary">
                   <img src={photo} alt="Uploaded" className="w-full h-full object-cover" />
-                  {processingBg && (
-                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                      <div className="text-white text-sm">Processing...</div>
-                    </div>
-                  )}
                 </div>
               ) : (
                 <label className="w-full h-48 gold-border bg-secondary/50 rounded-2xl flex flex-col items-center justify-center gap-3 cursor-pointer hover:gold-glow transition-all">
@@ -309,10 +300,19 @@ export default function MotivationalBannerCreate() {
         </div>
 
         <div className="flex gap-3">
-          <Button onClick={handleReset} variant="outline" className="flex-1 h-12 border-2 border-primary text-foreground hover:bg-primary/10">
+          <Button 
+            onClick={handleReset} 
+            variant="outline" 
+            className="flex-1 h-12 border-2 border-primary text-foreground hover:bg-primary/10"
+            disabled={bgRemoval.isProcessing}
+          >
             RESET
           </Button>
-          <Button onClick={handleCreate} className="flex-1 h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-bold">
+          <Button 
+            onClick={handleCreate} 
+            className="flex-1 h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-bold"
+            disabled={bgRemoval.isProcessing}
+          >
             CREATE
           </Button>
         </div>
@@ -334,10 +334,13 @@ export default function MotivationalBannerCreate() {
       )}
 
       <BackgroundRemoverModal 
-        open={showBgRemover} 
+        open={bgRemoval.showModal} 
         onKeep={handleKeepBackground} 
         onRemove={handleRemoveBackground} 
-        onClose={() => setShowBgRemover(false)} 
+        onClose={bgRemoval.closeModal}
+        isProcessing={bgRemoval.isProcessing}
+        progress={bgRemoval.progress}
+        progressText={bgRemoval.progressText}
       />
     </div>
   );
