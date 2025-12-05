@@ -10,7 +10,9 @@ import { toast } from "sonner";
 import { useProfile } from "@/hooks/useProfile";
 import { useProfilePhotos } from "@/hooks/useProfilePhotos";
 import { supabase } from "@/integrations/supabase/client";
-import ProfileCompletionBonusModal from "@/components/ProfileCompletionBonusModal";
+
+const PROFILE_GATE_BYPASS_KEY = "rebusiness_profile_completed";
+
 export default function ProfileEdit() {
   const navigate = useNavigate();
   const [photos, setPhotos] = useState<string[]>([]);
@@ -53,8 +55,6 @@ export default function ProfileEdit() {
     married: false
   });
   const [customRole, setCustomRole] = useState("");
-  const [showBonusModal, setShowBonusModal] = useState(false);
-  const [pendingBonusCredit, setPendingBonusCredit] = useState(false);
   
   // PIN state
   const [createPin, setCreatePin] = useState("");
@@ -170,83 +170,13 @@ export default function ProfileEdit() {
     }
   };
 
-  // Check if profile is complete for bonus
+  // Check if profile is complete
   const isProfileComplete = () => {
     const hasName = formData.name.trim() !== '' && formData.name !== 'User';
     const hasMobile = formData.mobile && /^\d{10}$/.test(formData.mobile.replace(/\D/g, ''));
     const hasRole = formData.role && formData.role.trim() !== '';
     const hasPhotos = photos.length > 0;
     return hasName && hasMobile && hasRole && hasPhotos;
-  };
-
-  // Check if profile completion bonus should be shown
-  const checkAndShowBonusModal = async () => {
-    if (!userId) return false;
-    try {
-      const {
-        data: profileData
-      } = await supabase.from('profiles').select('profile_completion_bonus_given').eq('user_id', userId).single();
-      if (profileData?.profile_completion_bonus_given) {
-        return false; // Bonus already given
-      }
-
-      // Show bonus modal
-      setShowBonusModal(true);
-      setPendingBonusCredit(true);
-      return true;
-    } catch (error) {
-      console.error('Error checking bonus status:', error);
-      return false;
-    }
-  };
-
-  // Credit profile completion bonus after user confirms
-  const creditProfileCompletionBonus = async () => {
-    if (!userId) return;
-    try {
-      // Get current credits
-      const {
-        data: currentCredits
-      } = await supabase.from('user_credits').select('balance, total_earned').eq('user_id', userId).single();
-      if (currentCredits) {
-        // Credit 199 to wallet
-        await supabase.from('user_credits').update({
-          balance: currentCredits.balance + 199,
-          total_earned: currentCredits.total_earned + 199,
-          updated_at: new Date().toISOString()
-        }).eq('user_id', userId);
-      }
-
-      // Create transaction record
-      await supabase.from('credit_transactions').insert({
-        user_id: userId,
-        amount: 199,
-        transaction_type: 'admin_credit',
-        description: 'Welcome Bonus Credited (199 Credits)'
-      });
-
-      // Mark bonus as given
-      await supabase.from('profiles').update({
-        profile_completion_bonus_given: true
-      }).eq('user_id', userId);
-    } catch (error) {
-      console.error('Error crediting profile completion bonus:', error);
-    }
-  };
-
-  // Handle bonus modal confirmation
-  const handleBonusConfirm = async () => {
-    await creditProfileCompletionBonus();
-    setShowBonusModal(false);
-    setPendingBonusCredit(false);
-    
-    // Set localStorage flag to prevent ProfileCompletionGate from blocking
-    try {
-      localStorage.setItem("rebusiness_profile_completed", "true");
-    } catch {}
-    
-    toast.success("199 Credits added to your wallet!");
-    navigate("/dashboard", { replace: true });
   };
   const handleSave = async () => {
     // Validation
@@ -339,16 +269,15 @@ export default function ProfileEdit() {
         toast.success("PIN updated successfully!");
       }
 
-      // Check if profile is now complete and show bonus modal if first time
+      // If profile is complete, set localStorage bypass and redirect to dashboard
       if (isProfileComplete()) {
-        const showedModal = await checkAndShowBonusModal();
-        if (showedModal) {
-          toast.success("Profile updated successfully!");
-          return; // Don't navigate yet, wait for modal confirmation
-        }
+        try {
+          localStorage.setItem(PROFILE_GATE_BYPASS_KEY, "true");
+        } catch {}
       }
-      toast.success("Profile updated successfully! Your banners will auto-update.");
-      navigate("/dashboard");
+      
+      toast.success("Profile updated successfully!");
+      navigate("/dashboard", { replace: true });
     } catch (err) {
       console.error("Unexpected error during profile update:", err);
       toast.error("An unexpected error occurred. Please try again.");
@@ -357,7 +286,6 @@ export default function ProfileEdit() {
     }
   };
   return <>
-    <ProfileCompletionBonusModal open={showBonusModal} onConfirm={handleBonusConfirm} />
     <div className="min-h-screen bg-navy-dark pb-6">
       {/* Header */}
       <header className="sticky top-0 bg-navy-dark/95 backdrop-blur-sm z-40 px-6 py-4 border-b border-primary/20">

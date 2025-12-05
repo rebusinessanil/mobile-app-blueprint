@@ -4,6 +4,7 @@ import { logger } from '@/lib/logger';
 
 // Update release date - users created before this are considered "old users"
 const UPDATE_RELEASE_DATE = new Date('2024-12-01T00:00:00Z');
+const PROFILE_GATE_BYPASS_KEY = "rebusiness_profile_completed";
 
 export interface ProfileCompletionStatus {
   isComplete: boolean;
@@ -30,6 +31,20 @@ export const useProfileCompletion = (userId?: string) => {
 
     const checkProfileCompletion = async () => {
       try {
+        // Check localStorage bypass first
+        try {
+          if (localStorage.getItem(PROFILE_GATE_BYPASS_KEY) === "true") {
+            setStatus({
+              isComplete: true,
+              missingFields: [],
+              completionPercentage: 100,
+              loading: false,
+              isOldUser: false,
+            });
+            return;
+          }
+        } catch {}
+
         // Fetch profile data
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
@@ -41,16 +56,12 @@ export const useProfileCompletion = (userId?: string) => {
         const profileCreatedAt = profile?.created_at ? new Date(profile.created_at) : null;
         const isOldUser = profileCreatedAt ? profileCreatedAt < UPDATE_RELEASE_DATE : false;
 
-        // OLD USER with profile_completion_bonus_given = true → always complete
-        // OR OLD USER (created before update) with complete profile → always complete
-        if (profile?.profile_completion_bonus_given === true) {
-          // Also ensure welcome_popup_seen is set for old users
-          if (isOldUser && !profile.welcome_popup_seen) {
-            await supabase
-              .from('profiles')
-              .update({ welcome_popup_seen: true })
-              .eq('user_id', userId);
-          }
+        // If welcome_popup_seen is true, user has completed the flow
+        if (profile?.welcome_popup_seen === true) {
+          // Set localStorage bypass for future checks
+          try {
+            localStorage.setItem(PROFILE_GATE_BYPASS_KEY, "true");
+          } catch {}
           
           setStatus({
             isComplete: true,
@@ -105,18 +116,19 @@ export const useProfileCompletion = (userId?: string) => {
         const fieldsComplete = missingFields.length === 0;
 
         // For OLD users with 100% complete profile, auto-grant access
-        // and set welcome_popup_seen to true
         if (isOldUser && fieldsComplete) {
           logger.log('Old user with complete profile detected, granting full access');
           
-          // Auto-set flags for old users
+          // Auto-set welcome_popup_seen for old users
           await supabase
             .from('profiles')
-            .update({ 
-              profile_completion_bonus_given: true,
-              welcome_popup_seen: true 
-            })
+            .update({ welcome_popup_seen: true })
             .eq('user_id', userId);
+
+          // Set localStorage bypass
+          try {
+            localStorage.setItem(PROFILE_GATE_BYPASS_KEY, "true");
+          } catch {}
 
           setStatus({
             isComplete: true,

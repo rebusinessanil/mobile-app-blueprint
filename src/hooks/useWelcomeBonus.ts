@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { logger } from '@/lib/logger';
 
 const WELCOME_BONUS_AMOUNT = 199;
+const PROFILE_GATE_BYPASS_KEY = "rebusiness_profile_completed";
 
 // Update release date - users created before this are considered "old users"
 const UPDATE_RELEASE_DATE = new Date('2024-12-01T00:00:00Z');
@@ -22,10 +23,10 @@ export function useWelcomeBonus() {
         return;
       }
 
-      // Check profile for welcome_popup_seen status and profile_completion_bonus_given
+      // Check profile for welcome_popup_seen status
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('welcome_popup_seen, profile_completion_bonus_given, created_at')
+        .select('welcome_popup_seen, created_at')
         .eq('user_id', user.id)
         .single();
 
@@ -42,11 +43,10 @@ export function useWelcomeBonus() {
       }
 
       // Check if this is an OLD user (created before update release date)
-      // OR if profile_completion_bonus_given is already true (profile was completed before)
       const profileCreatedAt = profile?.created_at ? new Date(profile.created_at) : null;
       const isOldUser = profileCreatedAt && profileCreatedAt < UPDATE_RELEASE_DATE;
       
-      if (isOldUser || profile?.profile_completion_bonus_given) {
+      if (isOldUser) {
         // OLD USER: Auto-set welcome_popup_seen to true and skip popup
         logger.log('Old user detected, skipping welcome bonus popup');
         
@@ -54,6 +54,11 @@ export function useWelcomeBonus() {
           .from('profiles')
           .update({ welcome_popup_seen: true })
           .eq('user_id', user.id);
+        
+        // Set localStorage bypass
+        try {
+          localStorage.setItem(PROFILE_GATE_BYPASS_KEY, "true");
+        } catch {}
         
         setIsChecking(false);
         return;
@@ -72,8 +77,7 @@ export function useWelcomeBonus() {
         return;
       }
 
-      // Only show popup for NEW users who received welcome bonus
-      // and haven't seen the popup yet
+      // Show popup for NEW users who received welcome bonus and haven't seen the popup
       if (credits && credits.total_earned >= WELCOME_BONUS_AMOUNT && !profile?.welcome_popup_seen) {
         setBonusAmount(WELCOME_BONUS_AMOUNT);
         setShowWelcomeModal(true);
@@ -91,32 +95,29 @@ export function useWelcomeBonus() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Mark welcome popup as seen and profile completion bonus given
+      // Only set welcome_popup_seen = true in database
       const { error } = await supabase
         .from('profiles')
-        .update({ 
-          welcome_popup_seen: true,
-          profile_completion_bonus_given: true 
-        })
+        .update({ welcome_popup_seen: true })
         .eq('user_id', user.id);
 
       if (error) {
-        logger.error('Error updating profile flags:', error);
+        logger.error('Error updating welcome_popup_seen:', error);
       }
 
-      // Set localStorage flag to prevent ProfileCompletionGate from blocking
+      // Set localStorage bypass flag for instant gate skip
       try {
-        localStorage.setItem("rebusiness_profile_completed", "true");
+        localStorage.setItem(PROFILE_GATE_BYPASS_KEY, "true");
       } catch {}
 
-      // Close modal and navigate
+      // Close modal and immediately redirect to dashboard
       setShowWelcomeModal(false);
       navigate('/dashboard', { replace: true });
     } catch (error) {
       logger.error('Error handling continue:', error);
       // Even on error, set localStorage and navigate
       try {
-        localStorage.setItem("rebusiness_profile_completed", "true");
+        localStorage.setItem(PROFILE_GATE_BYPASS_KEY, "true");
       } catch {}
       setShowWelcomeModal(false);
       navigate('/dashboard', { replace: true });
