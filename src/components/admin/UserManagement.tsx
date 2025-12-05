@@ -56,27 +56,41 @@ export default function UserManagement() {
       .channel('admin-user-management-sync')
       .on(
         'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'user_credits',
-        },
-        () => {
+        { event: '*', schema: 'public', table: 'user_credits' },
+        (payload) => {
+          console.log('🔄 Admin: Credits updated', payload);
           fetchUsers();
         }
       )
       .on(
         'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'profiles',
-        },
-        () => {
+        { event: '*', schema: 'public', table: 'profiles' },
+        (payload) => {
+          console.log('🔄 Admin: Profile updated', payload);
           fetchUsers();
         }
       )
-      .subscribe();
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'credit_transactions' },
+        (payload) => {
+          console.log('🔄 Admin: Transaction created', payload);
+          fetchUsers();
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'user_roles' },
+        (payload) => {
+          console.log('🔄 Admin: Roles updated', payload);
+          fetchUsers();
+        }
+      )
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Admin user management real-time sync active');
+        }
+      });
 
     return () => {
       supabase.removeChannel(channel);
@@ -285,12 +299,59 @@ export default function UserManagement() {
     user.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // Calculate stats
+  const totalUsers = users.length;
+  const totalCredits = users.reduce((sum, u) => sum + u.balance, 0);
+  const adminCount = users.filter(u => u.is_admin).length;
+  const today = new Date().toDateString();
+  const newUsersToday = users.filter(u => new Date(u.created_at).toDateString() === today).length;
+
   if (loading) {
     return <div className="text-center py-8 text-muted-foreground">Loading users...</div>;
   }
 
   return (
     <div className="space-y-4">
+      {/* Stats Summary */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="gold-border bg-card rounded-xl p-4">
+          <div className="flex items-center gap-2">
+            <User className="w-5 h-5 text-primary" />
+            <div>
+              <p className="text-2xl font-bold text-foreground">{totalUsers}</p>
+              <p className="text-xs text-muted-foreground">Total Users</p>
+            </div>
+          </div>
+        </div>
+        <div className="gold-border bg-card rounded-xl p-4">
+          <div className="flex items-center gap-2">
+            <Plus className="w-5 h-5 text-green-500" />
+            <div>
+              <p className="text-2xl font-bold text-foreground">{totalCredits}</p>
+              <p className="text-xs text-muted-foreground">Total Credits</p>
+            </div>
+          </div>
+        </div>
+        <div className="gold-border bg-card rounded-xl p-4">
+          <div className="flex items-center gap-2">
+            <Crown className="w-5 h-5 text-primary" />
+            <div>
+              <p className="text-2xl font-bold text-foreground">{adminCount}</p>
+              <p className="text-xs text-muted-foreground">Admins</p>
+            </div>
+          </div>
+        </div>
+        <div className="gold-border bg-card rounded-xl p-4">
+          <div className="flex items-center gap-2">
+            <User className="w-5 h-5 text-blue-500" />
+            <div>
+              <p className="text-2xl font-bold text-foreground">{newUsersToday}</p>
+              <p className="text-xs text-muted-foreground">New Today</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Search */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />

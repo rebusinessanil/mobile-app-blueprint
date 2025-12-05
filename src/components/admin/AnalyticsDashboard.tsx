@@ -53,6 +53,39 @@ export default function AnalyticsDashboard() {
 
   useEffect(() => {
     fetchAnalytics();
+
+    // Real-time subscriptions for instant admin panel updates
+    const channel = supabase
+      .channel('admin-analytics-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'profiles' },
+        () => fetchAnalytics()
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'banners' },
+        () => fetchAnalytics()
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'user_credits' },
+        () => fetchAnalytics()
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'credit_transactions' },
+        () => fetchAnalytics()
+      )
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Analytics real-time sync active');
+        }
+      });
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [timeRange]);
 
   const fetchAnalytics = async () => {
