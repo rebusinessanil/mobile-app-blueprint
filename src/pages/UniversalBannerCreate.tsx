@@ -211,28 +211,39 @@ export default function UniversalBannerCreate() {
     setTempPhoto(null);
   };
 
+  const [bgProgress, setBgProgress] = useState(0);
+  const [bgProgressText, setBgProgressText] = useState('');
+
   const handleKeepBackground = () => {
     setShowBgRemover(false);
   };
 
   const handleRemoveBackground = async () => {
     if (!photo) return;
-    setShowBgRemover(false);
     setProcessingBg(true);
+    setBgProgress(0);
+    setBgProgressText('Loading AI model...');
     try {
       const img = await loadImage(await fetch(photo).then(r => r.blob()));
-      const processedBlob = await removeBackground(img);
+      const processedBlob = await removeBackground(img, (stage, percent) => {
+        setBgProgressText(stage);
+        setBgProgress(percent);
+      });
       const reader = new FileReader();
       reader.onload = () => {
         setPhoto(reader.result as string);
+        setShowBgRemover(false);
         toast.success("Background removed successfully!");
       };
       reader.readAsDataURL(processedBlob);
     } catch (error) {
       console.error("Background removal error:", error);
       toast.error("Failed to remove background. Keeping original image.");
+      setShowBgRemover(false);
     } finally {
       setProcessingBg(false);
+      setBgProgress(0);
+      setBgProgressText('');
     }
   };
 
@@ -450,7 +461,10 @@ export default function UniversalBannerCreate() {
         open={showBgRemover} 
         onKeep={handleKeepBackground} 
         onRemove={handleRemoveBackground} 
-        onClose={() => setShowBgRemover(false)} 
+        onClose={() => setShowBgRemover(false)}
+        isProcessing={processingBg}
+        progress={bgProgress}
+        progressText={bgProgressText}
       />
     </div>
   );
