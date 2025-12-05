@@ -10,9 +10,7 @@ import { toast } from "sonner";
 import { useProfile } from "@/hooks/useProfile";
 import { useProfilePhotos } from "@/hooks/useProfilePhotos";
 import { supabase } from "@/integrations/supabase/client";
-
 const PROFILE_GATE_BYPASS_KEY = "rebusiness_profile_completed";
-
 export default function ProfileEdit() {
   const navigate = useNavigate();
   const [photos, setPhotos] = useState<string[]>([]);
@@ -48,15 +46,17 @@ export default function ProfileEdit() {
   const [formData, setFormData] = useState({
     title: "mr",
     name: "",
-    mobile: "", // Empty by default - user must enter
-    role: "", // Empty by default - user must select
+    mobile: "",
+    // Empty by default - user must enter
+    role: "",
+    // Empty by default - user must select
     language: "eng",
     gender: "male",
     married: false
   });
   const [customRole, setCustomRole] = useState("");
   const [roleConfirmed, setRoleConfirmed] = useState(false); // Track if user manually selected role
-  
+
   // PIN state
   const [createPin, setCreatePin] = useState("");
   const [confirmPin, setConfirmPin] = useState("");
@@ -69,7 +69,7 @@ export default function ProfileEdit() {
     if (profile) {
       const predefinedRoles = ["bronze", "silver", "gold", "platinum", "emerald", "topaz", "ruby-star", "sapphire", "star-sapphire", "diamond", "blue-diamond", "black-diamond", "royal-diamond", "crown-diamond", "ambassador", "royal-ambassador", "crown-ambassador", "brand-ambassador"];
       const isCustomRole = profile.role && !predefinedRoles.includes(profile.role);
-      
+
       // Extract 10-digit mobile from stored format (e.g., +919876543210 -> 9876543210)
       // Only load if it's a real number (not default placeholder)
       let extractedMobile = '';
@@ -80,20 +80,21 @@ export default function ProfileEdit() {
           extractedMobile = cleaned.slice(-10);
         }
       }
-      
+
       // Determine if user has previously selected a role
       const hasValidRole = profile.role && profile.role.trim() !== '' && profile.role !== 'User';
-      
       setFormData({
         title: "mr",
         name: profile.name && profile.name !== 'User' ? profile.name : "",
-        mobile: extractedMobile, // Empty if no valid mobile
-        role: hasValidRole ? (isCustomRole ? "custom" : profile.role) : "", // Empty if no valid role
+        mobile: extractedMobile,
+        // Empty if no valid mobile
+        role: hasValidRole ? isCustomRole ? "custom" : profile.role : "",
+        // Empty if no valid role
         language: "eng",
         gender: "male",
         married: false
       });
-      
+
       // Only mark role as confirmed if user previously had a valid role
       if (hasValidRole) {
         setRoleConfirmed(true);
@@ -238,7 +239,7 @@ export default function ProfileEdit() {
       toast.error("Please enter a custom role name");
       return;
     }
-    
+
     // PIN validation - MANDATORY for profile completion
     if (createPin.length !== 4 || !/^\d{4}$/.test(createPin)) {
       toast.error("Please set a valid 4-digit PIN");
@@ -250,13 +251,11 @@ export default function ProfileEdit() {
       setPinError("PIN does not match");
       return;
     }
-    
     setLoading(true);
     try {
       const finalRole = formData.role === "custom" ? customRole.trim() : formData.role;
       // Format mobile number with country code
       const formattedMobile = `+91${formData.mobile.replace(/\D/g, '')}`;
-      
       const {
         error
       } = await updateProfile({
@@ -272,30 +271,33 @@ export default function ProfileEdit() {
         toast.error(error.message || "Failed to update profile. Please try again.");
         return;
       }
-      
+
       // Save PIN if provided - updates auth password for login to work with new PIN
       if (createPin.length === 4 && confirmPin === createPin && userId) {
         // Pad PIN with prefix to meet Supabase 6+ character password requirement
         const PIN_PREFIX = "pin_";
         const paddedPassword = PIN_PREFIX + createPin;
-        
+
         // Update the actual auth password so signInWithPassword works with new PIN
-        const { error: passwordError } = await supabase.auth.updateUser({
+        const {
+          error: passwordError
+        } = await supabase.auth.updateUser({
           password: paddedPassword
         });
-        
         if (passwordError) {
           console.error("Error updating PIN password:", passwordError);
           toast.error("Failed to update PIN. Please try again.");
           return;
         }
-        
+
         // Also store PIN hash in metadata for reference/verification
         const pinHash = btoa(createPin);
         await supabase.auth.updateUser({
-          data: { pin_hash: pinHash }
+          data: {
+            pin_hash: pinHash
+          }
         });
-        
+
         // Clear PIN fields after successful save
         setCreatePin("");
         setConfirmPin("");
@@ -306,49 +308,44 @@ export default function ProfileEdit() {
       if (isProfileComplete() && userId) {
         try {
           // Check if user already has credits
-          const { data: existingCredits } = await supabase
-            .from('user_credits')
-            .select('id, balance')
-            .eq('user_id', userId)
-            .single();
+          const {
+            data: existingCredits
+          } = await supabase.from('user_credits').select('id, balance').eq('user_id', userId).single();
 
           // If no credits exist or balance is 0, create/update with welcome bonus
           if (!existingCredits || existingCredits.balance === 0) {
             // Upsert user_credits with welcome bonus
-            await supabase
-              .from('user_credits')
-              .upsert({
-                user_id: userId,
-                balance: 199,
-                total_earned: 199,
-                total_spent: 0
-              }, { onConflict: 'user_id' });
+            await supabase.from('user_credits').upsert({
+              user_id: userId,
+              balance: 199,
+              total_earned: 199,
+              total_spent: 0
+            }, {
+              onConflict: 'user_id'
+            });
 
             // Create welcome bonus transaction
-            await supabase
-              .from('credit_transactions')
-              .insert({
-                user_id: userId,
-                amount: 199,
-                transaction_type: 'admin_credit',
-                description: 'Welcome Bonus Credited'
-              });
+            await supabase.from('credit_transactions').insert({
+              user_id: userId,
+              amount: 199,
+              transaction_type: 'admin_credit',
+              description: 'Welcome Bonus Credited'
+            });
 
             // Set welcome_popup_seen = false so popup shows on dashboard
-            await supabase
-              .from('profiles')
-              .update({ welcome_popup_seen: false })
-              .eq('user_id', userId);
+            await supabase.from('profiles').update({
+              welcome_popup_seen: false
+            }).eq('user_id', userId);
           }
-
           localStorage.setItem(PROFILE_GATE_BYPASS_KEY, "true");
         } catch (e) {
           console.error("Error setting up welcome bonus:", e);
         }
       }
-      
       toast.success("Profile updated successfully!");
-      navigate("/dashboard", { replace: true });
+      navigate("/dashboard", {
+        replace: true
+      });
     } catch (err) {
       console.error("Unexpected error during profile update:", err);
       toast.error("An unexpected error occurred. Please try again.");
@@ -435,7 +432,10 @@ export default function ProfileEdit() {
           <div className="space-y-2">
             <label className="text-sm text-foreground">Role</label>
             <Select value={formData.role} onValueChange={value => {
-              setFormData({ ...formData, role: value });
+              setFormData({
+                ...formData,
+                role: value
+              });
               setRoleConfirmed(true); // Mark as confirmed when user manually selects
             }}>
               <SelectTrigger className="gold-border bg-secondary text-foreground h-12 border-b-2 border-t-0 border-x-0 rounded-none">
@@ -495,84 +495,48 @@ export default function ProfileEdit() {
                 <span className="text-xs text-destructive font-medium">* Required</span>
               </div>
               <div className="relative">
-                <Input
-                  type={showCreatePin ? "text" : "password"}
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  maxLength={4}
-                  value={createPin}
-                  onChange={(e) => {
-                    const value = e.target.value.replace(/\D/g, '').slice(0, 4);
-                    setCreatePin(value);
-                    // Clear confirm PIN when create PIN changes
-                    if (confirmPin) setConfirmPin("");
-                    // Clear error when typing
-                    if (pinError) setPinError("");
-                  }}
-                  placeholder="●●●●"
-                  className="gold-border bg-secondary text-foreground h-12 border-b-2 border-t-0 border-x-0 rounded-none tracking-[0.5em] text-center text-lg pr-10"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowCreatePin(!showCreatePin)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                >
+                <Input type={showCreatePin ? "text" : "password"} inputMode="numeric" pattern="[0-9]*" maxLength={4} value={createPin} onChange={e => {
+                  const value = e.target.value.replace(/\D/g, '').slice(0, 4);
+                  setCreatePin(value);
+                  // Clear confirm PIN when create PIN changes
+                  if (confirmPin) setConfirmPin("");
+                  // Clear error when typing
+                  if (pinError) setPinError("");
+                }} placeholder="●●●●" className="gold-border bg-secondary text-foreground h-12 border-b-2 border-t-0 border-x-0 rounded-none tracking-[0.5em] text-center text-lg pr-10" />
+                <button type="button" onClick={() => setShowCreatePin(!showCreatePin)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
                   {showCreatePin ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
-              {createPin.length > 0 && createPin.length < 4 && (
-                <p className="text-sm text-destructive">PIN must be 4 digits</p>
-              )}
+              {createPin.length > 0 && createPin.length < 4 && <p className="text-sm text-destructive">PIN must be 4 digits</p>}
             </div>
 
             {/* Confirm PIN - only show when Create PIN has 4 digits */}
-            {createPin.length === 4 && (
-              <div className="space-y-2">
+            {createPin.length === 4 && <div className="space-y-2">
                 <label className="text-sm text-foreground">Confirm PIN</label>
                 <div className="relative">
-                  <Input
-                    type={showConfirmPin ? "text" : "password"}
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    maxLength={4}
-                    value={confirmPin}
-                    onChange={(e) => {
-                      const value = e.target.value.replace(/\D/g, '').slice(0, 4);
-                      setConfirmPin(value);
-                      // Validate PIN match
-                      if (value.length === 4) {
-                        if (value !== createPin) {
-                          setPinError("PIN does not match");
-                        } else {
-                          setPinError("");
-                        }
-                      } else {
-                        setPinError("");
-                      }
-                    }}
-                    placeholder="●●●●"
-                    className={`gold-border bg-secondary text-foreground h-12 border-b-2 border-t-0 border-x-0 rounded-none tracking-[0.5em] text-center text-lg pr-10 ${
-                      pinError ? "border-destructive" : confirmPin.length === 4 && confirmPin === createPin ? "border-green-500" : ""
-                    }`}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPin(!showConfirmPin)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                  >
+                  <Input type={showConfirmPin ? "text" : "password"} inputMode="numeric" pattern="[0-9]*" maxLength={4} value={confirmPin} onChange={e => {
+                  const value = e.target.value.replace(/\D/g, '').slice(0, 4);
+                  setConfirmPin(value);
+                  // Validate PIN match
+                  if (value.length === 4) {
+                    if (value !== createPin) {
+                      setPinError("PIN does not match");
+                    } else {
+                      setPinError("");
+                    }
+                  } else {
+                    setPinError("");
+                  }
+                }} placeholder="●●●●" className={`gold-border bg-secondary text-foreground h-12 border-b-2 border-t-0 border-x-0 rounded-none tracking-[0.5em] text-center text-lg pr-10 ${pinError ? "border-destructive" : confirmPin.length === 4 && confirmPin === createPin ? "border-green-500" : ""}`} />
+                  <button type="button" onClick={() => setShowConfirmPin(!showConfirmPin)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
                     {showConfirmPin ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
-                  {confirmPin.length === 4 && confirmPin === createPin && !pinError && (
-                    <div className="absolute right-10 top-1/2 -translate-y-1/2">
+                  {confirmPin.length === 4 && confirmPin === createPin && !pinError && <div className="absolute right-10 top-1/2 -translate-y-1/2">
                       <Check className="w-5 h-5 text-green-500" />
-                    </div>
-                  )}
+                    </div>}
                 </div>
-                {pinError && (
-                  <p className="text-sm text-destructive">{pinError}</p>
-                )}
-              </div>
-            )}
+                {pinError && <p className="text-sm text-destructive">{pinError}</p>}
+              </div>}
           </div>
 
           {/* Gender */}
@@ -606,15 +570,13 @@ export default function ProfileEdit() {
         </Button>
         
         {/* Validation hints when button is disabled */}
-        {!loading && userId && !isProfileComplete() && (
-          <div className="text-center mt-3 space-y-1">
+        {!loading && userId && !isProfileComplete() && <div className="text-center mt-3 space-y-1">
             {!formData.name.trim() && <p className="text-sm text-destructive">• Name is required</p>}
             {(!formData.mobile || !/^\d{10}$/.test(formData.mobile.replace(/\D/g, ''))) && <p className="text-sm text-destructive">• Valid 10-digit mobile required</p>}
             {(!roleConfirmed || !formData.role) && <p className="text-sm text-destructive">• Please select a role</p>}
             {photos.length === 0 && <p className="text-sm text-destructive">• At least 1 profile photo required</p>}
-            {!isPinValid() && <p className="text-sm text-destructive">• 4-digit PIN required</p>}
-          </div>
-        )}
+            {!isPinValid()}
+          </div>}
       </div>
     </div>
   </>;
