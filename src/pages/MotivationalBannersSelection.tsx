@@ -1,20 +1,18 @@
 import { useNavigate } from "react-router-dom";
-import { useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { useMotivationalBanners } from "@/hooks/useMotivationalBanners";
-import { ListPageSkeleton } from "@/components/skeletons";
+import { Loader2 } from "lucide-react";
 
 const MotivationalBannersSelection = () => {
   const navigate = useNavigate();
   const { motivationalBanners, loading } = useMotivationalBanners();
 
-  // Instant direct navigation - zero delay
-  const handleMotivationalSelect = useCallback((bannerId: string) => {
-    navigate(`/banner-create/motivational?motivationalBannerId=${bannerId}`);
-  }, [navigate]);
-
   if (loading) {
-    return <ListPageSkeleton />;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
   }
 
   return (
@@ -31,8 +29,8 @@ const MotivationalBannersSelection = () => {
           {motivationalBanners.map((banner) => (
             <Card
               key={banner.id}
-              className="cursor-pointer overflow-hidden hover:scale-105 transition-transform active:scale-95"
-              onClick={() => handleMotivationalSelect(banner.id)}
+              className="cursor-pointer overflow-hidden hover:scale-105 transition-transform"
+              onClick={() => navigate(`/banner-create/motivational?motivationalBannerId=${banner.id}`)}
             >
               <div className="aspect-square relative">
                 <img
