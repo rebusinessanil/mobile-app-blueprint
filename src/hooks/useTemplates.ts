@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useEffect } from 'react';
 
 export interface TemplateCategory {
   id: string;
@@ -52,33 +53,24 @@ export interface Template {
   } | null;
 }
 
-
 export const useTemplateCategories = () => {
-  const [categories, setCategories] = useState<TemplateCategory[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+  const queryClient = useQueryClient();
+
+  const { data: categories, isLoading, error } = useQuery({
+    queryKey: ['template-categories'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('template_categories')
+        .select('*')
+        .eq('is_active', true)
+        .order('display_order', { ascending: true });
+
+      if (error) throw error;
+      return data as TemplateCategory[];
+    },
+  });
 
   useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('template_categories')
-          .select('*')
-          .eq('is_active', true)
-          .order('display_order', { ascending: true });
-
-        if (error) throw error;
-        setCategories(data || []);
-      } catch (err) {
-        setError(err as Error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchCategories();
-
-    // Set up real-time subscription for instant category updates
     const channel = supabase
       .channel(`template-categories-changes-${Math.random()}`)
       .on(
@@ -88,9 +80,8 @@ export const useTemplateCategories = () => {
           schema: 'public',
           table: 'template_categories',
         },
-        (payload) => {
-          console.log('📡 Category update received:', payload);
-          fetchCategories();
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['template-categories'] });
         }
       )
       .subscribe();
@@ -98,74 +89,45 @@ export const useTemplateCategories = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [queryClient]);
 
-  return { categories, loading, error };
+  return { 
+    categories: categories || [], 
+    loading: isLoading, 
+    error 
+  };
 };
 
 export const useTemplates = (categoryId?: string, tripId?: string, rankId?: string, birthdayId?: string, anniversaryId?: string, motivationalBannerId?: string, festivalId?: string, storiesEventsId?: string) => {
-  const [templates, setTemplates] = useState<Template[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    const fetchTemplates = async () => {
-      try {
-        setLoading(true);
-        let query = supabase
-          .from('templates')
-          .select('*, ranks(name, color, icon)')
-          .eq('is_active', true)
-          .order('display_order', { ascending: true });
+  const queryKey = ['templates', categoryId, tripId, rankId, birthdayId, anniversaryId, motivationalBannerId, festivalId, storiesEventsId];
 
-        if (categoryId) {
-          query = query.eq('category_id', categoryId);
-        }
+  const { data: templates, isLoading, error, refetch } = useQuery({
+    queryKey,
+    queryFn: async () => {
+      let query = supabase
+        .from('templates')
+        .select('*, ranks(name, color, icon)')
+        .eq('is_active', true)
+        .order('display_order', { ascending: true });
 
-        if (tripId) {
-          query = query.eq('trip_id', tripId);
-        }
-
-      if (rankId) {
-        query = query.eq('rank_id', rankId);
-      }
-
-      if (birthdayId) {
-        query = query.eq('birthday_id', birthdayId);
-      }
-
-      if (anniversaryId) {
-        query = query.eq('anniversary_id', anniversaryId);
-      }
-
-      if (motivationalBannerId) {
-        query = query.eq('motivational_banner_id', motivationalBannerId);
-      }
-
-      if (festivalId) {
-        query = query.eq('festival_id', festivalId);
-      }
-
-      if (storiesEventsId) {
-        query = query.eq('stories_events_id', storiesEventsId);
-      }
+      if (categoryId) query = query.eq('category_id', categoryId);
+      if (tripId) query = query.eq('trip_id', tripId);
+      if (rankId) query = query.eq('rank_id', rankId);
+      if (birthdayId) query = query.eq('birthday_id', birthdayId);
+      if (anniversaryId) query = query.eq('anniversary_id', anniversaryId);
+      if (motivationalBannerId) query = query.eq('motivational_banner_id', motivationalBannerId);
+      if (festivalId) query = query.eq('festival_id', festivalId);
+      if (storiesEventsId) query = query.eq('stories_events_id', storiesEventsId);
 
       const { data, error } = await query;
+      if (error) throw error;
+      return data as Template[];
+    },
+  });
 
-        if (error) throw error;
-        setTemplates(data || []);
-        setError(null);
-      } catch (err) {
-        setError(err as Error);
-        console.error('Error fetching templates:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchTemplates();
-
-    // Real-time subscription for instant cover updates
+  useEffect(() => {
     const filterKey = tripId 
       ? `trip_id=eq.${tripId}` 
       : rankId 
@@ -183,6 +145,7 @@ export const useTemplates = (categoryId?: string, tripId?: string, rankId?: stri
       : categoryId 
       ? `category_id=eq.${categoryId}` 
       : undefined;
+
     const channel = supabase
       .channel(`templates-changes-${categoryId || tripId || rankId || birthdayId || anniversaryId || motivationalBannerId || festivalId || storiesEventsId || 'all'}-${Math.random()}`)
       .on(
@@ -193,9 +156,8 @@ export const useTemplates = (categoryId?: string, tripId?: string, rankId?: stri
           table: 'templates',
           filter: filterKey,
         },
-        (payload) => {
-          console.log('📡 Template update received:', payload);
-          fetchTemplates();
+        () => {
+          queryClient.invalidateQueries({ queryKey });
         }
       )
       .subscribe();
@@ -203,11 +165,15 @@ export const useTemplates = (categoryId?: string, tripId?: string, rankId?: stri
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [categoryId, tripId, rankId, birthdayId, anniversaryId, motivationalBannerId, festivalId, storiesEventsId]);
+  }, [queryClient, queryKey, categoryId, tripId, rankId, birthdayId, anniversaryId, motivationalBannerId, festivalId, storiesEventsId]);
 
-  return { templates, loading, error };
+  return { 
+    templates: templates || [], 
+    loading: isLoading, 
+    error,
+    refetch
+  };
 };
-
 
 export const useAdminTemplates = () => {
   const updateCategoryCover = async (
@@ -321,13 +287,11 @@ export const useAdminTemplates = () => {
 };
 
 export const useRanks = () => {
-  const [ranks, setRanks] = useState<Rank[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+  const queryClient = useQueryClient();
 
-  const fetchRanks = async () => {
-    try {
-      setLoading(true);
+  const { data: ranks, isLoading, error, refetch } = useQuery({
+    queryKey: ['ranks'],
+    queryFn: async () => {
       const { data, error } = await supabase
         .from('ranks')
         .select('*')
@@ -335,17 +299,14 @@ export const useRanks = () => {
         .order('display_order', { ascending: true });
 
       if (error) throw error;
-      setRanks(data || []);
-    } catch (err) {
-      setError(err as Error);
-    } finally {
-      setLoading(false);
-    }
+      return data as Rank[];
+    },
+  });
+
+  return { 
+    ranks: ranks || [], 
+    loading: isLoading, 
+    error, 
+    refetch 
   };
-
-  useEffect(() => {
-    fetchRanks();
-  }, []);
-
-  return { ranks, loading, error, refetch: fetchRanks };
 };

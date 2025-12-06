@@ -84,10 +84,9 @@ export default function Dashboard() {
   // Welcome bonus modal
   const { showWelcomeModal, bonusAmount, handleContinue } = useWelcomeBonus();
 
-  // Check if all data is loaded
-  const isDataLoading = categoriesLoading || templatesLoading || ranksLoading || 
-    tripsLoading || birthdaysLoading || anniversariesLoading || 
-    motivationalLoading || festivalsLoading || storiesLoading || storiesEventsLoading;
+  // Check if data is loading AND no cached data exists
+  const hasNoData = categories.length === 0 && allTemplates.length === 0 && ranks.length === 0;
+  const isInitialLoading = (categoriesLoading || templatesLoading || ranksLoading) && hasNoData;
 
   // Memoized template filters to prevent recalculation
   const getRankTemplates = useMemo(() => {
@@ -130,7 +129,7 @@ export default function Dashboard() {
 
   // Preload template images when data loads
   useEffect(() => {
-    if (!isDataLoading) {
+    if (!isInitialLoading && ranks.length > 0) {
       const imageUrls = [
         ...ranks.map(r => r.icon).filter(Boolean),
         ...trips.map(t => t.trip_image_url).filter(Boolean),
@@ -141,7 +140,7 @@ export default function Dashboard() {
         preloadImages(imageUrls as string[]);
       }
     }
-  }, [isDataLoading, ranks, trips, birthdays, allTemplates]);
+  }, [isInitialLoading, ranks, trips, birthdays, allTemplates]);
 
   // Memoized quick actions
   const quickActions = useMemo(() => [{
@@ -166,8 +165,9 @@ export default function Dashboard() {
   const getCategoryTemplates = useCallback((categoryId: string) => {
     return allTemplates.filter(t => t.category_id === categoryId).slice(0, 3);
   }, [allTemplates]);
-  // Show skeleton loading state
-  if (isDataLoading) {
+
+  // Show skeleton only on initial load with no cached data
+  if (isInitialLoading) {
     return (
       <ProfileCompletionGate userId={userId}>
         <DashboardSkeleton />
