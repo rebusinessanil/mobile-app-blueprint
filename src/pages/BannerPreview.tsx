@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft, Settings, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,7 @@ import download from "downloadjs";
 import { useRealtimeStickerSync } from "@/hooks/useRealtimeStickerSync";
 import { useWalletDeduction } from "@/hooks/useWalletDeduction";
 import InsufficientBalanceModal from "@/components/InsufficientBalanceModal";
+import BannerPreviewSkeleton from "@/components/skeletons/BannerPreviewSkeleton";
 interface Upline {
   id: string;
   name: string;
@@ -425,10 +426,27 @@ export default function BannerPreview() {
   // Fetch selected stickers - removed, now using slotStickers structure
   // Each slot has its own stickers independently
 
+  // Check if all assets are ready for rendering
+  const isAssetsReady = useMemo(() => {
+    // Must have userId loaded
+    if (!userId) return false;
+    // Must have profile loaded
+    if (!profile) return false;
+    // Must have backgrounds loaded (not loading)
+    if (backgroundsLoading) return false;
+    // All essential data is ready
+    return true;
+  }, [userId, profile, backgroundsLoading]);
+
   // Early return if no banner data
   if (!bannerData) {
     navigate("/rank-selection");
     return null;
+  }
+
+  // Show skeleton overlay while assets are loading
+  if (!isAssetsReady) {
+    return <BannerPreviewSkeleton />;
   }
 
   // Category-specific content render function
