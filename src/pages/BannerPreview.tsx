@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft, Settings, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,20 @@ import { useRealtimeStickerSync } from "@/hooks/useRealtimeStickerSync";
 import { useWalletDeduction } from "@/hooks/useWalletDeduction";
 import InsufficientBalanceModal from "@/components/InsufficientBalanceModal";
 import BannerPreviewSkeleton from "@/components/skeletons/BannerPreviewSkeleton";
+
+// Helper: Preload an image and return a promise
+const preloadImage = (src: string): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    if (!src || src === '/placeholder.svg') {
+      resolve();
+      return;
+    }
+    const img = new Image();
+    img.onload = () => resolve();
+    img.onerror = () => resolve(); // Don't block on failed images
+    img.src = src;
+  });
+};
 
 interface Upline {
   id: string;
@@ -103,6 +117,10 @@ export default function BannerPreview() {
   } | null>(null);
   const [isProfileControlMinimized, setIsProfileControlMinimized] = useState(false);
   const [showInsufficientBalanceModal, setShowInsufficientBalanceModal] = useState(false);
+  
+  // Asset loading states for complete loading gate
+  const [imagesLoaded, setImagesLoaded] = useState(false);
+  const [isReady, setIsReady] = useState(false);
 
   // Wallet deduction hook
   const {
@@ -434,17 +452,77 @@ export default function BannerPreview() {
   }
 
   // ============ LOADING GATE: Show skeleton until all critical assets are ready ============
-  const isAssetsReady = useMemo(() => {
-    // Check if profile data is loaded
+  // Collect all image URLs that need to be preloaded
+  const imagesToPreload = useMemo(() => {
+    const images: string[] = [];
+    
+    // Background images from current slot
+    const currentSlotBg = globalBackgroundSlots.find(slot => slot.slotNumber === selectedSlot);
+    if (currentSlotBg?.imageUrl) images.push(currentSlotBg.imageUrl);
+    
+    // User photos
+    if (primaryPhoto) images.push(primaryPhoto);
+    if (mentorPhoto) images.push(mentorPhoto);
+    
+    // Upline avatars
+    displayUplines?.forEach(upline => {
+      if (upline.avatar) images.push(upline.avatar);
+    });
+    
+    // Banner settings logos
+    if (bannerSettings?.logo_left) images.push(bannerSettings.logo_left);
+    if (bannerSettings?.logo_right) images.push(bannerSettings.logo_right);
+    
+    // Banner defaults
+    if (bannerDefaults?.congratulations_image) images.push(bannerDefaults.congratulations_image);
+    
+    // Sticker images
+    Object.values(stickerImages).forEach(slotStickers => {
+      slotStickers.forEach(sticker => {
+        if (sticker.url) images.push(sticker.url);
+      });
+    });
+    
+    return images.filter(Boolean);
+  }, [globalBackgroundSlots, selectedSlot, primaryPhoto, mentorPhoto, displayUplines, bannerSettings, bannerDefaults, stickerImages]);
+
+  // Preload all images when dependencies change
+  useEffect(() => {
+    const loadAllImages = async () => {
+      setImagesLoaded(false);
+      setIsReady(false);
+      
+      if (imagesToPreload.length === 0) {
+        setImagesLoaded(true);
+        return;
+      }
+      
+      try {
+        await Promise.all(imagesToPreload.map(preloadImage));
+        setImagesLoaded(true);
+      } catch {
+        // Even on error, proceed to show the banner
+        setImagesLoaded(true);
+      }
+    };
+    
+    loadAllImages();
+  }, [imagesToPreload]);
+
+  // Final ready state with smooth transition timing
+  useEffect(() => {
+    if (imagesLoaded && profile && userId && !backgroundsLoading) {
+      // Small delay for smooth fade-in
+      const timer = setTimeout(() => setIsReady(true), 50);
+      return () => clearTimeout(timer);
+    }
+  }, [imagesLoaded, profile, userId, backgroundsLoading]);
+
+  // Check if all data dependencies are loaded
+  const isDataReady = useMemo(() => {
     const hasProfile = !!profile;
-    
-    // Check if backgrounds are loaded (not loading)
     const hasBackgrounds = !backgroundsLoading && globalBackgroundSlots.length > 0;
-    
-    // Check if user ID is set
     const hasUserId = !!userId;
-    
-    // For non-motivational, check if profile photos loaded
     const hasPhotos = bannerData?.categoryType === 'motivational' || bannerData?.categoryType === 'festival' || bannerData?.categoryType === 'story' 
       ? true 
       : profilePhotos.length > 0 || !!profile?.profile_photo;
@@ -453,7 +531,7 @@ export default function BannerPreview() {
   }, [profile, backgroundsLoading, globalBackgroundSlots.length, userId, profilePhotos.length, bannerData?.categoryType]);
 
   // Show skeleton while assets are loading
-  if (!isAssetsReady) {
+  if (!isDataReady || !isReady) {
     return <BannerPreviewSkeleton />;
   }
 
@@ -1382,7 +1460,7 @@ export default function BannerPreview() {
       setIsDownloading(false);
     }
   };
-  return <div className="h-screen overflow-hidden bg-background flex flex-col">
+  return <div className="h-screen overflow-hidden bg-background flex flex-col animate-fade-in" style={{ animationDuration: '300ms' }}>
       {/* Header - Fixed */}
       <header className="bg-background/95 backdrop-blur-sm z-40 px-4 sm:px-6 py-3 sm:py-4 flex-shrink-0">
         <div className="flex items-center justify-between max-w-[600px] mx-auto">
