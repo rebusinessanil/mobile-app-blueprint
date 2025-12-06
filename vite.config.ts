@@ -31,14 +31,8 @@ export default defineConfig(({ mode }) => ({
     },
     // Reduce chunk size warnings
     chunkSizeWarningLimit: 500,
-    // Minification
-    minify: 'terser',
-    terserOptions: {
-      compress: {
-        drop_console: mode === 'production',
-        drop_debugger: true,
-      },
-    },
+    // Minification - use esbuild (faster, no extra dependency)
+    minify: 'esbuild',
     // Source maps only in development
     sourcemap: mode === 'development',
     // Target modern browsers
