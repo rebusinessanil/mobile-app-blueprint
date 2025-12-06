@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { 
@@ -9,7 +9,8 @@ import {
   Calendar,
   Award,
   Database,
-  Clock
+  Clock,
+  RefreshCw
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
@@ -50,9 +51,15 @@ export default function AnalyticsDashboard() {
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d'>('30d');
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+
+  const fetchAnalyticsCallback = useCallback(async () => {
+    await fetchAnalytics();
+    setLastUpdated(new Date());
+  }, []);
 
   useEffect(() => {
-    fetchAnalytics();
+    fetchAnalyticsCallback();
 
     // Real-time subscriptions for instant admin panel updates
     const channel = supabase
@@ -60,22 +67,32 @@ export default function AnalyticsDashboard() {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'profiles' },
-        () => fetchAnalytics()
+        () => fetchAnalyticsCallback()
       )
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'banners' },
-        () => fetchAnalytics()
+        () => fetchAnalyticsCallback()
       )
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'user_credits' },
-        () => fetchAnalytics()
+        () => fetchAnalyticsCallback()
       )
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'credit_transactions' },
-        () => fetchAnalytics()
+        () => fetchAnalyticsCallback()
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'templates' },
+        () => fetchAnalyticsCallback()
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'banner_downloads' },
+        () => fetchAnalyticsCallback()
       )
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
@@ -86,7 +103,7 @@ export default function AnalyticsDashboard() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [timeRange]);
+  }, [timeRange, fetchAnalyticsCallback]);
 
   const fetchAnalytics = async () => {
     try {
@@ -220,6 +237,15 @@ export default function AnalyticsDashboard() {
 
   return (
     <div className="space-y-6">
+      {/* Last Updated Indicator */}
+      <div className="flex items-center justify-between text-xs text-muted-foreground">
+        <span className="flex items-center gap-1">
+          <RefreshCw className="w-3 h-3" />
+          Live sync active
+        </span>
+        <span>Updated: {lastUpdated.toLocaleTimeString()}</span>
+      </div>
+
       {/* Time Range Selector */}
       <div className="flex gap-2">
         {(['7d', '30d', '90d'] as const).map((range) => (
