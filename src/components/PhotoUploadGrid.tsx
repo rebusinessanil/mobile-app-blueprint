@@ -27,29 +27,47 @@ export default function PhotoUploadGrid({ photos, onPhotosChange, maxPhotos = 5,
   const [processingText, setProcessingText] = useState('');
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Check if max limit reached
     if (photos.length >= maxPhotos) {
-      toast.error(`You can upload only ${maxPhotos} photos.`);
+      toast.error(`Maximum ${maxPhotos} photos allowed. Remove one to add more.`);
       e.target.value = "";
       return;
     }
     
+    // Get only the first file (single upload only)
     const file = e.target.files?.[0];
-    if (file) {
-      // Validate file type
-      if (!file.type.match(/^image\/(jpeg|jpg|png)$/)) {
-        toast.error("Upload JPG or PNG only.");
-        e.target.value = "";
-        return;
-      }
-      
-      const reader = new FileReader();
-      reader.onload = () => {
-        setSelectedImage(reader.result as string);
-        setEditingIndex(photos.length);
-        setCropModalOpen(true);
-      };
-      reader.readAsDataURL(file);
+    if (!file) {
+      e.target.value = "";
+      return;
     }
+    
+    // Validate file type
+    if (!file.type.match(/^image\/(jpeg|jpg|png|webp)$/i)) {
+      toast.error("Please upload JPG, PNG, or WebP images only.");
+      e.target.value = "";
+      return;
+    }
+    
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Image size must be less than 10MB.");
+      e.target.value = "";
+      return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = () => {
+      setSelectedImage(reader.result as string);
+      setEditingIndex(photos.length); // Add to end of list
+      setCropModalOpen(true);
+    };
+    reader.onerror = () => {
+      toast.error("Failed to read image. Please try again.");
+      e.target.value = "";
+    };
+    reader.readAsDataURL(file);
+    
+    // Reset input to allow re-selecting same file
     e.target.value = "";
   };
 
