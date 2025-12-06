@@ -6,7 +6,6 @@ import { logger } from '@/lib/logger';
 interface UseBackgroundRemovalFastOptions {
   onSuccess?: (processedImageUrl: string) => void;
   onError?: (error: Error) => void;
-  maxDimension?: number; // Max dimension for pre-processing compression
 }
 
 // Throttle with leading edge for immediate feedback
@@ -21,62 +20,6 @@ const throttle = <T extends (...args: any[]) => any>(fn: T, delay: number) => {
   };
 };
 
-// Pre-process image: compress and resize before BG removal
-const preProcessImage = async (
-  imageUrl: string, 
-  maxDimension: number = 800
-): Promise<{ blob: Blob; width: number; height: number }> => {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    
-    img.onload = () => {
-      try {
-        let { naturalWidth: width, naturalHeight: height } = img;
-        
-        // Scale down if exceeds max dimension
-        if (width > maxDimension || height > maxDimension) {
-          const ratio = Math.min(maxDimension / width, maxDimension / height);
-          width = Math.round(width * ratio);
-          height = Math.round(height * ratio);
-        }
-        
-        // Create canvas for compression
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        
-        if (!ctx) {
-          reject(new Error('Failed to get canvas context'));
-          return;
-        }
-        
-        // Draw scaled image
-        ctx.drawImage(img, 0, 0, width, height);
-        
-        // Convert to blob with compression (JPEG 0.85 quality)
-        canvas.toBlob(
-          (blob) => {
-            if (blob) {
-              resolve({ blob, width, height });
-            } else {
-              reject(new Error('Failed to create blob'));
-            }
-          },
-          'image/jpeg',
-          0.85
-        );
-      } catch (err) {
-        reject(err);
-      }
-    };
-    
-    img.onerror = () => reject(new Error('Failed to load image for pre-processing'));
-    img.src = imageUrl;
-  });
-};
-
 export const useBackgroundRemovalFast = (options?: UseBackgroundRemovalFastOptions) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -86,6 +29,8 @@ export const useBackgroundRemovalFast = (options?: UseBackgroundRemovalFastOptio
   
   const processingRef = useRef(false);
   const abortRef = useRef(false);
+  const retryCountRef = useRef(0);
+  const MAX_RETRIES = 1;
 
   // Throttled progress updates
   const updateProgress = useCallback(
@@ -127,8 +72,8 @@ export const useBackgroundRemovalFast = (options?: UseBackgroundRemovalFastOptio
   // Cleanup on unmount - always release memory
   useEffect(() => {
     return () => {
-      abortRef.current = true; // Signal abort
-      clearModel(); // Always release memory on unmount
+      abortRef.current = true;
+      clearModel();
     };
   }, []);
 
@@ -138,6 +83,7 @@ export const useBackgroundRemovalFast = (options?: UseBackgroundRemovalFastOptio
     setProgress(0);
     setProgressText('');
     abortRef.current = false;
+    retryCountRef.current = 0;
   }, []);
 
   const closeModal = useCallback(() => {
@@ -155,43 +101,43 @@ export const useBackgroundRemovalFast = (options?: UseBackgroundRemovalFastOptio
     return image;
   }, [pendingImage, closeModal]);
 
-  const processRemoval = useCallback(async (): Promise<string | null> => {
-    if (!pendingImage || processingRef.current) return null;
+  // Internal processing function with retry support
+  const processRemovalInternal = useCallback(async (): Promise<string | null> => {
+    if (!pendingImage) return null;
 
-    setIsProcessing(true);
-    processingRef.current = true;
-    updateProgress(0, 'Compressing image...');
+    updateProgress(5, 'Loading image...');
 
     try {
-      // Step 1: Pre-process image (compress & resize) to reduce memory
-      const maxDim = options?.maxDimension || 800;
-      const { blob: compressedBlob } = await preProcessImage(pendingImage, maxDim);
-      
-      updateProgress(10, 'Loading image...');
-      
-      // Step 2: Load compressed image for processing
-      const img = await loadImage(compressedBlob);
+      // Load image directly from URL - no pre-compression for quality
+      const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+        const image = new Image();
+        image.crossOrigin = 'anonymous';
+        image.onload = () => resolve(image);
+        image.onerror = () => reject(new Error('Failed to load image'));
+        image.src = pendingImage;
+      });
 
       if (abortRef.current) {
-        clearModel(); // Release memory on abort
+        clearModel();
         return null;
       }
 
-      // Step 3: Process with RMBG-1.4 model (WebGPU → WASM fallback)
+      updateProgress(10, 'Processing...');
+
+      // Process with RMBG-1.4 model (WebGPU → WASM fallback)
       const processedBlob = await removeBackground(img, (stage, percent) => {
         if (!abortRef.current) {
-          // Offset progress to account for pre-processing (10% already done)
-          const adjustedPercent = 10 + Math.round(percent * 0.9);
+          const adjustedPercent = 10 + Math.round(percent * 0.85);
           updateProgress(adjustedPercent, stage);
         }
       });
 
       if (abortRef.current) {
-        clearModel(); // Release memory on abort
+        clearModel();
         return null;
       }
 
-      // Step 4: Convert blob to optimized data URL
+      // Convert blob to data URL
       return new Promise((resolve) => {
         const reader = new FileReader();
         reader.onload = () => {
@@ -202,12 +148,11 @@ export const useBackgroundRemovalFast = (options?: UseBackgroundRemovalFastOptio
             setProgressText('Complete!');
           });
           
-          // Step 5: Release memory after processing
+          // Release memory after processing
           setTimeout(() => {
             clearModel();
-          }, 500);
+          }, 300);
           
-          // Delay modal close for smooth transition
           setTimeout(() => {
             startTransition(() => {
               setShowModal(false);
@@ -222,16 +167,37 @@ export const useBackgroundRemovalFast = (options?: UseBackgroundRemovalFastOptio
           }, 100);
         };
         reader.onerror = () => {
-          clearModel(); // Release memory on error
+          clearModel();
           throw new Error('Failed to read processed image');
         };
         reader.readAsDataURL(processedBlob);
       });
     } catch (error) {
+      // Attempt retry once
+      if (retryCountRef.current < MAX_RETRIES) {
+        retryCountRef.current++;
+        logger.warn(`Background removal failed, retrying (${retryCountRef.current}/${MAX_RETRIES})...`);
+        updateProgress(5, 'Retrying...');
+        clearModel();
+        return processRemovalInternal();
+      }
+      throw error;
+    }
+  }, [pendingImage, options, updateProgress]);
+
+  const processRemoval = useCallback(async (): Promise<string | null> => {
+    if (!pendingImage || processingRef.current) return null;
+
+    setIsProcessing(true);
+    processingRef.current = true;
+    retryCountRef.current = 0;
+
+    try {
+      return await processRemovalInternal();
+    } catch (error) {
       logger.error('Background removal error:', error);
       const errorMsg = error instanceof Error ? error.message : 'Unknown error';
       
-      // Release memory on error
       clearModel();
       
       startTransition(() => {
@@ -245,7 +211,7 @@ export const useBackgroundRemovalFast = (options?: UseBackgroundRemovalFastOptio
       options?.onError?.(error instanceof Error ? error : new Error(errorMsg));
       return null;
     }
-  }, [pendingImage, options, updateProgress]);
+  }, [pendingImage, options, processRemovalInternal]);
 
   return {
     isProcessing,
