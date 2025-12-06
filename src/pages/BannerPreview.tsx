@@ -17,6 +17,7 @@ import type { Sticker } from "@/hooks/useStickers";
 import { toPng } from "html-to-image";
 import download from "downloadjs";
 import { useRealtimeStickerSync } from "@/hooks/useRealtimeStickerSync";
+import { useGlobalRankStickers } from "@/hooks/useGlobalRankStickers";
 import { useWalletDeduction } from "@/hooks/useWalletDeduction";
 import InsufficientBalanceModal from "@/components/InsufficientBalanceModal";
 interface Upline {
@@ -261,85 +262,57 @@ export default function BannerPreview() {
     categoryType: bannerData?.categoryType
   });
 
+  // Global rank stickers with real-time sync - users only see, can't edit
+  const {
+    stickers: globalStickers,
+    stickersBySlot: globalStickersBySlot,
+    getStickerForSlot,
+    refetch: refetchGlobalStickers,
+  } = useGlobalRankStickers({
+    rankId: bannerData?.rankId,
+    categoryId: bannerData?.templateId || currentTemplateId,
+  });
+
   // Real-time sync for sticker updates from admin panel
   useRealtimeStickerSync({
-    categoryId: bannerData?.templateId || currentTemplateId,
     rankId: bannerData?.rankId,
+    categoryId: bannerData?.templateId || currentTemplateId,
     onUpdate: () => {
-      // Refetch sticker images when admin updates stickers
-      console.log('Sticker update detected, refetching images...');
-      fetchStickerImages();
+      // Refetch global stickers when admin updates
+      console.log('Admin sticker update detected, syncing...');
+      refetchGlobalStickers();
     }
   });
 
-  // Fetch sticker images for each slot independently
-  const fetchStickerImages = async () => {
-    // If no slotStickers or rankId, fetch all stickers for this rank
-    if (bannerData?.rankId && (!slotStickers || Object.keys(slotStickers).length === 0)) {
-      const {
-        data,
-        error
-      } = await supabase.from('stickers').select('id, image_url, position_x, position_y, scale, rotation, slot_number').eq('rank_id', bannerData.rankId).eq('is_active', true);
-      if (!error && data) {
-        const newStickerImages: Record<number, {
-          id: string;
-          url: string;
-          position_x?: number;
-          position_y?: number;
-          scale?: number;
-          rotation?: number;
-        }[]> = {};
-        data.forEach(s => {
-          if (s.slot_number) {
-            if (!newStickerImages[s.slot_number]) {
-              newStickerImages[s.slot_number] = [];
-            }
-            newStickerImages[s.slot_number].push({
-              id: s.id,
-              url: s.image_url,
-              position_x: s.position_x ?? 50,
-              position_y: s.position_y ?? 50,
-              scale: s.scale ?? 1.0,
-              rotation: s.rotation ?? 0
-            });
-          }
-        });
-        setStickerImages(newStickerImages);
-        return;
-      }
-    }
-
-    // Otherwise use slotStickers structure
-    const newStickerImages: Record<number, {
-      id: string;
-      url: string;
-      position_x?: number;
-      position_y?: number;
-      scale?: number;
-      rotation?: number;
-    }[]> = {};
-    for (const [slotNum, stickerIds] of Object.entries(slotStickers)) {
-      if (stickerIds.length === 0) continue;
-      const {
-        data,
-        error
-      } = await supabase.from('stickers').select('id, image_url, position_x, position_y, scale, rotation').in('id', stickerIds);
-      if (!error && data) {
-        newStickerImages[parseInt(slotNum)] = data.map(s => ({
-          id: s.id,
-          url: s.image_url,
-          position_x: s.position_x ?? 50,
-          position_y: s.position_y ?? 50,
-          scale: s.scale ?? 1.0,
-          rotation: s.rotation ?? 0
-        }));
-      }
-    }
-    setStickerImages(newStickerImages);
-  };
+  // Convert global stickers to stickerImages format for rendering
   useEffect(() => {
-    fetchStickerImages();
-  }, [slotStickers, bannerData?.rankId]);
+    if (globalStickers.length > 0) {
+      const newStickerImages: Record<number, {
+        id: string;
+        url: string;
+        position_x?: number;
+        position_y?: number;
+        scale?: number;
+        rotation?: number;
+      }[]> = {};
+
+      globalStickers.forEach(sticker => {
+        if (!newStickerImages[sticker.slot_number]) {
+          newStickerImages[sticker.slot_number] = [];
+        }
+        newStickerImages[sticker.slot_number].push({
+          id: sticker.id,
+          url: sticker.image_url,
+          position_x: sticker.position_x,
+          position_y: sticker.position_y,
+          scale: sticker.scale,
+          rotation: sticker.rotation,
+        });
+      });
+
+      setStickerImages(newStickerImages);
+    }
+  }, [globalStickers]);
 
   // Auto-select sticker when there's only one in the current slot
   useEffect(() => {
