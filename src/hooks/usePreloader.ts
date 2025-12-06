@@ -43,8 +43,18 @@ export const usePreloader = () => {
       preloadBannerPreviewSystem();
     }
 
-    // On banner create - preload preview
-    if (path.includes('/banner-create')) {
+    // On any banner create page - preload preview system
+    if (
+      path.includes('/banner-create') ||
+      path.includes('/rank-banner-create') ||
+      path.includes('/birthday-banner-create') ||
+      path.includes('/bonanza-banner-create') ||
+      path.includes('/festival-banner-create') ||
+      path.includes('/motivational-banner-create') ||
+      path.includes('/meeting-banner-create') ||
+      path.includes('/anniversary-banner-create') ||
+      path.includes('/story-banner-create')
+    ) {
       preloadBannerPreviewSystem();
     }
 
