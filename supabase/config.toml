@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.process-banner-image]
 verify_jwt = true
+
+[functions.admin-users]
+verify_jwt = false
