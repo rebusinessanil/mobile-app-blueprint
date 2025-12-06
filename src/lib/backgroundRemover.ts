@@ -1,349 +1,391 @@
-import { AutoModel, AutoProcessor, RawImage, env } from '@huggingface/transformers';
+/**
+ * Ultra-fast background remover using MediaPipe Selfie Segmentation
+ * - Runs fully client-side with no API keys
+ * - 256px processing for maximum speed (<1 second)
+ * - Web Worker compositing for smooth UI
+ * - Color-threshold fallback if MediaPipe fails
+ */
 
-// Configure transformers.js
-env.allowLocalModels = false;
-env.useBrowserCache = true;
+import { SelfieSegmentation, Results } from '@mediapipe/selfie_segmentation';
 
-// Mobile detection for adaptive processing
-const isMobile = () => {
-  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
-    (window.innerWidth <= 768);
-};
+// Processing size - small for speed
+const PROCESS_SIZE = 256;
 
-// Adaptive max dimension - 384px for mobile, 512px for desktop
-const getMaxDimension = () => isMobile() ? 384 : 512;
-
-let model: any = null;
-let processor: any = null;
+let segmenter: SelfieSegmentation | null = null;
+let segmenterReady = false;
+let segmenterLoading = false;
 let compositorWorker: Worker | null = null;
 
-// CPU fallback disabled by default - only WebGPU and WASM allowed
-let allowCpuFallback = false;
+// Pending segmentation callback
+let pendingResolve: ((mask: ImageData) => void) | null = null;
+let pendingReject: ((err: Error) => void) | null = null;
 
-export const setAllowCpuFallback = (allow: boolean) => {
-  allowCpuFallback = allow;
-};
-
-// Initialize compositor web worker
-const getCompositorWorker = (): Worker | null => {
+// Initialize compositor worker
+function getWorker(): Worker | null {
   if (typeof Worker === 'undefined') return null;
   
   if (!compositorWorker) {
     try {
       compositorWorker = new Worker(
-        new URL('../workers/backgroundCompositor.worker.ts', import.meta.url),
+        new URL('../workers/segmentation.worker.ts', import.meta.url),
         { type: 'module' }
       );
     } catch (e) {
-      console.warn('Compositor Worker not available');
+      console.warn('Segmentation worker not available:', e);
       return null;
     }
   }
   return compositorWorker;
-};
-
-// Load the RMBG model - WebGPU → WASM fallback (CPU disabled unless explicitly allowed)
-async function loadModel(onProgress?: (stage: string, percent: number) => void) {
-  if (model && processor) return { model, processor };
-  
-  const mobile = isMobile();
-  onProgress?.('Loading AI model...', 10);
-  
-  // Try WebGPU first with fp16 precision
-  try {
-    model = await AutoModel.from_pretrained('briaai/RMBG-1.4', {
-      device: 'webgpu',
-      dtype: 'fp16', // Always use fp16 for performance
-    });
-    
-    processor = await AutoProcessor.from_pretrained('briaai/RMBG-1.4');
-    
-    console.log('RMBG-1.4 loaded with WebGPU (fp16)');
-    onProgress?.('Model loaded', 25);
-    return { model, processor };
-  } catch (webgpuError) {
-    console.log('WebGPU not available, falling back to WASM...');
-    
-    // Try WASM fallback
-    try {
-      model = await AutoModel.from_pretrained('briaai/RMBG-1.4', {
-        device: 'wasm',
-      });
-      
-      processor = await AutoProcessor.from_pretrained('briaai/RMBG-1.4');
-      
-      console.log('RMBG-1.4 loaded with WASM');
-      onProgress?.('Model loaded', 25);
-      return { model, processor };
-    } catch (wasmError) {
-      // CPU fallback only if explicitly allowed
-      if (allowCpuFallback) {
-        console.log('WASM not available, falling back to CPU...');
-        
-        model = await AutoModel.from_pretrained('briaai/RMBG-1.4', {
-          device: 'cpu',
-        });
-        
-        processor = await AutoProcessor.from_pretrained('briaai/RMBG-1.4');
-        
-        console.log('RMBG-1.4 loaded with CPU fallback');
-        onProgress?.('Model loaded', 25);
-        return { model, processor };
-      }
-      
-      throw new Error('WebGPU and WASM not available. CPU fallback is disabled.');
-    }
-  }
 }
 
-function resizeImageIfNeeded(
-  canvas: HTMLCanvasElement, 
-  ctx: CanvasRenderingContext2D, 
-  image: HTMLImageElement
-): { width: number; height: number } {
-  const MAX_IMAGE_DIMENSION = getMaxDimension();
-  let width = image.naturalWidth;
-  let height = image.naturalHeight;
-
-  if (width > MAX_IMAGE_DIMENSION || height > MAX_IMAGE_DIMENSION) {
-    if (width > height) {
-      height = Math.round((height * MAX_IMAGE_DIMENSION) / width);
-      width = MAX_IMAGE_DIMENSION;
-    } else {
-      width = Math.round((width * MAX_IMAGE_DIMENSION) / height);
-      height = MAX_IMAGE_DIMENSION;
-    }
-  }
-
-  canvas.width = width;
-  canvas.height = height;
-  ctx.drawImage(image, 0, 0, width, height);
+// Initialize MediaPipe Selfie Segmentation (Lite model - 2MB)
+async function initSegmenter(): Promise<void> {
+  if (segmenterReady || segmenterLoading) return;
   
-  return { width, height };
-}
-
-// Async chunked mask creation - yields to UI every chunk
-async function createMaskChunked(
-  maskData: Float32Array,
-  maskWidth: number,
-  maskHeight: number,
-  targetWidth: number,
-  targetHeight: number,
-  onProgress?: (stage: string, percent: number) => void
-): Promise<Uint8ClampedArray> {
-  const maskLen = targetWidth * targetHeight;
-  const result = new Uint8ClampedArray(maskLen);
-  const chunkSize = 15000; // Process in chunks to avoid UI freeze
-  
-  const scaleX = maskWidth / targetWidth;
-  const scaleY = maskHeight / targetHeight;
-  
-  let processed = 0;
-  
-  return new Promise((resolve) => {
-    function processChunk() {
-      const end = Math.min(maskLen, processed + chunkSize);
-      
-      for (let i = processed; i < end; i++) {
-        const x = i % targetWidth;
-        const y = Math.floor(i / targetWidth);
-        
-        // Bilinear interpolation for smoother mask
-        const mx = x * scaleX;
-        const my = y * scaleY;
-        const mx0 = Math.floor(mx);
-        const my0 = Math.floor(my);
-        const mx1 = Math.min(mx0 + 1, maskWidth - 1);
-        const my1 = Math.min(my0 + 1, maskHeight - 1);
-        
-        const fx = mx - mx0;
-        const fy = my - my0;
-        
-        const v00 = maskData[my0 * maskWidth + mx0] || 0;
-        const v10 = maskData[my0 * maskWidth + mx1] || 0;
-        const v01 = maskData[my1 * maskWidth + mx0] || 0;
-        const v11 = maskData[my1 * maskWidth + mx1] || 0;
-        
-        const maskValue = (1 - fx) * (1 - fy) * v00 +
-                          fx * (1 - fy) * v10 +
-                          (1 - fx) * fy * v01 +
-                          fx * fy * v11;
-        
-        result[i] = Math.round(maskValue * 255);
-      }
-      
-      processed = end;
-      const progress = 60 + Math.round((processed / maskLen) * 20);
-      onProgress?.('Creating mask...', progress);
-      
-      if (processed < maskLen) {
-        // Yield to UI with setTimeout(0)
-        setTimeout(processChunk, 0);
-      } else {
-        resolve(result);
-      }
-    }
-    
-    processChunk();
-  });
-}
-
-// Compositor worker integration - returns transparent PNG blob
-async function composeInWorker(
-  imageBuffer: ArrayBuffer,
-  imageMime: string,
-  maskUint8: Uint8ClampedArray,
-  width: number,
-  height: number
-): Promise<Blob> {
-  const worker = getCompositorWorker();
-  
-  if (!worker) {
-    throw new Error('Compositor worker not available');
-  }
+  segmenterLoading = true;
   
   return new Promise((resolve, reject) => {
-    const timeout = setTimeout(() => {
-      reject(new Error('Compositor worker timeout'));
-    }, 60000);
-    
-    function onMessage(ev: MessageEvent) {
-      clearTimeout(timeout);
-      worker.removeEventListener('message', onMessage);
-      
-      const { type, blobBuffer, mime, message } = ev.data;
-      if (type === 'RESULT') {
-        // Return transparent PNG blob with preserved alpha
-        const blob = new Blob([blobBuffer], { type: 'image/png' });
-        resolve(blob);
-      } else if (type === 'ERROR') {
-        reject(new Error(message || 'Compositor error'));
-      }
-    }
-    
-    worker.addEventListener('message', onMessage);
-    
     try {
-      // Clone buffers for transfer
-      const maskBuffer = maskUint8.buffer.slice(0);
-      const imgBuffer = imageBuffer.slice(0);
-      
-      worker.postMessage({
-        type: 'COMPOSE',
-        payload: {
-          imageBuffer: imgBuffer,
-          imageMime: imageMime || 'image/png',
-          maskBuffer: maskBuffer,
-          width,
-          height,
-          options: { mime: 'image/png', quality: 1.0 } // PNG with full quality for transparency
+      segmenter = new SelfieSegmentation({
+        locateFile: (file) => {
+          return `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${file}`;
         }
-      }, [imgBuffer, maskBuffer]);
+      });
+      
+      segmenter.setOptions({
+        modelSelection: 0, // 0 = Lite model (faster), 1 = Full model
+        selfieMode: false,
+      });
+      
+      segmenter.onResults((results: Results) => {
+        if (pendingResolve && results.segmentationMask) {
+          // Create canvas to get mask as ImageData
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          
+          if (ctx && results.segmentationMask) {
+            canvas.width = results.segmentationMask.width;
+            canvas.height = results.segmentationMask.height;
+            ctx.drawImage(results.segmentationMask, 0, 0);
+            const maskData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            pendingResolve(maskData);
+          } else {
+            pendingReject?.(new Error('Failed to extract mask'));
+          }
+          pendingResolve = null;
+          pendingReject = null;
+        }
+      });
+      
+      // Initialize the segmenter
+      segmenter.initialize().then(() => {
+        segmenterReady = true;
+        segmenterLoading = false;
+        console.log('MediaPipe Selfie Segmentation (Lite) ready');
+        resolve();
+      }).catch((err) => {
+        segmenterLoading = false;
+        reject(err);
+      });
+      
     } catch (err) {
-      worker.removeEventListener('message', onMessage);
-      clearTimeout(timeout);
+      segmenterLoading = false;
       reject(err);
     }
   });
 }
 
-export const removeBackground = async (
+// Resize image to processing size
+function resizeToProcess(img: HTMLImageElement): { canvas: HTMLCanvasElement; scale: number } {
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d')!;
+  
+  let w = img.naturalWidth;
+  let h = img.naturalHeight;
+  const scale = Math.min(PROCESS_SIZE / w, PROCESS_SIZE / h, 1);
+  
+  w = Math.round(w * scale);
+  h = Math.round(h * scale);
+  
+  canvas.width = w;
+  canvas.height = h;
+  ctx.drawImage(img, 0, 0, w, h);
+  
+  return { canvas, scale };
+}
+
+// Run segmentation and get mask
+async function runSegmentation(canvas: HTMLCanvasElement): Promise<ImageData> {
+  if (!segmenter || !segmenterReady) {
+    throw new Error('Segmenter not ready');
+  }
+  
+  return new Promise((resolve, reject) => {
+    pendingResolve = resolve;
+    pendingReject = reject;
+    
+    // Timeout after 5 seconds
+    const timeout = setTimeout(() => {
+      pendingResolve = null;
+      pendingReject = null;
+      reject(new Error('Segmentation timeout'));
+    }, 5000);
+    
+    const originalResolve = pendingResolve;
+    pendingResolve = (mask: ImageData) => {
+      clearTimeout(timeout);
+      originalResolve(mask);
+    };
+    
+    segmenter!.send({ image: canvas });
+  });
+}
+
+// Apply mask using worker (off main thread)
+async function applyMaskInWorker(
+  imageData: Uint8ClampedArray,
+  maskData: Uint8ClampedArray,
+  width: number,
+  height: number
+): Promise<Blob> {
+  const worker = getWorker();
+  
+  if (!worker) {
+    // Fallback: apply mask on main thread
+    return applyMaskOnMainThread(imageData, maskData, width, height);
+  }
+  
+  return new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => reject(new Error('Worker timeout')), 10000);
+    
+    const handler = (ev: MessageEvent) => {
+      clearTimeout(timeout);
+      worker.removeEventListener('message', handler);
+      
+      if (ev.data.type === 'RESULT') {
+        resolve(new Blob([ev.data.buffer], { type: 'image/png' }));
+      } else if (ev.data.type === 'ERROR') {
+        reject(new Error(ev.data.message));
+      }
+    };
+    
+    worker.addEventListener('message', handler);
+    
+    const imgBuffer = imageData.buffer.slice(0);
+    const maskBuffer = maskData.buffer.slice(0);
+    
+    worker.postMessage({
+      type: 'COMPOSE',
+      payload: { imageData: imgBuffer, maskData: maskBuffer, width, height }
+    }, [imgBuffer, maskBuffer]);
+  });
+}
+
+// Main thread fallback for mask application
+function applyMaskOnMainThread(
+  imageData: Uint8ClampedArray,
+  maskData: Uint8ClampedArray,
+  width: number,
+  height: number
+): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    
+    if (!ctx) {
+      reject(new Error('Could not get canvas context'));
+      return;
+    }
+    
+    const imgData = new ImageData(new Uint8ClampedArray(imageData), width, height);
+    
+    // Apply mask to alpha channel
+    for (let i = 0; i < maskData.length; i++) {
+      imgData.data[i * 4 + 3] = maskData[i];
+    }
+    
+    ctx.putImageData(imgData, 0, 0);
+    
+    canvas.toBlob((blob) => {
+      if (blob) resolve(blob);
+      else reject(new Error('Failed to create blob'));
+    }, 'image/png', 1.0);
+  });
+}
+
+// Color threshold fallback using worker
+async function colorThresholdFallback(
+  canvas: HTMLCanvasElement
+): Promise<Uint8ClampedArray> {
+  const ctx = canvas.getContext('2d')!;
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  
+  const worker = getWorker();
+  
+  if (!worker) {
+    // Simple inline threshold
+    const mask = new Uint8ClampedArray(canvas.width * canvas.height);
+    const data = imageData.data;
+    
+    // Sample edges for background color
+    const bgSamples: number[][] = [];
+    for (let x = 0; x < canvas.width; x += 20) {
+      bgSamples.push([data[x * 4], data[x * 4 + 1], data[x * 4 + 2]]);
+    }
+    const avgBg = bgSamples.reduce((a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]], [0, 0, 0])
+      .map(v => v / bgSamples.length);
+    
+    for (let i = 0; i < mask.length; i++) {
+      const idx = i * 4;
+      const dist = Math.sqrt(
+        Math.pow(data[idx] - avgBg[0], 2) +
+        Math.pow(data[idx + 1] - avgBg[1], 2) +
+        Math.pow(data[idx + 2] - avgBg[2], 2)
+      );
+      mask[i] = dist > 40 ? 255 : 0;
+    }
+    
+    return mask;
+  }
+  
+  return new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => reject(new Error('Threshold timeout')), 5000);
+    
+    const handler = (ev: MessageEvent) => {
+      clearTimeout(timeout);
+      worker.removeEventListener('message', handler);
+      
+      if (ev.data.type === 'MASK_RESULT') {
+        resolve(new Uint8ClampedArray(ev.data.mask));
+      } else if (ev.data.type === 'ERROR') {
+        reject(new Error(ev.data.message));
+      }
+    };
+    
+    worker.addEventListener('message', handler);
+    
+    const buffer = imageData.data.buffer.slice(0);
+    worker.postMessage({
+      type: 'THRESHOLD_MASK',
+      payload: { imageData: buffer, width: canvas.width, height: canvas.height }
+    }, [buffer]);
+  });
+}
+
+/**
+ * Remove background from image
+ * @param imageElement - Source image element
+ * @param onProgress - Progress callback (stage, percent)
+ * @returns Transparent PNG blob
+ */
+export async function removeBackground(
   imageElement: HTMLImageElement,
   onProgress?: (stage: string, percent: number) => void
-): Promise<Blob> => {
-  const mobile = isMobile();
+): Promise<Blob> {
+  const startTime = performance.now();
   
   try {
-    console.log('Starting background removal...', mobile ? '(mobile: fp16, 384px)' : '(desktop: fp16, 512px)');
+    onProgress?.('Initializing...', 10);
     
-    // Step 1: Load model with WebGPU → WASM fallback (CPU disabled)
-    const { model: loadedModel, processor: loadedProcessor } = await loadModel(onProgress);
+    // Initialize segmenter if needed
+    await initSegmenter();
     
-    onProgress?.('Preparing image...', 30);
+    onProgress?.('Processing image...', 30);
     
-    // Step 2: Resize image to optimal dimension
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    if (!ctx) throw new Error('Could not get canvas context');
+    // Resize to processing size
+    const { canvas } = resizeToProcess(imageElement);
+    const width = canvas.width;
+    const height = canvas.height;
     
-    const { width, height } = resizeImageIfNeeded(canvas, ctx, imageElement);
-    console.log(`Processing image at ${width}x${height}`);
+    let maskUint8: Uint8ClampedArray;
     
-    // Get image as PNG for lossless processing
-    const imageUrl = canvas.toDataURL('image/png', 1.0);
-    const rawImage = await RawImage.fromURL(imageUrl);
+    try {
+      onProgress?.('Detecting person...', 50);
+      
+      // Run MediaPipe segmentation
+      const maskData = await runSegmentation(canvas);
+      
+      // Convert mask to alpha values (red channel = person probability)
+      maskUint8 = new Uint8ClampedArray(width * height);
+      for (let i = 0; i < maskUint8.length; i++) {
+        // MediaPipe mask: higher value = more likely person
+        maskUint8[i] = maskData.data[i * 4]; // Use red channel
+      }
+      
+    } catch (segError) {
+      console.warn('MediaPipe failed, using color threshold fallback:', segError);
+      onProgress?.('Using fallback...', 50);
+      
+      // Color threshold fallback
+      maskUint8 = await colorThresholdFallback(canvas);
+    }
     
-    onProgress?.('Detecting person...', 45);
+    onProgress?.('Creating transparent image...', 80);
     
-    // Step 3: Run AI model inference
-    const { pixel_values } = await loadedProcessor(rawImage);
+    // Get original image data at processing size
+    const ctx = canvas.getContext('2d')!;
+    const imageData = ctx.getImageData(0, 0, width, height);
     
-    onProgress?.('Processing...', 55);
-    
-    const { output } = await loadedModel({ input: pixel_values });
-    
-    onProgress?.('Creating mask...', 60);
-    
-    const maskData = output[0][0].data;
-    const maskHeight = output[0][0].dims[0];
-    const maskWidth = output[0][0].dims[1];
-    
-    // Step 4: Create mask with async chunked processing (yields to UI)
-    const maskUint8 = await createMaskChunked(
-      maskData,
-      maskWidth,
-      maskHeight,
+    // Apply mask in worker
+    const result = await applyMaskInWorker(
+      imageData.data,
+      maskUint8,
       width,
-      height,
-      onProgress
+      height
     );
     
-    onProgress?.('Compositing in worker...', 85);
-    
-    // Step 5: Get original image as PNG buffer for compositor worker
-    const imageBlob = await new Promise<Blob>((resolve, reject) => {
-      canvas.toBlob(
-        (blob) => blob ? resolve(blob) : reject(new Error('Failed to create image blob')),
-        'image/png',
-        1.0
-      );
-    });
-    const imageBuffer = await imageBlob.arrayBuffer();
-    
-    // Step 6: Compose in worker using OffscreenCanvas - returns transparent PNG
-    const result = await composeInWorker(imageBuffer, 'image/png', maskUint8, width, height);
+    const elapsed = Math.round(performance.now() - startTime);
+    console.log(`Background removal complete in ${elapsed}ms`);
     
     onProgress?.('Complete!', 100);
-    console.log('Background removal complete - transparent PNG output');
+    
     return result;
     
   } catch (error) {
     console.error('Background removal error:', error);
     throw error;
   }
-};
+}
 
-export const loadImage = (file: Blob): Promise<HTMLImageElement> => {
+/**
+ * Load image from blob/file
+ */
+export function loadImage(file: Blob): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
+    const url = URL.createObjectURL(file);
+    
     img.onload = () => {
-      URL.revokeObjectURL(img.src);
+      URL.revokeObjectURL(url);
       resolve(img);
     };
+    
     img.onerror = () => {
-      URL.revokeObjectURL(img.src);
+      URL.revokeObjectURL(url);
       reject(new Error('Failed to load image'));
     };
-    img.src = URL.createObjectURL(file);
+    
+    img.src = url;
   });
-};
+}
 
-// Clear cached model and worker to free memory
-export const clearModel = () => {
-  model = null;
-  processor = null;
+/**
+ * Clear segmenter and worker to free memory
+ */
+export function clearModel(): void {
+  if (segmenter) {
+    segmenter.close();
+    segmenter = null;
+    segmenterReady = false;
+  }
+  
   if (compositorWorker) {
     compositorWorker.terminate();
     compositorWorker = null;
   }
-};
+  
+  pendingResolve = null;
+  pendingReject = null;
+}
