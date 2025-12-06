@@ -261,15 +261,49 @@ export default function BannerPreview() {
     categoryType: bannerData?.categoryType
   });
 
-  // Real-time sync for sticker updates from admin panel
+  // Real-time sync for sticker updates from admin panel - handles INSERT, UPDATE, DELETE
   useRealtimeStickerSync({
     categoryId: bannerData?.templateId || currentTemplateId,
     rankId: bannerData?.rankId,
+    bannerCategory: bannerData?.categoryType || 'rank',
+    showToast: false, // Don't show toasts to regular users
     onUpdate: () => {
       // Refetch sticker images when admin updates stickers
-      console.log('Sticker update detected, refetching images...');
+      console.log('Sticker update detected via realtime, refetching images...');
       fetchStickerImages();
-    }
+    },
+    onInsert: (newSticker) => {
+      console.log('New sticker inserted via realtime:', newSticker);
+      if (newSticker.slot_number) {
+        setStickerImages(prev => {
+          const slot = newSticker.slot_number;
+          const existing = prev[slot] || [];
+          // Don't add if already exists
+          if (existing.some(s => s.id === newSticker.id)) return prev;
+          return {
+            ...prev,
+            [slot]: [...existing, {
+              id: newSticker.id,
+              url: newSticker.image_url,
+              position_x: newSticker.position_x ?? 50,
+              position_y: newSticker.position_y ?? 50,
+              scale: newSticker.scale ?? 1.0,
+              rotation: newSticker.rotation ?? 0,
+            }],
+          };
+        });
+      }
+    },
+    onDelete: (stickerId) => {
+      console.log('Sticker deleted via realtime:', stickerId);
+      setStickerImages(prev => {
+        const updated = { ...prev };
+        for (const slot in updated) {
+          updated[slot] = updated[slot].filter(s => s.id !== stickerId);
+        }
+        return updated;
+      });
+    },
   });
 
   // Fetch sticker images for each slot independently
@@ -340,6 +374,63 @@ export default function BannerPreview() {
   useEffect(() => {
     fetchStickerImages();
   }, [slotStickers, bannerData?.rankId]);
+
+  // Direct realtime subscription for immediate sticker position/scale/rotation updates
+  useEffect(() => {
+    if (!bannerData?.rankId) return;
+
+    const channel = supabase
+      .channel(`banner-stickers-live-${bannerData.rankId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'stickers',
+        },
+        (payload) => {
+          const updated = payload.new as any;
+          
+          // Only process if this sticker belongs to current rank
+          if (updated.rank_id !== bannerData.rankId) return;
+          
+          console.log('🔄 Live sticker update received:', updated);
+          
+          // Replace sticker in state with updated values - no refetch needed
+          setStickerImages(prev => {
+            const newState = { ...prev };
+            for (const slot in newState) {
+              newState[slot] = newState[slot].map(s =>
+                s.id === updated.id
+                  ? {
+                      id: updated.id,
+                      url: updated.image_url,
+                      position_x: updated.position_x ?? 50,
+                      position_y: updated.position_y ?? 50,
+                      scale: updated.scale ?? 1.0,
+                      rotation: updated.rotation ?? 0,
+                    }
+                  : s
+              );
+            }
+            return newState;
+          });
+          
+          // Also update scale state if this is the selected sticker
+          if (selectedStickerId === updated.id) {
+            setStickerScale(prev => ({
+              ...prev,
+              [updated.id]: updated.scale ?? 1.0,
+            }));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [bannerData?.rankId, selectedStickerId]);
 
   // Auto-select sticker when there's only one in the current slot
   useEffect(() => {
@@ -1071,33 +1162,61 @@ export default function BannerPreview() {
       return;
     }
     const currentSlot = selectedTemplate + 1;
-    const stickers = stickerImages[currentSlot] || [];
-    const selectedSticker = stickers.find(s => s.id === selectedStickerId);
+    const stickersInSlot = stickerImages[currentSlot] || [];
+    const selectedSticker = stickersInSlot.find(s => s.id === selectedStickerId);
     if (!selectedSticker) {
       toast.error("Sticker not found");
       return;
     }
     setIsSavingSticker(true);
     try {
-      const {
-        error
-      } = await supabase.from("stickers").update({
-        position_x: selectedSticker.position_x || 0,
-        position_y: selectedSticker.position_y || 0,
-        scale: stickerScale[selectedStickerId] || 2.5
-      }).eq("id", selectedStickerId);
+      // Include all transform fields including rotation, and return the updated row
+      const { data, error } = await supabase
+        .from("stickers")
+        .update({
+          position_x: selectedSticker.position_x ?? 50,
+          position_y: selectedSticker.position_y ?? 50,
+          scale: stickerScale[selectedStickerId] ?? 2.5,
+          rotation: selectedSticker.rotation ?? 0,
+          slot_number: currentSlot,
+          banner_category: bannerData?.categoryType || 'rank',
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", selectedStickerId)
+        .select('*')
+        .single();
+
       if (error) throw error;
+
+      console.log('✅ Sticker saved successfully:', data);
 
       // Store current state as original after successful save
       setOriginalStickerStates(prev => ({
         ...prev,
         [selectedStickerId]: {
-          position_x: selectedSticker.position_x || 0,
-          position_y: selectedSticker.position_y || 0,
-          scale: stickerScale[selectedStickerId] || 2.5
+          position_x: selectedSticker.position_x ?? 50,
+          position_y: selectedSticker.position_y ?? 50,
+          scale: stickerScale[selectedStickerId] ?? 2.5
         }
       }));
-      toast.success("Sticker settings saved successfully!");
+      
+      // Update local state with saved data (will also trigger via realtime)
+      setStickerImages(prev => ({
+        ...prev,
+        [currentSlot]: (prev[currentSlot] || []).map(sticker =>
+          sticker.id === selectedStickerId
+            ? {
+                ...sticker,
+                position_x: data.position_x,
+                position_y: data.position_y,
+                scale: data.scale,
+                rotation: data.rotation,
+              }
+            : sticker
+        ),
+      }));
+
+      toast.success("Sticker settings saved! Changes synced to all users.");
     } catch (error) {
       console.error("Error saving sticker:", error);
       toast.error("Failed to save sticker settings");
