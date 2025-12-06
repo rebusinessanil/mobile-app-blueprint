@@ -7,7 +7,7 @@ import UplineCarousel from "@/components/UplineCarousel";
 import BackgroundRemoverModal from "@/components/BackgroundRemoverModal";
 import ImageCropper from "@/components/ImageCropper";
 import { toast } from "sonner";
-import { useBackgroundRemoval } from "@/hooks/useBackgroundRemoval";
+import { useBackgroundRemovalFast } from "@/hooks/useBackgroundRemovalFast";
 import { useProfile } from "@/hooks/useProfile";
 import { useBannerSettings } from "@/hooks/useBannerSettings";
 import { useBirthday } from "@/hooks/useBirthdays";
@@ -45,8 +45,8 @@ export default function BirthdayBannerCreate() {
   const [showCropper, setShowCropper] = useState(false);
   const [slotStickers, setSlotStickers] = useState<Record<number, string[]>>({});
 
-  // Unified background removal hook
-  const bgRemoval = useBackgroundRemoval({
+  // Fast backend background removal hook
+  const bgRemoval = useBackgroundRemovalFast({
     onSuccess: (processedUrl) => setPhoto(processedUrl)
   });
 
