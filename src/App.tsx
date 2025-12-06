@@ -3,11 +3,12 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
-import { Suspense, lazy, memo, Component, ReactNode, useMemo } from "react";
+import { Suspense, lazy, memo, Component, ReactNode, useMemo, useEffect } from "react";
 import WhatsAppSupport from "@/components/WhatsAppSupport";
 import OfflineBanner from "@/components/OfflineBanner";
 import AuthGuard from "@/components/AuthGuard";
 import { queryClient } from "@/lib/queryConfig";
+import { preloadCriticalModules, preloadFonts } from "@/lib/preloader";
 
 // Skeleton loaders
 import {
@@ -21,27 +22,35 @@ import {
   GenericSkeleton,
 } from "@/components/skeletons";
 
-// Critical path - load immediately
+// Critical path - load immediately for instant access
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
+import BannerPreview from "./pages/BannerPreview";
+import Categories from "./pages/Categories";
+import RankSelection from "./pages/RankSelection";
 
-// Lazy load all non-critical pages with retry logic
+// Start preloading fonts and modules immediately on script load
+preloadFonts();
+setTimeout(() => preloadCriticalModules(), 50);
+
+// Lazy load with retry and cache
 const lazyWithRetry = (componentImport: () => Promise<{ default: React.ComponentType<unknown> }>) =>
   lazy(async () => {
     try {
       return await componentImport();
     } catch (error) {
       console.warn('Lazy load failed, retrying...', error);
+      // Clear module cache and retry
+      await new Promise(r => setTimeout(r, 100));
       return await componentImport();
     }
   });
 
-const Categories = lazyWithRetry(() => import("./pages/Categories"));
+// Secondary pages - lazy load with retry
 const Messages = lazyWithRetry(() => import("./pages/Messages"));
 const Profile = lazyWithRetry(() => import("./pages/Profile"));
 const ProfileEdit = lazyWithRetry(() => import("./pages/ProfileEdit"));
-const RankSelection = lazyWithRetry(() => import("./pages/RankSelection"));
 const RankBannerCreate = lazyWithRetry(() => import("./pages/RankBannerCreate"));
 const BonanzaTripsSelection = lazyWithRetry(() => import("./pages/BonanzaTripsSelection"));
 const BonanzaBannerCreate = lazyWithRetry(() => import("./pages/BonanzaBannerCreate"));
@@ -58,7 +67,6 @@ const MotivationalPreview = lazyWithRetry(() => import("./pages/MotivationalPrev
 const StoryBannerCreate = lazyWithRetry(() => import("./pages/StoryBannerCreate"));
 const StoryPreview = lazyWithRetry(() => import("./pages/StoryPreview"));
 const BannerSettings = lazyWithRetry(() => import("./pages/BannerSettings"));
-const BannerPreview = lazyWithRetry(() => import("./pages/BannerPreview"));
 const Wallet = lazyWithRetry(() => import("./pages/Wallet"));
 const MyDownloads = lazyWithRetry(() => import("./pages/MyDownloads"));
 const Transactions = lazyWithRetry(() => import("./pages/Transactions"));

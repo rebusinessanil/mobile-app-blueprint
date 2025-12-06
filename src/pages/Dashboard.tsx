@@ -22,6 +22,7 @@ import BannerCard from "@/components/dashboard/BannerCard";
 import WelcomeBonusModal from "@/components/WelcomeBonusModal";
 import { useWelcomeBonus } from "@/hooks/useWelcomeBonus";
 import DashboardSkeleton from "@/components/skeletons/DashboardSkeleton";
+import { preloadBannerPreviewSystem, preloadImages } from "@/lib/preloader";
 
 export default function Dashboard() {
   const {
@@ -122,7 +123,25 @@ export default function Dashboard() {
     }) => {
       setUserId(session?.user?.id ?? null);
     });
+    
+    // Preload Banner Preview system in background for instant navigation
+    preloadBannerPreviewSystem();
   }, []);
+
+  // Preload template images when data loads
+  useEffect(() => {
+    if (!isDataLoading) {
+      const imageUrls = [
+        ...ranks.map(r => r.icon).filter(Boolean),
+        ...trips.map(t => t.trip_image_url).filter(Boolean),
+        ...birthdays.map(b => b.Birthday_image_url).filter(Boolean),
+        ...allTemplates.slice(0, 10).map(t => t.cover_thumbnail_url).filter(Boolean),
+      ];
+      if (imageUrls.length > 0) {
+        preloadImages(imageUrls as string[]);
+      }
+    }
+  }, [isDataLoading, ranks, trips, birthdays, allTemplates]);
 
   // Memoized quick actions
   const quickActions = useMemo(() => [{
