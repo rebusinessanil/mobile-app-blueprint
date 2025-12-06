@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback, memo } from "react";
 import { Link } from "react-router-dom";
 import BottomNav from "@/components/BottomNav";
 import { Menu, Bell, Star, Calendar, Zap, Award, Wallet } from "lucide-react";
@@ -87,35 +87,30 @@ export default function Dashboard() {
     tripsLoading || birthdaysLoading || anniversariesLoading || 
     motivationalLoading || festivalsLoading || storiesLoading || storiesEventsLoading;
 
-  // Get rank templates with covers
-  const getRankTemplates = () => {
+  // Memoized template filters to prevent recalculation
+  const getRankTemplates = useMemo(() => {
     return allTemplates.filter(t => t.rank_id && ranks.some(r => r.id === t.rank_id));
-  };
+  }, [allTemplates, ranks]);
 
-  // Get trip templates with covers
-  const getTripTemplates = () => {
+  const getTripTemplates = useMemo(() => {
     return allTemplates.filter(t => t.trip_id && trips.some(trip => trip.id === t.trip_id));
-  };
+  }, [allTemplates, trips]);
 
-  // Get birthday templates with covers
-  const getBirthdayTemplates = () => {
+  const getBirthdayTemplates = useMemo(() => {
     return allTemplates.filter(t => t.birthday_id && birthdays.some(birthday => birthday.id === t.birthday_id));
-  };
+  }, [allTemplates, birthdays]);
 
-  // Get anniversary templates with covers
-  const getAnniversaryTemplates = () => {
+  const getAnniversaryTemplates = useMemo(() => {
     return allTemplates.filter(t => t.anniversary_id && anniversaries.some(anniversary => anniversary.id === t.anniversary_id));
-  };
+  }, [allTemplates, anniversaries]);
 
-  // Get motivational banner templates with covers
-  const getMotivationalBannerTemplates = () => {
+  const getMotivationalBannerTemplates = useMemo(() => {
     return allTemplates.filter(t => t.motivational_banner_id && motivationalBanners.some(mb => mb.id === t.motivational_banner_id));
-  };
+  }, [allTemplates, motivationalBanners]);
 
-  // Get festival templates with covers
-  const getFestivalTemplates = () => {
+  const getFestivalTemplates = useMemo(() => {
     return allTemplates.filter(t => t.festival_id && festivals.some(f => f.id === t.festival_id));
-  };
+  }, [allTemplates, festivals]);
 
   // Get authenticated user
   useEffect(() => {
@@ -127,7 +122,9 @@ export default function Dashboard() {
       setUserId(session?.user?.id ?? null);
     });
   }, []);
-  const quickActions = [{
+
+  // Memoized quick actions
+  const quickActions = useMemo(() => [{
     icon: Calendar,
     label: "Festival Banner",
     color: "bg-icon-purple"
@@ -143,12 +140,12 @@ export default function Dashboard() {
     label: "Special Offer Today",
     color: "bg-secondary",
     special: true
-  }];
+  }], []);
 
-  // Get templates for each category
-  const getCategoryTemplates = (categoryId: string) => {
+  // Memoized category templates getter
+  const getCategoryTemplates = useCallback((categoryId: string) => {
     return allTemplates.filter(t => t.category_id === categoryId).slice(0, 3);
-  };
+  }, [allTemplates]);
   // Show blank loading state until all data is ready - prevents flash
   if (isDataLoading) {
     return (
@@ -278,9 +275,8 @@ export default function Dashboard() {
                 </Link>
               </div>
 
-              {/* Rank Promotion - 3 per row with 12px gap */}
-              {isRankPromotion ? <div className="flex gap-3 overflow-x-auto pb-2 pl-4 pr-4 scrollbar-hide scroll-smooth">
-                  {getRankTemplates().map(template => {
+              {isRankPromotion ? <div className="flex gap-3 overflow-x-auto pb-2 pl-4 pr-4 scrollbar-hide scroll-smooth transform-gpu">
+                  {getRankTemplates.map(template => {
               const rank = ranks.find(r => r.id === template.rank_id);
               return <BannerCard 
                 key={template.id}
@@ -292,9 +288,9 @@ export default function Dashboard() {
                 linkTo={`/rank-banner-create/${template.rank_id}`}
               />;
             })}
-                </div> : isBonanzaPromotion ? (/* Bonanza Trips - 3 per row */
-          <div className="flex gap-3 overflow-x-auto pb-2 pl-4 pr-4 scrollbar-hide scroll-smooth">
-                  {getTripTemplates().map(template => {
+                </div> : isBonanzaPromotion ? (
+          <div className="flex gap-3 overflow-x-auto pb-2 pl-4 pr-4 scrollbar-hide scroll-smooth transform-gpu">
+                  {getTripTemplates.map(template => {
               const trip = trips.find(t => t.id === template.trip_id);
               return <BannerCard 
                 key={template.id}
@@ -306,9 +302,9 @@ export default function Dashboard() {
                 linkTo={`/banner-create/bonanza?tripId=${template.trip_id}`}
               />;
             })}
-                </div>) : isBirthday ? (/* Birthday - 3 per row */
-          <div className="flex gap-3 overflow-x-auto pb-2 pl-4 pr-4 scrollbar-hide scroll-smooth">
-                  {getBirthdayTemplates().map(template => {
+                </div>) : isBirthday ? (
+          <div className="flex gap-3 overflow-x-auto pb-2 pl-4 pr-4 scrollbar-hide scroll-smooth transform-gpu">
+                  {getBirthdayTemplates.map(template => {
               const birthday = birthdays.find(b => b.id === template.birthday_id);
               return <BannerCard 
                 key={template.id}
@@ -320,9 +316,9 @@ export default function Dashboard() {
                 linkTo={`/banner-create/birthday?birthdayId=${template.birthday_id}`}
               />;
             })}
-                </div>) : isAnniversary ? (/* Anniversary - 3 per row */
-          <div className="flex gap-3 overflow-x-auto pb-2 pl-4 pr-4 scrollbar-hide scroll-smooth">
-                  {getAnniversaryTemplates().map(template => {
+                </div>) : isAnniversary ? (
+          <div className="flex gap-3 overflow-x-auto pb-2 pl-4 pr-4 scrollbar-hide scroll-smooth transform-gpu">
+                  {getAnniversaryTemplates.map(template => {
               const anniversary = anniversaries.find(a => a.id === template.anniversary_id);
               return <BannerCard 
                 key={template.id}
@@ -334,9 +330,9 @@ export default function Dashboard() {
                 linkTo={`/banner-create/anniversary?anniversaryId=${template.anniversary_id}`}
               />;
             })}
-                </div>) : isMotivational ? (/* Motivational - 3 per row */
-          <div className="flex gap-3 overflow-x-auto pb-2 pl-4 pr-4 scrollbar-hide scroll-smooth">
-                  {getMotivationalBannerTemplates().map(template => {
+                </div>) : isMotivational ? (
+          <div className="flex gap-3 overflow-x-auto pb-2 pl-4 pr-4 scrollbar-hide scroll-smooth transform-gpu">
+                  {getMotivationalBannerTemplates.map(template => {
               const motivationalBanner = motivationalBanners.find(mb => mb.id === template.motivational_banner_id);
               return <BannerCard 
                 key={template.id}
@@ -348,9 +344,9 @@ export default function Dashboard() {
                 linkTo={`/motivational-preview/${template.motivational_banner_id}`}
               />;
             })}
-                </div>) : isFestival ? (/* Festival - 3 per row */
-          <div className="flex gap-3 overflow-x-auto pb-2 pl-4 pr-4 scrollbar-hide scroll-smooth">
-                  {getFestivalTemplates().map(template => {
+                </div>) : isFestival ? (
+          <div className="flex gap-3 overflow-x-auto pb-2 pl-4 pr-4 scrollbar-hide scroll-smooth transform-gpu">
+                  {getFestivalTemplates.map(template => {
               const festival = festivals.find(f => f.id === template.festival_id);
               return <BannerCard 
                 key={template.id}

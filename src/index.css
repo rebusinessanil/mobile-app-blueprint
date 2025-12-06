@@ -1,3 +1,4 @@
+/* Optimized font loading - swap for faster rendering */
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Inter:wght@400;500;600&display=swap');
 
 @tailwind base;
@@ -11,6 +12,33 @@
   }
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
+  }
+  
+  /* GPU-accelerated transforms */
+  .transform-gpu {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+  }
+  
+  /* Will-change hints for animations */
+  .will-change-transform {
+    will-change: transform;
+  }
+  
+  .will-change-opacity {
+    will-change: opacity;
+  }
+  
+  /* Smooth scroll optimization */
+  .smooth-scroll {
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Content visibility for off-screen elements */
+  .content-visibility-auto {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 300px;
   }
 }
 
