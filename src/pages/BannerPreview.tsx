@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft, Settings, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,8 @@ import download from "downloadjs";
 import { useRealtimeStickerSync } from "@/hooks/useRealtimeStickerSync";
 import { useWalletDeduction } from "@/hooks/useWalletDeduction";
 import InsufficientBalanceModal from "@/components/InsufficientBalanceModal";
+import BannerPreviewSkeleton from "@/components/skeletons/BannerPreviewSkeleton";
+
 interface Upline {
   id: string;
   name: string;
@@ -429,6 +431,30 @@ export default function BannerPreview() {
   if (!bannerData) {
     navigate("/rank-selection");
     return null;
+  }
+
+  // ============ LOADING GATE: Show skeleton until all critical assets are ready ============
+  const isAssetsReady = useMemo(() => {
+    // Check if profile data is loaded
+    const hasProfile = !!profile;
+    
+    // Check if backgrounds are loaded (not loading)
+    const hasBackgrounds = !backgroundsLoading && globalBackgroundSlots.length > 0;
+    
+    // Check if user ID is set
+    const hasUserId = !!userId;
+    
+    // For non-motivational, check if profile photos loaded
+    const hasPhotos = bannerData?.categoryType === 'motivational' || bannerData?.categoryType === 'festival' || bannerData?.categoryType === 'story' 
+      ? true 
+      : profilePhotos.length > 0 || !!profile?.profile_photo;
+    
+    return hasProfile && hasBackgrounds && hasUserId && hasPhotos;
+  }, [profile, backgroundsLoading, globalBackgroundSlots.length, userId, profilePhotos.length, bannerData?.categoryType]);
+
+  // Show skeleton while assets are loading
+  if (!isAssetsReady) {
+    return <BannerPreviewSkeleton />;
   }
 
   // Category-specific content render function
