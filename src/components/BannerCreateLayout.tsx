@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Info, Camera, Upload } from "lucide-react";
+import { ArrowLeft, Info, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -56,6 +56,17 @@ export default function BannerCreateLayout({
 }: BannerCreateLayoutProps) {
   const navigate = useNavigate();
 
+  const handleAddUpline = () => {
+    if (uplines.length < 4) {
+      const newUpline: Upline = {
+        id: `upline-${Date.now()}`,
+        name: `Upline ${uplines.length + 1}`,
+        avatar: undefined
+      };
+      onUplinesChange([...uplines, newUpline]);
+    }
+  };
+
   // Ensure we always have 4 upline slots for display
   const displayUplines = [...uplines];
   while (displayUplines.length < 4) {
@@ -69,13 +80,7 @@ export default function BannerCreateLayout({
   return (
     <div className="min-h-screen bg-black pb-6">
       {/* Header */}
-      <header 
-        className="sticky top-0 bg-black z-40 px-4 py-3"
-        style={{
-          borderBottom: '2px solid #FFD700',
-          boxShadow: '0 2px 10px rgba(255, 215, 0, 0.3)'
-        }}
-      >
+      <header className="sticky top-0 bg-black z-40 px-4 py-3 border-b-2 border-[#FFD700]">
         <div className="flex items-center justify-between">
           <button 
             onClick={() => !isProcessing && navigate(-1)} 
@@ -84,137 +89,51 @@ export default function BannerCreateLayout({
           >
             <ArrowLeft className="w-6 h-6 text-white" />
           </button>
-          <h1 
-            className="text-2xl font-bold tracking-wider uppercase"
-            style={{ 
-              color: '#FFD700',
-              fontFamily: 'Georgia, serif',
-              textShadow: '0 0 10px rgba(255, 215, 0, 0.5)'
-            }}
-          >
+          <h1 className="text-2xl font-bold text-[#FFD700] tracking-wider uppercase" style={{ fontFamily: 'serif' }}>
             {title}
           </h1>
           <button className="w-10 h-10 flex items-center justify-center">
-            <div 
-              className="w-7 h-7 rounded-full border-2 flex items-center justify-center"
-              style={{ borderColor: 'rgba(255, 255, 255, 0.6)' }}
-            >
-              <span className="text-white/60 text-sm font-serif">i</span>
-            </div>
+            <Info className="w-6 h-6 text-white/70" />
           </button>
         </div>
       </header>
 
       <div className="px-4 py-4 space-y-4">
-        {/* Title Block with Medal and Decorations */}
-        <div 
-          className="relative overflow-hidden py-4 px-3"
-          style={{
-            background: 'linear-gradient(135deg, rgba(0,0,0,0.9) 0%, rgba(20,20,30,0.9) 100%)'
-          }}
-        >
-          {/* Decorative teal/cyan curves on the right */}
-          <div className="absolute top-0 right-0 w-full h-full pointer-events-none overflow-hidden">
-            <svg 
-              className="absolute top-0 right-0" 
-              width="200" 
-              height="120" 
-              viewBox="0 0 200 120"
-              style={{ opacity: 0.8 }}
-            >
-              <path 
-                d="M200 0 Q150 30, 180 60 Q210 90, 160 120 L200 120 Z" 
-                fill="url(#tealGrad1)"
-              />
-              <path 
-                d="M200 20 Q160 50, 190 80 Q220 110, 180 120 L200 120 Z" 
-                fill="url(#tealGrad2)"
-              />
-              <defs>
-                <linearGradient id="tealGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#00CED1" stopOpacity="0.6"/>
-                  <stop offset="100%" stopColor="#008B8B" stopOpacity="0.3"/>
-                </linearGradient>
-                <linearGradient id="tealGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#20B2AA" stopOpacity="0.5"/>
-                  <stop offset="100%" stopColor="#006666" stopOpacity="0.2"/>
-                </linearGradient>
-              </defs>
-            </svg>
-          </div>
-
-          {/* Golden ribbon decoration at top-left */}
-          <div className="absolute top-0 left-16 w-8 h-20 pointer-events-none">
-            <svg width="40" height="80" viewBox="0 0 40 80">
-              <path 
-                d="M15 0 L15 50 L5 65 L15 55 L15 70 L25 55 L25 65 L15 50" 
-                fill="url(#goldRibbon)"
-              />
-              <defs>
-                <linearGradient id="goldRibbon" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="#B8860B"/>
-                  <stop offset="50%" stopColor="#FFD700"/>
-                  <stop offset="100%" stopColor="#B8860B"/>
-                </linearGradient>
-              </defs>
-            </svg>
+        {/* Title Block with Badge */}
+        <div className="relative overflow-hidden rounded-lg py-4">
+          {/* Decorative curves */}
+          <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
+            <div className="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-[#FFD700]/20 to-transparent rounded-full -translate-x-1/2 -translate-y-1/2" />
+            <div className="absolute top-0 right-0 w-48 h-24 bg-gradient-to-l from-cyan-500/20 to-transparent" />
           </div>
           
           <div className="flex items-center gap-4 relative z-10">
-            {/* Bronze Medal Badge with Laurel Wreath */}
-            <div className="w-24 h-28 flex-shrink-0 relative flex items-center justify-center">
-              {/* Laurel wreath */}
-              <svg className="absolute w-24 h-24" viewBox="0 0 100 100">
-                {/* Left laurel */}
-                <g fill="#B8860B" opacity="0.9">
-                  <ellipse cx="25" cy="35" rx="8" ry="15" transform="rotate(-30 25 35)"/>
-                  <ellipse cx="20" cy="50" rx="7" ry="13" transform="rotate(-20 20 50)"/>
-                  <ellipse cx="18" cy="65" rx="6" ry="12" transform="rotate(-10 18 65)"/>
-                  <ellipse cx="22" cy="78" rx="5" ry="10" transform="rotate(5 22 78)"/>
-                </g>
-                {/* Right laurel */}
-                <g fill="#B8860B" opacity="0.9">
-                  <ellipse cx="75" cy="35" rx="8" ry="15" transform="rotate(30 75 35)"/>
-                  <ellipse cx="80" cy="50" rx="7" ry="13" transform="rotate(20 80 50)"/>
-                  <ellipse cx="82" cy="65" rx="6" ry="12" transform="rotate(10 82 65)"/>
-                  <ellipse cx="78" cy="78" rx="5" ry="10" transform="rotate(-5 78 78)"/>
-                </g>
-              </svg>
-              {/* Medal circle */}
-              <div 
-                className="w-16 h-16 rounded-full flex items-center justify-center relative z-10"
-                style={{
-                  background: 'linear-gradient(145deg, #CD7F32 0%, #8B4513 50%, #CD7F32 100%)',
-                  boxShadow: '0 4px 15px rgba(205, 127, 50, 0.5), inset 0 2px 4px rgba(255,255,255,0.3)'
-                }}
-              >
-                <span 
-                  className="text-3xl font-bold text-white"
-                  style={{ textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}
-                >
-                  3
-                </span>
+            {/* Bronze Medal Badge */}
+            <div className="w-24 h-24 flex-shrink-0 relative">
+              <div className="absolute inset-0 flex items-center justify-center">
+                {/* Golden laurel wreath effect */}
+                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#CD7F32] via-[#B87333] to-[#8B4513] flex items-center justify-center shadow-lg shadow-[#FFD700]/30">
+                  <span className="text-3xl font-bold text-white" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>3</span>
+                </div>
               </div>
+              {/* Decorative ribbon */}
+              <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-16 h-6 bg-gradient-to-r from-[#8B0000] via-[#DC143C] to-[#8B0000] rounded-b-lg" />
             </div>
             
             <div className="flex-1">
               <h2 
-                className="text-2xl font-bold mb-1"
+                className="text-2xl font-bold text-[#FFD700] mb-1"
                 style={{ 
-                  color: '#FFD700',
-                  textShadow: '0 0 20px #FFD700, 0 0 40px #FFD700, 0 0 60px #FFD700',
-                  fontFamily: 'Georgia, serif',
-                  letterSpacing: '2px'
+                  textShadow: '0 0 20px #FFD700, 0 0 40px #FFD700',
+                  fontFamily: 'serif'
                 }}
               >
                 PLEASE FILL UP
               </h2>
               <p 
-                className="text-xl font-semibold"
+                className="text-xl font-semibold text-cyan-400"
                 style={{ 
-                  color: '#00CED1',
-                  textShadow: '0 0 15px #00CED1, 0 0 30px #00CED1',
-                  fontFamily: 'Georgia, serif'
+                  textShadow: '0 0 15px #00FFFF, 0 0 30px #00FFFF'
                 }}
               >
                 {subtitle}
@@ -228,62 +147,53 @@ export default function BannerCreateLayout({
           className="rounded-2xl p-4"
           style={{
             border: '2px solid #FFD700',
-            boxShadow: '0 0 15px rgba(255, 215, 0, 0.25), inset 0 0 20px rgba(255, 215, 0, 0.05)',
-            background: 'rgba(0, 0, 0, 0.6)'
+            boxShadow: '0 0 15px rgba(255, 215, 0, 0.3), inset 0 0 15px rgba(255, 215, 0, 0.1)'
           }}
         >
-          <div className="flex justify-between items-center px-2">
+          <div className="flex justify-between items-center">
             {displayUplines.slice(0, 4).map((upline, index) => (
               <div key={upline.id} className="flex flex-col items-center gap-2">
                 <div 
-                  className="w-16 h-16 rounded-full flex items-center justify-center overflow-hidden"
+                  className="w-16 h-16 rounded-full bg-gray-800 flex items-center justify-center overflow-hidden"
                   style={{
-                    border: '2.5px solid #FFD700',
-                    boxShadow: '0 0 12px rgba(255, 215, 0, 0.5), inset 0 0 8px rgba(0,0,0,0.5)',
-                    background: 'linear-gradient(180deg, #2a2a2a 0%, #1a1a1a 100%)'
+                    border: '2px solid #FFD700',
+                    boxShadow: '0 0 10px rgba(255, 215, 0, 0.4)'
                   }}
                 >
                   {upline.avatar ? (
                     <img src={upline.avatar} alt={upline.name} className="w-full h-full object-cover" />
                   ) : (
                     <svg className="w-10 h-10 text-gray-500" viewBox="0 0 24 24" fill="currentColor">
-                      <circle cx="12" cy="8" r="4"/>
-                      <path d="M12 14c-6 0-8 3-8 5v1h16v-1c0-2-2-5-8-5z"/>
+                      <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
                     </svg>
                   )}
                 </div>
-                <span 
-                  className="text-xs font-medium"
-                  style={{ color: '#FFD700' }}
-                >
-                  Upline {index + 1}
-                </span>
+                <span className="text-xs text-[#FFD700] font-medium">Upline {index + 1}</span>
               </div>
             ))}
           </div>
         </div>
 
         {/* Form and Photo Section */}
-        <div className="flex gap-3">
+        <div className="flex gap-4">
           {/* Left: Form Fields */}
-          <div className="flex-1 space-y-3">
+          <div className="flex-1 space-y-4">
             {formFields.map((field) => (
               <div 
                 key={field.name}
                 className="rounded-xl p-3"
                 style={{
-                  border: '1.5px solid #FFD700',
-                  boxShadow: '0 0 10px rgba(255, 215, 0, 0.15)',
-                  background: 'rgba(0, 0, 0, 0.4)'
+                  border: '1px solid #FFD700',
+                  boxShadow: '0 0 10px rgba(255, 215, 0, 0.2)'
                 }}
               >
-                <label className="text-sm text-white mb-2 block font-medium">
+                <label className="text-sm text-white mb-2 block">
                   {field.label}
-                  {field.optional && <span className="text-gray-500 ml-1 font-normal">(optional)</span>}
+                  {field.optional && <span className="text-gray-500 ml-1">(optional)</span>}
                 </label>
                 <div className="relative">
                   {field.prefix && (
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-lg">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
                       {field.prefix}
                     </span>
                   )}
@@ -301,10 +211,7 @@ export default function BannerCreateLayout({
                     }} 
                     placeholder={field.placeholder}
                     maxLength={field.maxLength}
-                    className={`bg-gray-900/60 border border-gray-700 text-white h-11 focus-visible:ring-1 focus-visible:ring-[#FFD700] focus-visible:border-[#FFD700] placeholder:text-gray-500 rounded-lg ${field.prefix ? 'pl-8' : ''}`}
-                    style={{
-                      boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.3)'
-                    }}
+                    className={`bg-gray-900/50 border-0 text-white h-11 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-gray-600 rounded-lg ${field.prefix ? 'pl-8' : ''}`}
                   />
                 </div>
                 {field.showCounter && field.maxLength && (
@@ -319,12 +226,11 @@ export default function BannerCreateLayout({
           {/* Right: Photo Upload */}
           {showPhotoUpload && (
             <div 
-              className="w-36 flex-shrink-0 rounded-xl overflow-hidden relative"
+              className="w-40 flex-shrink-0 rounded-xl overflow-hidden"
               style={{
                 border: '2px solid #FFD700',
                 boxShadow: '0 0 15px rgba(255, 215, 0, 0.3)',
-                aspectRatio: '3/4',
-                background: 'linear-gradient(180deg, #1a1a1a 0%, #0a0a0a 100%)'
+                aspectRatio: '3/4'
               }}
             >
               {photo ? (
@@ -333,37 +239,25 @@ export default function BannerCreateLayout({
                   <img src={photo} alt="Uploaded" className="w-full h-full object-cover" />
                 </label>
               ) : (
-                <label className="w-full h-full flex flex-col items-center justify-end pb-4 cursor-pointer relative">
+                <label className="w-full h-full bg-gray-900 flex flex-col items-center justify-end pb-6 cursor-pointer relative">
                   <input type="file" accept="image/*" onChange={onPhotoUpload} className="hidden" />
                   {/* Silhouette */}
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <svg 
-                      className="w-full h-3/4" 
-                      viewBox="0 0 100 140" 
-                      fill="rgba(30, 30, 30, 0.9)"
-                    >
-                      {/* Head */}
-                      <ellipse cx="50" cy="35" rx="22" ry="28" />
-                      {/* Body/Shoulders */}
-                      <path d="M10 140 Q10 95 50 85 Q90 95 90 140 Z" />
+                    <svg className="w-32 h-40 text-gray-800" viewBox="0 0 100 120" fill="currentColor">
+                      <ellipse cx="50" cy="35" rx="25" ry="30" />
+                      <path d="M10 120 Q10 80 50 70 Q90 80 90 120 Z" />
                     </svg>
                   </div>
                   {/* Camera icon and text */}
                   <div className="relative z-10 flex flex-col items-center gap-1">
-                    <div className="relative">
-                      <Camera 
-                        className="w-10 h-10" 
-                        style={{ color: '#FFD700' }}
-                        strokeWidth={1.5}
-                      />
-                      <Upload 
-                        className="w-4 h-4 absolute -top-1 -right-1" 
-                        style={{ color: '#FFD700' }}
-                        strokeWidth={2}
-                      />
+                    <div 
+                      className="w-12 h-12 rounded-lg flex items-center justify-center"
+                      style={{ color: '#FFD700' }}
+                    >
+                      <Camera className="w-8 h-8" />
                     </div>
                     <span 
-                      className="text-xs font-medium text-center"
+                      className="text-xs font-medium"
                       style={{ color: '#FFD700' }}
                     >
                       Upload Your Photo
@@ -380,10 +274,9 @@ export default function BannerCreateLayout({
           <Button 
             onClick={onReset} 
             variant="outline" 
-            className="flex-1 h-12 bg-black text-white hover:bg-gray-900 font-bold text-lg rounded-xl uppercase tracking-wider"
+            className="flex-1 h-12 bg-black border-2 border-[#FFD700] text-white hover:bg-[#FFD700]/10 font-bold text-lg rounded-xl"
             disabled={isProcessing}
             style={{
-              border: '2px solid #FFD700',
               boxShadow: '0 0 10px rgba(255, 215, 0, 0.2)'
             }}
           >
@@ -391,10 +284,9 @@ export default function BannerCreateLayout({
           </Button>
           <Button 
             onClick={onCreate} 
-            className="flex-1 h-12 text-black font-bold text-lg rounded-xl uppercase tracking-wider"
+            className="flex-1 h-12 bg-[#FFD700] hover:bg-[#FFD700]/90 text-black font-bold text-lg rounded-xl"
             disabled={isProcessing}
             style={{
-              background: 'linear-gradient(180deg, #FFD700 0%, #FFC000 50%, #FFD700 100%)',
               boxShadow: '0 0 15px rgba(255, 215, 0, 0.4)'
             }}
           >
