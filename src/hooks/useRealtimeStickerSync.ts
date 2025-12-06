@@ -1,81 +1,53 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import { logger } from '@/lib/logger';
 
 interface RealtimeStickerSyncOptions {
-  rankId?: string;
   categoryId?: string;
+  rankId?: string;
   onUpdate?: () => void;
-  showToast?: boolean;
 }
 
-/**
- * Real-time sync hook for sticker updates.
- * Listens to all sticker changes for the given rank and triggers callback.
- */
 export const useRealtimeStickerSync = ({
-  rankId,
   categoryId,
+  rankId,
   onUpdate,
-  showToast = false,
 }: RealtimeStickerSyncOptions) => {
-  const handleUpdate = useCallback(() => {
-    onUpdate?.();
-  }, [onUpdate]);
-
   useEffect(() => {
-    if (!rankId) return;
+    if (!categoryId || !rankId) return;
 
-    const channelName = categoryId
-      ? `stickers-sync-${rankId}-${categoryId}`
-      : `stickers-sync-${rankId}`;
-
-    logger.log('Setting up real-time sticker sync:', { rankId, categoryId });
+    logger.log('Setting up real-time sync for:', { categoryId, rankId });
 
     const channel = supabase
-      .channel(channelName)
+      .channel(`stickers-${categoryId}-${rankId}`)
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
           table: 'stickers',
+          filter: `category_id=eq.${categoryId}`,
         },
         (payload) => {
-          const newData = payload.new as any;
-          const oldData = payload.old as any;
-
-          // Check if this change affects our rank
-          const affectsOurRank =
-            (newData?.rank_id === rankId) ||
-            (oldData?.rank_id === rankId);
-
-          // Optional category filter
-          const affectsOurCategory = !categoryId ||
-            (newData?.category_id === categoryId) ||
-            (oldData?.category_id === categoryId);
-
-          if (affectsOurRank && affectsOurCategory) {
-            logger.log('Sticker update received:', {
-              event: payload.eventType,
-              rankId,
-              slot: newData?.slot_number || oldData?.slot_number,
-              position: { x: newData?.position_x, y: newData?.position_y },
-              scale: newData?.scale,
-              rotation: newData?.rotation,
+          logger.log('Real-time sticker update:', payload);
+          
+          // Only trigger update if the change is for the current rank
+          if (payload.new && (payload.new as any).rank_id === rankId) {
+            toast.success('Banner preview updated', {
+              description: 'Sticker changes synced in real-time',
             });
-
-            handleUpdate();
+            onUpdate?.();
           }
         }
       )
       .subscribe((status) => {
-        logger.log('Sticker sync subscription:', status);
+        logger.log('Real-time subscription status:', status);
       });
 
     return () => {
-      logger.log('Cleaning up sticker sync subscription');
+      logger.log('Cleaning up real-time subscription');
       supabase.removeChannel(channel);
     };
-  }, [rankId, categoryId, handleUpdate]);
+  }, [categoryId, rankId, onUpdate]);
 };
