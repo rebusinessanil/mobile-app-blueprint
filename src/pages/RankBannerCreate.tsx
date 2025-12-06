@@ -185,7 +185,14 @@ export default function RankBannerCreate() {
           </div>
         </div>
 
-        
+        <div className="space-y-2">
+          <label className="text-sm text-foreground font-semibold">Banner Type</label>
+          <div className="flex gap-3">
+            <button onClick={() => setMode("myPhoto")} className={`flex-1 h-12 rounded-xl font-semibold transition-all ${mode === "myPhoto" ? "bg-primary text-primary-foreground" : "bg-secondary text-foreground border-2 border-primary"}`}>
+              With My Photo
+            </button>
+          </div>
+        </div>
 
         <div className="space-y-3">
           <div className="gold-border bg-card/30 rounded-2xl p-4">
