@@ -1,10 +1,14 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import BannerCreateLayout from "@/components/BannerCreateLayout";
+import { ArrowLeft, ImagePlus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import UplineCarousel from "@/components/UplineCarousel";
 import BackgroundRemoverModal from "@/components/BackgroundRemoverModal";
 import ImageCropper from "@/components/ImageCropper";
 import { toast } from "sonner";
 import { useBackgroundRemovalFast } from "@/hooks/useBackgroundRemovalFast";
+import { useProfile } from "@/hooks/useProfile";
 import { useBannerSettings } from "@/hooks/useBannerSettings";
 import { useBonanzaTrip } from "@/hooks/useBonanzaTrips";
 import { useTemplates } from "@/hooks/useTemplates";
@@ -21,13 +25,15 @@ export default function BonanzaBannerCreate() {
   const [searchParams] = useSearchParams();
   const tripId = searchParams.get('tripId');
   
+  const [mode, setMode] = useState<"myPhoto" | "others">("myPhoto");
   const [userId, setUserId] = useState<string | null>(null);
+  const { profile } = useProfile(userId || undefined);
   const { settings: bannerSettings } = useBannerSettings(userId || undefined);
   const { trip, loading: tripLoading } = useBonanzaTrip(tripId || undefined);
   const { templates, loading: templatesLoading } = useTemplates(undefined, tripId || undefined);
   
   const [uplines, setUplines] = useState<Upline[]>([]);
-  const [formData, setFormData] = useState<Record<string, string>>({
+  const [formData, setFormData] = useState({
     name: "",
     teamCity: "",
     tripName: ""
@@ -37,10 +43,12 @@ export default function BonanzaBannerCreate() {
   const [showCropper, setShowCropper] = useState(false);
   const [slotStickers, setSlotStickers] = useState<Record<number, string[]>>({});
 
+  // Fast backend background removal hook
   const bgRemoval = useBackgroundRemovalFast({
     onSuccess: (processedUrl) => setPhoto(processedUrl)
   });
 
+  // Auto-fill trip name when trip is loaded
   useEffect(() => {
     if (trip && !formData.tripName) {
       setFormData(prev => ({
@@ -112,16 +120,17 @@ export default function BonanzaBannerCreate() {
       toast.error("Please enter Name");
       return;
     }
-    if (formData.name.length > 50) {
-      toast.error("Name can't exceed 50 characters");
+    if (formData.name.length > 20) {
+      toast.error("Name can't exceed 20 characters");
       return;
     }
-    if (!photo) {
+    if (mode === "myPhoto" && !photo) {
       toast.error("Please upload your photo");
       return;
     }
 
-    const tripTemplate = templates[0];
+    // Get the template for this trip
+    const tripTemplate = templates[0]; // Use first template for this trip
 
     navigate("/banner-preview", {
       state: {
@@ -147,7 +156,7 @@ export default function BonanzaBannerCreate() {
     setFormData({
       name: "",
       teamCity: "",
-      tripName: trip?.title || ""
+      tripName: ""
     });
     setPhoto(null);
     setTempPhoto(null);
@@ -165,63 +174,153 @@ export default function BonanzaBannerCreate() {
     toast.success("Form reset to default values");
   };
 
-  const handleFormChange = (fieldName: string, value: string) => {
-    setFormData({ ...formData, [fieldName]: value });
-  };
-
   if (tripLoading || templatesLoading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
+      <div className="min-h-screen bg-navy-dark flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FFD700] mx-auto mb-4"></div>
-          <p className="text-gray-400">Loading...</p>
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading trip details...</p>
         </div>
       </div>
     );
   }
 
-  const formFields = [
-    {
-      name: 'name',
-      label: 'Name',
-      placeholder: 'Enter Name',
-      maxLength: 50,
-      showCounter: true
-    },
-    {
-      name: 'teamCity',
-      label: 'Team Name',
-      placeholder: 'Enter Team Name',
-      optional: true
-    },
-    {
-      name: 'tripName',
-      label: 'Trip Name',
-      placeholder: 'Enter Trip Name',
-      optional: true
-    }
-  ];
+  if (!trip) {
+    return (
+      <div className="min-h-screen bg-navy-dark flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-muted-foreground">Trip not found</p>
+          <Button onClick={() => navigate('/categories/bonanza-trips')} className="mt-4">
+            Back to Trips
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <BannerCreateLayout
-      title="BONANZA"
-      subtitle="Trip Achievement Details"
-      uplines={uplines}
-      onUplinesChange={setUplines}
-      formFields={formFields}
-      formData={formData}
-      onFormChange={handleFormChange}
-      photo={photo}
-      onPhotoUpload={handlePhotoUpload}
-      onReset={handleReset}
-      onCreate={handleCreate}
-      isProcessing={bgRemoval.isProcessing}
-    >
+    <div className="min-h-screen bg-navy-dark pb-6">
+      <header className="sticky top-0 bg-navy-dark/95 backdrop-blur-sm z-40 px-6 py-4 border-b border-primary/20">
+        <div className="flex items-center justify-between">
+          <button 
+            onClick={() => !bgRemoval.isProcessing && navigate("/dashboard")} 
+            className="w-10 h-10 rounded-xl border-2 border-primary flex items-center justify-center hover:bg-primary/10 transition-colors"
+            disabled={bgRemoval.isProcessing}
+          >
+            <ArrowLeft className="w-5 h-5 text-primary" />
+          </button>
+        </div>
+      </header>
+
+      <div className="px-6 py-6 space-y-6">
+        <div className="flex items-start gap-4">
+          <div className="bg-gradient-to-br from-red-600 to-orange-600 rounded-3xl p-6 flex items-center justify-center gold-border flex-shrink-0 w-32 h-32">
+            <div className="text-5xl">🎁</div>
+          </div>
+          <div className="flex-1 pt-2">
+            <p className="text-sm text-muted-foreground mb-1">Please fill up</p>
+            <h1 className="text-3xl font-bold text-primary mb-1">Bonanza Promotion</h1>
+            <p className="text-lg text-blue-400">Trip Achievement Details</p>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-sm text-foreground font-semibold">Banner Type</label>
+          <div className="flex gap-3">
+            <button onClick={() => setMode("myPhoto")} className={`flex-1 h-12 rounded-xl font-semibold transition-all ${mode === "myPhoto" ? "bg-primary text-primary-foreground" : "bg-secondary text-foreground border-2 border-primary"}`}>
+              With My Photo
+            </button>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <div className="gold-border bg-card/30 rounded-2xl p-4">
+            <UplineCarousel uplines={uplines} onUplinesChange={setUplines} maxUplines={5} />
+          </div>
+        </div>
+
+        <div className="flex gap-4">
+          <div className="flex-1 space-y-5">
+            <div className="space-y-2">
+              <label className="text-sm text-foreground">Name (Max 20 characters)</label>
+              <Input 
+                value={formData.name} 
+                onChange={e => {
+                  const value = e.target.value;
+                  if (value.length <= 20) {
+                    setFormData({ ...formData, name: value });
+                  }
+                }} 
+                placeholder="Enter Name" 
+                maxLength={20}
+                className="bg-transparent border-0 border-b-2 border-muted rounded-none text-foreground h-12 focus-visible:ring-0 focus-visible:border-primary" 
+              />
+              <p className="text-xs text-muted-foreground">{formData.name.length}/20 characters</p>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm text-foreground">Team Name <span className="text-muted-foreground">(Optional)</span></label>
+              <Input 
+                value={formData.teamCity} 
+                onChange={e => setFormData({ ...formData, teamCity: e.target.value })} 
+                placeholder="Team Name (Optional)" 
+                className="bg-transparent border-0 border-b-2 border-muted rounded-none text-foreground h-12 focus-visible:ring-0 focus-visible:border-primary" 
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm text-foreground">Trip Name <span className="text-muted-foreground">(optional)</span></label>
+              <Input 
+                value={formData.tripName} 
+                onChange={e => setFormData({ ...formData, tripName: e.target.value })} 
+                placeholder="Enter trip name" 
+                className="bg-transparent border-0 border-b-2 border-muted rounded-none text-foreground h-12 focus-visible:ring-0 focus-visible:border-primary" 
+              />
+            </div>
+          </div>
+
+          {mode === "myPhoto" && (
+            <div className="w-48 flex-shrink-0">
+              {photo ? (
+                <div className="relative w-full h-48 gold-border rounded-2xl overflow-hidden bg-secondary">
+                  <img src={photo} alt="Uploaded" className="w-full h-full object-cover" />
+                </div>
+              ) : (
+                <label className="w-full h-48 gold-border bg-secondary/50 rounded-2xl flex flex-col items-center justify-center gap-3 cursor-pointer hover:gold-glow transition-all">
+                  <input type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" />
+                  <div className="w-16 h-16 bg-primary/20 rounded-xl flex items-center justify-center">
+                    <ImagePlus className="w-8 h-8 text-primary" />
+                  </div>
+                </label>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div className="flex gap-3">
+          <Button 
+            onClick={handleReset} 
+            variant="outline" 
+            className="flex-1 h-12 border-2 border-primary text-foreground hover:bg-primary/10"
+            disabled={bgRemoval.isProcessing}
+          >
+            RESET
+          </Button>
+          <Button 
+            onClick={handleCreate} 
+            className="flex-1 h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-bold"
+            disabled={bgRemoval.isProcessing}
+          >
+            CREATE
+          </Button>
+        </div>
+      </div>
+
       {showCropper && tempPhoto && (
         <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
-          <div className="bg-[#0B0E15] rounded-2xl p-6 w-full max-w-2xl border-2 border-[#FFD700] shadow-2xl">
+          <div className="bg-[#0B0E15] rounded-2xl p-6 w-full max-w-2xl border-2 border-primary shadow-2xl">
             <h3 className="text-xl font-bold text-white mb-2">Crop Your Photo</h3>
-            <p className="text-sm text-gray-400 mb-4">Adjust to 3:4 portrait ratio for perfect banner fit</p>
+            <p className="text-sm text-muted-foreground mb-4">Adjust to 3:4 portrait ratio for perfect banner fit</p>
             <ImageCropper
               image={tempPhoto}
               onCropComplete={handleCropComplete}
@@ -241,6 +340,6 @@ export default function BonanzaBannerCreate() {
         progress={bgRemoval.progress}
         progressText={bgRemoval.progressText}
       />
-    </BannerCreateLayout>
+    </div>
   );
 }
