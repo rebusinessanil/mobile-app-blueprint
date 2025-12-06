@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect, useCallback } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import BottomNav from "@/components/BottomNav";
 import { Search, Filter, Trophy, Gift, Calendar, Star, MessageCircle, Zap, Briefcase, Target, Medal, Image, Users, IndianRupee, BarChart3 } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,7 @@ import ProfileCompletionGate from "@/components/ProfileCompletionGate";
 export default function Categories() {
   const [searchQuery, setSearchQuery] = useState("");
   const [userId, setUserId] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   // Get authenticated user
   useEffect(() => {
@@ -16,6 +17,13 @@ export default function Categories() {
       setUserId(session?.user?.id ?? null);
     });
   }, []);
+
+  // Instant navigation handler - no delays
+  const handleCategoryClick = useCallback((e: React.MouseEvent, path: string) => {
+    e.preventDefault();
+    // Use startTransition for non-blocking navigation
+    navigate(path);
+  }, [navigate]);
 
   const categories = [
     { icon: Trophy, label: "Rank Promotion", color: "bg-yellow-600", path: "/rank-selection" },
@@ -73,7 +81,8 @@ export default function Categories() {
               <Link
                 key={index}
                 to={category.path}
-                className="gold-border bg-card rounded-2xl p-5 flex flex-col items-center justify-center gap-3 hover:gold-glow transition-all"
+                onClick={(e) => handleCategoryClick(e, category.path)}
+                className="gold-border bg-card rounded-2xl p-5 flex flex-col items-center justify-center gap-3 hover:gold-glow transition-all active:scale-95"
               >
                 <div className={`w-14 h-14 ${category.color} rounded-2xl flex items-center justify-center`}>
                   <Icon className="w-7 h-7 text-white" />
