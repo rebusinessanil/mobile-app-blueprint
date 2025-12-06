@@ -1,32 +1,21 @@
 import { useNavigate } from "react-router-dom";
+import { useCallback } from "react";
 import { useBirthdays } from "@/hooks/useBirthdays";
 import { Card } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import BottomNav from "@/components/BottomNav";
+import { ListPageSkeleton } from "@/components/skeletons";
 
 const BirthdaysSelection = () => {
   const navigate = useNavigate();
   const { birthdays, loading } = useBirthdays();
 
+  // Instant direct navigation - zero delay
+  const handleBirthdaySelect = useCallback((birthdayId: string) => {
+    navigate(`/banner-create/birthday?birthdayId=${birthdayId}`);
+  }, [navigate]);
+
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-background pb-20">
-        <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-lg border-b border-border/50">
-          <div className="container mx-auto px-4 py-4">
-            <h1 className="text-2xl font-semibold text-foreground">Birthday Celebrations</h1>
-            <p className="text-sm text-muted-foreground mt-1">Select a birthday theme</p>
-          </div>
-        </div>
-        
-        <div className="container mx-auto px-4 py-6">
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            {[...Array(6)].map((_, i) => (
-              <Skeleton key={i} className="h-48 rounded-xl" />
-            ))}
-          </div>
-        </div>
-      </div>
-    );
+    return <ListPageSkeleton />;
   }
 
   return (
@@ -48,8 +37,8 @@ const BirthdaysSelection = () => {
             {birthdays.map((birthday) => (
               <Card
                 key={birthday.id}
-                className="group cursor-pointer overflow-hidden border-2 border-border/50 hover:border-primary/50 transition-all duration-300 hover:shadow-lg hover:shadow-primary/20"
-                onClick={() => navigate(`/banner-create/birthday?birthdayId=${birthday.id}`)}
+                className="group cursor-pointer overflow-hidden border-2 border-border/50 hover:border-primary/50 transition-all duration-300 hover:shadow-lg hover:shadow-primary/20 active:scale-95"
+                onClick={() => handleBirthdaySelect(birthday.id)}
               >
                 <div className="aspect-[3/4] relative overflow-hidden bg-muted">
                   <img
