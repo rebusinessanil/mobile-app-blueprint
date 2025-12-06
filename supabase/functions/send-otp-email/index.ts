@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,6 +13,47 @@ interface OTPEmailRequest {
   name?: string;
 }
 
+// Simple in-memory rate limiting (per edge function instance)
+const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+const RATE_LIMIT_MAX = 5; // Max 5 requests per email per hour
+const RATE_LIMIT_WINDOW = 60 * 60 * 1000; // 1 hour in milliseconds
+
+function isRateLimited(email: string): boolean {
+  const now = Date.now();
+  const normalizedEmail = email.toLowerCase().trim();
+  const record = rateLimitMap.get(normalizedEmail);
+  
+  if (!record || now > record.resetTime) {
+    // Reset or create new record
+    rateLimitMap.set(normalizedEmail, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
+    return false;
+  }
+  
+  if (record.count >= RATE_LIMIT_MAX) {
+    return true;
+  }
+  
+  record.count++;
+  return false;
+}
+
+// Sanitize name to prevent HTML injection
+function sanitizeName(name: string | undefined): string {
+  if (!name) return "User";
+  // Remove HTML tags and limit length
+  return name
+    .replace(/<[^>]*>/g, '')
+    .replace(/[<>"'&]/g, '')
+    .substring(0, 50)
+    .trim() || "User";
+}
+
+// Validate email format
+function isValidEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email) && email.length <= 254;
+}
+
 const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -20,13 +62,47 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     const { email, otp, name }: OTPEmailRequest = await req.json();
+    
+    // Input validation
+    if (!email || !otp) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Email and OTP are required" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    if (!isValidEmail(email)) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Invalid email format" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Validate OTP format (should be 6 digits)
+    if (!/^\d{6}$/.test(otp)) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Invalid OTP format" }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Rate limiting check
+    if (isRateLimited(email)) {
+      console.log(`Rate limit exceeded for email request`);
+      return new Response(
+        JSON.stringify({ success: false, error: "Too many requests. Please try again later." }),
+        { status: 429, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
     const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 
     if (!RESEND_API_KEY) {
       throw new Error("RESEND_API_KEY not configured");
     }
 
-    console.log(`Sending OTP email to ${email}`);
+    // Sanitize name to prevent HTML injection
+    const safeName = sanitizeName(name);
 
     // Use fetch to call Resend API directly
     const response = await fetch("https://api.resend.com/emails", {
@@ -128,7 +204,7 @@ const handler = async (req: Request): Promise<Response> => {
                 </div>
                 <div class="content">
                   <div class="greeting">
-                    Hello ${name || "User"}! 👋
+                    Hello ${safeName}! 👋
                   </div>
                   <p>Welcome to ReBusiness! We're excited to have you join our community of business professionals.</p>
                   <p>To complete your registration, please verify your email address using the verification code below:</p>
@@ -166,9 +242,9 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error(data.message || "Failed to send email");
     }
 
-    console.log("OTP email sent successfully:", data);
+    console.log("OTP email sent successfully");
 
-    return new Response(JSON.stringify({ success: true, data }), {
+    return new Response(JSON.stringify({ success: true }), {
       status: 200,
       headers: {
         "Content-Type": "application/json",
@@ -176,11 +252,11 @@ const handler = async (req: Request): Promise<Response> => {
       },
     });
   } catch (error: any) {
-    console.error("Error sending OTP email:", error);
+    console.error("Error sending OTP email:", error.message);
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: error.message || "Failed to send OTP email" 
+        error: "Failed to send verification email. Please try again." 
       }),
       {
         status: 500,
