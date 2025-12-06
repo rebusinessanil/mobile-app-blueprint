@@ -12,25 +12,22 @@ import { useBackgroundRemovalFast } from "@/hooks/useBackgroundRemovalFast";
 import { useProfile } from "@/hooks/useProfile";
 import { useBannerSettings } from "@/hooks/useBannerSettings";
 import { supabase } from "@/integrations/supabase/client";
+
 interface Upline {
   id: string;
   name: string;
   avatar?: string;
 }
+
 export default function RankBannerCreate() {
   const navigate = useNavigate();
-  const {
-    rankId
-  } = useParams();
+  const { rankId } = useParams();
   const rank = ranks.find(r => r.id === rankId);
   const [mode, setMode] = useState<"myPhoto" | "others">("myPhoto");
   const [userId, setUserId] = useState<string | null>(null);
-  const {
-    profile
-  } = useProfile(userId || undefined);
-  const {
-    settings: bannerSettings
-  } = useBannerSettings(userId || undefined);
+  const { profile } = useProfile(userId || undefined);
+  const { settings: bannerSettings } = useBannerSettings(userId || undefined);
+  
   const [uplines, setUplines] = useState<Upline[]>([]);
   const [formData, setFormData] = useState({
     name: "",
@@ -44,21 +41,19 @@ export default function RankBannerCreate() {
 
   // Fast backend background removal hook
   const bgRemoval = useBackgroundRemovalFast({
-    onSuccess: processedUrl => setPhoto(processedUrl)
+    onSuccess: (processedUrl) => setPhoto(processedUrl)
   });
+
   useEffect(() => {
     const getUser = async () => {
-      const {
-        data: {
-          user
-        }
-      } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         setUserId(user.id);
       }
     };
     getUser();
   }, []);
+
   useEffect(() => {
     if (bannerSettings && uplines.length === 0) {
       const defaultUplines = bannerSettings.upline_avatars.map((upline, index) => ({
@@ -69,9 +64,11 @@ export default function RankBannerCreate() {
       setUplines(defaultUplines);
     }
   }, [bannerSettings]);
+
   if (!rank) {
     return null;
   }
+
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -83,22 +80,27 @@ export default function RankBannerCreate() {
       reader.readAsDataURL(file);
     }
   };
+
   const handleCropComplete = (croppedImage: string) => {
     setPhoto(croppedImage);
     setShowCropper(false);
     setTempPhoto(null);
     bgRemoval.openModal(croppedImage);
   };
+
   const handleCropCancel = () => {
     setShowCropper(false);
     setTempPhoto(null);
   };
+
   const handleKeepBackground = () => {
     bgRemoval.closeModal();
   };
+
   const handleRemoveBackground = async () => {
     await bgRemoval.processRemoval();
   };
+
   const handleCreate = async () => {
     if (bgRemoval.isProcessing) {
       toast.warning("Please wait for background removal to complete");
@@ -116,9 +118,13 @@ export default function RankBannerCreate() {
       toast.error("Please upload your photo");
       return;
     }
-    const {
-      data: template
-    } = await supabase.from('templates').select('id').eq('rank_id', rankId).single();
+
+    const { data: template } = await supabase
+      .from('templates')
+      .select('id')
+      .eq('rank_id', rankId)
+      .single();
+
     navigate("/banner-preview", {
       state: {
         rankName: rank.name,
@@ -135,6 +141,7 @@ export default function RankBannerCreate() {
       }
     });
   };
+
   const handleReset = () => {
     if (bgRemoval.isProcessing) {
       toast.warning("Please wait for background removal to complete");
@@ -161,10 +168,16 @@ export default function RankBannerCreate() {
     setSlotStickers({});
     toast.success("Form reset to default values");
   };
-  return <div className="min-h-screen bg-navy-dark pb-6">
+
+  return (
+    <div className="min-h-screen bg-navy-dark pb-6">
       <header className="sticky top-0 bg-navy-dark/95 backdrop-blur-sm z-40 px-6 py-4 border-b border-primary/20">
         <div className="flex items-center justify-between">
-          <button onClick={() => !bgRemoval.isProcessing && navigate("/dashboard")} className="w-10 h-10 rounded-xl border-2 border-primary flex items-center justify-center hover:bg-primary/10 transition-colors" disabled={bgRemoval.isProcessing}>
+          <button 
+            onClick={() => !bgRemoval.isProcessing && navigate("/dashboard")} 
+            className="w-10 h-10 rounded-xl border-2 border-primary flex items-center justify-center hover:bg-primary/10 transition-colors"
+            disabled={bgRemoval.isProcessing}
+          >
             <ArrowLeft className="w-5 h-5 text-primary" />
           </button>
           <div className="flex items-center gap-2">
@@ -186,9 +199,11 @@ export default function RankBannerCreate() {
         </div>
 
         <div className="space-y-2">
-          
+          <label className="text-sm text-foreground font-semibold">Banner Type</label>
           <div className="flex gap-3">
-            
+            <button onClick={() => setMode("myPhoto")} className={`flex-1 h-12 rounded-xl font-semibold transition-all ${mode === "myPhoto" ? "bg-primary text-primary-foreground" : "bg-secondary text-foreground border-2 border-primary"}`}>
+              With My Photo
+            </button>
           </div>
         </div>
 
@@ -202,71 +217,109 @@ export default function RankBannerCreate() {
           <div className="flex-1 space-y-5 py-0 mx-0 px-0 my-0">
             <div className="space-y-2">
               <label className="text-sm text-foreground">Name (Max 20 characters)</label>
-              <Input value={formData.name} onChange={e => {
-              const value = e.target.value;
-              if (value.length <= 20) {
-                setFormData({
-                  ...formData,
-                  name: value
-                });
-              }
-            }} placeholder="Enter Name" maxLength={20} className="bg-transparent border-0 border-b-2 border-muted rounded-none text-foreground h-12 focus-visible:ring-0 focus-visible:border-primary" />
+              <Input 
+                value={formData.name} 
+                onChange={e => {
+                  const value = e.target.value;
+                  if (value.length <= 20) {
+                    setFormData({ ...formData, name: value });
+                  }
+                }} 
+                placeholder="Enter Name" 
+                maxLength={20}
+                className="bg-transparent border-0 border-b-2 border-muted rounded-none text-foreground h-12 focus-visible:ring-0 focus-visible:border-primary" 
+              />
               <p className="text-xs text-muted-foreground">{formData.name.length}/20 characters</p>
             </div>
 
             <div className="space-y-2">
               <label className="text-sm text-foreground">Team Name <span className="text-muted-foreground">(Optional)</span></label>
-              <Input value={formData.teamCity} onChange={e => setFormData({
-              ...formData,
-              teamCity: e.target.value
-            })} placeholder="Team Name (Optional)" className="bg-transparent border-0 border-b-2 border-muted rounded-none text-foreground h-12 focus-visible:ring-0 focus-visible:border-primary" />
+              <Input 
+                value={formData.teamCity} 
+                onChange={e => setFormData({ ...formData, teamCity: e.target.value })} 
+                placeholder="Team Name (Optional)" 
+                className="bg-transparent border-0 border-b-2 border-muted rounded-none text-foreground h-12 focus-visible:ring-0 focus-visible:border-primary" 
+              />
             </div>
 
             <div className="space-y-2">
               <label className="text-sm text-foreground">Cheque Amount <span className="text-muted-foreground">(optional)</span></label>
               <div className="relative">
                 <span className="absolute left-0 top-1/2 -translate-y-1/2 text-foreground text-lg">₹</span>
-                <Input value={formData.chequeAmount} onChange={e => {
-                const value = e.target.value.replace(/[^0-9]/g, '');
-                setFormData({
-                  ...formData,
-                  chequeAmount: value
-                });
-              }} placeholder="Enter amount" className="bg-transparent border-0 border-b-2 border-muted rounded-none text-foreground h-12 focus-visible:ring-0 focus-visible:border-primary pl-6" />
+                <Input 
+                  value={formData.chequeAmount} 
+                  onChange={e => {
+                    const value = e.target.value.replace(/[^0-9]/g, '');
+                    setFormData({ ...formData, chequeAmount: value });
+                  }} 
+                  placeholder="Enter amount" 
+                  className="bg-transparent border-0 border-b-2 border-muted rounded-none text-foreground h-12 focus-visible:ring-0 focus-visible:border-primary pl-6" 
+                />
               </div>
             </div>
           </div>
 
-          {mode === "myPhoto" && <div className="w-48 flex-shrink-0">
-              {photo ? <div className="relative w-full h-48 gold-border rounded-2xl overflow-hidden bg-secondary">
+          {mode === "myPhoto" && (
+            <div className="w-48 flex-shrink-0">
+              {photo ? (
+                <div className="relative w-full h-48 gold-border rounded-2xl overflow-hidden bg-secondary">
                   <img src={photo} alt="Uploaded" className="w-full h-full object-cover" />
-                </div> : <label className="w-full h-48 gold-border bg-secondary/50 rounded-2xl flex flex-col items-center justify-center gap-3 cursor-pointer hover:gold-glow transition-all">
+                </div>
+              ) : (
+                <label className="w-full h-48 gold-border bg-secondary/50 rounded-2xl flex flex-col items-center justify-center gap-3 cursor-pointer hover:gold-glow transition-all">
                   <input type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" />
                   <div className="w-16 h-16 bg-primary/20 rounded-xl flex items-center justify-center">
                     <ImagePlus className="w-8 h-8 text-primary" />
                   </div>
-                </label>}
-            </div>}
+                </label>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="flex gap-3">
-          <Button onClick={handleReset} variant="outline" className="flex-1 h-12 border-2 border-primary text-foreground hover:bg-primary/10" disabled={bgRemoval.isProcessing}>
+          <Button 
+            onClick={handleReset} 
+            variant="outline" 
+            className="flex-1 h-12 border-2 border-primary text-foreground hover:bg-primary/10"
+            disabled={bgRemoval.isProcessing}
+          >
             RESET
           </Button>
-          <Button onClick={handleCreate} className="flex-1 h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-bold" disabled={bgRemoval.isProcessing}>
+          <Button 
+            onClick={handleCreate} 
+            className="flex-1 h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-bold"
+            disabled={bgRemoval.isProcessing}
+          >
             CREATE
           </Button>
         </div>
       </div>
 
-      {showCropper && tempPhoto && <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
+      {showCropper && tempPhoto && (
+        <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
           <div className="bg-[#0B0E15] rounded-2xl p-6 w-full max-w-2xl border-2 border-primary shadow-2xl">
             <h3 className="text-xl font-bold text-white mb-2">Crop Your Photo</h3>
             <p className="text-sm text-muted-foreground mb-4">Adjust to 3:4 portrait ratio for perfect banner fit</p>
-            <ImageCropper image={tempPhoto} onCropComplete={handleCropComplete} onCancel={handleCropCancel} aspect={0.75} />
+            <ImageCropper
+              image={tempPhoto}
+              onCropComplete={handleCropComplete}
+              onCancel={handleCropCancel}
+              aspect={0.75}
+            />
           </div>
-        </div>}
+        </div>
+      )}
 
-      <BackgroundRemoverModal open={bgRemoval.showModal} onKeep={handleKeepBackground} onRemove={handleRemoveBackground} onClose={bgRemoval.closeModal} isProcessing={bgRemoval.isProcessing} progress={bgRemoval.progress} progressText={bgRemoval.progressText} />
-    </div>;
+      <BackgroundRemoverModal 
+        open={bgRemoval.showModal} 
+        onKeep={handleKeepBackground} 
+        onRemove={handleRemoveBackground} 
+        onClose={bgRemoval.closeModal}
+        isProcessing={bgRemoval.isProcessing}
+        progress={bgRemoval.progress}
+        progressText={bgRemoval.progressText}
+      />
+    </div>
+  );
 }

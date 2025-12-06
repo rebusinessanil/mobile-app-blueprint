@@ -20,9 +20,6 @@ export default function ProfileEdit() {
   const prefillMobile = location.state?.prefillMobile;
   const prefillPin = location.state?.prefillPin;
   
-  // Detect if user is in signup onboarding mode (not normal profile edit)
-  const isOnboardingMode = Boolean(location.state?.fromSignup || prefillName || prefillMobile || prefillPin);
-  
   const [photos, setPhotos] = useState<string[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -218,19 +215,18 @@ export default function ProfileEdit() {
     }
   };
 
-  // Check if PIN is valid - only required during onboarding
+  // Check if PIN is valid
   const isPinValid = () => {
-    if (!isOnboardingMode) return true; // Skip PIN validation for normal profile edit
     return createPin.length === 4 && /^\d{4}$/.test(createPin) && confirmPin === createPin;
   };
 
-  // Check if profile is complete - requires manual selection of all fields + valid PIN (only during onboarding)
+  // Check if profile is complete - requires manual selection of all fields + valid PIN
   const isProfileComplete = () => {
     const hasName = formData.name.trim() !== '' && formData.name !== 'User';
     const hasMobile = formData.mobile && /^\d{10}$/.test(formData.mobile.replace(/\D/g, ''));
     const hasRole = roleConfirmed && formData.role && formData.role.trim() !== '';
     const hasPhotos = photos.length > 0;
-    const hasValidPin = isPinValid(); // Returns true for non-onboarding mode
+    const hasValidPin = isPinValid();
     return hasName && hasMobile && hasRole && hasPhotos && hasValidPin;
   };
 
@@ -269,18 +265,16 @@ export default function ProfileEdit() {
       return;
     }
 
-    // PIN validation - MANDATORY only during onboarding
-    if (isOnboardingMode) {
-      if (createPin.length !== 4 || !/^\d{4}$/.test(createPin)) {
-        toast.error("Please set a valid 4-digit PIN");
-        setPinError("PIN must be exactly 4 digits");
-        return;
-      }
-      if (confirmPin !== createPin) {
-        toast.error("PIN does not match");
-        setPinError("PIN does not match");
-        return;
-      }
+    // PIN validation - MANDATORY for profile completion
+    if (createPin.length !== 4 || !/^\d{4}$/.test(createPin)) {
+      toast.error("Please set a valid 4-digit PIN");
+      setPinError("PIN must be exactly 4 digits");
+      return;
+    }
+    if (confirmPin !== createPin) {
+      toast.error("PIN does not match");
+      setPinError("PIN does not match");
+      return;
     }
     setLoading(true);
     try {
@@ -303,8 +297,8 @@ export default function ProfileEdit() {
         return;
       }
 
-      // Save PIN if provided during onboarding - updates auth password for login to work with new PIN
-      if (isOnboardingMode && createPin.length === 4 && confirmPin === createPin && userId) {
+      // Save PIN if provided - updates auth password for login to work with new PIN
+      if (createPin.length === 4 && confirmPin === createPin && userId) {
         // Pad PIN with prefix to meet Supabase 6+ character password requirement
         const PIN_PREFIX = "pin_";
         const paddedPassword = PIN_PREFIX + createPin;
@@ -512,59 +506,57 @@ export default function ProfileEdit() {
             </div>
           </div>
 
-          {/* Create PIN Section - Only show during signup onboarding */}
-          {isOnboardingMode && (
-            <div className="space-y-4 pt-4 border-t border-primary/20">
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <label className="text-sm text-foreground">Create PIN</label>
-                  <span className="text-xs text-destructive font-medium">* Required</span>
-                </div>
-                <div className="relative">
-                  <Input type={showCreatePin ? "text" : "password"} inputMode="numeric" pattern="[0-9]*" maxLength={4} value={createPin} onChange={e => {
-                    const value = e.target.value.replace(/\D/g, '').slice(0, 4);
-                    setCreatePin(value);
-                    // Clear confirm PIN when create PIN changes
-                    if (confirmPin) setConfirmPin("");
-                    // Clear error when typing
-                    if (pinError) setPinError("");
-                  }} placeholder="●●●●" className="gold-border bg-secondary text-foreground h-12 border-b-2 border-t-0 border-x-0 rounded-none tracking-[0.5em] text-center text-lg pr-10" />
-                  <button type="button" onClick={() => setShowCreatePin(!showCreatePin)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
-                    {showCreatePin ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                  </button>
-                </div>
-                {createPin.length > 0 && createPin.length < 4 && <p className="text-sm text-destructive">PIN must be 4 digits</p>}
+          {/* Create PIN Section - REQUIRED */}
+          <div className="space-y-4 pt-4 border-t border-primary/20">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-foreground">Create PIN</label>
+                <span className="text-xs text-destructive font-medium">* Required</span>
               </div>
+              <div className="relative">
+                <Input type={showCreatePin ? "text" : "password"} inputMode="numeric" pattern="[0-9]*" maxLength={4} value={createPin} onChange={e => {
+                  const value = e.target.value.replace(/\D/g, '').slice(0, 4);
+                  setCreatePin(value);
+                  // Clear confirm PIN when create PIN changes
+                  if (confirmPin) setConfirmPin("");
+                  // Clear error when typing
+                  if (pinError) setPinError("");
+                }} placeholder="●●●●" className="gold-border bg-secondary text-foreground h-12 border-b-2 border-t-0 border-x-0 rounded-none tracking-[0.5em] text-center text-lg pr-10" />
+                <button type="button" onClick={() => setShowCreatePin(!showCreatePin)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
+                  {showCreatePin ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+              {createPin.length > 0 && createPin.length < 4 && <p className="text-sm text-destructive">PIN must be 4 digits</p>}
+            </div>
 
-              {/* Confirm PIN - only show when Create PIN has 4 digits */}
-              {createPin.length === 4 && <div className="space-y-2">
-                  <label className="text-sm text-foreground">Confirm PIN</label>
-                  <div className="relative">
-                    <Input type={showConfirmPin ? "text" : "password"} inputMode="numeric" pattern="[0-9]*" maxLength={4} value={confirmPin} onChange={e => {
-                    const value = e.target.value.replace(/\D/g, '').slice(0, 4);
-                    setConfirmPin(value);
-                    // Validate PIN match
-                    if (value.length === 4) {
-                      if (value !== createPin) {
-                        setPinError("PIN does not match");
-                      } else {
-                        setPinError("");
-                      }
+            {/* Confirm PIN - only show when Create PIN has 4 digits */}
+            {createPin.length === 4 && <div className="space-y-2">
+                <label className="text-sm text-foreground">Confirm PIN</label>
+                <div className="relative">
+                  <Input type={showConfirmPin ? "text" : "password"} inputMode="numeric" pattern="[0-9]*" maxLength={4} value={confirmPin} onChange={e => {
+                  const value = e.target.value.replace(/\D/g, '').slice(0, 4);
+                  setConfirmPin(value);
+                  // Validate PIN match
+                  if (value.length === 4) {
+                    if (value !== createPin) {
+                      setPinError("PIN does not match");
                     } else {
                       setPinError("");
                     }
-                  }} placeholder="●●●●" className={`gold-border bg-secondary text-foreground h-12 border-b-2 border-t-0 border-x-0 rounded-none tracking-[0.5em] text-center text-lg pr-10 ${pinError ? "border-destructive" : confirmPin.length === 4 && confirmPin === createPin ? "border-green-500" : ""}`} />
-                    <button type="button" onClick={() => setShowConfirmPin(!showConfirmPin)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
-                      {showConfirmPin ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                    </button>
-                    {confirmPin.length === 4 && confirmPin === createPin && !pinError && <div className="absolute right-10 top-1/2 -translate-y-1/2">
-                        <Check className="w-5 h-5 text-green-500" />
-                      </div>}
-                  </div>
-                  {pinError && <p className="text-sm text-destructive">{pinError}</p>}
-                </div>}
-            </div>
-          )}
+                  } else {
+                    setPinError("");
+                  }
+                }} placeholder="●●●●" className={`gold-border bg-secondary text-foreground h-12 border-b-2 border-t-0 border-x-0 rounded-none tracking-[0.5em] text-center text-lg pr-10 ${pinError ? "border-destructive" : confirmPin.length === 4 && confirmPin === createPin ? "border-green-500" : ""}`} />
+                  <button type="button" onClick={() => setShowConfirmPin(!showConfirmPin)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
+                    {showConfirmPin ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                  {confirmPin.length === 4 && confirmPin === createPin && !pinError && <div className="absolute right-10 top-1/2 -translate-y-1/2">
+                      <Check className="w-5 h-5 text-green-500" />
+                    </div>}
+                </div>
+                {pinError && <p className="text-sm text-destructive">{pinError}</p>}
+              </div>}
+          </div>
 
           {/* Gender */}
           <div className="gold-border bg-card rounded-2xl p-5 py-0 px-[15px]">
@@ -602,7 +594,7 @@ export default function ProfileEdit() {
             {(!formData.mobile || !/^\d{10}$/.test(formData.mobile.replace(/\D/g, ''))) && <p className="text-sm text-destructive">• Valid 10-digit mobile required</p>}
             {(!roleConfirmed || !formData.role) && <p className="text-sm text-destructive">• Please select a role</p>}
             {photos.length === 0 && <p className="text-sm text-destructive">• At least 1 profile photo required</p>}
-            {isOnboardingMode && !isPinValid() && <p className="text-sm text-destructive">• Valid 4-digit PIN required</p>}
+            {!isPinValid() && <p className="text-sm text-destructive">• Valid 4-digit PIN required</p>}
           </div>}
       </div>
     </div>
