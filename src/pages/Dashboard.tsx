@@ -21,6 +21,7 @@ import StoriesSection from "@/components/dashboard/StoriesSection";
 import BannerCard from "@/components/dashboard/BannerCard";
 import WelcomeBonusModal from "@/components/WelcomeBonusModal";
 import { useWelcomeBonus } from "@/hooks/useWelcomeBonus";
+import DashboardSkeleton from "@/components/skeletons/DashboardSkeleton";
 
 export default function Dashboard() {
   const {
@@ -146,52 +147,11 @@ export default function Dashboard() {
   const getCategoryTemplates = useCallback((categoryId: string) => {
     return allTemplates.filter(t => t.category_id === categoryId).slice(0, 3);
   }, [allTemplates]);
-  // Show blank loading state until all data is ready - prevents flash
+  // Show skeleton loading state
   if (isDataLoading) {
     return (
       <ProfileCompletionGate userId={userId}>
-        <div className="min-h-screen bg-navy-dark pb-24">
-          {/* Blank loading state with same background */}
-          <header className="sticky top-0 bg-navy-dark/95 backdrop-blur-sm z-40 px-6 py-4 border-b border-primary/20">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center">
-                  <Star className="w-6 h-6 text-primary-foreground" />
-                </div>
-                <div>
-                  <h1 className="text-xl font-bold text-foreground">ReBusiness</h1>
-                  <p className="text-sm text-muted-foreground">Loading...</p>
-                </div>
-              </div>
-            </div>
-          </header>
-          <div className="py-6 space-y-6">
-            {/* Stories Skeleton */}
-            <div className="space-y-3">
-              <div className="h-6 w-32 bg-secondary/50 rounded animate-pulse ml-4" />
-              <div className="flex gap-2 overflow-hidden pl-4">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <div key={i} className="w-[72px] h-[100px] bg-secondary/30 rounded-2xl animate-pulse flex-shrink-0" />
-                ))}
-              </div>
-            </div>
-            {/* Banner Section Skeletons */}
-            {[1, 2].map((section) => (
-              <div key={section} className="space-y-3">
-                <div className="flex justify-between items-center px-4">
-                  <div className="h-6 w-40 bg-secondary/50 rounded animate-pulse" />
-                  <div className="h-4 w-16 bg-secondary/50 rounded animate-pulse" />
-                </div>
-                <div className="flex gap-3 overflow-hidden pl-4">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="w-[calc(33.333%-8px)] min-w-[110px] max-w-[140px] aspect-[4/5] bg-secondary/30 rounded-2xl animate-pulse flex-shrink-0" />
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-          <BottomNav />
-        </div>
+        <DashboardSkeleton />
       </ProfileCompletionGate>
     );
   }
