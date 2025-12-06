@@ -1,5 +1,5 @@
-import { Link } from "react-router-dom";
-import { useState, memo, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useState, memo, useRef, useEffect, useCallback } from "react";
 import { getThumbnailUrl } from "@/lib/imageOptimizer";
 
 interface BannerCardProps {
@@ -10,6 +10,7 @@ interface BannerCardProps {
   fallbackIcon?: string;
   fallbackGradient?: string;
   linkTo: string;
+  instantNav?: boolean; // Enable instant navigation without transition
 }
 
 function BannerCardComponent({
@@ -19,11 +20,20 @@ function BannerCardComponent({
   imageUrl,
   fallbackIcon = "🏆",
   fallbackGradient = "bg-gradient-to-br from-secondary to-card",
-  linkTo
+  linkTo,
+  instantNav = false
 }: BannerCardProps) {
+  const navigate = useNavigate();
   const [imageLoaded, setImageLoaded] = useState(false);
   const [isInView, setIsInView] = useState(false);
-  const cardRef = useRef<HTMLAnchorElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  // Instant navigation handler - zero delay
+  const handleClick = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    // Use replace: false for normal history, navigate immediately
+    navigate(linkTo);
+  }, [navigate, linkTo]);
 
   // Lazy load with Intersection Observer
   useEffect(() => {
@@ -47,10 +57,13 @@ function BannerCardComponent({
   const thumbnailUrl = imageUrl ? getThumbnailUrl(imageUrl, 40) : '';
 
   return (
-    <Link
+    <div
       ref={cardRef}
-      to={linkTo}
-      className="w-[calc(33.333%-8px)] min-w-[110px] max-w-[140px] gold-border bg-card rounded-2xl overflow-hidden flex-shrink-0 hover:gold-glow transition-all active:scale-95 transform-gpu will-change-transform"
+      onClick={handleClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => e.key === 'Enter' && handleClick(e as any)}
+      className="w-[calc(33.333%-8px)] min-w-[110px] max-w-[140px] gold-border bg-card rounded-2xl overflow-hidden flex-shrink-0 hover:gold-glow transition-all active:scale-95 transform-gpu will-change-transform cursor-pointer"
     >
       {/* Fixed aspect ratio container - GPU accelerated */}
       <div className="aspect-[4/3] relative bg-secondary/30 overflow-hidden">
@@ -100,7 +113,7 @@ function BannerCardComponent({
           </p>
         )}
       </div>
-    </Link>
+    </div>
   );
 }
 
