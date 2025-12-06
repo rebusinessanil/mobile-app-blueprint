@@ -1,5 +1,5 @@
-import { useState, useCallback, useRef } from 'react';
-import { removeBackgroundFast, loadImageElement } from '@/lib/backgroundRemoverFast';
+import { useState, useCallback, useEffect, useRef, startTransition } from 'react';
+import { removeBackground, loadImage, clearModel } from '@/lib/backgroundRemover';
 import { toast } from 'sonner';
 import { logger } from '@/lib/logger';
 
@@ -7,6 +7,18 @@ interface UseBackgroundRemovalFastOptions {
   onSuccess?: (processedImageUrl: string) => void;
   onError?: (error: Error) => void;
 }
+
+// Throttle with leading edge for immediate feedback
+const throttle = <T extends (...args: any[]) => any>(fn: T, delay: number) => {
+  let lastCall = 0;
+  return (...args: Parameters<T>) => {
+    const now = Date.now();
+    if (now - lastCall >= delay) {
+      lastCall = now;
+      fn(...args);
+    }
+  };
+};
 
 export const useBackgroundRemovalFast = (options?: UseBackgroundRemovalFastOptions) => {
   const [isProcessing, setIsProcessing] = useState(false);
@@ -16,12 +28,60 @@ export const useBackgroundRemovalFast = (options?: UseBackgroundRemovalFastOptio
   const [pendingImage, setPendingImage] = useState<string | null>(null);
   
   const processingRef = useRef(false);
+  const abortRef = useRef(false);
+
+  // Throttled progress updates
+  const updateProgress = useCallback(
+    throttle((value: number, text: string) => {
+      setProgress(value);
+      setProgressText(text);
+    }, 100),
+    []
+  );
+
+  // Prevent page exit during processing
+  useEffect(() => {
+    if (!isProcessing) return;
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = 'Background removal in progress. Are you sure you want to leave?';
+      return e.returnValue;
+    };
+
+    const handlePopState = (e: PopStateEvent) => {
+      if (processingRef.current) {
+        e.preventDefault();
+        window.history.pushState(null, '', window.location.href);
+        toast.warning('Please wait for background removal to complete');
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('popstate', handlePopState);
+    window.history.pushState(null, '', window.location.href);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [isProcessing]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (!processingRef.current) {
+        clearModel();
+      }
+    };
+  }, []);
 
   const openModal = useCallback((imageUrl: string) => {
     setPendingImage(imageUrl);
     setShowModal(true);
     setProgress(0);
     setProgressText('');
+    abortRef.current = false;
   }, []);
 
   const closeModal = useCallback(() => {
@@ -44,22 +104,25 @@ export const useBackgroundRemovalFast = (options?: UseBackgroundRemovalFastOptio
 
     setIsProcessing(true);
     processingRef.current = true;
+    updateProgress(0, 'Preparing...');
 
     try {
       // Fetch and load image
       const response = await fetch(pendingImage);
       if (!response.ok) throw new Error('Failed to fetch image');
       const blob = await response.blob();
-      const img = await loadImageElement(blob);
+      const img = await loadImage(blob);
 
-      // Process with fast backend
-      const { blob: resultBlob, processingTime } = await removeBackgroundFast(
-        img,
-        (stage, percent) => {
-          setProgress(percent);
-          setProgressText(stage);
+      if (abortRef.current) return null;
+
+      // Process with RMBG-1.4 model (WebGPU → WASM fallback)
+      const processedBlob = await removeBackground(img, (stage, percent) => {
+        if (!abortRef.current) {
+          updateProgress(percent, stage);
         }
-      );
+      });
+
+      if (abortRef.current) return null;
 
       // Convert blob to data URL
       return new Promise((resolve) => {
@@ -67,35 +130,46 @@ export const useBackgroundRemovalFast = (options?: UseBackgroundRemovalFastOptio
         reader.onload = () => {
           const result = reader.result as string;
           
-          setShowModal(false);
-          setPendingImage(null);
-          setIsProcessing(false);
-          processingRef.current = false;
+          startTransition(() => {
+            setProgress(100);
+            setProgressText('Complete!');
+          });
           
-          toast.success(`Background removed in ${(processingTime / 1000).toFixed(1)}s`);
-          options?.onSuccess?.(result);
-          resolve(result);
+          // Delay modal close for smooth transition
+          setTimeout(() => {
+            startTransition(() => {
+              setShowModal(false);
+              setPendingImage(null);
+              setIsProcessing(false);
+              processingRef.current = false;
+            });
+            
+            toast.success('Background removed successfully!');
+            options?.onSuccess?.(result);
+            resolve(result);
+          }, 100);
         };
         reader.onerror = () => {
           throw new Error('Failed to read processed image');
         };
-        reader.readAsDataURL(resultBlob);
+        reader.readAsDataURL(processedBlob);
       });
-      
     } catch (error) {
-      logger.error('Fast background removal error:', error);
+      logger.error('Background removal error:', error);
       const errorMsg = error instanceof Error ? error.message : 'Unknown error';
       
-      setIsProcessing(false);
-      processingRef.current = false;
-      setProgress(0);
-      setProgressText('');
+      startTransition(() => {
+        setIsProcessing(false);
+        processingRef.current = false;
+        setProgress(0);
+        setProgressText('');
+      });
       
       toast.error(`Failed to remove background: ${errorMsg}`);
       options?.onError?.(error instanceof Error ? error : new Error(errorMsg));
       return null;
     }
-  }, [pendingImage, options]);
+  }, [pendingImage, options, updateProgress]);
 
   return {
     isProcessing,
