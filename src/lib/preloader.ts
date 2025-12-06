@@ -18,14 +18,6 @@ export const preloadCriticalModules = () => {
     () => import('@/pages/BannerPreview'),
     () => import('@/pages/RankSelection'),
     () => import('@/pages/RankBannerCreate'),
-    () => import('@/pages/BirthdayBannerCreate'),
-    () => import('@/pages/BonanzaBannerCreate'),
-    () => import('@/pages/FestivalBannerCreate'),
-    () => import('@/pages/MotivationalBannerCreate'),
-    () => import('@/pages/MeetingBannerCreate'),
-    () => import('@/pages/AnniversaryBannerCreate'),
-    () => import('@/pages/UniversalBannerCreate'),
-    () => import('@/pages/StoryBannerCreate'),
   ];
 
   // Medium priority - Category pages
@@ -35,7 +27,6 @@ export const preloadCriticalModules = () => {
     () => import('@/pages/BirthdaysSelection'),
     () => import('@/pages/FestivalSelection'),
     () => import('@/pages/MotivationalBannersSelection'),
-    () => import('@/pages/AnniversariesSelection'),
   ];
 
   // Low priority - Other pages
