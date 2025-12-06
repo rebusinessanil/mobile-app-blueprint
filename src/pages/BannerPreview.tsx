@@ -17,7 +17,7 @@ import type { Sticker } from "@/hooks/useStickers";
 import { toPng } from "html-to-image";
 import download from "downloadjs";
 import { useRealtimeStickerSync } from "@/hooks/useRealtimeStickerSync";
-import { useGlobalRankStickers } from "@/hooks/useGlobalRankStickers";
+import { useGlobalStickers, type BannerCategoryType } from "@/hooks/useGlobalStickers";
 import { useWalletDeduction } from "@/hooks/useWalletDeduction";
 import InsufficientBalanceModal from "@/components/InsufficientBalanceModal";
 interface Upline {
@@ -262,24 +262,29 @@ export default function BannerPreview() {
     categoryType: bannerData?.categoryType
   });
 
-  // Global rank stickers with real-time sync - users only see, can't edit
+  // Determine banner category for universal sticker loading
+  const stickerBannerCategory: BannerCategoryType = bannerData?.categoryType || 'rank';
+
+  // Universal global stickers with real-time sync - works for ALL categories
   const {
     stickers: globalStickers,
     stickersBySlot: globalStickersBySlot,
     getStickerForSlot,
     refetch: refetchGlobalStickers,
-  } = useGlobalRankStickers({
-    rankId: bannerData?.rankId,
-    categoryId: bannerData?.templateId || currentTemplateId,
+  } = useGlobalStickers({
+    bannerCategory: stickerBannerCategory,
+    rankId: stickerBannerCategory === 'rank' ? bannerData?.rankId : undefined,
+    templateId: bannerData?.templateId || currentTemplateId,
   });
 
-  // Real-time sync for sticker updates from admin panel
+  // Real-time sync for sticker updates from admin panel (all categories)
   useRealtimeStickerSync({
-    rankId: bannerData?.rankId,
+    bannerCategory: stickerBannerCategory,
+    rankId: stickerBannerCategory === 'rank' ? bannerData?.rankId : undefined,
     categoryId: bannerData?.templateId || currentTemplateId,
     onUpdate: () => {
       // Refetch global stickers when admin updates
-      console.log('Admin sticker update detected, syncing...');
+      console.log('Admin sticker update detected, syncing for category:', stickerBannerCategory);
       refetchGlobalStickers();
     }
   });
