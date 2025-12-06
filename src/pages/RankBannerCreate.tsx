@@ -181,9 +181,7 @@ export default function RankBannerCreate() {
           >
             <ArrowLeft className="w-4 h-4 text-primary" />
           </button>
-          <div className="flex items-center gap-2">
-            <span className="text-lg font-semibold text-primary">Rank: {rank.name}</span>
-          </div>
+          <span className="text-lg font-bold text-primary tracking-wide">RE BUSINESS</span>
         </div>
       </header>
 
@@ -201,16 +199,6 @@ export default function RankBannerCreate() {
           </div>
         </div>
 
-        {/* Banner Type Toggle */}
-        <div className="flex-shrink-0 mb-3">
-          <label className="text-xs text-foreground font-semibold mb-1 block">Banner Type</label>
-          <button 
-            onClick={() => setMode("myPhoto")} 
-            className={`w-full h-10 rounded-xl font-semibold transition-all text-sm ${mode === "myPhoto" ? "bg-primary text-primary-foreground" : "bg-secondary text-foreground border-2 border-primary"}`}
-          >
-            With My Photo
-          </button>
-        </div>
 
         {/* Uplines Section */}
         <div className="flex-shrink-0 mb-3">
