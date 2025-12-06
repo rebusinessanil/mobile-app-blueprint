@@ -1,24 +1,21 @@
 /**
- * Ultra-fast background remover using MediaPipe Selfie Segmentation
+ * Ultra-fast background remover using TensorFlow.js Body Segmentation
  * - Runs fully client-side with no API keys
  * - 256px processing for maximum speed (<1 second)
  * - Web Worker compositing for smooth UI
- * - Color-threshold fallback if MediaPipe fails
+ * - Color-threshold fallback if segmentation fails
  */
 
-import { SelfieSegmentation, Results } from '@mediapipe/selfie_segmentation';
+import * as bodySegmentation from '@tensorflow-models/body-segmentation';
+import * as tf from '@tensorflow/tfjs-core';
+import '@tensorflow/tfjs-backend-webgl';
 
 // Processing size - small for speed
 const PROCESS_SIZE = 256;
 
-let segmenter: SelfieSegmentation | null = null;
-let segmenterReady = false;
+let segmenter: bodySegmentation.BodySegmenter | null = null;
 let segmenterLoading = false;
 let compositorWorker: Worker | null = null;
-
-// Pending segmentation callback
-let pendingResolve: ((mask: ImageData) => void) | null = null;
-let pendingReject: ((err: Error) => void) | null = null;
 
 // Initialize compositor worker
 function getWorker(): Worker | null {
@@ -38,65 +35,45 @@ function getWorker(): Worker | null {
   return compositorWorker;
 }
 
-// Initialize MediaPipe Selfie Segmentation (Lite model - 2MB)
-async function initSegmenter(): Promise<void> {
-  if (segmenterReady || segmenterLoading) return;
+// Initialize TensorFlow.js Body Segmentation
+async function initSegmenter(): Promise<bodySegmentation.BodySegmenter> {
+  if (segmenter) return segmenter;
+  if (segmenterLoading) {
+    // Wait for existing load
+    while (segmenterLoading) {
+      await new Promise(r => setTimeout(r, 100));
+    }
+    if (segmenter) return segmenter;
+  }
   
   segmenterLoading = true;
   
-  return new Promise((resolve, reject) => {
-    try {
-      segmenter = new SelfieSegmentation({
-        locateFile: (file) => {
-          return `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${file}`;
-        }
-      });
-      
-      segmenter.setOptions({
-        modelSelection: 0, // 0 = Lite model (faster), 1 = Full model
-        selfieMode: false,
-      });
-      
-      segmenter.onResults((results: Results) => {
-        if (pendingResolve && results.segmentationMask) {
-          // Create canvas to get mask as ImageData
-          const canvas = document.createElement('canvas');
-          const ctx = canvas.getContext('2d');
-          
-          if (ctx && results.segmentationMask) {
-            canvas.width = results.segmentationMask.width;
-            canvas.height = results.segmentationMask.height;
-            ctx.drawImage(results.segmentationMask, 0, 0);
-            const maskData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            pendingResolve(maskData);
-          } else {
-            pendingReject?.(new Error('Failed to extract mask'));
-          }
-          pendingResolve = null;
-          pendingReject = null;
-        }
-      });
-      
-      // Initialize the segmenter
-      segmenter.initialize().then(() => {
-        segmenterReady = true;
-        segmenterLoading = false;
-        console.log('MediaPipe Selfie Segmentation (Lite) ready');
-        resolve();
-      }).catch((err) => {
-        segmenterLoading = false;
-        reject(err);
-      });
-      
-    } catch (err) {
-      segmenterLoading = false;
-      reject(err);
-    }
-  });
+  try {
+    // Ensure WebGL backend is ready
+    await tf.setBackend('webgl');
+    await tf.ready();
+    
+    // Create segmenter with MediaPipe Selfie Segmentation model
+    segmenter = await bodySegmentation.createSegmenter(
+      bodySegmentation.SupportedModels.MediaPipeSelfieSegmentation,
+      {
+        runtime: 'tfjs',
+        modelType: 'general', // 'general' is faster than 'landscape'
+      }
+    );
+    
+    console.log('TensorFlow.js Body Segmentation ready');
+    segmenterLoading = false;
+    return segmenter;
+    
+  } catch (err) {
+    segmenterLoading = false;
+    throw err;
+  }
 }
 
 // Resize image to processing size
-function resizeToProcess(img: HTMLImageElement): { canvas: HTMLCanvasElement; scale: number } {
+function resizeToProcess(img: HTMLImageElement): HTMLCanvasElement {
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d')!;
   
@@ -111,34 +88,7 @@ function resizeToProcess(img: HTMLImageElement): { canvas: HTMLCanvasElement; sc
   canvas.height = h;
   ctx.drawImage(img, 0, 0, w, h);
   
-  return { canvas, scale };
-}
-
-// Run segmentation and get mask
-async function runSegmentation(canvas: HTMLCanvasElement): Promise<ImageData> {
-  if (!segmenter || !segmenterReady) {
-    throw new Error('Segmenter not ready');
-  }
-  
-  return new Promise((resolve, reject) => {
-    pendingResolve = resolve;
-    pendingReject = reject;
-    
-    // Timeout after 5 seconds
-    const timeout = setTimeout(() => {
-      pendingResolve = null;
-      pendingReject = null;
-      reject(new Error('Segmentation timeout'));
-    }, 5000);
-    
-    const originalResolve = pendingResolve;
-    pendingResolve = (mask: ImageData) => {
-      clearTimeout(timeout);
-      originalResolve(mask);
-    };
-    
-    segmenter!.send({ image: canvas });
-  });
+  return canvas;
 }
 
 // Apply mask using worker (off main thread)
@@ -215,63 +165,51 @@ function applyMaskOnMainThread(
   });
 }
 
-// Color threshold fallback using worker
-async function colorThresholdFallback(
-  canvas: HTMLCanvasElement
-): Promise<Uint8ClampedArray> {
+// Color threshold fallback
+function colorThresholdFallback(canvas: HTMLCanvasElement): Uint8ClampedArray {
   const ctx = canvas.getContext('2d')!;
   const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const data = imageData.data;
+  const mask = new Uint8ClampedArray(canvas.width * canvas.height);
   
-  const worker = getWorker();
+  // Sample edge pixels for background color
+  const edgePixels: number[][] = [];
+  const w = canvas.width;
+  const h = canvas.height;
   
-  if (!worker) {
-    // Simple inline threshold
-    const mask = new Uint8ClampedArray(canvas.width * canvas.height);
-    const data = imageData.data;
-    
-    // Sample edges for background color
-    const bgSamples: number[][] = [];
-    for (let x = 0; x < canvas.width; x += 20) {
-      bgSamples.push([data[x * 4], data[x * 4 + 1], data[x * 4 + 2]]);
-    }
-    const avgBg = bgSamples.reduce((a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]], [0, 0, 0])
-      .map(v => v / bgSamples.length);
-    
-    for (let i = 0; i < mask.length; i++) {
-      const idx = i * 4;
-      const dist = Math.sqrt(
-        Math.pow(data[idx] - avgBg[0], 2) +
-        Math.pow(data[idx + 1] - avgBg[1], 2) +
-        Math.pow(data[idx + 2] - avgBg[2], 2)
-      );
-      mask[i] = dist > 40 ? 255 : 0;
-    }
-    
-    return mask;
+  // Sample top and bottom edges
+  for (let x = 0; x < w; x += Math.max(1, Math.floor(w / 15))) {
+    const topIdx = x * 4;
+    const bottomIdx = ((h - 1) * w + x) * 4;
+    edgePixels.push([data[topIdx], data[topIdx + 1], data[topIdx + 2]]);
+    edgePixels.push([data[bottomIdx], data[bottomIdx + 1], data[bottomIdx + 2]]);
   }
   
-  return new Promise((resolve, reject) => {
-    const timeout = setTimeout(() => reject(new Error('Threshold timeout')), 5000);
-    
-    const handler = (ev: MessageEvent) => {
-      clearTimeout(timeout);
-      worker.removeEventListener('message', handler);
-      
-      if (ev.data.type === 'MASK_RESULT') {
-        resolve(new Uint8ClampedArray(ev.data.mask));
-      } else if (ev.data.type === 'ERROR') {
-        reject(new Error(ev.data.message));
-      }
-    };
-    
-    worker.addEventListener('message', handler);
-    
-    const buffer = imageData.data.buffer.slice(0);
-    worker.postMessage({
-      type: 'THRESHOLD_MASK',
-      payload: { imageData: buffer, width: canvas.width, height: canvas.height }
-    }, [buffer]);
-  });
+  // Sample left and right edges
+  for (let y = 0; y < h; y += Math.max(1, Math.floor(h / 15))) {
+    const leftIdx = y * w * 4;
+    const rightIdx = (y * w + w - 1) * 4;
+    edgePixels.push([data[leftIdx], data[leftIdx + 1], data[leftIdx + 2]]);
+    edgePixels.push([data[rightIdx], data[rightIdx + 1], data[rightIdx + 2]]);
+  }
+  
+  // Calculate average background color
+  const avgBg = edgePixels.reduce((acc, p) => [acc[0] + p[0], acc[1] + p[1], acc[2] + p[2]], [0, 0, 0])
+    .map(v => v / edgePixels.length);
+  
+  // Threshold based on color distance from background
+  const threshold = 45;
+  for (let i = 0; i < mask.length; i++) {
+    const idx = i * 4;
+    const dist = Math.sqrt(
+      Math.pow(data[idx] - avgBg[0], 2) +
+      Math.pow(data[idx + 1] - avgBg[1], 2) +
+      Math.pow(data[idx + 2] - avgBg[2], 2)
+    );
+    mask[i] = dist > threshold ? 255 : 0;
+  }
+  
+  return mask;
 }
 
 /**
@@ -289,13 +227,13 @@ export async function removeBackground(
   try {
     onProgress?.('Initializing...', 10);
     
-    // Initialize segmenter if needed
-    await initSegmenter();
+    // Initialize segmenter
+    const seg = await initSegmenter();
     
     onProgress?.('Processing image...', 30);
     
     // Resize to processing size
-    const { canvas } = resizeToProcess(imageElement);
+    const canvas = resizeToProcess(imageElement);
     const width = canvas.width;
     const height = canvas.height;
     
@@ -304,22 +242,31 @@ export async function removeBackground(
     try {
       onProgress?.('Detecting person...', 50);
       
-      // Run MediaPipe segmentation
-      const maskData = await runSegmentation(canvas);
+      // Run segmentation
+      const segmentations = await seg.segmentPeople(canvas, {
+        flipHorizontal: false,
+        multiSegmentation: false,
+        segmentBodyParts: false,
+      });
       
-      // Convert mask to alpha values (red channel = person probability)
-      maskUint8 = new Uint8ClampedArray(width * height);
-      for (let i = 0; i < maskUint8.length; i++) {
-        // MediaPipe mask: higher value = more likely person
-        maskUint8[i] = maskData.data[i * 4]; // Use red channel
+      if (segmentations.length > 0 && segmentations[0].mask) {
+        // Get mask as ImageData
+        const maskImageData = await segmentations[0].mask.toImageData();
+        
+        // Extract alpha from mask (person = high value)
+        maskUint8 = new Uint8ClampedArray(width * height);
+        for (let i = 0; i < maskUint8.length; i++) {
+          // Red channel contains person probability (0-255)
+          maskUint8[i] = maskImageData.data[i * 4];
+        }
+      } else {
+        throw new Error('No segmentation result');
       }
       
     } catch (segError) {
-      console.warn('MediaPipe failed, using color threshold fallback:', segError);
+      console.warn('Segmentation failed, using color threshold fallback:', segError);
       onProgress?.('Using fallback...', 50);
-      
-      // Color threshold fallback
-      maskUint8 = await colorThresholdFallback(canvas);
+      maskUint8 = colorThresholdFallback(canvas);
     }
     
     onProgress?.('Creating transparent image...', 80);
@@ -376,16 +323,12 @@ export function loadImage(file: Blob): Promise<HTMLImageElement> {
  */
 export function clearModel(): void {
   if (segmenter) {
-    segmenter.close();
+    segmenter.dispose();
     segmenter = null;
-    segmenterReady = false;
   }
   
   if (compositorWorker) {
     compositorWorker.terminate();
     compositorWorker = null;
   }
-  
-  pendingResolve = null;
-  pendingReject = null;
 }
