@@ -201,7 +201,7 @@ export default function RankBannerCreate() {
         <div className="flex gap-4">
           <div className="flex-1 space-y-5 py-0 mx-0 px-0 my-0">
             <div className="space-y-2">
-              <label className="text-sm text-foreground">Name  </label>
+              <label className="text-sm text-foreground">Name (Max 20 characters)</label>
               <Input value={formData.name} onChange={e => {
               const value = e.target.value;
               if (value.length <= 20) {
@@ -223,7 +223,7 @@ export default function RankBannerCreate() {
             </div>
 
             <div className="space-y-2">
-              
+              <label className="text-sm text-foreground">Cheque Amount <span className="text-muted-foreground">(optional)</span></label>
               <div className="relative">
                 <span className="absolute left-0 top-1/2 -translate-y-1/2 text-foreground text-lg">₹</span>
                 <Input value={formData.chequeAmount} onChange={e => {
