@@ -2,20 +2,15 @@ import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { useFestivals } from "@/hooks/useFestivals";
 import BottomNav from "@/components/BottomNav";
+import ListPageSkeleton from "@/components/skeletons/ListPageSkeleton";
 
 export default function FestivalSelection() {
   const navigate = useNavigate();
   const { festivals, loading } = useFestivals();
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-navy-dark flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading festivals...</p>
-        </div>
-      </div>
-    );
+  // Only show skeleton on initial load with no cached data
+  if (loading && festivals.length === 0) {
+    return <ListPageSkeleton />;
   }
 
   const handleFestivalClick = (festivalId: string) => {
@@ -82,7 +77,7 @@ export default function FestivalSelection() {
           ))}
         </div>
 
-        {festivals.length === 0 && (
+        {festivals.length === 0 && !loading && (
           <div className="text-center py-12">
             <div className="w-20 h-20 bg-secondary rounded-full flex items-center justify-center mx-auto mb-4">
               <span className="text-4xl">🎉</span>

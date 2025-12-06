@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { logger } from '@/lib/logger';
+import { useEffect } from 'react';
 
 export interface BonanzaTrip {
   id: string;
@@ -16,13 +16,11 @@ export interface BonanzaTrip {
 }
 
 export const useBonanzaTrips = () => {
-  const [trips, setTrips] = useState<BonanzaTrip[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+  const queryClient = useQueryClient();
 
-  const fetchTrips = async () => {
-    try {
-      setLoading(true);
+  const { data: trips, isLoading, error, refetch } = useQuery({
+    queryKey: ['bonanza-trips'],
+    queryFn: async () => {
       const { data, error } = await supabase
         .from('bonanza_trips')
         .select('*')
@@ -30,20 +28,11 @@ export const useBonanzaTrips = () => {
         .order('display_order', { ascending: true });
 
       if (error) throw error;
-      setTrips(data || []);
-      setError(null);
-    } catch (err) {
-      setError(err as Error);
-      logger.error('Error fetching bonanza trips:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+      return data as BonanzaTrip[];
+    },
+  });
 
   useEffect(() => {
-    fetchTrips();
-
-    // Real-time subscription for instant updates
     const channel = supabase
       .channel(`bonanza-trips-changes-${Math.random()}`)
       .on(
@@ -53,9 +42,8 @@ export const useBonanzaTrips = () => {
           schema: 'public',
           table: 'bonanza_trips',
         },
-        (payload) => {
-          logger.log('Bonanza trip update received:', payload);
-          fetchTrips();
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['bonanza-trips'] });
         }
       )
       .subscribe();
@@ -63,67 +51,37 @@ export const useBonanzaTrips = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [queryClient]);
 
-  return { trips, loading, error, refetch: fetchTrips };
+  return { 
+    trips: trips || [], 
+    loading: isLoading, 
+    error, 
+    refetch 
+  };
 };
 
 export const useBonanzaTrip = (tripId?: string) => {
-  const [trip, setTrip] = useState<BonanzaTrip | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+  const { data: trip, isLoading, error } = useQuery({
+    queryKey: ['bonanza-trip', tripId],
+    queryFn: async () => {
+      if (!tripId) return null;
 
-  useEffect(() => {
-    if (!tripId) {
-      setTrip(null);
-      setLoading(false);
-      return;
-    }
+      const { data, error } = await supabase
+        .from('bonanza_trips')
+        .select('*')
+        .eq('id', tripId)
+        .single();
 
-    const fetchTrip = async () => {
-      try {
-        setLoading(true);
-        const { data, error } = await supabase
-          .from('bonanza_trips')
-          .select('*')
-          .eq('id', tripId)
-          .single();
+      if (error) throw error;
+      return data as BonanzaTrip;
+    },
+    enabled: !!tripId,
+  });
 
-        if (error) throw error;
-        setTrip(data);
-        setError(null);
-      } catch (err) {
-        setError(err as Error);
-        logger.error('Error fetching bonanza trip:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchTrip();
-
-    // Real-time subscription
-    const channel = supabase
-      .channel(`bonanza-trip-${tripId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'bonanza_trips',
-          filter: `id=eq.${tripId}`,
-        },
-        (payload) => {
-          logger.log('Bonanza trip update received:', payload);
-          fetchTrip();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [tripId]);
-
-  return { trip, loading, error };
+  return { 
+    trip: trip || null, 
+    loading: isLoading, 
+    error 
+  };
 };

@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { logger } from '@/lib/logger';
+import { useEffect } from 'react';
 
 export interface Birthday {
   id: string;
@@ -16,35 +16,23 @@ export interface Birthday {
 }
 
 export const useBirthdays = () => {
-  const [birthdays, setBirthdays] = useState<Birthday[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+  const queryClient = useQueryClient();
+
+  const { data: birthdays, isLoading, error, refetch } = useQuery({
+    queryKey: ['birthdays'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('Birthday')
+        .select('*')
+        .eq('is_active', true)
+        .order('display_order', { ascending: true });
+
+      if (error) throw error;
+      return data as Birthday[];
+    },
+  });
 
   useEffect(() => {
-    const fetchBirthdays = async () => {
-      try {
-        setLoading(true);
-        const { data, error } = await supabase
-          .from('Birthday')
-          .select('*')
-          .eq('is_active', true)
-          .order('display_order', { ascending: true });
-
-        if (error) throw error;
-
-        setBirthdays(data || []);
-        setError(null);
-      } catch (err) {
-        setError(err as Error);
-        logger.error('Error fetching birthdays:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchBirthdays();
-
-    // Set up real-time subscription
     const channel = supabase
       .channel('birthdays-changes')
       .on(
@@ -54,9 +42,8 @@ export const useBirthdays = () => {
           schema: 'public',
           table: 'Birthday',
         },
-        (payload) => {
-          logger.log('Birthday changed:', payload);
-          fetchBirthdays();
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['birthdays'] });
         }
       )
       .subscribe();
@@ -64,67 +51,36 @@ export const useBirthdays = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [queryClient]);
 
-  return { birthdays, loading, error };
+  return { 
+    birthdays: birthdays || [], 
+    loading: isLoading, 
+    error 
+  };
 };
 
 export const useBirthday = (birthdayId?: string) => {
-  const [birthday, setBirthday] = useState<Birthday | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+  const { data: birthday, isLoading, error } = useQuery({
+    queryKey: ['birthday', birthdayId],
+    queryFn: async () => {
+      if (!birthdayId) return null;
 
-  useEffect(() => {
-    if (!birthdayId) {
-      setLoading(false);
-      return;
-    }
+      const { data, error } = await supabase
+        .from('Birthday')
+        .select('*')
+        .eq('id', birthdayId)
+        .single();
 
-    const fetchBirthday = async () => {
-      try {
-        setLoading(true);
-        const { data, error } = await supabase
-          .from('Birthday')
-          .select('*')
-          .eq('id', birthdayId)
-          .single();
+      if (error) throw error;
+      return data as Birthday;
+    },
+    enabled: !!birthdayId,
+  });
 
-        if (error) throw error;
-
-        setBirthday(data);
-        setError(null);
-      } catch (err) {
-        setError(err as Error);
-        logger.error('Error fetching birthday:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchBirthday();
-
-    // Set up real-time subscription
-    const channel = supabase
-      .channel(`birthday-${birthdayId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'Birthday',
-          filter: `id=eq.${birthdayId}`,
-        },
-        (payload) => {
-          logger.log('Birthday changed:', payload);
-          fetchBirthday();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [birthdayId]);
-
-  return { birthday, loading, error };
+  return { 
+    birthday: birthday || null, 
+    loading: isLoading, 
+    error 
+  };
 };

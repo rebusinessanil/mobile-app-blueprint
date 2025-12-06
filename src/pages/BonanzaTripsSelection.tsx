@@ -2,20 +2,15 @@ import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { useBonanzaTrips } from "@/hooks/useBonanzaTrips";
 import BottomNav from "@/components/BottomNav";
+import ListPageSkeleton from "@/components/skeletons/ListPageSkeleton";
 
 export default function BonanzaTripsSelection() {
   const navigate = useNavigate();
   const { trips, loading } = useBonanzaTrips();
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-navy-dark flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading trips...</p>
-        </div>
-      </div>
-    );
+  // Only show skeleton on initial load with no cached data
+  if (loading && trips.length === 0) {
+    return <ListPageSkeleton />;
   }
 
   return (
@@ -75,7 +70,7 @@ export default function BonanzaTripsSelection() {
           ))}
         </div>
 
-        {trips.length === 0 && (
+        {trips.length === 0 && !loading && (
           <div className="text-center py-12">
             <div className="w-20 h-20 bg-secondary rounded-full flex items-center justify-center mx-auto mb-4">
               <span className="text-4xl">🎁</span>

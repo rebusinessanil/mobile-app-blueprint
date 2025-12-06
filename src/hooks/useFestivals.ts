@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { logger } from '@/lib/logger';
+import { useEffect } from 'react';
 
 export interface Festival {
   id: string;
@@ -14,13 +14,11 @@ export interface Festival {
 }
 
 export const useFestivals = () => {
-  const [festivals, setFestivals] = useState<Festival[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+  const queryClient = useQueryClient();
 
-  const fetchFestivals = async () => {
-    try {
-      setLoading(true);
+  const { data: festivals, isLoading, error, refetch } = useQuery({
+    queryKey: ['festivals'],
+    queryFn: async () => {
       const { data, error } = await supabase
         .from('stories_festivals')
         .select('*')
@@ -28,20 +26,11 @@ export const useFestivals = () => {
         .order('festival_date', { ascending: true });
 
       if (error) throw error;
-      setFestivals(data || []);
-      setError(null);
-    } catch (err) {
-      setError(err as Error);
-      logger.error('Error fetching festivals:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+      return data as Festival[];
+    },
+  });
 
   useEffect(() => {
-    fetchFestivals();
-
-    // Real-time subscription for instant updates
     const channel = supabase
       .channel(`festivals-changes-${Math.random()}`)
       .on(
@@ -51,9 +40,8 @@ export const useFestivals = () => {
           schema: 'public',
           table: 'stories_festivals',
         },
-        (payload) => {
-          logger.log('Festival update received:', payload);
-          fetchFestivals();
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['festivals'] });
         }
       )
       .subscribe();
@@ -61,67 +49,37 @@ export const useFestivals = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [queryClient]);
 
-  return { festivals, loading, error, refetch: fetchFestivals };
+  return { 
+    festivals: festivals || [], 
+    loading: isLoading, 
+    error, 
+    refetch 
+  };
 };
 
 export const useFestival = (festivalId?: string) => {
-  const [festival, setFestival] = useState<Festival | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+  const { data: festival, isLoading, error } = useQuery({
+    queryKey: ['festival', festivalId],
+    queryFn: async () => {
+      if (!festivalId) return null;
 
-  useEffect(() => {
-    if (!festivalId) {
-      setFestival(null);
-      setLoading(false);
-      return;
-    }
+      const { data, error } = await supabase
+        .from('stories_festivals')
+        .select('*')
+        .eq('id', festivalId)
+        .single();
 
-    const fetchFestival = async () => {
-      try {
-        setLoading(true);
-        const { data, error } = await supabase
-          .from('stories_festivals')
-          .select('*')
-          .eq('id', festivalId)
-          .single();
+      if (error) throw error;
+      return data as Festival;
+    },
+    enabled: !!festivalId,
+  });
 
-        if (error) throw error;
-        setFestival(data);
-        setError(null);
-      } catch (err) {
-        setError(err as Error);
-        logger.error('Error fetching festival:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchFestival();
-
-    // Real-time subscription
-    const channel = supabase
-      .channel(`festival-${festivalId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'stories_festivals',
-          filter: `id=eq.${festivalId}`,
-        },
-        (payload) => {
-          logger.log('Festival update received:', payload);
-          fetchFestival();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [festivalId]);
-
-  return { festival, loading, error };
+  return { 
+    festival: festival || null, 
+    loading: isLoading, 
+    error 
+  };
 };

@@ -1,18 +1,15 @@
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { useMotivationalBanners } from "@/hooks/useMotivationalBanners";
-import { Loader2 } from "lucide-react";
+import ListPageSkeleton from "@/components/skeletons/ListPageSkeleton";
 
 const MotivationalBannersSelection = () => {
   const navigate = useNavigate();
   const { motivationalBanners, loading } = useMotivationalBanners();
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+  // Only show skeleton on initial load with no cached data
+  if (loading && motivationalBanners.length === 0) {
+    return <ListPageSkeleton />;
   }
 
   return (

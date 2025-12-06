@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { logger } from '@/lib/logger';
+import { useEffect } from 'react';
 
 export interface Anniversary {
   id: string;
@@ -16,35 +16,23 @@ export interface Anniversary {
 }
 
 export const useAnniversaries = () => {
-  const [anniversaries, setAnniversaries] = useState<Anniversary[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+  const queryClient = useQueryClient();
+
+  const { data: anniversaries, isLoading, error, refetch } = useQuery({
+    queryKey: ['anniversaries'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('Anniversary')
+        .select('*')
+        .eq('is_active', true)
+        .order('display_order', { ascending: true });
+
+      if (error) throw error;
+      return data as Anniversary[];
+    },
+  });
 
   useEffect(() => {
-    const fetchAnniversaries = async () => {
-      try {
-        setLoading(true);
-        const { data, error } = await supabase
-          .from('Anniversary')
-          .select('*')
-          .eq('is_active', true)
-          .order('display_order', { ascending: true });
-
-        if (error) throw error;
-
-        setAnniversaries(data || []);
-        setError(null);
-      } catch (err) {
-        setError(err as Error);
-        logger.error('Error fetching anniversaries:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAnniversaries();
-
-    // Set up real-time subscription
     const channel = supabase
       .channel('anniversaries-changes')
       .on(
@@ -54,9 +42,8 @@ export const useAnniversaries = () => {
           schema: 'public',
           table: 'Anniversary',
         },
-        (payload) => {
-          logger.log('Anniversary changed:', payload);
-          fetchAnniversaries();
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['anniversaries'] });
         }
       )
       .subscribe();
@@ -64,67 +51,36 @@ export const useAnniversaries = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [queryClient]);
 
-  return { anniversaries, loading, error };
+  return { 
+    anniversaries: anniversaries || [], 
+    loading: isLoading, 
+    error 
+  };
 };
 
 export const useAnniversary = (anniversaryId?: string) => {
-  const [anniversary, setAnniversary] = useState<Anniversary | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+  const { data: anniversary, isLoading, error } = useQuery({
+    queryKey: ['anniversary', anniversaryId],
+    queryFn: async () => {
+      if (!anniversaryId) return null;
 
-  useEffect(() => {
-    if (!anniversaryId) {
-      setLoading(false);
-      return;
-    }
+      const { data, error } = await supabase
+        .from('Anniversary')
+        .select('*')
+        .eq('id', anniversaryId)
+        .single();
 
-    const fetchAnniversary = async () => {
-      try {
-        setLoading(true);
-        const { data, error } = await supabase
-          .from('Anniversary')
-          .select('*')
-          .eq('id', anniversaryId)
-          .single();
+      if (error) throw error;
+      return data as Anniversary;
+    },
+    enabled: !!anniversaryId,
+  });
 
-        if (error) throw error;
-
-        setAnniversary(data);
-        setError(null);
-      } catch (err) {
-        setError(err as Error);
-        logger.error('Error fetching anniversary:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAnniversary();
-
-    // Set up real-time subscription
-    const channel = supabase
-      .channel(`anniversary-${anniversaryId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'Anniversary',
-          filter: `id=eq.${anniversaryId}`,
-        },
-        (payload) => {
-          logger.log('Anniversary changed:', payload);
-          fetchAnniversary();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [anniversaryId]);
-
-  return { anniversary, loading, error };
+  return { 
+    anniversary: anniversary || null, 
+    loading: isLoading, 
+    error 
+  };
 };
