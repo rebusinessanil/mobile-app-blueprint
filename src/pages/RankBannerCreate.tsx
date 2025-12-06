@@ -234,7 +234,7 @@ export default function RankBannerCreate() {
                   ...formData,
                   chequeAmount: value
                 });
-              }} placeholder="Enter amount" className="bg-transparent border-0 border-b-2 border-muted rounded-none text-foreground h-12 focus-visible:ring-0 focus-visible:border-primary pl-6" />
+              }} className="bg-transparent border-0 border-b-2 border-muted rounded-none text-foreground h-12 focus-visible:ring-0 focus-visible:border-primary pl-6" placeholder="Check Amount" />
               </div>
             </div>
           </div>
