@@ -217,7 +217,7 @@ export default function RankBannerCreate() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm text-foreground">Team Name <span className="text-muted-foreground">(Optional)</span></label>
+              
               <Input value={formData.teamCity} onChange={e => setFormData({
               ...formData,
               teamCity: e.target.value
@@ -225,7 +225,7 @@ export default function RankBannerCreate() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm text-foreground">Cheque Amount <span className="text-muted-foreground">(optional)</span></label>
+              
               <div className="relative">
                 <span className="absolute left-0 top-1/2 -translate-y-1/2 text-foreground text-lg">₹</span>
                 <Input value={formData.chequeAmount} onChange={e => {
