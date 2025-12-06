@@ -1,13 +1,15 @@
 import { useNavigate } from "react-router-dom";
+import { useCallback } from "react";
 import { ArrowLeft } from "lucide-react";
 import { ranks } from "@/data/ranks";
 
 export default function RankSelection() {
   const navigate = useNavigate();
 
-  const handleRankSelect = (rankId: string) => {
+  // Instant direct navigation - zero delay
+  const handleRankSelect = useCallback((rankId: string) => {
     navigate(`/rank-banner-create/${rankId}`);
-  };
+  }, [navigate]);
 
   return (
     <div className="min-h-screen bg-navy-dark pb-6">

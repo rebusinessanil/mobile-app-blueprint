@@ -1,29 +1,22 @@
 import { useNavigate } from "react-router-dom";
+import { useCallback } from "react";
 import { ArrowLeft } from "lucide-react";
 import { useFestivals } from "@/hooks/useFestivals";
 import BottomNav from "@/components/BottomNav";
+import { ListPageSkeleton } from "@/components/skeletons";
 
 export default function FestivalSelection() {
   const navigate = useNavigate();
   const { festivals, loading } = useFestivals();
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-navy-dark flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading festivals...</p>
-        </div>
-      </div>
-    );
-  }
+  // Instant direct navigation - zero delay
+  const handleFestivalSelect = useCallback((festivalId: string) => {
+    navigate('/banner-create/festival', { state: { festivalId } });
+  }, [navigate]);
 
-  const handleFestivalClick = (festivalId: string) => {
-    console.log('🎉 Festival selected:', festivalId);
-    navigate('/banner-create/festival', {
-      state: { festivalId }
-    });
-  };
+  if (loading) {
+    return <ListPageSkeleton />;
+  }
 
   return (
     <div className="min-h-screen bg-navy-dark pb-24">
@@ -31,7 +24,7 @@ export default function FestivalSelection() {
         <div className="flex items-center justify-between">
           <button
             onClick={() => navigate("/dashboard")}
-            className="w-10 h-10 rounded-xl border-2 border-primary flex items-center justify-center hover:bg-primary/10 transition-colors"
+            className="w-10 h-10 rounded-xl border-2 border-primary flex items-center justify-center hover:bg-primary/10 transition-colors active:scale-95"
           >
             <ArrowLeft className="w-5 h-5 text-primary" />
           </button>
@@ -52,8 +45,8 @@ export default function FestivalSelection() {
           {festivals.map((festival) => (
             <button
               key={festival.id}
-              onClick={() => handleFestivalClick(festival.id)}
-              className="gold-border bg-card rounded-2xl overflow-hidden hover:gold-glow transition-all text-left"
+              onClick={() => handleFestivalSelect(festival.id)}
+              className="gold-border bg-card rounded-2xl overflow-hidden hover:gold-glow transition-all text-left active:scale-95"
             >
               <div className="h-32 relative">
                 {festival.poster_url ? (
