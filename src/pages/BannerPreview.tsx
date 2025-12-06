@@ -19,6 +19,8 @@ import download from "downloadjs";
 import { useRealtimeStickerSync } from "@/hooks/useRealtimeStickerSync";
 import { useWalletDeduction } from "@/hooks/useWalletDeduction";
 import InsufficientBalanceModal from "@/components/InsufficientBalanceModal";
+import BannerPreviewSkeleton from "@/components/skeletons/BannerPreviewSkeleton";
+
 interface Upline {
   id: string;
   name: string;
@@ -173,16 +175,20 @@ export default function BannerPreview() {
     });
   }, []);
   const {
-    profile
+    profile,
+    loading: profileLoading
   } = useProfile(userId ?? undefined);
   const {
-    photos: profilePhotos
+    photos: profilePhotos,
+    loading: photosLoading
   } = useProfilePhotos(userId ?? undefined);
   const {
-    settings: bannerSettings
+    settings: bannerSettings,
+    loading: settingsLoading
   } = useBannerSettings(userId ?? undefined);
   const {
-    defaults: bannerDefaults
+    defaults: bannerDefaults,
+    loading: defaultsLoading
   } = useBannerDefaults();
 
   // Fetch motivational profile defaults (position and scale for profile picture)
@@ -425,10 +431,30 @@ export default function BannerPreview() {
   // Fetch selected stickers - removed, now using slotStickers structure
   // Each slot has its own stickers independently
 
+  // LOADING GATE: Calculate loading state - must be before any conditional returns
+  const isAssetsLoading = 
+    // Check if user ID is still being fetched
+    (userId === null && !profile) ||
+    // Check profile data
+    profileLoading ||
+    // Check photos data
+    photosLoading ||
+    // Check banner settings
+    settingsLoading ||
+    // Check banner defaults
+    defaultsLoading ||
+    // Check backgrounds
+    backgroundsLoading;
+
   // Early return if no banner data
   if (!bannerData) {
     navigate("/rank-selection");
     return null;
+  }
+
+  // Show skeleton while assets are loading - prevents partial renders and flicker
+  if (isAssetsLoading) {
+    return <BannerPreviewSkeleton />;
   }
 
   // Category-specific content render function
