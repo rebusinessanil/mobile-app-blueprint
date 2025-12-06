@@ -221,7 +221,7 @@ export default function RankBannerCreate() {
               <Input value={formData.teamCity} onChange={e => setFormData({
               ...formData,
               teamCity: e.target.value
-            })} placeholder="Team Name (Optional)" className="bg-transparent border-0 border-b-2 border-muted rounded-none text-foreground h-12 focus-visible:ring-0 focus-visible:border-primary" />
+            })} className="bg-transparent border-0 border-b-2 border-muted rounded-none text-foreground h-12 focus-visible:ring-0 focus-visible:border-primary" placeholder="Team / City" />
             </div>
 
             <div className="space-y-2">
