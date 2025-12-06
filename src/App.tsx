@@ -2,12 +2,24 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { Suspense, lazy, memo, Component, ReactNode } from "react";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { Suspense, lazy, memo, Component, ReactNode, useMemo } from "react";
 import WhatsAppSupport from "@/components/WhatsAppSupport";
 import OfflineBanner from "@/components/OfflineBanner";
 import AuthGuard from "@/components/AuthGuard";
 import { queryClient } from "@/lib/queryConfig";
+
+// Skeleton loaders
+import {
+  DashboardSkeleton,
+  BannerCreateSkeleton,
+  BannerPreviewSkeleton,
+  ProfileSkeleton,
+  ListPageSkeleton,
+  WalletSkeleton,
+  AdminSkeleton,
+  GenericSkeleton,
+} from "@/components/skeletons";
 
 // Critical path - load immediately
 import Login from "./pages/Login";
@@ -20,7 +32,6 @@ const lazyWithRetry = (componentImport: () => Promise<{ default: React.Component
     try {
       return await componentImport();
     } catch (error) {
-      // Retry once on failure (handles HMR/chunk issues)
       console.warn('Lazy load failed, retrying...', error);
       return await componentImport();
     }
@@ -59,7 +70,7 @@ const ComingSoon = lazyWithRetry(() => import("./pages/ComingSoon"));
 const NotFound = lazyWithRetry(() => import("./pages/NotFound"));
 const MeetingBannerCreate = lazyWithRetry(() => import("./pages/MeetingBannerCreate"));
 
-// Admin pages - lazy load (rarely accessed)
+// Admin pages
 const AdminDashboard = lazyWithRetry(() => import("./pages/AdminDashboard"));
 const AdminUsers = lazyWithRetry(() => import("./pages/AdminUsers"));
 const AdminTemplates = lazyWithRetry(() => import("./pages/AdminTemplates"));
@@ -107,13 +118,25 @@ class LazyErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundary
   }
 }
 
-// Minimal loading fallback - GPU accelerated
-const PageLoader = memo(() => (
-  <div className="min-h-screen bg-background flex items-center justify-center">
-    <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin transform-gpu" />
-  </div>
-));
-PageLoader.displayName = 'PageLoader';
+// Context-aware skeleton loader
+const RouteSkeleton = memo(() => {
+  const location = useLocation();
+  const path = location.pathname;
+
+  const skeleton = useMemo(() => {
+    if (path === '/dashboard') return <DashboardSkeleton />;
+    if (path.includes('/banner-preview') || path.includes('-preview')) return <BannerPreviewSkeleton />;
+    if (path.includes('/banner-create') || path.includes('-banner-create')) return <BannerCreateSkeleton />;
+    if (path.includes('/profile')) return <ProfileSkeleton />;
+    if (path.includes('/wallet') || path.includes('/transactions')) return <WalletSkeleton />;
+    if (path.includes('/admin')) return <AdminSkeleton />;
+    if (path.includes('/categories') || path.includes('/selection') || path.includes('/my-downloads')) return <ListPageSkeleton />;
+    return <GenericSkeleton />;
+  }, [path]);
+
+  return skeleton;
+});
+RouteSkeleton.displayName = 'RouteSkeleton';
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -123,7 +146,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <LazyErrorBoundary>
-          <Suspense fallback={<PageLoader />}>
+          <Suspense fallback={<RouteSkeleton />}>
             <Routes>
               {/* Public routes - no auth required */}
               <Route path="/" element={<Login />} />
