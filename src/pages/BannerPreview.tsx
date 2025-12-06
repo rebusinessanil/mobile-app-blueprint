@@ -17,7 +17,7 @@ import type { Sticker } from "@/hooks/useStickers";
 import { toPng } from "html-to-image";
 import download from "downloadjs";
 import { useRealtimeStickerSync } from "@/hooks/useRealtimeStickerSync";
-import { useGlobalStickers, type BannerCategoryType } from "@/hooks/useGlobalStickers";
+import { useGlobalRankStickers } from "@/hooks/useGlobalRankStickers";
 import { useWalletDeduction } from "@/hooks/useWalletDeduction";
 import InsufficientBalanceModal from "@/components/InsufficientBalanceModal";
 interface Upline {
@@ -262,29 +262,24 @@ export default function BannerPreview() {
     categoryType: bannerData?.categoryType
   });
 
-  // Determine banner category for universal sticker loading
-  const stickerBannerCategory: BannerCategoryType = bannerData?.categoryType || 'rank';
-
-  // Universal global stickers with real-time sync - works for ALL categories
+  // Global rank stickers with real-time sync - users only see, can't edit
   const {
     stickers: globalStickers,
     stickersBySlot: globalStickersBySlot,
     getStickerForSlot,
     refetch: refetchGlobalStickers,
-  } = useGlobalStickers({
-    bannerCategory: stickerBannerCategory,
-    rankId: stickerBannerCategory === 'rank' ? bannerData?.rankId : undefined,
-    templateId: bannerData?.templateId || currentTemplateId,
+  } = useGlobalRankStickers({
+    rankId: bannerData?.rankId,
+    categoryId: bannerData?.templateId || currentTemplateId,
   });
 
-  // Real-time sync for sticker updates from admin panel (all categories)
+  // Real-time sync for sticker updates from admin panel
   useRealtimeStickerSync({
-    bannerCategory: stickerBannerCategory,
-    rankId: stickerBannerCategory === 'rank' ? bannerData?.rankId : undefined,
+    rankId: bannerData?.rankId,
     categoryId: bannerData?.templateId || currentTemplateId,
     onUpdate: () => {
       // Refetch global stickers when admin updates
-      console.log('Admin sticker update detected, syncing for category:', stickerBannerCategory);
+      console.log('Admin sticker update detected, syncing...');
       refetchGlobalStickers();
     }
   });
