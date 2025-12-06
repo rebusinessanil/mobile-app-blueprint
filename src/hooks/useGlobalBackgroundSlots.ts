@@ -186,9 +186,10 @@ export const getSlotBackgroundStyle = (slot: BackgroundSlot): React.CSSPropertie
   if (slot.hasImage && slot.imageUrl) {
     return {
       backgroundImage: `url(${slot.imageUrl})`,
-      backgroundSize: 'cover',
+      backgroundSize: 'contain',
       backgroundPosition: 'center',
       backgroundRepeat: 'no-repeat',
+      backgroundColor: '#0c111c', // Dark background behind image
     };
   }
   
