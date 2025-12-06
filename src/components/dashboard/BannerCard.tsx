@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
-import { useState } from "react";
+import { useState, memo, useRef, useEffect } from "react";
+import { getThumbnailUrl } from "@/lib/imageOptimizer";
 
 interface BannerCardProps {
   id: string;
@@ -11,7 +12,7 @@ interface BannerCardProps {
   linkTo: string;
 }
 
-export default function BannerCard({
+function BannerCardComponent({
   id,
   title,
   subtitle,
@@ -21,28 +22,67 @@ export default function BannerCard({
   linkTo
 }: BannerCardProps) {
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [isInView, setIsInView] = useState(false);
+  const cardRef = useRef<HTMLAnchorElement>(null);
+
+  // Lazy load with Intersection Observer
+  useEffect(() => {
+    const element = cardRef.current;
+    if (!element) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsInView(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: '100px', threshold: 0.01 }
+    );
+
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+
+  const thumbnailUrl = imageUrl ? getThumbnailUrl(imageUrl, 40) : '';
 
   return (
     <Link
+      ref={cardRef}
       to={linkTo}
-      className="w-[calc(33.333%-8px)] min-w-[110px] max-w-[140px] gold-border bg-card rounded-2xl overflow-hidden flex-shrink-0 hover:gold-glow transition-all active:scale-95"
+      className="w-[calc(33.333%-8px)] min-w-[110px] max-w-[140px] gold-border bg-card rounded-2xl overflow-hidden flex-shrink-0 hover:gold-glow transition-all active:scale-95 transform-gpu will-change-transform"
     >
-      {/* Fixed aspect ratio container to prevent layout shift */}
-      <div className="aspect-[4/3] relative bg-secondary/30">
+      {/* Fixed aspect ratio container - GPU accelerated */}
+      <div className="aspect-[4/3] relative bg-secondary/30 overflow-hidden">
         {imageUrl ? (
           <>
-            {!imageLoaded && (
+            {/* Blur placeholder - always render first */}
+            {thumbnailUrl && !imageLoaded && (
+              <img
+                src={thumbnailUrl}
+                alt=""
+                aria-hidden="true"
+                className="absolute inset-0 w-full h-full object-cover blur-md scale-110 transform-gpu"
+                loading="eager"
+              />
+            )}
+            {/* Skeleton fallback */}
+            {!imageLoaded && !thumbnailUrl && (
               <div className="absolute inset-0 bg-secondary/50 animate-pulse" />
             )}
-            <img
-              src={imageUrl}
-              alt={title}
-              className={`w-full h-full object-cover transition-opacity duration-300 ${
-                imageLoaded ? 'opacity-100' : 'opacity-0'
-              }`}
-              onLoad={() => setImageLoaded(true)}
-              loading="lazy"
-            />
+            {/* Main image - only load when in view */}
+            {isInView && (
+              <img
+                src={imageUrl}
+                alt={title}
+                className={`w-full h-full object-cover transition-opacity duration-200 transform-gpu ${
+                  imageLoaded ? 'opacity-100' : 'opacity-0'
+                }`}
+                onLoad={() => setImageLoaded(true)}
+                loading="lazy"
+                decoding="async"
+              />
+            )}
           </>
         ) : (
           <div className={`w-full h-full ${fallbackGradient} flex items-center justify-center text-3xl`}>
@@ -63,3 +103,6 @@ export default function BannerCard({
     </Link>
   );
 }
+
+// Memoize to prevent unnecessary re-renders
+export default memo(BannerCardComponent);
