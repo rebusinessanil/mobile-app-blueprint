@@ -17,6 +17,13 @@ let model: any = null;
 let processor: any = null;
 let compositorWorker: Worker | null = null;
 
+// CPU fallback disabled by default - only WebGPU and WASM allowed
+let allowCpuFallback = false;
+
+export const setAllowCpuFallback = (allow: boolean) => {
+  allowCpuFallback = allow;
+};
+
 // Initialize compositor web worker
 const getCompositorWorker = (): Worker | null => {
   if (typeof Worker === 'undefined') return null;
@@ -28,34 +35,36 @@ const getCompositorWorker = (): Worker | null => {
         { type: 'module' }
       );
     } catch (e) {
-      console.warn('Compositor Worker not available, using fallback');
+      console.warn('Compositor Worker not available');
       return null;
     }
   }
   return compositorWorker;
 };
 
-// Load the RMBG model with fp16 on mobile, webgpu preferred
+// Load the RMBG model - WebGPU → WASM fallback (CPU disabled unless explicitly allowed)
 async function loadModel(onProgress?: (stage: string, percent: number) => void) {
   if (model && processor) return { model, processor };
   
   const mobile = isMobile();
   onProgress?.('Loading AI model...', 10);
   
+  // Try WebGPU first with fp16 precision
   try {
-    // Always use fp16 on mobile for memory efficiency, fp32 on desktop for quality
     model = await AutoModel.from_pretrained('briaai/RMBG-1.4', {
       device: 'webgpu',
-      dtype: mobile ? 'fp16' : 'fp32',
+      dtype: 'fp16', // Always use fp16 for performance
     });
     
     processor = await AutoProcessor.from_pretrained('briaai/RMBG-1.4');
     
+    console.log('RMBG-1.4 loaded with WebGPU (fp16)');
     onProgress?.('Model loaded', 25);
     return { model, processor };
-  } catch (error) {
+  } catch (webgpuError) {
     console.log('WebGPU not available, falling back to WASM...');
     
+    // Try WASM fallback
     try {
       model = await AutoModel.from_pretrained('briaai/RMBG-1.4', {
         device: 'wasm',
@@ -63,19 +72,26 @@ async function loadModel(onProgress?: (stage: string, percent: number) => void) 
       
       processor = await AutoProcessor.from_pretrained('briaai/RMBG-1.4');
       
+      console.log('RMBG-1.4 loaded with WASM');
       onProgress?.('Model loaded', 25);
       return { model, processor };
     } catch (wasmError) {
-      console.log('WASM not available, falling back to CPU...');
+      // CPU fallback only if explicitly allowed
+      if (allowCpuFallback) {
+        console.log('WASM not available, falling back to CPU...');
+        
+        model = await AutoModel.from_pretrained('briaai/RMBG-1.4', {
+          device: 'cpu',
+        });
+        
+        processor = await AutoProcessor.from_pretrained('briaai/RMBG-1.4');
+        
+        console.log('RMBG-1.4 loaded with CPU fallback');
+        onProgress?.('Model loaded', 25);
+        return { model, processor };
+      }
       
-      model = await AutoModel.from_pretrained('briaai/RMBG-1.4', {
-        device: 'cpu',
-      });
-      
-      processor = await AutoProcessor.from_pretrained('briaai/RMBG-1.4');
-      
-      onProgress?.('Model loaded', 25);
-      return { model, processor };
+      throw new Error('WebGPU and WASM not available. CPU fallback is disabled.');
     }
   }
 }
@@ -106,21 +122,21 @@ function resizeImageIfNeeded(
   return { width, height };
 }
 
-// Async chunked mask application - yields to UI every chunk
-async function applyMaskChunked(
-  imageData: ImageData,
+// Async chunked mask creation - yields to UI every chunk
+async function createMaskChunked(
   maskData: Float32Array,
   maskWidth: number,
   maskHeight: number,
+  targetWidth: number,
+  targetHeight: number,
   onProgress?: (stage: string, percent: number) => void
 ): Promise<Uint8ClampedArray> {
-  const { width, height, data } = imageData;
-  const result = new Uint8ClampedArray(data);
-  const maskLen = width * height;
-  const chunkSize = 10000; // Process in chunks to avoid UI freeze
+  const maskLen = targetWidth * targetHeight;
+  const result = new Uint8ClampedArray(maskLen);
+  const chunkSize = 15000; // Process in chunks to avoid UI freeze
   
-  const scaleX = maskWidth / width;
-  const scaleY = maskHeight / height;
+  const scaleX = maskWidth / targetWidth;
+  const scaleY = maskHeight / targetHeight;
   
   let processed = 0;
   
@@ -129,8 +145,8 @@ async function applyMaskChunked(
       const end = Math.min(maskLen, processed + chunkSize);
       
       for (let i = processed; i < end; i++) {
-        const x = i % width;
-        const y = Math.floor(i / width);
+        const x = i % targetWidth;
+        const y = Math.floor(i / targetWidth);
         
         // Bilinear interpolation for smoother mask
         const mx = x * scaleX;
@@ -153,13 +169,12 @@ async function applyMaskChunked(
                           (1 - fx) * fy * v01 +
                           fx * fy * v11;
         
-        const pixelIdx = i * 4;
-        result[pixelIdx + 3] = Math.round(maskValue * 255);
+        result[i] = Math.round(maskValue * 255);
       }
       
       processed = end;
-      const progress = 60 + Math.round((processed / maskLen) * 25);
-      onProgress?.('Applying mask...', progress);
+      const progress = 60 + Math.round((processed / maskLen) * 20);
+      onProgress?.('Creating mask...', progress);
       
       if (processed < maskLen) {
         // Yield to UI with setTimeout(0)
@@ -173,7 +188,7 @@ async function applyMaskChunked(
   });
 }
 
-// Compositor worker integration
+// Compositor worker integration - returns transparent PNG blob
 async function composeInWorker(
   imageBuffer: ArrayBuffer,
   imageMime: string,
@@ -198,7 +213,8 @@ async function composeInWorker(
       
       const { type, blobBuffer, mime, message } = ev.data;
       if (type === 'RESULT') {
-        const blob = new Blob([blobBuffer], { type: mime || 'image/png' });
+        // Return transparent PNG blob with preserved alpha
+        const blob = new Blob([blobBuffer], { type: 'image/png' });
         resolve(blob);
       } else if (type === 'ERROR') {
         reject(new Error(message || 'Compositor error'));
@@ -208,6 +224,7 @@ async function composeInWorker(
     worker.addEventListener('message', onMessage);
     
     try {
+      // Clone buffers for transfer
       const maskBuffer = maskUint8.buffer.slice(0);
       const imgBuffer = imageBuffer.slice(0);
       
@@ -219,7 +236,7 @@ async function composeInWorker(
           maskBuffer: maskBuffer,
           width,
           height,
-          options: { mime: 'image/png', quality: 0.95 }
+          options: { mime: 'image/png', quality: 1.0 } // PNG with full quality for transparency
         }
       }, [imgBuffer, maskBuffer]);
     } catch (err) {
@@ -230,32 +247,6 @@ async function composeInWorker(
   });
 }
 
-// Fallback canvas compositing for when worker is unavailable
-async function composeInCanvas(
-  canvas: HTMLCanvasElement,
-  ctx: CanvasRenderingContext2D,
-  maskedData: Uint8ClampedArray,
-  width: number,
-  height: number
-): Promise<Blob> {
-  const imageData = new ImageData(new Uint8ClampedArray(maskedData), width, height);
-  ctx.putImageData(imageData, 0, 0);
-  
-  return new Promise((resolve, reject) => {
-    canvas.toBlob(
-      (blob) => {
-        if (blob) {
-          resolve(blob);
-        } else {
-          reject(new Error('Failed to create blob'));
-        }
-      },
-      'image/png',
-      1.0
-    );
-  });
-}
-
 export const removeBackground = async (
   imageElement: HTMLImageElement,
   onProgress?: (stage: string, percent: number) => void
@@ -263,9 +254,9 @@ export const removeBackground = async (
   const mobile = isMobile();
   
   try {
-    console.log('Starting background removal...', mobile ? '(mobile mode - fp16, 384px)' : '(desktop mode - fp32, 512px)');
+    console.log('Starting background removal...', mobile ? '(mobile: fp16, 384px)' : '(desktop: fp16, 512px)');
     
-    // Step 1: Load model (main thread - GPU accelerated)
+    // Step 1: Load model with WebGPU → WASM fallback (CPU disabled)
     const { model: loadedModel, processor: loadedProcessor } = await loadModel(onProgress);
     
     onProgress?.('Preparing image...', 30);
@@ -278,16 +269,13 @@ export const removeBackground = async (
     const { width, height } = resizeImageIfNeeded(canvas, ctx, imageElement);
     console.log(`Processing image at ${width}x${height}`);
     
-    // Use JPEG for intermediate format on mobile to reduce memory
-    const imageFormat = mobile ? 'image/jpeg' : 'image/png';
-    const imageQuality = mobile ? 0.8 : 0.95;
-    const imageUrl = canvas.toDataURL(imageFormat, imageQuality);
-    
+    // Get image as PNG for lossless processing
+    const imageUrl = canvas.toDataURL('image/png', 1.0);
     const rawImage = await RawImage.fromURL(imageUrl);
     
     onProgress?.('Detecting person...', 45);
     
-    // Step 3: Run AI model (main thread - GPU)
+    // Step 3: Run AI model inference
     const { pixel_values } = await loadedProcessor(rawImage);
     
     onProgress?.('Processing...', 55);
@@ -300,56 +288,33 @@ export const removeBackground = async (
     const maskHeight = output[0][0].dims[0];
     const maskWidth = output[0][0].dims[1];
     
-    // Step 4: Get original image as buffer for worker
-    const imageData = ctx.getImageData(0, 0, width, height);
-    
-    // Step 5: Apply mask with async chunked processing (yields to UI)
-    const maskedData = await applyMaskChunked(
-      imageData,
+    // Step 4: Create mask with async chunked processing (yields to UI)
+    const maskUint8 = await createMaskChunked(
       maskData,
       maskWidth,
       maskHeight,
+      width,
+      height,
       onProgress
     );
     
-    onProgress?.('Compositing...', 90);
+    onProgress?.('Compositing in worker...', 85);
     
-    // Step 6: Try compositor worker first, fallback to canvas
-    try {
-      const worker = getCompositorWorker();
-      if (worker) {
-        // Create mask as Uint8 for worker
-        const maskUint8 = new Uint8ClampedArray(width * height);
-        for (let i = 0; i < maskUint8.length; i++) {
-          maskUint8[i] = maskedData[i * 4 + 3];
-        }
-        
-        // Get original image buffer
-        const imageBlob = await new Promise<Blob>((resolve) => {
-          canvas.toBlob((blob) => resolve(blob!), 'image/png', 1.0);
-        });
-        const imageBuffer = await imageBlob.arrayBuffer();
-        
-        const result = await composeInWorker(imageBuffer, 'image/png', maskUint8, width, height);
-        onProgress?.('Complete!', 100);
-        return result;
-      }
-    } catch (workerError) {
-      console.warn('Compositor worker failed, using canvas fallback:', workerError);
-    }
-    
-// Fallback: use canvas compositing
-    const finalImageData = new ImageData(new Uint8ClampedArray(maskedData), width, height);
-    ctx.putImageData(finalImageData, 0, 0);
-    
-    const result = await new Promise<Blob>((resolve, reject) => {
+    // Step 5: Get original image as PNG buffer for compositor worker
+    const imageBlob = await new Promise<Blob>((resolve, reject) => {
       canvas.toBlob(
-        (blob) => blob ? resolve(blob) : reject(new Error('Failed to create blob')),
+        (blob) => blob ? resolve(blob) : reject(new Error('Failed to create image blob')),
         'image/png',
         1.0
       );
     });
+    const imageBuffer = await imageBlob.arrayBuffer();
+    
+    // Step 6: Compose in worker using OffscreenCanvas - returns transparent PNG
+    const result = await composeInWorker(imageBuffer, 'image/png', maskUint8, width, height);
+    
     onProgress?.('Complete!', 100);
+    console.log('Background removal complete - transparent PNG output');
     return result;
     
   } catch (error) {
