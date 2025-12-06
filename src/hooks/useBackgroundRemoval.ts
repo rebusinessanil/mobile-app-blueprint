@@ -1,24 +1,11 @@
-import { useState, useCallback, useEffect, useRef, startTransition } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { removeBackground, loadImage, clearModel } from '@/lib/backgroundRemover';
 import { toast } from 'sonner';
-import { logger } from '@/lib/logger';
 
 interface UseBackgroundRemovalOptions {
   onSuccess?: (processedImageUrl: string) => void;
   onError?: (error: Error) => void;
 }
-
-// Throttle with leading edge for immediate feedback
-const throttle = <T extends (...args: any[]) => any>(fn: T, delay: number) => {
-  let lastCall = 0;
-  return (...args: Parameters<T>) => {
-    const now = Date.now();
-    if (now - lastCall >= delay) {
-      lastCall = now;
-      fn(...args);
-    }
-  };
-};
 
 export const useBackgroundRemoval = (options?: UseBackgroundRemovalOptions) => {
   const [isProcessing, setIsProcessing] = useState(false);
@@ -28,61 +15,12 @@ export const useBackgroundRemoval = (options?: UseBackgroundRemovalOptions) => {
   const [pendingImage, setPendingImage] = useState<string | null>(null);
   
   const processingRef = useRef(false);
-  const abortRef = useRef(false);
-
-  // Throttled progress updates - only update UI via startTransition after worker returns
-  const updateProgress = useCallback(
-    throttle((value: number, text: string) => {
-      // Only batch UI updates, don't trigger re-renders during processing
-      setProgress(value);
-      setProgressText(text);
-    }, 100),
-    []
-  );
-
-  // Prevent page exit during processing
-  useEffect(() => {
-    if (!isProcessing) return;
-
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      e.preventDefault();
-      e.returnValue = 'Background removal in progress. Are you sure you want to leave?';
-      return e.returnValue;
-    };
-
-    const handlePopState = (e: PopStateEvent) => {
-      if (processingRef.current) {
-        e.preventDefault();
-        window.history.pushState(null, '', window.location.href);
-        toast.warning('Please wait for background removal to complete');
-      }
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    window.addEventListener('popstate', handlePopState);
-    window.history.pushState(null, '', window.location.href);
-
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-      window.removeEventListener('popstate', handlePopState);
-    };
-  }, [isProcessing]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (!processingRef.current) {
-        clearModel();
-      }
-    };
-  }, []);
 
   const openModal = useCallback((imageUrl: string) => {
     setPendingImage(imageUrl);
     setShowModal(true);
     setProgress(0);
     setProgressText('');
-    abortRef.current = false;
   }, []);
 
   const closeModal = useCallback(() => {
@@ -105,7 +43,6 @@ export const useBackgroundRemoval = (options?: UseBackgroundRemovalOptions) => {
 
     setIsProcessing(true);
     processingRef.current = true;
-    updateProgress(0, 'Preparing...');
 
     try {
       // Fetch and load image
@@ -114,64 +51,60 @@ export const useBackgroundRemoval = (options?: UseBackgroundRemovalOptions) => {
       const blob = await response.blob();
       const img = await loadImage(blob);
 
-      if (abortRef.current) return null;
-
-      // Process with progress callback - worker handles compositing
+      // Process with progress callback
       const processedBlob = await removeBackground(img, (stage, percent) => {
-        if (!abortRef.current) {
-          updateProgress(percent, stage);
-        }
+        setProgress(percent);
+        setProgressText(stage);
       });
 
-      if (abortRef.current) return null;
-
-      // Convert blob to data URL - use startTransition for final UI update
+      // Convert blob to data URL
       return new Promise((resolve) => {
         const reader = new FileReader();
         reader.onload = () => {
           const result = reader.result as string;
           
-          // Only update UI state via startTransition after worker returns final PNG
-          startTransition(() => {
-            setProgress(100);
-            setProgressText('Complete!');
-          });
+          setProgress(100);
+          setProgressText('Complete!');
           
-          // Delay modal close to ensure smooth transition
+          // Brief delay for smooth transition
           setTimeout(() => {
-            startTransition(() => {
-              setShowModal(false);
-              setPendingImage(null);
-              setIsProcessing(false);
-              processingRef.current = false;
-            });
+            setShowModal(false);
+            setPendingImage(null);
+            setIsProcessing(false);
+            processingRef.current = false;
             
-            toast.success('Background removed - transparent PNG ready!');
+            toast.success('Background removed successfully!');
             options?.onSuccess?.(result);
             resolve(result);
-          }, 100);
+          }, 200);
         };
         reader.onerror = () => {
           throw new Error('Failed to read processed image');
         };
         reader.readAsDataURL(processedBlob);
       });
+      
     } catch (error) {
-      logger.error('Background removal error:', error);
+      console.error('Background removal error:', error);
       const errorMsg = error instanceof Error ? error.message : 'Unknown error';
       
-      startTransition(() => {
-        setIsProcessing(false);
-        processingRef.current = false;
-        setProgress(0);
-        setProgressText('');
-      });
+      setIsProcessing(false);
+      processingRef.current = false;
+      setProgress(0);
+      setProgressText('');
       
       toast.error(`Failed to remove background: ${errorMsg}`);
       options?.onError?.(error instanceof Error ? error : new Error(errorMsg));
       return null;
     }
-  }, [pendingImage, options, updateProgress]);
+  }, [pendingImage, options]);
+
+  // Cleanup on unmount
+  const cleanup = useCallback(() => {
+    if (!processingRef.current) {
+      clearModel();
+    }
+  }, []);
 
   return {
     isProcessing,
@@ -183,5 +116,6 @@ export const useBackgroundRemoval = (options?: UseBackgroundRemovalOptions) => {
     closeModal,
     keepBackground,
     processRemoval,
+    cleanup,
   };
 };
