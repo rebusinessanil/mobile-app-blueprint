@@ -1334,6 +1334,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      deduct_user_credits: {
+        Args: {
+          p_amount: number
+          p_banner_url?: string
+          p_category_name?: string
+          p_description: string
+          p_template_id?: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
       generate_customer_code: { Args: never; Returns: string }
       is_admin: { Args: { user_id: string }; Returns: boolean }
     }
