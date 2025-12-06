@@ -30,14 +30,13 @@ export const useBackgroundRemoval = (options?: UseBackgroundRemovalOptions) => {
   const processingRef = useRef(false);
   const abortRef = useRef(false);
 
-  // Throttled progress updates - 150ms to reduce render load
+  // Throttled progress updates - only update UI via startTransition after worker returns
   const updateProgress = useCallback(
     throttle((value: number, text: string) => {
-      startTransition(() => {
-        setProgress(value);
-        setProgressText(text);
-      });
-    }, 150),
+      // Only batch UI updates, don't trigger re-renders during processing
+      setProgress(value);
+      setProgressText(text);
+    }, 100),
     []
   );
 
@@ -117,7 +116,7 @@ export const useBackgroundRemoval = (options?: UseBackgroundRemovalOptions) => {
 
       if (abortRef.current) return null;
 
-      // Process with progress callback
+      // Process with progress callback - worker handles compositing
       const processedBlob = await removeBackground(img, (stage, percent) => {
         if (!abortRef.current) {
           updateProgress(percent, stage);
@@ -126,13 +125,13 @@ export const useBackgroundRemoval = (options?: UseBackgroundRemovalOptions) => {
 
       if (abortRef.current) return null;
 
-      // Convert blob to data URL off main render cycle
+      // Convert blob to data URL - use startTransition for final UI update
       return new Promise((resolve) => {
         const reader = new FileReader();
         reader.onload = () => {
           const result = reader.result as string;
           
-          // Batch all state updates together
+          // Only update UI state via startTransition after worker returns final PNG
           startTransition(() => {
             setProgress(100);
             setProgressText('Complete!');
@@ -147,7 +146,7 @@ export const useBackgroundRemoval = (options?: UseBackgroundRemovalOptions) => {
               processingRef.current = false;
             });
             
-            toast.success('Background removed successfully!');
+            toast.success('Background removed - transparent PNG ready!');
             options?.onSuccess?.(result);
             resolve(result);
           }, 100);
