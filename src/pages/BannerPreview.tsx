@@ -1421,15 +1421,11 @@ export default function BannerPreview() {
                 position: 'relative',
                 width: '1350px',
                 height: '1350px',
-                background: '#0c111c',
+                background: templateColors[selectedTemplate].bgGradient,
                 overflow: 'hidden',
                 cursor: isAdmin && isDragMode ? 'crosshair' : 'default'
               }}>
-              <div className="absolute inset-0 w-full h-full" style={{
-                ...backgroundStyle,
-                width: '100%',
-                height: '100%',
-              }}>
+              <div className="absolute inset-0" style={backgroundStyle}>
                 {/* Background automatically from global slot system (image or default color) */}
 
                 {/* Story Category: Three Dark-Theme Upper Bars */}
