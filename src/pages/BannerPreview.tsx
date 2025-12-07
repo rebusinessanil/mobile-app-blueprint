@@ -6,7 +6,6 @@ import { toast } from "sonner";
 import RanksStickersPanel from "@/components/RanksStickersPanel";
 import StickerControl from "@/components/StickerControl";
 import downloadIcon from "@/assets/download-icon.png";
-import nameplateFrame from "@/assets/nameplate-frame.png";
 import { useProfile } from "@/hooks/useProfile";
 import { useProfilePhotos } from "@/hooks/useProfilePhotos";
 import { useBannerSettings } from "@/hooks/useBannerSettings";
@@ -1005,53 +1004,35 @@ export default function BannerPreview() {
 
             {/* Rank Achievement Title - Removed */}
 
-            {/* Achiever Name with Nameplate Frame */}
-            {(() => {
-              // Auto-scale nameplate based on name length
-              const nameLen = truncatedMainName.length;
-              // Base width scales with name length: min 500px, max 900px
-              const baseWidth = Math.min(900, Math.max(500, 400 + nameLen * 25));
-              // Height proportional to width (1:5.5 aspect ratio for this frame)
-              const baseHeight = baseWidth / 5.5;
-              // Font scales inversely with length
-              const fontSize = nameLen > 18 ? 36 : nameLen > 14 ? 42 : nameLen > 10 ? 48 : 54;
-              
-              return (
-                <div className="absolute" style={{
-                  top: '300px',
-                  left: '978px',
-                  transform: 'translateX(-50%)',
-                  width: `${baseWidth}px`,
-                  height: `${baseHeight}px`,
-                  backgroundImage: `url(${nameplateFrame})`,
-                  backgroundSize: '100% 100%',
-                  backgroundRepeat: 'no-repeat',
-                  backgroundPosition: 'center',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  padding: '0 60px',
-                  imageRendering: 'crisp-edges'
-                }}>
-                  <h2 style={{
-                    color: '#ffffff',
-                    textAlign: 'center',
-                    fontSize: `${fontSize}px`,
-                    fontWeight: '700',
-                    textShadow: '2px 2px 8px rgba(0,0,0,0.9)',
-                    letterSpacing: '2px',
-                    margin: 0,
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    maxWidth: '100%',
-                    lineHeight: 1
-                  }}>
-                    {truncatedMainName.toUpperCase()}
-                  </h2>
-                </div>
-              );
-            })()}
+            {/* Achiever Name */}
+            <div className="absolute" style={{
+              top: '337px',
+              left: '978px',
+              transform: 'translateX(-50%)',
+              width: '648px',
+              height: '60px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '0 40px'
+            }}>
+              <h2 style={{
+                color: '#ffffff',
+                textAlign: 'center',
+                fontSize: truncatedMainName.length > 18 ? '36px' : truncatedMainName.length > 14 ? '42px' : truncatedMainName.length > 10 ? '48px' : '54px',
+                fontWeight: '700',
+                textShadow: '3px 3px 10px rgba(0,0,0,0.9)',
+                letterSpacing: '1px',
+                margin: 0,
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                maxWidth: '100%',
+                lineHeight: 1
+              }}>
+                {truncatedMainName.toUpperCase()}
+              </h2>
+            </div>
 
             {/* Team Name */}
             <div className="absolute" style={{
