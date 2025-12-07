@@ -1007,26 +1007,26 @@ export default function BannerPreview() {
 
             {/* Achiever Name with Nameplate Frame */}
             <div className="absolute" style={{
-              top: '310px',
-              left: '978px',
+              top: '325px',
+              left: '50%',
               transform: 'translateX(-50%)',
-              width: '720px',
-              height: '90px',
+              width: '680px',
+              height: '75px',
               backgroundImage: `url(${nameplateFrame})`,
-              backgroundSize: 'contain',
+              backgroundSize: '100% 100%',
               backgroundRepeat: 'no-repeat',
               backgroundPosition: 'center',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              padding: '0 80px'
+              padding: '0 70px'
             }}>
               <h2 style={{
                 color: '#ffffff',
                 textAlign: 'center',
-                fontSize: truncatedMainName.length > 18 ? '32px' : truncatedMainName.length > 14 ? '38px' : truncatedMainName.length > 10 ? '44px' : '50px',
+                fontSize: truncatedMainName.length > 18 ? '28px' : truncatedMainName.length > 14 ? '34px' : truncatedMainName.length > 10 ? '40px' : '46px',
                 fontWeight: '700',
-                textShadow: '2px 2px 8px rgba(0,0,0,0.9)',
+                textShadow: '2px 2px 6px rgba(0,0,0,0.9)',
                 letterSpacing: '2px',
                 margin: 0,
                 whiteSpace: 'nowrap',
