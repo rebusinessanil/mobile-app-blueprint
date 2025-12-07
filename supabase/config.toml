@@ -1,7 +1,7 @@
 project_id = "gjlrxikynlbpsvrpwebp"
 
 [functions.credit-welcome-bonus]
-verify_jwt = false
+verify_jwt = true
 
 [functions.admin-pin-management]
 verify_jwt = false
