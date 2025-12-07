@@ -1199,7 +1199,8 @@ export default function BannerPreview() {
     }
     setIsSavingSticker(true);
     try {
-      // Include all transform fields including rotation, and return the updated row
+      // Only update transform properties (position, scale, rotation) - don't update slot_number or banner_category
+      // as those are already set and updating them can cause unique constraint violations
       const { data, error } = await supabase
         .from("stickers")
         .update({
@@ -1207,8 +1208,6 @@ export default function BannerPreview() {
           position_y: selectedSticker.position_y ?? 50,
           scale: stickerScale[selectedStickerId] ?? 2.5,
           rotation: selectedSticker.rotation ?? 0,
-          slot_number: currentSlot,
-          banner_category: bannerData?.categoryType || 'rank',
           updated_at: new Date().toISOString(),
         })
         .eq("id", selectedStickerId)
