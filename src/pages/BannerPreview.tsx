@@ -1006,21 +1006,30 @@ export default function BannerPreview() {
 
             {/* Achiever Name */}
             <div className="absolute" style={{
-            top: '337px',
-            left: '978px',
-            transform: 'translateX(-50%)',
-            width: '648px',
-            padding: '0 27px'
-          }}>
-              <h2 style={{
-              color: '#ffffff',
-              textAlign: 'center',
-              fontSize: '54px',
-              fontWeight: '700',
-              textShadow: '3px 3px 10px rgba(0,0,0,0.9)',
-              letterSpacing: '1px',
-              margin: 0
+              top: '337px',
+              left: '978px',
+              transform: 'translateX(-50%)',
+              width: '648px',
+              height: '60px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '0 40px'
             }}>
+              <h2 style={{
+                color: '#ffffff',
+                textAlign: 'center',
+                fontSize: truncatedMainName.length > 18 ? '36px' : truncatedMainName.length > 14 ? '42px' : truncatedMainName.length > 10 ? '48px' : '54px',
+                fontWeight: '700',
+                textShadow: '3px 3px 10px rgba(0,0,0,0.9)',
+                letterSpacing: '1px',
+                margin: 0,
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                maxWidth: '100%',
+                lineHeight: 1
+              }}>
                 {truncatedMainName.toUpperCase()}
               </h2>
             </div>
