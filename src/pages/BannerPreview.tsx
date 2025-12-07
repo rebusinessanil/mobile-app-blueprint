@@ -1006,38 +1006,52 @@ export default function BannerPreview() {
             {/* Rank Achievement Title - Removed */}
 
             {/* Achiever Name with Nameplate Frame */}
-            <div className="absolute" style={{
-              top: '310px',
-              left: '978px',
-              transform: 'translateX(-50%)',
-              width: '720px',
-              height: '90px',
-              backgroundImage: `url(${nameplateFrame})`,
-              backgroundSize: 'contain',
-              backgroundRepeat: 'no-repeat',
-              backgroundPosition: 'center',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '0 80px'
-            }}>
-              <h2 style={{
-                color: '#ffffff',
-                textAlign: 'center',
-                fontSize: truncatedMainName.length > 18 ? '32px' : truncatedMainName.length > 14 ? '38px' : truncatedMainName.length > 10 ? '44px' : '50px',
-                fontWeight: '700',
-                textShadow: '2px 2px 8px rgba(0,0,0,0.9)',
-                letterSpacing: '2px',
-                margin: 0,
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                maxWidth: '100%',
-                lineHeight: 1
-              }}>
-                {truncatedMainName.toUpperCase()}
-              </h2>
-            </div>
+            {(() => {
+              // Auto-scale nameplate based on name length
+              const nameLen = truncatedMainName.length;
+              // Base width scales with name length: min 500px, max 900px
+              const baseWidth = Math.min(900, Math.max(500, 400 + nameLen * 25));
+              // Height proportional to width (1:5.5 aspect ratio for this frame)
+              const baseHeight = baseWidth / 5.5;
+              // Font scales inversely with length
+              const fontSize = nameLen > 18 ? 36 : nameLen > 14 ? 42 : nameLen > 10 ? 48 : 54;
+              
+              return (
+                <div className="absolute" style={{
+                  top: '300px',
+                  left: '978px',
+                  transform: 'translateX(-50%)',
+                  width: `${baseWidth}px`,
+                  height: `${baseHeight}px`,
+                  backgroundImage: `url(${nameplateFrame})`,
+                  backgroundSize: '100% 100%',
+                  backgroundRepeat: 'no-repeat',
+                  backgroundPosition: 'center',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '0 60px',
+                  imageRendering: 'crisp-edges'
+                }}>
+                  <h2 style={{
+                    color: '#ffffff',
+                    textAlign: 'center',
+                    fontSize: `${fontSize}px`,
+                    fontWeight: '700',
+                    textShadow: '2px 2px 8px rgba(0,0,0,0.9)',
+                    letterSpacing: '2px',
+                    margin: 0,
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    maxWidth: '100%',
+                    lineHeight: 1
+                  }}>
+                    {truncatedMainName.toUpperCase()}
+                  </h2>
+                </div>
+              );
+            })()}
 
             {/* Team Name */}
             <div className="absolute" style={{
