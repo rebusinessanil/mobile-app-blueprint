@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import RanksStickersPanel from "@/components/RanksStickersPanel";
 import StickerControl from "@/components/StickerControl";
 import downloadIcon from "@/assets/download-icon.png";
+import nameplateFrame from "@/assets/nameplate-frame.png";
 import { useProfile } from "@/hooks/useProfile";
 import { useProfilePhotos } from "@/hooks/useProfilePhotos";
 import { useBannerSettings } from "@/hooks/useBannerSettings";
@@ -1004,25 +1005,29 @@ export default function BannerPreview() {
 
             {/* Rank Achievement Title - Removed */}
 
-            {/* Achiever Name */}
+            {/* Achiever Name with Nameplate Frame */}
             <div className="absolute" style={{
-              top: '337px',
+              top: '310px',
               left: '978px',
               transform: 'translateX(-50%)',
-              width: '648px',
-              height: '60px',
+              width: '720px',
+              height: '90px',
+              backgroundImage: `url(${nameplateFrame})`,
+              backgroundSize: 'contain',
+              backgroundRepeat: 'no-repeat',
+              backgroundPosition: 'center',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              padding: '0 40px'
+              padding: '0 80px'
             }}>
               <h2 style={{
                 color: '#ffffff',
                 textAlign: 'center',
-                fontSize: truncatedMainName.length > 18 ? '36px' : truncatedMainName.length > 14 ? '42px' : truncatedMainName.length > 10 ? '48px' : '54px',
+                fontSize: truncatedMainName.length > 18 ? '32px' : truncatedMainName.length > 14 ? '38px' : truncatedMainName.length > 10 ? '44px' : '50px',
                 fontWeight: '700',
-                textShadow: '3px 3px 10px rgba(0,0,0,0.9)',
-                letterSpacing: '1px',
+                textShadow: '2px 2px 8px rgba(0,0,0,0.9)',
+                letterSpacing: '2px',
                 margin: 0,
                 whiteSpace: 'nowrap',
                 overflow: 'hidden',
