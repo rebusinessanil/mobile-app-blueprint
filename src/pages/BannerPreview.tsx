@@ -1004,17 +1004,37 @@ export default function BannerPreview() {
 
             {/* Rank Achievement Title - Removed */}
 
-            {/* Achiever Name */}
-            <div className="absolute" style={{
+            {/* Nameplate Border behind Achiever Name */}
+            <div className="absolute z-20" style={{
               top: '337px',
               left: '978px',
               transform: 'translateX(-50%)',
               width: '648px',
-              height: '60px',
+              height: '81px'
+            }}>
+              <img 
+                src="/assets/nameplate-border.png" 
+                alt="Nameplate Border" 
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'contain',
+                  filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.5))'
+                }} 
+              />
+            </div>
+
+            {/* Achiever Name */}
+            <div className="absolute z-30" style={{
+              top: '337px',
+              left: '978px',
+              transform: 'translateX(-50%)',
+              width: '648px',
+              height: '81px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              padding: '0 40px'
+              padding: '0 50px'
             }}>
               <h2 style={{
                 color: '#ffffff',
