@@ -446,7 +446,7 @@ export default function BannerPreview() {
       if (!stickerScale[sticker.id]) {
         setStickerScale(prev => ({
           ...prev,
-          [sticker.id]: sticker.scale || 2.5
+          [sticker.id]: sticker.scale || 9.3
         }));
       }
 
@@ -2094,9 +2094,9 @@ export default function BannerPreview() {
 
                 {/* Achievement Stickers - Right side of achiever photo, near right edge */}
                 {stickerImages[selectedTemplate + 1]?.map((sticker, index) => {
-                    const finalScale = stickerScale[sticker.id] ?? sticker.scale ?? 0.5;
+                    const finalScale = stickerScale[sticker.id] ?? sticker.scale ?? 9.3;
                     const isSelected = selectedStickerId === sticker.id;
-                    return <img key={sticker.id} src={sticker.url} alt="Achievement Sticker" className={`absolute animate-in fade-in zoom-in duration-300 transition-all ${isAdmin && isDragMode ? 'cursor-move' : 'pointer-events-none'} ${isAdmin && isSelected ? 'ring-4 ring-primary ring-offset-2 ring-offset-background' : ''}`} onMouseDown={isAdmin ? e => handleStickerMouseDown(e, sticker.id) : undefined} onClick={isAdmin ? e => {
+                    return <img key={sticker.id} src={sticker.url} alt="Achievement Sticker" className={`absolute ${isAdmin && isDragMode ? 'cursor-move' : 'pointer-events-none'} ${isAdmin && isSelected ? 'ring-4 ring-primary ring-offset-2 ring-offset-background' : ''}`} onMouseDown={isAdmin ? e => handleStickerMouseDown(e, sticker.id) : undefined} onClick={isAdmin ? e => {
                       if (isDragMode) {
                         e.stopPropagation();
                         setSelectedStickerId(sticker.id);
