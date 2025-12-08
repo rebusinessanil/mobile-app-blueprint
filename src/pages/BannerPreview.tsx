@@ -1009,8 +1009,8 @@ export default function BannerPreview() {
               top: '337px',
               left: '978px',
               transform: 'translateX(-50%)',
-              width: '713px',
-              height: '89px'
+              width: '648px',
+              height: '81px'
             }}>
               <img 
                 src="/assets/nameplate-border.png" 
