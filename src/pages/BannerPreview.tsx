@@ -1039,16 +1039,16 @@ export default function BannerPreview() {
               </h2>
             </div>
 
-            {/* Team Name - positioned below Achiever Name with 10% vertical gap */}
+            {/* Team Name */}
             <div className="absolute" style={{
-            top: '553px',
+            top: '470px',
             left: '978px',
             transform: 'translateX(-50%)',
             width: '648px',
             padding: '0 27px'
           }}>
               {bannerData.teamCity && <p style={{
-              margin: 0,
+              marginTop: '13px',
               color: '#ffffff',
               textAlign: 'center',
               fontSize: '28px',
