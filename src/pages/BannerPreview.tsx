@@ -1011,7 +1011,7 @@ export default function BannerPreview() {
 
             {/* Achiever Name */}
             <div className="absolute z-30" style={{
-            top: '347px',
+            top: '337px',
             left: '978px',
             transform: 'translateX(-50%)',
             width: '648px',
