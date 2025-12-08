@@ -266,13 +266,14 @@ export default function BannerPreview() {
     categoryId: bannerData?.templateId || currentTemplateId,
     rankId: bannerData?.rankId,
     bannerCategory: bannerData?.categoryType || 'rank',
-    showToast: false, // Don't show toasts to regular users
+    showToast: false,
+    // Don't show toasts to regular users
     onUpdate: () => {
       // Refetch sticker images when admin updates stickers
       console.log('Sticker update detected via realtime, refetching images...');
       fetchStickerImages();
     },
-    onInsert: (newSticker) => {
+    onInsert: newSticker => {
       console.log('New sticker inserted via realtime:', newSticker);
       if (newSticker.slot_number) {
         setStickerImages(prev => {
@@ -288,22 +289,24 @@ export default function BannerPreview() {
               position_x: newSticker.position_x ?? 50,
               position_y: newSticker.position_y ?? 50,
               scale: newSticker.scale ?? 1.0,
-              rotation: newSticker.rotation ?? 0,
-            }],
+              rotation: newSticker.rotation ?? 0
+            }]
           };
         });
       }
     },
-    onDelete: (stickerId) => {
+    onDelete: stickerId => {
       console.log('Sticker deleted via realtime:', stickerId);
       setStickerImages(prev => {
-        const updated = { ...prev };
+        const updated = {
+          ...prev
+        };
         for (const slot in updated) {
           updated[slot] = updated[slot].filter(s => s.id !== stickerId);
         }
         return updated;
       });
-    },
+    }
   });
 
   // Fetch sticker images for each slot independently
@@ -378,55 +381,43 @@ export default function BannerPreview() {
   // Direct realtime subscription for immediate sticker position/scale/rotation updates
   useEffect(() => {
     if (!bannerData?.rankId) return;
+    const channel = supabase.channel(`banner-stickers-live-${bannerData.rankId}`).on('postgres_changes', {
+      event: 'UPDATE',
+      schema: 'public',
+      table: 'stickers'
+    }, payload => {
+      const updated = payload.new as any;
 
-    const channel = supabase
-      .channel(`banner-stickers-live-${bannerData.rankId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'stickers',
-        },
-        (payload) => {
-          const updated = payload.new as any;
-          
-          // Only process if this sticker belongs to current rank
-          if (updated.rank_id !== bannerData.rankId) return;
-          
-          console.log('🔄 Live sticker update received:', updated);
-          
-          // Replace sticker in state with updated values - no refetch needed
-          setStickerImages(prev => {
-            const newState = { ...prev };
-            for (const slot in newState) {
-              newState[slot] = newState[slot].map(s =>
-                s.id === updated.id
-                  ? {
-                      id: updated.id,
-                      url: updated.image_url,
-                      position_x: updated.position_x ?? 50,
-                      position_y: updated.position_y ?? 50,
-                      scale: updated.scale ?? 1.0,
-                      rotation: updated.rotation ?? 0,
-                    }
-                  : s
-              );
-            }
-            return newState;
-          });
-          
-          // Also update scale state if this is the selected sticker
-          if (selectedStickerId === updated.id) {
-            setStickerScale(prev => ({
-              ...prev,
-              [updated.id]: updated.scale ?? 1.0,
-            }));
-          }
+      // Only process if this sticker belongs to current rank
+      if (updated.rank_id !== bannerData.rankId) return;
+      console.log('🔄 Live sticker update received:', updated);
+
+      // Replace sticker in state with updated values - no refetch needed
+      setStickerImages(prev => {
+        const newState = {
+          ...prev
+        };
+        for (const slot in newState) {
+          newState[slot] = newState[slot].map(s => s.id === updated.id ? {
+            id: updated.id,
+            url: updated.image_url,
+            position_x: updated.position_x ?? 50,
+            position_y: updated.position_y ?? 50,
+            scale: updated.scale ?? 1.0,
+            rotation: updated.rotation ?? 0
+          } : s);
         }
-      )
-      .subscribe();
+        return newState;
+      });
 
+      // Also update scale state if this is the selected sticker
+      if (selectedStickerId === updated.id) {
+        setStickerScale(prev => ({
+          ...prev,
+          [updated.id]: updated.scale ?? 1.0
+        }));
+      }
+    }).subscribe();
     return () => {
       supabase.removeChannel(channel);
     };
@@ -490,21 +481,19 @@ export default function BannerPreview() {
   // Bottom profile name - ALWAYS from user profile (never changes)
   const profileName: string = profile?.name || "";
   const truncatedProfileName = profileName.length > MAX_NAME_LENGTH ? profileName.slice(0, MAX_NAME_LENGTH) + "..." : profileName;
-  
+
   // Display contact - auto-load from user profile
   const displayContact: string = profile?.mobile || profile?.whatsapp || "";
-  
+
   // Display rank - auto-load from user profile
   const displayRank: string = (profile?.rank || "").replace(/[-–—]/g, ' ');
 
   // Display uplines - use bannerData.uplines if provided, otherwise fall back to user's saved banner settings
-  const displayUplines: Upline[] = (bannerData?.uplines && bannerData.uplines.length > 0)
-    ? bannerData.uplines
-    : (bannerSettings?.upline_avatars || []).map((u, idx) => ({
-        id: `settings-${idx}`,
-        name: u.name || '',
-        avatar: u.avatar_url || ''
-      }));
+  const displayUplines: Upline[] = bannerData?.uplines && bannerData.uplines.length > 0 ? bannerData.uplines : (bannerSettings?.upline_avatars || []).map((u, idx) => ({
+    id: `settings-${idx}`,
+    name: u.name || '',
+    avatar: u.avatar_url || ''
+  }));
 
   // Get primary profile photo - prioritize uploaded photo from banner creation for LEFT side
   // FESTIVAL, MOTIVATIONAL & STORY CATEGORIES: Skip auto-loading achiever image completely
@@ -1006,50 +995,46 @@ export default function BannerPreview() {
 
             {/* Nameplate Border behind Achiever Name */}
             <div className="absolute z-20" style={{
-              top: '305px',
-              left: '978px',
-              transform: 'translateX(-50%)',
-              width: '1166px',
-              height: '146px'
-            }}>
-              <img 
-                src="/assets/nameplate-border.png" 
-                alt="Nameplate Border" 
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'contain',
-                  filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.5))'
-                }} 
-              />
+            top: '305px',
+            left: '978px',
+            transform: 'translateX(-50%)',
+            width: '1166px',
+            height: '146px'
+          }}>
+              <img src="/assets/nameplate-border.png" alt="Nameplate Border" style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'contain',
+              filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.5))'
+            }} className="object-contain" />
             </div>
 
             {/* Achiever Name */}
             <div className="absolute z-30" style={{
-              top: '337px',
-              left: '978px',
-              transform: 'translateX(-50%)',
-              width: '648px',
-              height: '81px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '0 50px'
-            }}>
+            top: '337px',
+            left: '978px',
+            transform: 'translateX(-50%)',
+            width: '648px',
+            height: '81px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '0 50px'
+          }}>
               <h2 style={{
-                color: '#ffffff',
-                textAlign: 'center',
-                fontSize: truncatedMainName.length > 18 ? '36px' : truncatedMainName.length > 14 ? '42px' : truncatedMainName.length > 10 ? '48px' : '54px',
-                fontWeight: '700',
-                textShadow: '3px 3px 10px rgba(0,0,0,0.9)',
-                letterSpacing: '1px',
-                margin: 0,
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                maxWidth: '100%',
-                lineHeight: 1
-              }}>
+              color: '#ffffff',
+              textAlign: 'center',
+              fontSize: truncatedMainName.length > 18 ? '36px' : truncatedMainName.length > 14 ? '42px' : truncatedMainName.length > 10 ? '48px' : '54px',
+              fontWeight: '700',
+              textShadow: '3px 3px 10px rgba(0,0,0,0.9)',
+              letterSpacing: '1px',
+              margin: 0,
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              maxWidth: '100%',
+              lineHeight: 1
+            }}>
                 {truncatedMainName.toUpperCase()}
               </h2>
             </div>
@@ -1201,21 +1186,17 @@ export default function BannerPreview() {
     try {
       // Only update transform properties (position, scale, rotation) - don't update slot_number or banner_category
       // as those are already set and updating them can cause unique constraint violations
-      const { data, error } = await supabase
-        .from("stickers")
-        .update({
-          position_x: selectedSticker.position_x ?? 50,
-          position_y: selectedSticker.position_y ?? 50,
-          scale: stickerScale[selectedStickerId] ?? 2.5,
-          rotation: selectedSticker.rotation ?? 0,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", selectedStickerId)
-        .select('*')
-        .single();
-
+      const {
+        data,
+        error
+      } = await supabase.from("stickers").update({
+        position_x: selectedSticker.position_x ?? 50,
+        position_y: selectedSticker.position_y ?? 50,
+        scale: stickerScale[selectedStickerId] ?? 2.5,
+        rotation: selectedSticker.rotation ?? 0,
+        updated_at: new Date().toISOString()
+      }).eq("id", selectedStickerId).select('*').single();
       if (error) throw error;
-
       console.log('✅ Sticker saved successfully:', data);
 
       // Store current state as original after successful save
@@ -1227,23 +1208,18 @@ export default function BannerPreview() {
           scale: stickerScale[selectedStickerId] ?? 2.5
         }
       }));
-      
+
       // Update local state with saved data (will also trigger via realtime)
       setStickerImages(prev => ({
         ...prev,
-        [currentSlot]: (prev[currentSlot] || []).map(sticker =>
-          sticker.id === selectedStickerId
-            ? {
-                ...sticker,
-                position_x: data.position_x,
-                position_y: data.position_y,
-                scale: data.scale,
-                rotation: data.rotation,
-              }
-            : sticker
-        ),
+        [currentSlot]: (prev[currentSlot] || []).map(sticker => sticker.id === selectedStickerId ? {
+          ...sticker,
+          position_x: data.position_x,
+          position_y: data.position_y,
+          scale: data.scale,
+          rotation: data.rotation
+        } : sticker)
       }));
-
       toast.success("Sticker settings saved! Changes synced to all users.");
     } catch (error) {
       console.error("Error saving sticker:", error);
@@ -1435,11 +1411,16 @@ export default function BannerPreview() {
       const FIXED_SIZE = 1350;
       const dataUrl = await toPng(bannerRef.current, {
         cacheBust: true,
-        width: FIXED_SIZE,        // Force exact width
-        height: FIXED_SIZE,       // Force exact height
-        canvasWidth: FIXED_SIZE,  // Lock canvas width
-        canvasHeight: FIXED_SIZE, // Lock canvas height
-        pixelRatio: 1,            // No pixel ratio scaling
+        width: FIXED_SIZE,
+        // Force exact width
+        height: FIXED_SIZE,
+        // Force exact height
+        canvasWidth: FIXED_SIZE,
+        // Lock canvas width
+        canvasHeight: FIXED_SIZE,
+        // Lock canvas height
+        pixelRatio: 1,
+        // No pixel ratio scaling
         quality: 1,
         backgroundColor: null,
         style: {
@@ -1807,12 +1788,10 @@ export default function BannerPreview() {
                     // Calculate variant based on slot number (0-15) in repeating sequence
                     const slotNumber = selectedTemplate; // selectedTemplate is 0-indexed
                     const variantIndex = slotNumber % 3 + 1; // 1, 2, or 3
-                    
+
                     // Helper function to capitalize first letter of each word
                     const capitalizeWords = (str: string) => {
-                      return str.split(' ').map(word => 
-                        word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-                      ).join(' ');
+                      return str.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
                     };
 
                     // Define three color variants: red, orange, teal
@@ -1837,7 +1816,6 @@ export default function BannerPreview() {
                       }
                     };
                     const currentVariant = variants[variantIndex as keyof typeof variants];
-                    
                     return <div className="absolute" style={{
                       bottom: '30px',
                       left: '20px',
@@ -1884,7 +1862,7 @@ export default function BannerPreview() {
                             letterSpacing: '0.5px',
                             textShadow: '0 2px 8px rgba(0, 0, 0, 0.6)'
                           }}>
-                            {displayContact ? (displayContact.startsWith('+91') ? `+91 ${displayContact.slice(3)}` : displayContact.startsWith('91') ? `+91 ${displayContact.slice(2)}` : `+91 ${displayContact}`) : ''}
+                            {displayContact ? displayContact.startsWith('+91') ? `+91 ${displayContact.slice(3)}` : displayContact.startsWith('91') ? `+91 ${displayContact.slice(2)}` : `+91 ${displayContact}` : ''}
                           </div>
                         </div>
                       </div>
