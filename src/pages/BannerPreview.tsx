@@ -995,7 +995,7 @@ export default function BannerPreview() {
 
             {/* Nameplate Border behind Achiever Name */}
             <div className="absolute z-20" style={{
-            top: '205px',
+            top: '280px',
             left: '978px',
             transform: 'translateX(-50%)',
             width: '2769px',
