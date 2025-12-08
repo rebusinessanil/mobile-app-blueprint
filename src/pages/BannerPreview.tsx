@@ -1041,7 +1041,7 @@ export default function BannerPreview() {
 
             {/* Team Name */}
             <div className="absolute" style={{
-            top: '329px',
+            top: '470px',
             left: '978px',
             transform: 'translateX(-50%)',
             width: '648px',
