@@ -995,11 +995,11 @@ export default function BannerPreview() {
 
             {/* Nameplate Border behind Achiever Name */}
             <div className="absolute z-20" style={{
-            top: '305px',
+            top: '240px',
             left: '978px',
             transform: 'translateX(-50%)',
-            width: '1166px',
-            height: '146px'
+            width: '2215px',
+            height: '277px'
           }}>
               <img src="/assets/nameplate-border.png" alt="Nameplate Border" style={{
               width: '100%',
