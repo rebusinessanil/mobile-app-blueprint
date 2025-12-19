@@ -19,6 +19,7 @@ import download from "downloadjs";
 import { useRealtimeStickerSync } from "@/hooks/useRealtimeStickerSync";
 import { useWalletDeduction } from "@/hooks/useWalletDeduction";
 import InsufficientBalanceModal from "@/components/InsufficientBalanceModal";
+import ProxyPreviewSlot from "@/components/ProxyPreviewSlot";
 interface Upline {
   id: string;
   name: string;
@@ -498,6 +499,10 @@ export default function BannerPreview() {
   // Get primary profile photo - prioritize uploaded photo from banner creation for LEFT side
   // FESTIVAL, MOTIVATIONAL & STORY CATEGORIES: Skip auto-loading achiever image completely
   const primaryPhoto: string | null = bannerData?.categoryType === 'festival' || bannerData?.categoryType === 'motivational' || bannerData?.categoryType === 'story' ? bannerData?.photo || null : bannerData?.photo || profile?.profile_photo || profilePhotos[0]?.photo_url || null;
+
+  // PROXY MODE: Always use FIRST profile photo for 16-slot grid preview
+  // This ensures all 16 background slots show the same user image for consistent preview
+  const proxyPhoto: string | null = profilePhotos[0]?.photo_url || profile?.profile_photo || null;
 
   // Get mentor/upline photo (RIGHT-BOTTOM) - ONLY use profile photos, never uploads
   const mentorPhoto: string | null = profilePhotos[selectedMentorPhotoIndex]?.photo_url || profilePhotos[0]?.photo_url || profile?.profile_photo || null;
@@ -2129,18 +2134,33 @@ export default function BannerPreview() {
         </div>
       </div>
 
-      {/* Scrollable Slot Selector Box - All 16 slots with global background system */}
+      {/* Scrollable Slot Selector Box - All 16 slots with PROXY PREVIEW MODE */}
+      {/* Each slot shows full banner elements with FIRST profile photo only (proxy mode) */}
       {globalBackgroundSlots.length > 0 && <div className="flex-1 min-h-0 px-3 sm:px-4 pb-3 sm:pb-4">
           <div className="h-full overflow-y-auto rounded-2xl sm:rounded-3xl bg-[#111827]/50 border-2 border-[#FFD700]/20 p-3 sm:p-4 shadow-[0_0_30px_rgba(255,215,0,0.1)] scrollbar-thin scrollbar-thumb-[#FFD700]/30 scrollbar-track-transparent">
             <div className="grid grid-cols-4 gap-2 sm:gap-3">
               {globalBackgroundSlots.map(slot => {
-            const isSelected = selectedTemplate === slot.slotNumber - 1;
-            return <button key={slot.slotNumber} onClick={() => setSelectedTemplate(slot.slotNumber - 1)} className={`aspect-square rounded-lg overflow-hidden transition-all ${isSelected ? 'border-4 border-[#FFD700] scale-105 shadow-[0_0_20px_rgba(255,215,0,0.5)]' : 'border-2 border-gray-600 hover:border-[#FFD700] hover:scale-105'}`}>
-                <div className="w-full h-full flex items-center justify-center" style={getSlotBackgroundStyle(slot)}>
-                  {!slot.hasImage && <span className="text-white text-xs font-bold">{slot.slotNumber}</span>}
-                </div>
-              </button>;
-          })}
+                const isSelected = selectedTemplate === slot.slotNumber - 1;
+                // Get stickers for this specific slot
+                const slotStickerData = stickerImages[slot.slotNumber] || [];
+                
+                return (
+                  <ProxyPreviewSlot
+                    key={slot.slotNumber}
+                    slot={slot}
+                    isSelected={isSelected}
+                    onClick={() => setSelectedTemplate(slot.slotNumber - 1)}
+                    primaryPhoto={proxyPhoto || undefined}
+                    profileName={profileName}
+                    displayRank={displayRank}
+                    stickers={slotStickerData}
+                    stickerScale={stickerScale}
+                    categoryType={bannerData?.categoryType}
+                    bannerDefaults={bannerDefaults}
+                    rankIcon={bannerData?.rankIcon}
+                  />
+                );
+              })}
             </div>
           </div>
         </div>}
