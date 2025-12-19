@@ -8,6 +8,11 @@ import proxyModelUser from "@/assets/proxy-model-user.png";
 const PROXY_ACHIEVER = proxyModelAchiever;
 const PROXY_USER = proxyModelUser;
 
+// Fixed proxy data for nameplate in proxy preview mode
+const PROXY_NAME = "Anil";
+const PROXY_RANK = "Diamond";
+const PROXY_CONTACT = "7734990035";
+
 interface Upline {
   id: string;
   name: string;
@@ -559,7 +564,7 @@ export default function SlotPreviewMini({
           {/* Category-specific content */}
           {renderCategoryContent()}
 
-          {/* Bottom Profile Nameplate - Show for non-story categories */}
+          {/* Bottom Profile Nameplate - Fixed proxy data for proxy preview */}
           {categoryType !== 'story' && categoryType !== 'motivational' && (
             <div className="absolute" style={{
               bottom: '27px',
@@ -579,7 +584,7 @@ export default function SlotPreviewMini({
                 fontSize: '32px',
                 fontWeight: '600'
               }}>
-                {truncatedProfileName.toUpperCase()}
+                {PROXY_NAME.toUpperCase()}
               </p>
               <p style={{
                 textTransform: 'uppercase',
@@ -587,7 +592,15 @@ export default function SlotPreviewMini({
                 textAlign: 'center',
                 fontSize: '24px'
               }}>
-                {displayRank}
+                {PROXY_RANK.toUpperCase()}
+              </p>
+              <p style={{
+                color: '#ffffff',
+                textAlign: 'center',
+                fontSize: '22px',
+                marginTop: '8px'
+              }}>
+                {PROXY_CONTACT}
               </p>
             </div>
           )}
@@ -638,12 +651,7 @@ export default function SlotPreviewMini({
           })}
         </div>
 
-        {/* Fallback slot number if no image */}
-        {!slot.hasImage && (
-          <span className="absolute inset-0 flex items-center justify-center text-white text-xs font-bold z-20">
-            {slot.slotNumber}
-          </span>
-        )}
+        {/* Slot numbers removed - clean proxy preview */}
       </div>
     </button>
   );
