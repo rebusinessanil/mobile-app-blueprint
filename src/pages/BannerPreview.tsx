@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import RanksStickersPanel from "@/components/RanksStickersPanel";
 import StickerControl from "@/components/StickerControl";
+import SlotPreviewMini from "@/components/SlotPreviewMini";
 import downloadIcon from "@/assets/download-icon.png";
 import { useProfile } from "@/hooks/useProfile";
 import { useProfilePhotos } from "@/hooks/useProfilePhotos";
@@ -2129,17 +2130,33 @@ export default function BannerPreview() {
         </div>
       </div>
 
-      {/* Scrollable Slot Selector Box - All 16 slots with global background system */}
+      {/* Scrollable Slot Selector Box - All 16 slots with FULL banner preview (proxy mode) */}
       {globalBackgroundSlots.length > 0 && <div className="flex-1 min-h-0 px-3 sm:px-4 pb-3 sm:pb-4">
           <div className="h-full overflow-y-auto rounded-2xl sm:rounded-3xl bg-[#111827]/50 border-2 border-[#FFD700]/20 p-3 sm:p-4 shadow-[0_0_30px_rgba(255,215,0,0.1)] scrollbar-thin scrollbar-thumb-[#FFD700]/30 scrollbar-track-transparent">
             <div className="grid grid-cols-4 gap-2 sm:gap-3">
               {globalBackgroundSlots.map(slot => {
             const isSelected = selectedTemplate === slot.slotNumber - 1;
-            return <button key={slot.slotNumber} onClick={() => setSelectedTemplate(slot.slotNumber - 1)} className={`aspect-square rounded-lg overflow-hidden transition-all ${isSelected ? 'border-4 border-[#FFD700] scale-105 shadow-[0_0_20px_rgba(255,215,0,0.5)]' : 'border-2 border-gray-600 hover:border-[#FFD700] hover:scale-105'}`}>
-                <div className="w-full h-full flex items-center justify-center" style={getSlotBackgroundStyle(slot)}>
-                  {!slot.hasImage && <span className="text-white text-xs font-bold">{slot.slotNumber}</span>}
-                </div>
-              </button>;
+            return <SlotPreviewMini
+                key={slot.slotNumber}
+                slot={slot}
+                isSelected={isSelected}
+                onClick={() => setSelectedTemplate(slot.slotNumber - 1)}
+                categoryType={bannerData?.categoryType}
+                rankName={bannerData?.rankName}
+                name={bannerData?.name}
+                teamCity={bannerData?.teamCity}
+                chequeAmount={bannerData?.chequeAmount}
+                tripName={bannerData?.tripName}
+                message={bannerData?.message}
+                quote={bannerData?.quote}
+                congratulationsImage={bannerDefaults?.congratulations_image}
+                logoLeft={bannerSettings?.logo_left}
+                logoRight={bannerSettings?.logo_right}
+                uplines={displayUplines}
+                stickers={stickerImages[slot.slotNumber] || []}
+                profileName={profileName}
+                profileRank={displayRank}
+              />;
           })}
             </div>
           </div>
