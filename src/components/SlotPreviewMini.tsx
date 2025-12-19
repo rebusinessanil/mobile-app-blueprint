@@ -350,13 +350,13 @@ export default function SlotPreviewMini({
               </div>
             )}
 
-            {/* Nameplate Border - Positioned exactly as in real banner */}
+            {/* Nameplate Border */}
             <div className="absolute z-20" style={{
-              top: '162px',
-              left: '50%',
+              top: '205px',
+              left: '978px',
               transform: 'translateX(-50%)',
-              width: '1350px',
-              height: '270px'
+              width: '2769px',
+              height: '346px'
             }}>
               <img 
                 src="/assets/nameplate-border.png" 
@@ -369,12 +369,12 @@ export default function SlotPreviewMini({
               />
             </div>
 
-            {/* Achiever Name - Centered within nameplate */}
+            {/* Achiever Name */}
             <div className="absolute z-30" style={{
-              top: '252px',
-              left: '50%',
+              top: '340px',
+              left: '978px',
               transform: 'translateX(-50%)',
-              width: '810px',
+              width: '648px',
               height: '81px',
               display: 'flex',
               alignItems: 'center',
@@ -383,11 +383,10 @@ export default function SlotPreviewMini({
               <h2 style={{
                 color: '#ffffff',
                 textAlign: 'center',
-                fontSize: '54px',
+                fontSize: '48px',
                 fontWeight: '700',
                 margin: 0,
-                whiteSpace: 'nowrap',
-                textShadow: '2px 2px 8px rgba(0,0,0,0.9)'
+                whiteSpace: 'nowrap'
               }}>
                 {truncatedName.toUpperCase()}
               </h2>
@@ -395,17 +394,16 @@ export default function SlotPreviewMini({
 
             {/* Team Name */}
             {teamCity && (
-              <div className="absolute z-30" style={{
-                top: '340px',
-                left: '50%',
+              <div className="absolute" style={{
+                top: '423px',
+                left: '978px',
                 transform: 'translateX(-50%)',
                 width: '648px'
               }}>
                 <p style={{
                   color: '#ffffff',
                   textAlign: 'center',
-                  fontSize: '32px',
-                  textShadow: '2px 2px 6px rgba(0,0,0,0.9)'
+                  fontSize: '28px'
                 }}>
                   {teamCity.toUpperCase()}
                 </p>
@@ -640,6 +638,12 @@ export default function SlotPreviewMini({
           })}
         </div>
 
+        {/* Fallback slot number if no image */}
+        {!slot.hasImage && (
+          <span className="absolute inset-0 flex items-center justify-center text-white text-xs font-bold z-20">
+            {slot.slotNumber}
+          </span>
+        )}
       </div>
     </button>
   );
