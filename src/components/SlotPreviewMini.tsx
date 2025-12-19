@@ -602,38 +602,7 @@ export default function SlotPreviewMini({
           {/* Category-specific content */}
           {renderCategoryContent()}
 
-          {/* Bottom Profile Nameplate - Show for non-story categories */}
-          {categoryType !== 'story' && categoryType !== 'motivational' && (
-            <div className="absolute" style={{
-              bottom: '27px',
-              right: '27px',
-              width: '594px',
-              minWidth: '594px',
-              maxWidth: '594px',
-              padding: '27px 45px',
-              zIndex: 3
-            }}>
-              <p style={{
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                color: '#ffffff',
-                textAlign: 'center',
-                fontSize: '32px',
-                fontWeight: '600'
-              }}>
-                {truncatedProfileName.toUpperCase()}
-              </p>
-              <p style={{
-                textTransform: 'uppercase',
-                color: '#eab308',
-                textAlign: 'center',
-                fontSize: '24px'
-              }}>
-                {displayRank}
-              </p>
-            </div>
-          )}
+          {/* Bottom Profile Nameplate - Removed for proxy banner preview */}
 
           {/* Mentor Photo (Right Bottom) with PROXY image - shown for all categories except story and motivational */}
           {categoryType !== 'story' && categoryType !== 'motivational' && (
