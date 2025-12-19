@@ -1,7 +1,12 @@
 import { getSlotBackgroundStyle, BackgroundSlot } from "@/hooks/useGlobalBackgroundSlots";
 
-// Proxy placeholder image for user photos in mini previews
-const PROXY_AVATAR = "https://ui-avatars.com/api/?name=User&background=FFD700&color=0B0E15&size=200&bold=true";
+// Professional proxy model images for privacy-safe 16-slot preview
+import proxyModelAchiever from "@/assets/proxy-model-achiever.png";
+import proxyModelUser from "@/assets/proxy-model-user.png";
+
+// Proxy images: Model 1 = Achiever, Model 2 = User/Mentor
+const PROXY_ACHIEVER = proxyModelAchiever;
+const PROXY_USER = proxyModelUser;
 
 interface Upline {
   id: string;
@@ -517,7 +522,7 @@ export default function SlotPreviewMini({
                 flexShrink: 0
               }}>
                 <img 
-                  src={PROXY_AVATAR} 
+                  src={PROXY_USER} 
                   alt="Upline" 
                   style={{
                     width: '120px',
@@ -539,8 +544,8 @@ export default function SlotPreviewMini({
               borderRadius: '24px'
             }}>
               <img 
-                src={PROXY_AVATAR} 
-                alt="User" 
+                src={PROXY_ACHIEVER} 
+                alt="Achiever" 
                 style={{
                   width: '594px',
                   height: '792px',
@@ -597,8 +602,8 @@ export default function SlotPreviewMini({
               borderRadius: '24px'
             }}>
               <img 
-                src={PROXY_AVATAR} 
-                alt="Mentor" 
+                src={PROXY_USER} 
+                alt="User" 
                 style={{
                   width: '594px',
                   height: '594px',
