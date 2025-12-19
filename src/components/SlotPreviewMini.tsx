@@ -635,8 +635,8 @@ export default function SlotPreviewMini({
             </div>
           )}
 
-          {/* Mentor Photo (Right Bottom) with PROXY image - shown for all categories except story */}
-          {categoryType !== 'story' && (
+          {/* Mentor Photo (Right Bottom) with PROXY image - shown for all categories except story and motivational */}
+          {categoryType !== 'story' && categoryType !== 'motivational' && (
             <div className="absolute overflow-hidden" style={{
               right: '27px',
               bottom: '0',
