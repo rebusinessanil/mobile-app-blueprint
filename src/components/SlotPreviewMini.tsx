@@ -577,6 +577,28 @@ export default function SlotPreviewMini({
             </div>
           )}
 
+          {/* LEFT - User Photo with 2nd model for Motivational category */}
+          {categoryType === 'motivational' && (
+            <div className="absolute overflow-hidden" style={{
+              left: '40px',
+              top: '162px',
+              width: '594px',
+              height: '792px',
+              borderRadius: '24px'
+            }}>
+              <img 
+                src={PROXY_USER} 
+                alt="User" 
+                style={{
+                  width: '594px',
+                  height: '792px',
+                  objectFit: 'cover',
+                  objectPosition: 'center 25%'
+                }} 
+              />
+            </div>
+          )}
+
           {/* Category-specific content */}
           {renderCategoryContent()}
 
