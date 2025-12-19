@@ -638,12 +638,7 @@ export default function SlotPreviewMini({
           })}
         </div>
 
-        {/* Fallback slot number if no image */}
-        {!slot.hasImage && (
-          <span className="absolute inset-0 flex items-center justify-center text-white text-xs font-bold z-20">
-            {slot.slotNumber}
-          </span>
-        )}
+        {/* Slot numbers removed - proxy images always show full banner preview */}
       </div>
     </button>
   );
