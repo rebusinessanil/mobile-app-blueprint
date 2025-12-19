@@ -1,7 +1,7 @@
 import { getSlotBackgroundStyle, BackgroundSlot } from "@/hooks/useGlobalBackgroundSlots";
 
-// Professional silhouette placeholder for user photos in mini previews (gold-themed)
-const PROXY_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cdefs%3E%3ClinearGradient id='bg' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%230B0E15'/%3E%3Cstop offset='100%25' style='stop-color:%23111827'/%3E%3C/linearGradient%3E%3ClinearGradient id='gold' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%23FFD700'/%3E%3Cstop offset='100%25' style='stop-color:%23D4AF37'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='200' height='200' fill='url(%23bg)'/%3E%3Ccircle cx='100' cy='70' r='35' fill='url(%23gold)' opacity='0.9'/%3E%3Cellipse cx='100' cy='160' rx='50' ry='40' fill='url(%23gold)' opacity='0.9'/%3E%3C/svg%3E";
+// Proxy placeholder image for user photos in mini previews
+const PROXY_AVATAR = "https://ui-avatars.com/api/?name=User&background=FFD700&color=0B0E15&size=200&bold=true";
 
 interface Upline {
   id: string;
