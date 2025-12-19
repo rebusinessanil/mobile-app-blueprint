@@ -555,8 +555,8 @@ export default function SlotPreviewMini({
             ))}
           </div>
 
-          {/* LEFT - Main User Photo with PROXY image */}
-          {categoryType !== 'story' && (
+          {/* LEFT - Main User Photo with PROXY image - Only show for rank, bonanza, birthday, anniversary */}
+          {(categoryType === 'rank' || categoryType === 'bonanza' || categoryType === 'birthday' || categoryType === 'anniversary') && (
             <div className="absolute overflow-hidden" style={{
               left: '40px',
               top: '162px',
@@ -613,8 +613,8 @@ export default function SlotPreviewMini({
             </div>
           )}
 
-          {/* Mentor Photo (Right Bottom) with PROXY image - moved down 25%, aligned to touch bottom */}
-          {categoryType !== 'story' && categoryType !== 'motivational' && (
+          {/* Mentor Photo (Right Bottom) with PROXY image - shown for all categories except story */}
+          {categoryType !== 'story' && (
             <div className="absolute overflow-hidden" style={{
               right: '27px',
               bottom: '0',
