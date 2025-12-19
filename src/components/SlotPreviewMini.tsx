@@ -1,3 +1,4 @@
+import React from "react";
 import { getSlotBackgroundStyle, BackgroundSlot } from "@/hooks/useGlobalBackgroundSlots";
 
 // Professional proxy model images for privacy-safe 16-slot preview
@@ -443,6 +444,25 @@ export default function SlotPreviewMini({
     }
   };
 
+  // Use ref to calculate dynamic scale based on container size
+  const containerRef = React.useRef<HTMLDivElement>(null);
+  const [dynamicScale, setDynamicScale] = React.useState(SCALE_FACTOR);
+
+  React.useEffect(() => {
+    const updateScale = () => {
+      if (containerRef.current) {
+        const containerWidth = containerRef.current.offsetWidth;
+        // Scale banner (1350px) to fit container width perfectly
+        const newScale = containerWidth / 1350;
+        setDynamicScale(newScale);
+      }
+    };
+
+    updateScale();
+    window.addEventListener('resize', updateScale);
+    return () => window.removeEventListener('resize', updateScale);
+  }, []);
+
   return (
     <button
       onClick={onClick}
@@ -453,13 +473,14 @@ export default function SlotPreviewMini({
       }`}
     >
       <div 
+        ref={containerRef}
         className="w-full h-full relative overflow-hidden"
         style={{ 
           ...getSlotBackgroundStyle(slot),
           position: 'relative'
         }}
       >
-        {/* Scaled banner content wrapper */}
+        {/* Scaled banner content wrapper - fits perfectly to slot box */}
         <div 
           style={{
             position: 'absolute',
@@ -467,7 +488,7 @@ export default function SlotPreviewMini({
             left: 0,
             width: '1350px',
             height: '1350px',
-            transform: `scale(${SCALE_FACTOR})`,
+            transform: `scale(${dynamicScale})`,
             transformOrigin: 'top left',
             pointerEvents: 'none'
           }}
