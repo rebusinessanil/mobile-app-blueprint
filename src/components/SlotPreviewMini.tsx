@@ -555,14 +555,14 @@ export default function SlotPreviewMini({
             ))}
           </div>
 
-          {/* LEFT - Main Achiever Photo with PROXY image - positioned at bottom edge */}
+          {/* LEFT - Main User Photo with PROXY image */}
           {categoryType !== 'story' && (
             <div className="absolute overflow-hidden" style={{
               left: '40px',
-              bottom: '0px',
+              top: '162px',
               width: '594px',
               height: '792px',
-              borderRadius: '24px 24px 0 0'
+              borderRadius: '24px'
             }}>
               <img 
                 src={PROXY_ACHIEVER} 
@@ -571,7 +571,7 @@ export default function SlotPreviewMini({
                   width: '594px',
                   height: '792px',
                   objectFit: 'cover',
-                  objectPosition: 'center top'
+                  objectPosition: 'center'
                 }} 
               />
             </div>
