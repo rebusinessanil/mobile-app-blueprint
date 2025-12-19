@@ -613,14 +613,14 @@ export default function SlotPreviewMini({
             </div>
           )}
 
-          {/* Mentor Photo (Right Bottom) with PROXY image */}
+          {/* Mentor Photo (Right Bottom) with PROXY image - aligned to touch bottom */}
           {categoryType !== 'story' && categoryType !== 'motivational' && (
             <div className="absolute overflow-hidden" style={{
               right: '27px',
-              bottom: '162px',
+              bottom: '0',
               width: '594px',
               height: '594px',
-              borderRadius: '24px'
+              borderRadius: '24px 24px 0 0'
             }}>
               <img 
                 src={PROXY_USER} 
@@ -629,7 +629,7 @@ export default function SlotPreviewMini({
                   width: '594px',
                   height: '594px',
                   objectFit: 'cover',
-                  objectPosition: 'center'
+                  objectPosition: 'center top'
                 }} 
               />
             </div>
