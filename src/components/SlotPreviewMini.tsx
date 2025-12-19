@@ -629,7 +629,7 @@ export default function SlotPreviewMini({
                   width: '594px',
                   height: '594px',
                   objectFit: 'cover',
-                  objectPosition: 'center 50%'
+                  objectPosition: 'center 25%'
                 }} 
               />
             </div>
