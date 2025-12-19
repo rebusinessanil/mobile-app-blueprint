@@ -72,15 +72,11 @@ export default function SlotPreviewMini({
   // Scale factor for the mini preview (1350px -> approximately 80px visible)
   const SCALE_FACTOR = 0.06;
   
-  // PROXY MODE: Use fixed proxy data for all slots
-  const PROXY_NAME = 'Anil';
-  const PROXY_RANK = 'Diamond';
-  const PROXY_CONTACT = '7734990035';
-  
-  // Use proxy data instead of real user data
-  const truncatedName = PROXY_NAME;
-  const truncatedProfileName = PROXY_NAME;
-  const displayRank = PROXY_RANK;
+  // Truncate name for display
+  const truncatedName = name.length > 20 ? name.slice(0, 17) + '...' : name;
+  const truncatedProfileName = profileName.length > 15 ? profileName.slice(0, 12) + '...' : profileName;
+  const displayRank = profileRank || 'TEAM MEMBER';
+
   // Render category-specific content
   const renderCategoryContent = () => {
     switch (categoryType) {
@@ -563,7 +559,7 @@ export default function SlotPreviewMini({
           {/* Category-specific content */}
           {renderCategoryContent()}
 
-          {/* Bottom Profile Nameplate with Contact Bar - PROXY DATA */}
+          {/* Bottom Profile Nameplate - Show for non-story categories */}
           {categoryType !== 'story' && categoryType !== 'motivational' && (
             <div className="absolute" style={{
               bottom: '27px',
@@ -571,60 +567,28 @@ export default function SlotPreviewMini({
               width: '594px',
               minWidth: '594px',
               maxWidth: '594px',
-              background: 'linear-gradient(135deg, rgba(0,0,0,0.8) 0%, rgba(30,30,30,0.9) 100%)',
-              borderRadius: '16px',
-              border: '2px solid #FFD700',
-              padding: '20px 30px',
-              zIndex: 30
+              padding: '27px 45px',
+              zIndex: 3
             }}>
-              {/* Name */}
               <p style={{
                 whiteSpace: 'nowrap',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 color: '#ffffff',
                 textAlign: 'center',
-                fontSize: '36px',
-                fontWeight: '700',
-                margin: 0,
-                marginBottom: '8px'
+                fontSize: '32px',
+                fontWeight: '600'
               }}>
                 {truncatedProfileName.toUpperCase()}
               </p>
-              {/* Rank */}
               <p style={{
                 textTransform: 'uppercase',
-                color: '#FFD700',
+                color: '#eab308',
                 textAlign: 'center',
-                fontSize: '26px',
-                fontWeight: '600',
-                margin: 0,
-                marginBottom: '12px'
+                fontSize: '24px'
               }}>
                 {displayRank}
               </p>
-              {/* Contact Bar */}
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '10px',
-                padding: '10px 0',
-                borderTop: '1px solid rgba(255,215,0,0.3)'
-              }}>
-                <span style={{
-                  fontSize: '24px'
-                }}>📞</span>
-                <p style={{
-                  color: '#ffffff',
-                  fontSize: '24px',
-                  fontWeight: '500',
-                  margin: 0,
-                  letterSpacing: '1px'
-                }}>
-                  {PROXY_CONTACT}
-                </p>
-              </div>
             </div>
           )}
 
@@ -674,7 +638,12 @@ export default function SlotPreviewMini({
           })}
         </div>
 
-        {/* Slot numbers removed - proxy preview shows full mini banner without numbers */}
+        {/* Fallback slot number if no image */}
+        {!slot.hasImage && (
+          <span className="absolute inset-0 flex items-center justify-center text-white text-xs font-bold z-20">
+            {slot.slotNumber}
+          </span>
+        )}
       </div>
     </button>
   );
