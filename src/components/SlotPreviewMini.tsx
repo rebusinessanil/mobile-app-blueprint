@@ -613,7 +613,7 @@ export default function SlotPreviewMini({
             </div>
           )}
 
-          {/* Mentor Photo (Right Bottom) with PROXY image - aligned to touch bottom */}
+          {/* Mentor Photo (Right Bottom) with PROXY image - moved down 25%, aligned to touch bottom */}
           {categoryType !== 'story' && categoryType !== 'motivational' && (
             <div className="absolute overflow-hidden" style={{
               right: '27px',
@@ -629,7 +629,7 @@ export default function SlotPreviewMini({
                   width: '594px',
                   height: '594px',
                   objectFit: 'cover',
-                  objectPosition: 'center top'
+                  objectPosition: 'center 25%'
                 }} 
               />
             </div>
