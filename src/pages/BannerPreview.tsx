@@ -138,21 +138,35 @@ export default function BannerPreview() {
     };
   }, [isDraggingProfile, profileDragStart, profilePicScale]);
 
-  // Compute scale factor for display
+  // Compute scale factor for display - ensures full banner fits perfectly
   useEffect(() => {
     const updateScale = () => {
       const container = document.querySelector('.banner-scale-container') as HTMLElement;
       if (!container) return;
       const parent = container.parentElement;
       if (!parent) return;
+      
+      // Calculate scale to fit both width and height perfectly
       const parentWidth = parent.clientWidth;
-      const scale = parentWidth / 1350;
+      const parentHeight = parent.clientHeight || parentWidth; // Fallback to square
+      const scaleX = parentWidth / 1350;
+      const scaleY = parentHeight / 1350;
+      // Use the smaller scale to ensure full banner fits without cropping
+      const scale = Math.min(scaleX, scaleY);
+      
       container.style.setProperty('--banner-scale', scale.toString());
       container.style.transform = `scale(${scale})`;
     };
+    
+    // Initial update with slight delay to ensure DOM is ready
+    const timeoutId = setTimeout(updateScale, 50);
     updateScale();
+    
     window.addEventListener('resize', updateScale);
-    return () => window.removeEventListener('resize', updateScale);
+    return () => {
+      window.removeEventListener('resize', updateScale);
+      clearTimeout(timeoutId);
+    };
   }, []);
 
   // Get authenticated user and check admin status
@@ -1599,22 +1613,27 @@ export default function BannerPreview() {
       </header>
 
       {/* Banner Preview Container - Fixed at top */}
-      <div className="px-3 sm:px-4 py-3 sm:py-4 flex-shrink-0 bg-background">
-        {/* Display wrapper with responsive scaling */}
-        <div className="relative w-full max-w-[100vw] sm:max-w-[520px] mx-auto">
-          <div className="border-4 border-primary rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl">
-            {/* Scale wrapper for display - maintains 1350×1350 internal canvas */}
+      <div className="px-3 sm:px-4 py-2 sm:py-3 flex-shrink-0 bg-background">
+        {/* Display wrapper with responsive scaling - fits full banner */}
+        <div className="relative w-full max-w-[95vw] sm:max-w-[min(520px,90vw)] mx-auto">
+          <div className="border-4 border-primary rounded-2xl sm:rounded-3xl shadow-2xl">
+            {/* Scale wrapper for display - maintains 1350×1350 internal canvas, no overflow hidden */}
             <div style={{
             width: '100%',
             aspectRatio: '1 / 1',
-            overflow: 'hidden',
-            position: 'relative'
+            position: 'relative',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
           }}>
               <div style={{
               transform: 'scale(var(--banner-scale))',
               transformOrigin: 'top left',
               width: '1350px',
-              height: '1350px'
+              height: '1350px',
+              position: 'absolute',
+              top: 0,
+              left: 0
             }} className="banner-scale-container">
                 <div ref={bannerRef} id="banner-canvas" onMouseMove={isAdmin ? handleStickerMouseMove : undefined} onMouseUp={isAdmin ? handleStickerMouseUp : undefined} onMouseLeave={isAdmin ? handleStickerMouseUp : undefined} style={{
                 position: 'relative',
