@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useLayoutEffect, useRef, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft, Settings, Sparkles } from "lucide-react";
 import BannerPreviewSkeleton from "@/components/skeletons/BannerPreviewSkeleton";
@@ -595,23 +595,26 @@ export default function BannerPreview() {
     preloadStarted
   ]);
 
-  // Trigger scale update when assets are loaded and on resize
-  useEffect(() => {
+  // Trigger scale update immediately when assets are loaded and on resize
+  // Using useLayoutEffect ensures scale is applied before browser paint - no flicker
+  useLayoutEffect(() => {
     if (!assetsLoaded) return;
     
-    // Initial scale calculation
+    // Immediate scale calculation before paint
     updateBannerScale();
+  }, [assetsLoaded, updateBannerScale]);
+
+  // ResizeObserver for responsive updates on all devices
+  useEffect(() => {
+    if (!assetsLoaded || !bannerContainerRef.current) return;
     
-    // Use ResizeObserver for more reliable updates across all devices
     const resizeObserver = new ResizeObserver(() => {
       updateBannerScale();
     });
     
-    if (bannerContainerRef.current) {
-      resizeObserver.observe(bannerContainerRef.current);
-    }
-    
+    resizeObserver.observe(bannerContainerRef.current);
     window.addEventListener('resize', updateBannerScale);
+    
     return () => {
       resizeObserver.disconnect();
       window.removeEventListener('resize', updateBannerScale);
