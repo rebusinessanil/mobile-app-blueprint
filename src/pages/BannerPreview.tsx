@@ -138,19 +138,19 @@ export default function BannerPreview() {
     };
   }, [isDraggingProfile, profileDragStart, profilePicScale]);
 
+  // Banner scale state for CSS-based scaling (more reliable on all devices)
+  const [bannerScale, setBannerScale] = useState(1);
+  const bannerContainerRef = useRef<HTMLDivElement>(null);
+
   // Compute scale factor for display - ensures full banner fits perfectly on all devices
   const updateBannerScale = useCallback(() => {
-    const container = document.querySelector('.banner-scale-container') as HTMLElement;
-    if (!container) return;
-    const parent = container.parentElement;
-    if (!parent) return;
-    
-    // Use width-based scaling since aspect ratio is 1:1 (square)
-    const parentWidth = parent.clientWidth;
+    if (!bannerContainerRef.current) return;
+    const parentWidth = bannerContainerRef.current.clientWidth;
     if (parentWidth === 0) return;
     
+    // Use width-based scaling since aspect ratio is 1:1 (square)
     const scale = parentWidth / 1350;
-    container.style.transform = `scale(${scale})`;
+    setBannerScale(scale);
   }, []);
 
   // Get authenticated user and check admin status
@@ -599,16 +599,22 @@ export default function BannerPreview() {
   useEffect(() => {
     if (!assetsLoaded) return;
     
-    // Multiple updates to ensure DOM is fully ready after skeleton removal
+    // Initial scale calculation
     updateBannerScale();
-    requestAnimationFrame(updateBannerScale);
-    // Additional delayed update for mobile devices
-    const timeoutId = setTimeout(updateBannerScale, 100);
+    
+    // Use ResizeObserver for more reliable updates across all devices
+    const resizeObserver = new ResizeObserver(() => {
+      updateBannerScale();
+    });
+    
+    if (bannerContainerRef.current) {
+      resizeObserver.observe(bannerContainerRef.current);
+    }
     
     window.addEventListener('resize', updateBannerScale);
     return () => {
+      resizeObserver.disconnect();
       window.removeEventListener('resize', updateBannerScale);
-      clearTimeout(timeoutId);
     };
   }, [assetsLoaded, updateBannerScale]);
   if (!bannerData) {
@@ -1617,15 +1623,19 @@ export default function BannerPreview() {
         <div className="relative w-full max-w-[500px] mx-auto">
           <div className="border-4 border-primary rounded-2xl shadow-2xl overflow-hidden">
             {/* Scale wrapper - maintains 1350×1350 internal canvas with perfect fit */}
-            <div style={{
-              width: '100%',
-              aspectRatio: '1 / 1',
-              position: 'relative',
-              overflow: 'hidden'
-            }}>
+            <div 
+              ref={bannerContainerRef}
+              style={{
+                width: '100%',
+                aspectRatio: '1 / 1',
+                position: 'relative',
+                overflow: 'hidden'
+              }}
+            >
               <div 
                 className="banner-scale-container"
                 style={{
+                  transform: `scale(${bannerScale})`,
                   transformOrigin: 'top left',
                   width: '1350px',
                   height: '1350px',
