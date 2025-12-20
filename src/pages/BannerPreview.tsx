@@ -139,27 +139,18 @@ export default function BannerPreview() {
   }, [isDraggingProfile, profileDragStart, profilePicScale]);
 
   // Compute scale factor for display - ensures full banner fits perfectly on all devices
-  useEffect(() => {
-    const updateScale = () => {
-      const container = document.querySelector('.banner-scale-container') as HTMLElement;
-      if (!container) return;
-      const parent = container.parentElement;
-      if (!parent) return;
-      
-      // Use only width-based scaling since aspect ratio is 1:1 (square)
-      // This ensures consistent rendering like laptop view on all devices
-      const parentWidth = parent.clientWidth;
-      const scale = parentWidth / 1350;
-      
-      container.style.transform = `scale(${scale})`;
-    };
+  const updateBannerScale = useCallback(() => {
+    const container = document.querySelector('.banner-scale-container') as HTMLElement;
+    if (!container) return;
+    const parent = container.parentElement;
+    if (!parent) return;
     
-    // Multiple updates to ensure DOM is fully ready
-    updateScale();
-    requestAnimationFrame(updateScale);
+    // Use width-based scaling since aspect ratio is 1:1 (square)
+    const parentWidth = parent.clientWidth;
+    if (parentWidth === 0) return;
     
-    window.addEventListener('resize', updateScale);
-    return () => window.removeEventListener('resize', updateScale);
+    const scale = parentWidth / 1350;
+    container.style.transform = `scale(${scale})`;
   }, []);
 
   // Get authenticated user and check admin status
@@ -604,7 +595,22 @@ export default function BannerPreview() {
     preloadStarted
   ]);
 
-  // Early return if no banner data
+  // Trigger scale update when assets are loaded and on resize
+  useEffect(() => {
+    if (!assetsLoaded) return;
+    
+    // Multiple updates to ensure DOM is fully ready after skeleton removal
+    updateBannerScale();
+    requestAnimationFrame(updateBannerScale);
+    // Additional delayed update for mobile devices
+    const timeoutId = setTimeout(updateBannerScale, 100);
+    
+    window.addEventListener('resize', updateBannerScale);
+    return () => {
+      window.removeEventListener('resize', updateBannerScale);
+      clearTimeout(timeoutId);
+    };
+  }, [assetsLoaded, updateBannerScale]);
   if (!bannerData) {
     navigate("/rank-selection");
     return null;
