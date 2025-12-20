@@ -1,6 +1,7 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft, Settings, Sparkles } from "lucide-react";
+import BannerPreviewSkeleton from "@/components/skeletons/BannerPreviewSkeleton";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import RanksStickersPanel from "@/components/RanksStickersPanel";
@@ -506,10 +507,105 @@ export default function BannerPreview() {
   // Fetch selected stickers - removed, now using slotStickers structure
   // Each slot has its own stickers independently
 
+  // State for tracking if all assets are preloaded
+  const [assetsLoaded, setAssetsLoaded] = useState(false);
+  const [preloadStarted, setPreloadStarted] = useState(false);
+
+  // Preload all images before displaying the page
+  const preloadImages = useCallback(async (urls: string[]) => {
+    const validUrls = urls.filter(url => url && typeof url === 'string');
+    if (validUrls.length === 0) return true;
+    
+    const promises = validUrls.map(url => {
+      return new Promise<void>((resolve) => {
+        const img = new Image();
+        img.onload = () => resolve();
+        img.onerror = () => resolve(); // Don't block on failed images
+        img.src = url;
+      });
+    });
+    
+    await Promise.all(promises);
+    return true;
+  }, []);
+
+  // Preload all assets when data is ready
+  useEffect(() => {
+    if (preloadStarted || !bannerData) return;
+    
+    // Check if essential data is loaded
+    const isDataReady = 
+      userId !== null &&
+      profile !== undefined &&
+      !backgroundsLoading &&
+      globalBackgroundSlots.length >= 0;
+    
+    if (!isDataReady) return;
+    
+    setPreloadStarted(true);
+    
+    const loadAllAssets = async () => {
+      const imagesToPreload: string[] = [];
+      
+      // Add background images from slots
+      globalBackgroundSlots.forEach(slot => {
+        if (slot.imageUrl) imagesToPreload.push(slot.imageUrl);
+      });
+      
+      // Add profile photos
+      if (profile?.profile_photo) imagesToPreload.push(profile.profile_photo);
+      profilePhotos.forEach(photo => {
+        if (photo.photo_url) imagesToPreload.push(photo.photo_url);
+      });
+      
+      // Add banner defaults images
+      if (bannerDefaults?.congratulations_image) imagesToPreload.push(bannerDefaults.congratulations_image);
+      if (bannerDefaults?.logo_left) imagesToPreload.push(bannerDefaults.logo_left);
+      if (bannerDefaults?.logo_right) imagesToPreload.push(bannerDefaults.logo_right);
+      
+      // Add upline avatars
+      displayUplines.forEach(upline => {
+        if (upline.avatar) imagesToPreload.push(upline.avatar);
+      });
+      
+      // Add sticker images
+      Object.values(stickerImages).forEach(slotStickers => {
+        slotStickers.forEach(sticker => {
+          if (sticker.url) imagesToPreload.push(sticker.url);
+        });
+      });
+      
+      // Add bannerData photo if exists
+      if (bannerData?.photo) imagesToPreload.push(bannerData.photo);
+      
+      await preloadImages(imagesToPreload);
+      setAssetsLoaded(true);
+    };
+    
+    loadAllAssets();
+  }, [
+    bannerData, 
+    userId, 
+    profile, 
+    profilePhotos, 
+    bannerDefaults, 
+    globalBackgroundSlots, 
+    backgroundsLoading, 
+    stickerImages, 
+    displayUplines, 
+    preloadImages, 
+    preloadStarted
+  ]);
+
   // Early return if no banner data
   if (!bannerData) {
     navigate("/rank-selection");
     return null;
+  }
+
+  // Show skeleton until all data and assets are loaded
+  if (!assetsLoaded || backgroundsLoading) {
+    return <BannerPreviewSkeleton />;
   }
 
   // Category-specific content render function
