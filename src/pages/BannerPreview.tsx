@@ -138,7 +138,7 @@ export default function BannerPreview() {
     };
   }, [isDraggingProfile, profileDragStart, profilePicScale]);
 
-  // Compute scale factor for display - ensures full banner fits perfectly
+  // Compute scale factor for display - ensures full banner fits perfectly on all devices
   useEffect(() => {
     const updateScale = () => {
       const container = document.querySelector('.banner-scale-container') as HTMLElement;
@@ -146,27 +146,20 @@ export default function BannerPreview() {
       const parent = container.parentElement;
       if (!parent) return;
       
-      // Calculate scale to fit both width and height perfectly
+      // Use only width-based scaling since aspect ratio is 1:1 (square)
+      // This ensures consistent rendering like laptop view on all devices
       const parentWidth = parent.clientWidth;
-      const parentHeight = parent.clientHeight || parentWidth; // Fallback to square
-      const scaleX = parentWidth / 1350;
-      const scaleY = parentHeight / 1350;
-      // Use the smaller scale to ensure full banner fits without cropping
-      const scale = Math.min(scaleX, scaleY);
+      const scale = parentWidth / 1350;
       
-      container.style.setProperty('--banner-scale', scale.toString());
       container.style.transform = `scale(${scale})`;
     };
     
-    // Initial update with slight delay to ensure DOM is ready
-    const timeoutId = setTimeout(updateScale, 50);
+    // Multiple updates to ensure DOM is fully ready
     updateScale();
+    requestAnimationFrame(updateScale);
     
     window.addEventListener('resize', updateScale);
-    return () => {
-      window.removeEventListener('resize', updateScale);
-      clearTimeout(timeoutId);
-    };
+    return () => window.removeEventListener('resize', updateScale);
   }, []);
 
   // Get authenticated user and check admin status
@@ -1612,37 +1605,44 @@ export default function BannerPreview() {
         </div>
       </header>
 
-      {/* Banner Preview Container - Fixed at top */}
-      <div className="px-3 sm:px-4 py-2 sm:py-3 flex-shrink-0 bg-background">
-        {/* Display wrapper with responsive scaling - fits full banner */}
-        <div className="relative w-full max-w-[95vw] sm:max-w-[min(520px,90vw)] mx-auto">
-          <div className="border-4 border-primary rounded-2xl sm:rounded-3xl shadow-2xl">
-            {/* Scale wrapper for display - maintains 1350×1350 internal canvas, no overflow hidden */}
+      {/* Banner Preview Container - Fixed at top, consistent across all devices */}
+      <div className="px-2 sm:px-4 py-2 sm:py-3 flex-shrink-0 bg-background">
+        {/* Display wrapper - fixed max width for consistent laptop-like rendering */}
+        <div className="relative w-full max-w-[500px] mx-auto">
+          <div className="border-4 border-primary rounded-2xl shadow-2xl overflow-hidden">
+            {/* Scale wrapper - maintains 1350×1350 internal canvas with perfect fit */}
             <div style={{
-            width: '100%',
-            aspectRatio: '1 / 1',
-            position: 'relative',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}>
-              <div style={{
-              transform: 'scale(var(--banner-scale))',
-              transformOrigin: 'top left',
-              width: '1350px',
-              height: '1350px',
-              position: 'absolute',
-              top: 0,
-              left: 0
-            }} className="banner-scale-container">
-                <div ref={bannerRef} id="banner-canvas" onMouseMove={isAdmin ? handleStickerMouseMove : undefined} onMouseUp={isAdmin ? handleStickerMouseUp : undefined} onMouseLeave={isAdmin ? handleStickerMouseUp : undefined} style={{
-                position: 'relative',
-                width: '1350px',
-                height: '1350px',
-                background: templateColors[selectedTemplate].bgGradient,
-                overflow: 'hidden',
-                cursor: isAdmin && isDragMode ? 'crosshair' : 'default'
-              }}>
+              width: '100%',
+              aspectRatio: '1 / 1',
+              position: 'relative',
+              overflow: 'hidden'
+            }}>
+              <div 
+                className="banner-scale-container"
+                style={{
+                  transformOrigin: 'top left',
+                  width: '1350px',
+                  height: '1350px',
+                  position: 'absolute',
+                  top: 0,
+                  left: 0
+                }}
+              >
+                <div 
+                  ref={bannerRef} 
+                  id="banner-canvas" 
+                  onMouseMove={isAdmin ? handleStickerMouseMove : undefined} 
+                  onMouseUp={isAdmin ? handleStickerMouseUp : undefined} 
+                  onMouseLeave={isAdmin ? handleStickerMouseUp : undefined} 
+                  style={{
+                    position: 'relative',
+                    width: '1350px',
+                    height: '1350px',
+                    background: templateColors[selectedTemplate].bgGradient,
+                    overflow: 'hidden',
+                    cursor: isAdmin && isDragMode ? 'crosshair' : 'default'
+                  }}
+                >
               <div className="absolute inset-0" style={backgroundStyle}>
                 {/* Background automatically from global slot system (image or default color) */}
 
