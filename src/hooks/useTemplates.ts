@@ -68,6 +68,10 @@ export const useTemplateCategories = () => {
       if (error) throw error;
       return data as TemplateCategory[];
     },
+    staleTime: 30 * 60 * 1000, // 30 minutes - prevent re-fetching
+    gcTime: 60 * 60 * 1000, // 1 hour cache
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   useEffect(() => {
@@ -125,6 +129,10 @@ export const useTemplates = (categoryId?: string, tripId?: string, rankId?: stri
       if (error) throw error;
       return data as Template[];
     },
+    staleTime: 20 * 60 * 1000, // 20 minutes - prevent re-fetching on navigation
+    gcTime: 60 * 60 * 1000, // 1 hour cache
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   useEffect(() => {
@@ -301,6 +309,10 @@ export const useRanks = () => {
       if (error) throw error;
       return data as Rank[];
     },
+    staleTime: 30 * 60 * 1000, // 30 minutes - static data
+    gcTime: 60 * 60 * 1000, // 1 hour cache
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   return { 

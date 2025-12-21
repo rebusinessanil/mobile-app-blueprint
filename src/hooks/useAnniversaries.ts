@@ -30,6 +30,10 @@ export const useAnniversaries = () => {
       if (error) throw error;
       return data as Anniversary[];
     },
+    staleTime: 30 * 60 * 1000,
+    gcTime: 60 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   useEffect(() => {

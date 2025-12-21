@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback, memo } from "react";
+import { useState, useEffect, useMemo, useCallback, memo, useRef } from "react";
 import { Link } from "react-router-dom";
 import BottomNav from "@/components/BottomNav";
 import { Menu, Bell, Star, Calendar, Zap, Award, Wallet } from "lucide-react";
@@ -23,6 +23,12 @@ import WelcomeBonusModal from "@/components/WelcomeBonusModal";
 import { useWelcomeBonus } from "@/hooks/useWelcomeBonus";
 import DashboardSkeleton from "@/components/skeletons/DashboardSkeleton";
 import { preloadBannerPreviewSystem, preloadImages } from "@/lib/preloader";
+
+// Static proxy placeholder for instant card rendering
+const PROXY_PLACEHOLDER = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='105' viewBox='0 0 140 105'%3E%3Crect fill='%231a1f2e' width='140' height='105'/%3E%3Crect fill='%23ffd34e' opacity='0.1' width='140' height='105'/%3E%3C/svg%3E";
+
+// Track if dashboard has been loaded once
+let dashboardLoadedOnce = false;
 
 export default function Dashboard() {
   const {
@@ -62,7 +68,7 @@ export default function Dashboard() {
     loading: storiesLoading
   } = useGeneratedStories();
   
-  // Fetch stories_events
+  // Fetch stories_events with aggressive caching
   const { data: storiesEvents = [], isLoading: storiesEventsLoading } = useQuery({
     queryKey: ["stories-events"],
     queryFn: async () => {
@@ -73,6 +79,10 @@ export default function Dashboard() {
       if (error) throw error;
       return data || [];
     },
+    staleTime: 30 * 60 * 1000, // 30 minutes - prevent re-fetching
+    gcTime: 60 * 60 * 1000, // 1 hour cache
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
   
   const [userId, setUserId] = useState<string | null>(null);
@@ -80,13 +90,22 @@ export default function Dashboard() {
     profile
   } = useProfile(userId ?? undefined);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const hasLoadedRef = useRef(dashboardLoadedOnce);
   
   // Welcome bonus modal
   const { showWelcomeModal, bonusAmount, handleContinue } = useWelcomeBonus();
 
-  // Check if data is loading AND no cached data exists
+  // Check if data is loading AND no cached data exists AND first load
   const hasNoData = categories.length === 0 && allTemplates.length === 0 && ranks.length === 0;
-  const isInitialLoading = (categoriesLoading || templatesLoading || ranksLoading) && hasNoData;
+  const isInitialLoading = (categoriesLoading || templatesLoading || ranksLoading) && hasNoData && !hasLoadedRef.current;
+  
+  // Mark dashboard as loaded once data arrives
+  useEffect(() => {
+    if (!isInitialLoading && (categories.length > 0 || ranks.length > 0)) {
+      dashboardLoadedOnce = true;
+      hasLoadedRef.current = true;
+    }
+  }, [isInitialLoading, categories.length, ranks.length]);
 
   // Memoized template filters to prevent recalculation
   const getRankTemplates = useMemo(() => {

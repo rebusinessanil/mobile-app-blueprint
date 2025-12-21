@@ -30,6 +30,10 @@ export const useBonanzaTrips = () => {
       if (error) throw error;
       return data as BonanzaTrip[];
     },
+    staleTime: 30 * 60 * 1000, // 30 minutes
+    gcTime: 60 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   useEffect(() => {

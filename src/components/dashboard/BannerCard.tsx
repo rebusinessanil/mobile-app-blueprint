@@ -1,6 +1,12 @@
 import { useNavigate } from "react-router-dom";
-import { useState, memo, useRef, useEffect, useCallback } from "react";
+import { useState, memo, useRef, useEffect, useCallback, useMemo } from "react";
 import { getThumbnailUrl } from "@/lib/imageOptimizer";
+
+// Static proxy placeholder SVG - instant display, no network
+const PROXY_PLACEHOLDER = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='105' viewBox='0 0 140 105'%3E%3Crect fill='%231a1f2e' width='140' height='105'/%3E%3Crect fill='%23ffd34e' opacity='0.08' width='140' height='105'/%3E%3C/svg%3E";
+
+// Image cache for instant re-renders
+const imageCache = new Set<string>();
 
 interface BannerCardProps {
   id: string;
@@ -10,7 +16,7 @@ interface BannerCardProps {
   fallbackIcon?: string;
   fallbackGradient?: string;
   linkTo: string;
-  instantNav?: boolean; // Enable instant navigation without transition
+  instantNav?: boolean;
 }
 
 function BannerCardComponent({
@@ -24,19 +30,22 @@ function BannerCardComponent({
   instantNav = false
 }: BannerCardProps) {
   const navigate = useNavigate();
-  const [imageLoaded, setImageLoaded] = useState(false);
-  const [isInView, setIsInView] = useState(false);
+  // Check if image is already cached - instant display
+  const isCached = useMemo(() => imageUrl ? imageCache.has(imageUrl) : false, [imageUrl]);
+  const [imageLoaded, setImageLoaded] = useState(isCached);
+  const [isInView, setIsInView] = useState(isCached); // Skip observer if cached
   const cardRef = useRef<HTMLDivElement>(null);
 
   // Instant navigation handler - zero delay
   const handleClick = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
-    // Use replace: false for normal history, navigate immediately
     navigate(linkTo);
   }, [navigate, linkTo]);
 
-  // Lazy load with Intersection Observer
+  // Lazy load with Intersection Observer - skip if already cached
   useEffect(() => {
+    if (isCached || isInView) return;
+    
     const element = cardRef.current;
     if (!element) return;
 
@@ -47,14 +56,23 @@ function BannerCardComponent({
           observer.disconnect();
         }
       },
-      { rootMargin: '100px', threshold: 0.01 }
+      { rootMargin: '200px', threshold: 0.01 } // Larger margin for earlier loading
     );
 
     observer.observe(element);
     return () => observer.disconnect();
-  }, []);
+  }, [isCached, isInView]);
 
-  const thumbnailUrl = imageUrl ? getThumbnailUrl(imageUrl, 40) : '';
+  // Handle image load and cache
+  const handleImageLoad = useCallback(() => {
+    setImageLoaded(true);
+    if (imageUrl) imageCache.add(imageUrl);
+  }, [imageUrl]);
+
+  const thumbnailUrl = useMemo(() => 
+    imageUrl ? getThumbnailUrl(imageUrl, 40) : '', 
+    [imageUrl]
+  );
 
   return (
     <div
@@ -69,29 +87,25 @@ function BannerCardComponent({
       <div className="aspect-[4/3] relative bg-secondary/30 overflow-hidden">
         {imageUrl ? (
           <>
-            {/* Blur placeholder - always render first */}
-            {thumbnailUrl && !imageLoaded && (
+            {/* Instant proxy placeholder - always visible first */}
+            {!imageLoaded && (
               <img
-                src={thumbnailUrl}
+                src={thumbnailUrl || PROXY_PLACEHOLDER}
                 alt=""
                 aria-hidden="true"
-                className="absolute inset-0 w-full h-full object-cover blur-md scale-110 transform-gpu"
+                className="absolute inset-0 w-full h-full object-cover blur-sm scale-105 transform-gpu"
                 loading="eager"
               />
             )}
-            {/* Skeleton fallback */}
-            {!imageLoaded && !thumbnailUrl && (
-              <div className="absolute inset-0 bg-secondary/50 animate-pulse" />
-            )}
-            {/* Main image - only load when in view */}
-            {isInView && (
+            {/* Main image - load when in view or cached */}
+            {(isInView || isCached) && (
               <img
                 src={imageUrl}
                 alt={title}
-                className={`w-full h-full object-cover transition-opacity duration-200 transform-gpu ${
+                className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-150 transform-gpu ${
                   imageLoaded ? 'opacity-100' : 'opacity-0'
                 }`}
-                onLoad={() => setImageLoaded(true)}
+                onLoad={handleImageLoad}
                 loading="lazy"
                 decoding="async"
               />

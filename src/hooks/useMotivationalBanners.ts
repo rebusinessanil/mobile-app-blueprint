@@ -28,6 +28,10 @@ export const useMotivationalBanners = () => {
       if (error) throw error;
       return data as MotivationalBanner[];
     },
+    staleTime: 30 * 60 * 1000,
+    gcTime: 60 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   useEffect(() => {
