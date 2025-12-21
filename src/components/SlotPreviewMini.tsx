@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React from "react";
 import { getSlotBackgroundStyle, BackgroundSlot } from "@/hooks/useGlobalBackgroundSlots";
 
 // Professional proxy model images for privacy-safe 16-slot preview
@@ -8,9 +8,6 @@ import proxyModelUser from "@/assets/proxy-model-user.png";
 // Proxy images: Model 1 = Achiever, Model 2 = User/Mentor
 const PROXY_ACHIEVER = proxyModelAchiever;
 const PROXY_USER = proxyModelUser;
-
-// Simple gray placeholder for lazy loading
-const PLACEHOLDER_BG = 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)';
 
 interface Upline {
   id: string;
@@ -448,45 +445,10 @@ export default function SlotPreviewMini({
   };
 
   // Use ref to calculate dynamic scale based on container size
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [dynamicScale, setDynamicScale] = useState(SCALE_FACTOR);
-  
-  // Lazy loading state - background only loads when slot is visible
-  const [isVisible, setIsVisible] = useState(false);
-  const [bgLoaded, setBgLoaded] = useState(false);
+  const containerRef = React.useRef<HTMLDivElement>(null);
+  const [dynamicScale, setDynamicScale] = React.useState(SCALE_FACTOR);
 
-  // IntersectionObserver for lazy loading backgrounds
-  useEffect(() => {
-    const element = containerRef.current;
-    if (!element) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-          observer.disconnect(); // Stop observing once visible
-        }
-      },
-      { 
-        rootMargin: '100px', // Start loading 100px before visible
-        threshold: 0.01 
-      }
-    );
-
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, []);
-
-  // Preload background image when visible
-  useEffect(() => {
-    if (!isVisible || !slot.imageUrl) return;
-    
-    const img = new Image();
-    img.onload = () => setBgLoaded(true);
-    img.src = slot.imageUrl;
-  }, [isVisible, slot.imageUrl]);
-
-  useEffect(() => {
+  React.useEffect(() => {
     const updateScale = () => {
       if (containerRef.current) {
         const containerWidth = containerRef.current.offsetWidth;
@@ -501,14 +463,6 @@ export default function SlotPreviewMini({
     return () => window.removeEventListener('resize', updateScale);
   }, []);
 
-  // Get background style - use placeholder until loaded
-  const getBackgroundStyle = useCallback(() => {
-    if (!isVisible || !bgLoaded) {
-      return { background: PLACEHOLDER_BG };
-    }
-    return getSlotBackgroundStyle(slot);
-  }, [isVisible, bgLoaded, slot]);
-
   return (
     <button
       onClick={onClick}
@@ -520,11 +474,10 @@ export default function SlotPreviewMini({
     >
       <div 
         ref={containerRef}
-        className="w-full h-full relative overflow-hidden transition-opacity duration-300"
+        className="w-full h-full relative overflow-hidden"
         style={{ 
-          ...getBackgroundStyle(),
-          position: 'relative',
-          opacity: bgLoaded ? 1 : 0.7
+          ...getSlotBackgroundStyle(slot),
+          position: 'relative'
         }}
       >
         {/* Scaled banner content wrapper - fits perfectly to slot box */}
