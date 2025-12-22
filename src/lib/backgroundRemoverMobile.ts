@@ -8,7 +8,7 @@
  * - Preloaded model for instant processing
  */
 
-import { AutoModel, AutoProcessor, env } from '@huggingface/transformers';
+import { AutoModel, AutoProcessor, RawImage, env } from '@huggingface/transformers';
 
 env.allowLocalModels = false;
 env.useBrowserCache = true;
@@ -95,8 +95,13 @@ export async function removeBackgroundMobile(
 
   // Process through model
   onProgress?.('Processing...', 50);
-  const processorResult = await processor({ image: canvas });
-  
+
+  // AutoProcessor expects a RawImage (passing a canvas object can crash preprocess)
+  const imageUrl = canvas.toDataURL('image/png', 1.0);
+  const rawImage = await RawImage.fromURL(imageUrl);
+
+  const processorResult = await processor(rawImage);
+
   if (!processorResult || !processorResult.pixel_values) {
     console.warn('Processor returned invalid result, returning original image');
     return createOriginalBlob(w, h);
