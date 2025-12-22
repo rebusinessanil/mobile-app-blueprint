@@ -66,6 +66,22 @@ function resizeMobile(img: HTMLImageElement) {
 }
 
 /**
+ * Create blob from original image (fallback when model fails)
+ */
+function createOriginalBlob(w: number, h: number): Promise<Blob> {
+  return new Promise<Blob>((resolve, reject) => {
+    outCanvas.width = w;
+    outCanvas.height = h;
+    outCtx.drawImage(canvas, 0, 0);
+    outCanvas.toBlob(
+      (blob) => blob ? resolve(blob) : reject(new Error('Failed to create fallback blob')),
+      'image/png',
+      1.0
+    );
+  });
+}
+
+/**
  * Remove background fast (~1-3s) on mobile
  */
 export async function removeBackgroundMobile(
@@ -79,24 +95,44 @@ export async function removeBackgroundMobile(
 
   // Process through model
   onProgress?.('Processing...', 50);
-  const { pixel_values } = await processor({ image: canvas });
-  const { output } = await model({ input: pixel_values });
+  const processorResult = await processor({ image: canvas });
+  
+  if (!processorResult || !processorResult.pixel_values) {
+    console.warn('Processor returned invalid result, returning original image');
+    return createOriginalBlob(w, h);
+  }
+
+  const modelResult = await model({ input: processorResult.pixel_values });
+  
+  // Check model output before destructuring
+  if (!modelResult?.output?.[0]?.[0]?.data) {
+    console.warn('Model returned invalid output, returning original image');
+    return createOriginalBlob(w, h);
+  }
 
   onProgress?.('Applying mask...', 70);
 
-  const mask = output[0][0].data;
-  const mw = output[0][0].dims[1];
-  const mh = output[0][0].dims[0];
+  const maskData = modelResult.output[0][0];
+  const mask = maskData.data;
+  const mw = maskData.dims?.[1] || w;
+  const mh = maskData.dims?.[0] || h;
 
   const imgData = ctx.getImageData(0, 0, w, h);
   const data = imgData.data;
-  const typedMask = new Uint8ClampedArray(mask);
+  
+  // Convert to typed array for fast iteration
+  const maskLen = mask.length;
+  const typedMask = mask instanceof Uint8ClampedArray ? mask : new Float32Array(mask);
 
-  // Flat iteration for alpha mask
-  for (let i = 0; i < w * h; i++) {
-    const mx = Math.floor((i % w) / w * mw);
-    const my = Math.floor(Math.floor(i / w) / h * mh);
-    const alpha = typedMask[my * mw + mx];
+  // Flat iteration for alpha mask with bounds checking
+  const pixelCount = w * h;
+  for (let i = 0; i < pixelCount; i++) {
+    const x = i % w;
+    const y = Math.floor(i / w);
+    const mx = Math.floor(x / w * mw);
+    const my = Math.floor(y / h * mh);
+    const maskIdx = my * mw + mx;
+    const alpha = maskIdx < maskLen ? typedMask[maskIdx] : 0;
     data[i * 4 + 3] = alpha > 0.5 ? 255 : 0;
   }
 
