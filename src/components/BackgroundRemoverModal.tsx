@@ -1,6 +1,7 @@
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
+import { X, Clock } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
 
 interface BackgroundRemoverModalProps {
   open: boolean;
@@ -21,6 +22,47 @@ export default function BackgroundRemoverModal({
   progress = 0,
   progressText = ''
 }: BackgroundRemoverModalProps) {
+  const [elapsedTime, setElapsedTime] = useState(0);
+  const startTimeRef = useRef<number | null>(null);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Track elapsed time during processing
+  useEffect(() => {
+    if (isProcessing) {
+      startTimeRef.current = Date.now();
+      setElapsedTime(0);
+      
+      intervalRef.current = setInterval(() => {
+        if (startTimeRef.current) {
+          setElapsedTime(Math.floor((Date.now() - startTimeRef.current) / 100) / 10);
+        }
+      }, 100);
+    } else {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    }
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, [isProcessing]);
+
+  // Reset on close
+  useEffect(() => {
+    if (!open) {
+      setElapsedTime(0);
+      startTimeRef.current = null;
+    }
+  }, [open]);
+
+  const formatTime = (seconds: number) => {
+    return seconds.toFixed(1) + 's';
+  };
+
   return (
     <Dialog open={open} onOpenChange={isProcessing ? undefined : onClose}>
       <DialogContent className="bg-[#1a2744] border-2 border-primary max-w-md">
@@ -78,6 +120,12 @@ export default function BackgroundRemoverModal({
               
               <h2 className="text-xl font-bold text-primary mb-2">Removing Background</h2>
               <p className="text-white/80 text-sm">{progressText || 'Please wait...'}</p>
+              
+              {/* Real-time elapsed time display */}
+              <div className="flex items-center justify-center gap-2 mt-3 text-white/60">
+                <Clock className="w-4 h-4" />
+                <span className="text-sm font-mono">{formatTime(elapsedTime)}</span>
+              </div>
               
               {/* Progress stages indicator */}
               <div className="flex justify-center gap-2 mt-4">
