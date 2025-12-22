@@ -1,85 +1,130 @@
 /**
- * Mobile-Optimized Background Remover (1-3s target, 832px, High Quality)
- * - 832px max size for enhanced sharpness
- * - WASM inference (mobile/CPU-safe)
- * - Direct alpha mask with flat iteration (no nested loops)
- * - Fast image preloading with decode() and createImageBitmap()
- * - Reusable canvas elements
- * - Immediate memory cleanup
- * - Non-blocking, high quality output
+ * Fast Mobile-Optimized Background Remover
+ * - Max size: 832px for high quality
+ * - Direct alpha mask (no edge refinement)
+ * - Flat iteration with TypedArrays
+ * - CPU-safe WASM inference
+ * - Reusable canvas for memory efficiency
+ * - Preloaded model for instant processing
  */
 
-import { AutoModel, AutoProcessor, RawImage, env } from '@huggingface/transformers';
+import { AutoModel, AutoProcessor, env } from '@huggingface/transformers';
 
-// Configure transformers.js for mobile
 env.allowLocalModels = false;
 env.useBrowserCache = true;
 
-// 832px for quality while maintaining 1-3s speed
 const MAX_MOBILE_SIZE = 832;
 
 let model: any = null;
 let processor: any = null;
 let isLoading = false;
-let loadPromise: Promise<{ model: any; processor: any }> | null = null;
 
-// Reusable canvas pool for performance
-const canvasPool: HTMLCanvasElement[] = [];
+// Reusable canvas
+const canvas = document.createElement('canvas');
+const ctx = canvas.getContext('2d')!;
+const outCanvas = document.createElement('canvas');
+const outCtx = outCanvas.getContext('2d')!;
 
-function getCanvas(): HTMLCanvasElement {
-  return canvasPool.pop() || document.createElement('canvas');
-}
+/**
+ * Preload model at app startup for instant processing
+ */
+export async function preloadMobileModel() {
+  if (model && processor) return;
+  if (isLoading) return;
 
-function returnCanvas(canvas: HTMLCanvasElement) {
-  if (canvasPool.length < 3) {
-    canvas.width = 1;
-    canvas.height = 1;
-    canvasPool.push(canvas);
-  } else {
-    canvas.width = canvas.height = 0;
+  isLoading = true;
+  try {
+    model = await AutoModel.from_pretrained('briaai/RMBG-1.4', { device: 'wasm' });
+    processor = await AutoProcessor.from_pretrained('briaai/RMBG-1.4');
+    console.log('Mobile model preloaded');
+  } finally {
+    isLoading = false;
   }
 }
 
 /**
- * Load model with WASM inference - cached for reuse
+ * Resize image for mobile
  */
-async function loadMobileModel(onProgress?: (stage: string, percent: number) => void) {
-  if (model && processor) return { model, processor };
-  if (loadPromise) return loadPromise;
-  
-  isLoading = true;
-  
-  loadPromise = (async () => {
-    try {
-      onProgress?.('Loading AI model...', 10);
-      
-      const [loadedModel, loadedProcessor] = await Promise.all([
-        AutoModel.from_pretrained('briaai/RMBG-1.4', { device: 'wasm' }),
-        AutoProcessor.from_pretrained('briaai/RMBG-1.4')
-      ]);
-      
-      model = loadedModel;
-      processor = loadedProcessor;
-      
-      console.log('RMBG-1.4 loaded with WASM (832px max)');
-      onProgress?.('Model ready', 25);
-      
-      return { model, processor };
-    } finally {
-      isLoading = false;
-      loadPromise = null;
-    }
-  })();
-  
-  return loadPromise;
+function resizeMobile(img: HTMLImageElement) {
+  let w = img.naturalWidth;
+  let h = img.naturalHeight;
+
+  if (w > MAX_MOBILE_SIZE || h > MAX_MOBILE_SIZE) {
+    const scale = Math.min(MAX_MOBILE_SIZE / w, MAX_MOBILE_SIZE / h);
+    w = Math.round(w * scale);
+    h = Math.round(h * scale);
+  }
+
+  canvas.width = w;
+  canvas.height = h;
+  ctx.drawImage(img, 0, 0, w, h);
+
+  outCanvas.width = w;
+  outCanvas.height = h;
+
+  return { w, h };
 }
 
 /**
- * Fast image loading with decode() for non-blocking performance
+ * Remove background fast (~1-3s) on mobile
+ */
+export async function removeBackgroundMobile(
+  img: HTMLImageElement,
+  onProgress?: (stage: string, percent: number) => void
+): Promise<Blob> {
+  if (!model || !processor) await preloadMobileModel();
+
+  onProgress?.('Preparing image...', 20);
+  const { w, h } = resizeMobile(img);
+
+  // Process through model
+  onProgress?.('Processing...', 50);
+  const { pixel_values } = await processor({ image: canvas });
+  const { output } = await model({ input: pixel_values });
+
+  onProgress?.('Applying mask...', 70);
+
+  const mask = output[0][0].data;
+  const mw = output[0][0].dims[1];
+  const mh = output[0][0].dims[0];
+
+  const imgData = ctx.getImageData(0, 0, w, h);
+  const data = imgData.data;
+  const typedMask = new Uint8ClampedArray(mask);
+
+  // Flat iteration for alpha mask
+  for (let i = 0; i < w * h; i++) {
+    const mx = Math.floor((i % w) / w * mw);
+    const my = Math.floor(Math.floor(i / w) / h * mh);
+    const alpha = typedMask[my * mw + mx];
+    data[i * 4 + 3] = alpha > 0.5 ? 255 : 0;
+  }
+
+  outCtx.putImageData(imgData, 0, 0);
+
+  onProgress?.('Finalizing...', 90);
+
+  return new Promise<Blob>((resolve, reject) => {
+    outCanvas.toBlob(
+      (blob) => {
+        if (blob) {
+          onProgress?.('Complete!', 100);
+          resolve(blob);
+        } else {
+          reject(new Error('Failed to create blob'));
+        }
+      },
+      'image/png',
+      0.92
+    );
+  });
+}
+
+/**
+ * Fast image loading with decode()
  */
 export async function loadImageMobileFast(file: Blob): Promise<HTMLImageElement> {
   const objectUrl = URL.createObjectURL(file);
-  
   try {
     const img = new Image();
     img.src = objectUrl;
@@ -91,7 +136,7 @@ export async function loadImageMobileFast(file: Blob): Promise<HTMLImageElement>
 }
 
 /**
- * Fast image loading from URL with decode()
+ * Fast image loading from URL
  */
 export async function loadImageFromUrlFast(url: string): Promise<HTMLImageElement> {
   const img = new Image();
@@ -102,227 +147,17 @@ export async function loadImageFromUrlFast(url: string): Promise<HTMLImageElemen
 }
 
 /**
- * High-quality resize using createImageBitmap
+ * Legacy loaders for compatibility
  */
-async function resizeMobileFast(
-  canvas: HTMLCanvasElement,
-  ctx: CanvasRenderingContext2D,
-  img: HTMLImageElement,
-  maxSize: number = MAX_MOBILE_SIZE
-): Promise<{ w: number; h: number }> {
-  const originalW = img.naturalWidth;
-  const originalH = img.naturalHeight;
-  let w = originalW;
-  let h = originalH;
-
-  if (w > maxSize || h > maxSize) {
-    const scale = Math.min(maxSize / w, maxSize / h);
-    w = Math.round(w * scale);
-    h = Math.round(h * scale);
-  }
-
-  canvas.width = w;
-  canvas.height = h;
-  
-  if (typeof createImageBitmap !== 'undefined') {
-    try {
-      const bitmap = await createImageBitmap(img, {
-        resizeWidth: w,
-        resizeHeight: h,
-        resizeQuality: 'high'
-      });
-      ctx.drawImage(bitmap, 0, 0);
-      bitmap.close();
-    } catch {
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = 'high';
-      ctx.drawImage(img, 0, 0, w, h);
-    }
-  } else {
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = 'high';
-    ctx.drawImage(img, 0, 0, w, h);
-  }
-  
-  return { w, h };
-}
+export const loadImageMobile = loadImageMobileFast;
+export const loadImageFromUrl = loadImageFromUrlFast;
 
 /**
- * Build lookup table for mask to image coordinate mapping
- * Pre-computes all mappings to avoid repeated calculations in the loop
- */
-function buildCoordLookup(imgSize: number, maskSize: number): Uint16Array {
-  const lookup = new Uint16Array(imgSize);
-  const scale = maskSize / imgSize;
-  for (let i = 0; i < imgSize; i++) {
-    lookup[i] = Math.floor(i * scale);
-  }
-  return lookup;
-}
-
-/**
- * Apply alpha mask using flat iteration with TypedArrays
- * Optimized for mobile - no nested loops, direct memory access
- */
-function applyAlphaMaskFast(
-  data: Uint8ClampedArray,
-  mask: Float32Array,
-  w: number,
-  h: number,
-  mw: number,
-  mh: number
-): void {
-  // Pre-compute coordinate lookup tables
-  const xLookup = buildCoordLookup(w, mw);
-  const yLookup = buildCoordLookup(h, mh);
-  
-  const pixelCount = w * h;
-  
-  // Flat iteration - single loop over all pixels
-  for (let i = 0; i < pixelCount; i++) {
-    const x = i % w;
-    const y = (i / w) | 0; // Fast integer division
-    
-    // Get mask value using pre-computed lookup
-    const mx = xLookup[x];
-    const my = yLookup[y];
-    const alpha = mask[my * mw + mx];
-    
-    // Simple threshold for clean edges (avoid complex math)
-    const finalAlpha = alpha < 0.1 ? 0 : alpha > 0.9 ? 255 : (alpha * 255) | 0;
-    
-    // Direct alpha channel write (every 4th byte starting at offset 3)
-    data[(i << 2) + 3] = finalAlpha;
-  }
-}
-
-/**
- * Remove background with mobile-optimized flow (1-3s target, 832px, high quality)
- */
-export async function removeBackgroundMobile(
-  image: HTMLImageElement,
-  onProgress?: (stage: string, percent: number) => void
-): Promise<Blob> {
-  const startTime = performance.now();
-  
-  const canvas = getCanvas();
-  const outCanvas = getCanvas();
-  let raw: any = null;
-  
-  try {
-    onProgress?.('Loading model...', 5);
-    const { model: loadedModel, processor: loadedProcessor } = await loadMobileModel(onProgress);
-    console.log(`Model load: ${(performance.now() - startTime).toFixed(0)}ms`);
-
-    onProgress?.('Preparing image...', 30);
-    
-    const ctx = canvas.getContext('2d', { willReadFrequently: true });
-    if (!ctx) throw new Error('Could not get canvas context');
-    
-    const { w, h } = await resizeMobileFast(canvas, ctx, image, MAX_MOBILE_SIZE);
-    console.log(`Resize to ${w}x${h}: ${(performance.now() - startTime).toFixed(0)}ms`);
-
-    raw = await RawImage.fromCanvas(canvas);
-
-    onProgress?.('Processing...', 50);
-    
-    const inferenceStart = performance.now();
-    const { pixel_values } = await loadedProcessor(raw);
-    const { output } = await loadedModel({ input: pixel_values });
-    console.log(`Inference: ${(performance.now() - inferenceStart).toFixed(0)}ms`);
-
-    onProgress?.('Applying mask...', 75);
-
-    const maskData = output[0][0].data as Float32Array;
-    const mw = output[0][0].dims[1];
-    const mh = output[0][0].dims[0];
-
-    outCanvas.width = w;
-    outCanvas.height = h;
-    const outCtx = outCanvas.getContext('2d', { willReadFrequently: true });
-    if (!outCtx) throw new Error('Could not get output canvas context');
-    
-    outCtx.drawImage(canvas, 0, 0);
-
-    const imgData = outCtx.getImageData(0, 0, w, h);
-    
-    // Use optimized flat iteration for alpha mask
-    applyAlphaMaskFast(imgData.data, maskData, w, h, mw, mh);
-
-    outCtx.putImageData(imgData, 0, 0);
-
-    onProgress?.('Finalizing...', 90);
-
-    return new Promise<Blob>((resolve, reject) => {
-      outCanvas.toBlob((blob) => {
-        returnCanvas(canvas);
-        returnCanvas(outCanvas);
-        raw = null;
-        
-        const totalTime = performance.now() - startTime;
-        console.log(`Total background removal: ${totalTime.toFixed(0)}ms (${w}x${h})`);
-        
-        if (blob) {
-          onProgress?.('Complete!', 100);
-          resolve(blob);
-        } else {
-          reject(new Error('Failed to create blob'));
-        }
-      }, 'image/png', 1.0);
-    });
-    
-  } catch (error) {
-    returnCanvas(canvas);
-    returnCanvas(outCanvas);
-    console.error('Mobile background removal error:', error);
-    throw error;
-  }
-}
-
-/**
- * Legacy loader for compatibility
- */
-export function loadImageMobile(file: Blob): Promise<HTMLImageElement> {
-  return loadImageMobileFast(file);
-}
-
-/**
- * Legacy URL loader for compatibility
- */
-export function loadImageFromUrl(url: string): Promise<HTMLImageElement> {
-  return loadImageFromUrlFast(url);
-}
-
-/**
- * Clear model from memory
+ * Clear model & memory
  */
 export function clearMobileModel() {
-  if (model) {
-    try {
-      if (model.dispose) model.dispose();
-    } catch (e) {
-      // Ignore disposal errors
-    }
-    model = null;
-  }
-  
+  if (model?.dispose) model.dispose();
+  model = null;
   processor = null;
-  loadPromise = null;
-  
-  canvasPool.forEach(c => { c.width = c.height = 0; });
-  canvasPool.length = 0;
-  
-  console.log('Mobile model cleared from memory');
-}
-
-/**
- * Preload model for faster first use
- */
-export async function preloadMobileModel(): Promise<void> {
-  try {
-    await loadMobileModel();
-    console.log('Mobile model preloaded');
-  } catch (e) {
-    console.warn('Failed to preload mobile model:', e);
-  }
+  console.log('Mobile model cleared');
 }
