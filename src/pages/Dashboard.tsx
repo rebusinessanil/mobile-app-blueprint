@@ -21,9 +21,8 @@ import StoriesSection from "@/components/dashboard/StoriesSection";
 import BannerCard from "@/components/dashboard/BannerCard";
 import WelcomeBonusModal from "@/components/WelcomeBonusModal";
 import { useWelcomeBonus } from "@/hooks/useWelcomeBonus";
-import LoadingScreen from "@/components/LoadingScreen";
-import { preloadBannerPreviewSystem } from "@/lib/preloader";
-import { loadImages, collectDashboardAssets } from "@/lib/assetLoader";
+import DashboardSkeleton from "@/components/skeletons/DashboardSkeleton";
+import { preloadBannerPreviewSystem, preloadImages } from "@/lib/preloader";
 
 // Static proxy placeholder for instant card rendering
 const PROXY_PLACEHOLDER = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='105' viewBox='0 0 140 105'%3E%3Crect fill='%231a1f2e' width='140' height='105'/%3E%3Crect fill='%23ffd34e' opacity='0.1' width='140' height='105'/%3E%3C/svg%3E";
@@ -93,25 +92,20 @@ export default function Dashboard() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const hasLoadedRef = useRef(dashboardLoadedOnce);
   
-  // Asset preloading state
-  const [assetsLoaded, setAssetsLoaded] = useState(dashboardLoadedOnce);
-  const [loadingProgress, setLoadingProgress] = useState(dashboardLoadedOnce ? 100 : 0);
-  const preloadStartedRef = useRef(false);
-  
   // Welcome bonus modal
   const { showWelcomeModal, bonusAmount, handleContinue } = useWelcomeBonus();
 
   // Check if data is loading AND no cached data exists AND first load
   const hasNoData = categories.length === 0 && allTemplates.length === 0 && ranks.length === 0;
-  const isDataLoading = (categoriesLoading || templatesLoading || ranksLoading) && hasNoData && !hasLoadedRef.current;
+  const isInitialLoading = (categoriesLoading || templatesLoading || ranksLoading) && hasNoData && !hasLoadedRef.current;
   
   // Mark dashboard as loaded once data arrives
   useEffect(() => {
-    if (!isDataLoading && (categories.length > 0 || ranks.length > 0)) {
+    if (!isInitialLoading && (categories.length > 0 || ranks.length > 0)) {
       dashboardLoadedOnce = true;
       hasLoadedRef.current = true;
     }
-  }, [isDataLoading, categories.length, ranks.length]);
+  }, [isInitialLoading, categories.length, ranks.length]);
 
   // Memoized template filters to prevent recalculation
   const getRankTemplates = useMemo(() => {
@@ -152,34 +146,20 @@ export default function Dashboard() {
     preloadBannerPreviewSystem();
   }, []);
 
-  // Preload assets when data loads
+  // Preload template images when data loads
   useEffect(() => {
-    if (preloadStartedRef.current || isDataLoading || assetsLoaded) return;
-    if (ranks.length === 0 && allTemplates.length === 0) return;
-    
-    preloadStartedRef.current = true;
-    
-    const loadAllAssets = async () => {
-      const urls = collectDashboardAssets({
-        ranks,
-        trips,
-        birthdays,
-        templates: allTemplates,
-        festivals,
-      });
-      
-      if (urls.length > 0) {
-        await loadImages(urls, (percent) => {
-          setLoadingProgress(percent);
-        });
+    if (!isInitialLoading && ranks.length > 0) {
+      const imageUrls = [
+        ...ranks.map(r => r.icon).filter(Boolean),
+        ...trips.map(t => t.trip_image_url).filter(Boolean),
+        ...birthdays.map(b => b.Birthday_image_url).filter(Boolean),
+        ...allTemplates.slice(0, 10).map(t => t.cover_thumbnail_url).filter(Boolean),
+      ];
+      if (imageUrls.length > 0) {
+        preloadImages(imageUrls as string[]);
       }
-      
-      setAssetsLoaded(true);
-      setLoadingProgress(100);
-    };
-    
-    loadAllAssets();
-  }, [isDataLoading, ranks, trips, birthdays, allTemplates, festivals, assetsLoaded]);
+    }
+  }, [isInitialLoading, ranks, trips, birthdays, allTemplates]);
 
   // Memoized quick actions
   const quickActions = useMemo(() => [{
@@ -205,15 +185,11 @@ export default function Dashboard() {
     return allTemplates.filter(t => t.category_id === categoryId).slice(0, 3);
   }, [allTemplates]);
 
-  // Show loading screen until data AND assets are loaded
-  if (isDataLoading || !assetsLoaded) {
+  // Show skeleton only on initial load with no cached data
+  if (isInitialLoading) {
     return (
       <ProfileCompletionGate userId={userId}>
-        <LoadingScreen 
-          progress={loadingProgress} 
-          title="ReBusiness" 
-          subtitle="Loading your dashboard..."
-        />
+        <DashboardSkeleton />
       </ProfileCompletionGate>
     );
   }

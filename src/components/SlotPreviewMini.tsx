@@ -1,4 +1,4 @@
-import React, { memo, useRef, useState, useEffect, useCallback } from "react";
+import React from "react";
 import { getSlotBackgroundStyle, BackgroundSlot } from "@/hooks/useGlobalBackgroundSlots";
 
 // Professional proxy model images for privacy-safe 16-slot preview
@@ -50,8 +50,7 @@ interface SlotPreviewMiniProps {
   profileRank?: string;
 }
 
-// Memoized component to prevent re-renders when props haven't changed
-const SlotPreviewMiniComponent = memo(function SlotPreviewMini({
+export default function SlotPreviewMini({
   slot,
   isSelected,
   onClick,
@@ -655,8 +654,4 @@ const SlotPreviewMiniComponent = memo(function SlotPreviewMini({
       </div>
     </button>
   );
-});
-
-SlotPreviewMiniComponent.displayName = 'SlotPreviewMini';
-
-export default SlotPreviewMiniComponent;
+}
