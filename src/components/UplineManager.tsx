@@ -3,7 +3,7 @@ import { Upload, X, User } from "lucide-react";
 import { Button } from "./ui/button";
 import ImageCropper from "./ImageCropper";
 import BackgroundRemoverModal from "./BackgroundRemoverModal";
-import { removeBackground, loadImage } from "@/lib/backgroundRemover";
+import { removeBackgroundMobile, loadImageMobile } from "@/lib/backgroundRemoverMobile";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { logger } from "@/lib/logger";
@@ -65,8 +65,8 @@ export default function UplineManager({
     setProcessingText('Starting...');
     
     try {
-      const img = await loadImage(await fetch(tempImage).then(r => r.blob()));
-      const processedBlob = await removeBackground(img, (stage, percent) => {
+      const img = await loadImageMobile(await fetch(tempImage).then(r => r.blob()));
+      const processedBlob = await removeBackgroundMobile(img, (stage, percent) => {
         setProcessingProgress(percent);
         setProcessingText(stage);
       });

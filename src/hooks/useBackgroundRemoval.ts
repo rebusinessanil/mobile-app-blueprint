@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef, startTransition } from 'react';
-import { removeBackground, loadImage, clearModel } from '@/lib/backgroundRemover';
+import { removeBackgroundMobile, loadImageMobile, clearMobileModel } from '@/lib/backgroundRemoverMobile';
 import { toast } from 'sonner';
 import { logger } from '@/lib/logger';
 
@@ -72,7 +72,7 @@ export const useBackgroundRemoval = (options?: UseBackgroundRemovalOptions) => {
   useEffect(() => {
     return () => {
       if (!processingRef.current) {
-        clearModel();
+        clearMobileModel();
       }
     };
   }, []);
@@ -112,12 +112,12 @@ export const useBackgroundRemoval = (options?: UseBackgroundRemovalOptions) => {
       const response = await fetch(pendingImage);
       if (!response.ok) throw new Error('Failed to fetch image');
       const blob = await response.blob();
-      const img = await loadImage(blob);
+      const img = await loadImageMobile(blob);
 
       if (abortRef.current) return null;
 
-      // Process with progress callback - worker handles compositing
-      const processedBlob = await removeBackground(img, (stage, percent) => {
+      // Process with mobile-optimized background removal
+      const processedBlob = await removeBackgroundMobile(img, (stage, percent) => {
         if (!abortRef.current) {
           updateProgress(percent, stage);
         }
