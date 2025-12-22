@@ -508,17 +508,30 @@ export default function BannerPreview() {
   // State for tracking if all assets are preloaded
   const [assetsLoaded, setAssetsLoaded] = useState(false);
   const [preloadStarted, setPreloadStarted] = useState(false);
+  const [loadingProgress, setLoadingProgress] = useState(0);
 
-  // Preload all images before displaying the page
-  const preloadImages = useCallback(async (urls: string[]) => {
-    const validUrls = urls.filter(url => url && typeof url === 'string');
+  // Preload all images before displaying the page - with progress tracking
+  const preloadImages = useCallback(async (urls: string[]): Promise<boolean> => {
+    const validUrls = urls.filter(url => url && typeof url === 'string' && url.trim() !== '');
     if (validUrls.length === 0) return true;
+    
+    let loaded = 0;
+    const total = validUrls.length;
     
     const promises = validUrls.map(url => {
       return new Promise<void>((resolve) => {
         const img = new Image();
-        img.onload = () => resolve();
-        img.onerror = () => resolve(); // Don't block on failed images
+        img.onload = () => {
+          loaded++;
+          setLoadingProgress(Math.round((loaded / total) * 100));
+          resolve();
+        };
+        img.onerror = () => {
+          loaded++;
+          setLoadingProgress(Math.round((loaded / total) * 100));
+          resolve(); // Don't block on failed images
+        };
+        img.crossOrigin = 'anonymous';
         img.src = url;
       });
     });
@@ -527,25 +540,24 @@ export default function BannerPreview() {
     return true;
   }, []);
 
+  // Check if all required data is loaded
+  const isDataReady = 
+    userId !== null &&
+    profile !== undefined &&
+    !backgroundsLoading &&
+    bannerDefaults !== undefined;
+
   // Preload all assets when data is ready
   useEffect(() => {
-    if (preloadStarted || !bannerData) return;
-    
-    // Check if essential data is loaded
-    const isDataReady = 
-      userId !== null &&
-      profile !== undefined &&
-      !backgroundsLoading &&
-      globalBackgroundSlots.length >= 0;
-    
-    if (!isDataReady) return;
+    if (preloadStarted || !bannerData || !isDataReady) return;
     
     setPreloadStarted(true);
+    setLoadingProgress(0);
     
     const loadAllAssets = async () => {
       const imagesToPreload: string[] = [];
       
-      // Add background images from slots
+      // Add ALL background images from slots (all 16 slots)
       globalBackgroundSlots.forEach(slot => {
         if (slot.imageUrl) imagesToPreload.push(slot.imageUrl);
       });
@@ -566,7 +578,7 @@ export default function BannerPreview() {
         if (upline.avatar) imagesToPreload.push(upline.avatar);
       });
       
-      // Add sticker images
+      // Add ALL sticker images from all slots
       Object.values(stickerImages).forEach(slotStickers => {
         slotStickers.forEach(sticker => {
           if (sticker.url) imagesToPreload.push(sticker.url);
@@ -576,7 +588,20 @@ export default function BannerPreview() {
       // Add bannerData photo if exists
       if (bannerData?.photo) imagesToPreload.push(bannerData.photo);
       
+      // Add rank icon if exists
+      if (bannerData?.rankIcon) imagesToPreload.push(bannerData.rankIcon);
+      
+      // Add download icon
+      imagesToPreload.push(downloadIcon);
+      
+      console.log(`📦 Preloading ${imagesToPreload.length} assets...`);
+      
       await preloadImages(imagesToPreload);
+      
+      // Small delay to ensure all images are rendered
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      console.log('✅ All assets preloaded successfully');
       setAssetsLoaded(true);
     };
     
@@ -592,7 +617,8 @@ export default function BannerPreview() {
     stickerImages, 
     displayUplines, 
     preloadImages, 
-    preloadStarted
+    preloadStarted,
+    isDataReady
   ]);
 
   // Trigger scale update immediately when assets are loaded and on resize
@@ -620,14 +646,43 @@ export default function BannerPreview() {
       window.removeEventListener('resize', updateBannerScale);
     };
   }, [assetsLoaded, updateBannerScale]);
+
   if (!bannerData) {
     navigate("/rank-selection");
     return null;
   }
 
-  // Show skeleton until all data and assets are loaded
-  if (!assetsLoaded || backgroundsLoading) {
-    return <BannerPreviewSkeleton />;
+  // Show enhanced skeleton with progress until ALL data and assets are loaded
+  if (!assetsLoaded || backgroundsLoading || !isDataReady) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
+        <div className="w-full max-w-md">
+          {/* Loading indicator */}
+          <div className="text-center mb-6">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
+              <Sparkles className="w-8 h-8 text-primary animate-pulse" />
+            </div>
+            <h2 className="text-lg font-semibold text-foreground mb-2">
+              Preparing Your Banner
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Loading all assets for the best experience...
+            </p>
+          </div>
+          
+          {/* Progress bar */}
+          <div className="w-full bg-muted rounded-full h-2 mb-2 overflow-hidden">
+            <div 
+              className="h-full bg-primary rounded-full transition-all duration-300 ease-out"
+              style={{ width: `${loadingProgress}%` }}
+            />
+          </div>
+          <p className="text-xs text-muted-foreground text-center">
+            {loadingProgress}% loaded
+          </p>
+        </div>
+      </div>
+    );
   }
 
   // Category-specific content render function
