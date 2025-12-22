@@ -1,8 +1,8 @@
 /**
- * Mobile-Optimized Background Remover (~3s target, +30% quality)
- * - 832px max size for enhanced sharpness (up from 640px)
+ * Mobile-Optimized Background Remover (1-3s target, 832px, High Quality)
+ * - 832px max size for enhanced sharpness
  * - WASM inference (mobile/CPU-safe)
- * - Direct alpha mask with smooth gradients (no heavy edge refinement)
+ * - Direct alpha mask with flat iteration (no nested loops)
  * - Fast image preloading with decode() and createImageBitmap()
  * - Reusable canvas elements
  * - Immediate memory cleanup
@@ -15,9 +15,8 @@ import { AutoModel, AutoProcessor, RawImage, env } from '@huggingface/transforme
 env.allowLocalModels = false;
 env.useBrowserCache = true;
 
-// Increased from 640 to 832 for ~30% better quality while maintaining ~3s speed
+// 832px for quality while maintaining 1-3s speed
 const MAX_MOBILE_SIZE = 832;
-const MIN_MOBILE_SIZE = 640; // Fallback for very low-end devices
 
 let model: any = null;
 let processor: any = null;
@@ -32,7 +31,6 @@ function getCanvas(): HTMLCanvasElement {
 }
 
 function returnCanvas(canvas: HTMLCanvasElement) {
-  // Reset and return to pool (max 3 canvases for better reuse)
   if (canvasPool.length < 3) {
     canvas.width = 1;
     canvas.height = 1;
@@ -47,8 +45,6 @@ function returnCanvas(canvas: HTMLCanvasElement) {
  */
 async function loadMobileModel(onProgress?: (stage: string, percent: number) => void) {
   if (model && processor) return { model, processor };
-  
-  // Return existing promise if already loading
   if (loadPromise) return loadPromise;
   
   isLoading = true;
@@ -57,18 +53,15 @@ async function loadMobileModel(onProgress?: (stage: string, percent: number) => 
     try {
       onProgress?.('Loading AI model...', 10);
       
-      // Load model and processor in parallel
       const [loadedModel, loadedProcessor] = await Promise.all([
-        AutoModel.from_pretrained('briaai/RMBG-1.4', {
-          device: 'wasm',
-        }),
+        AutoModel.from_pretrained('briaai/RMBG-1.4', { device: 'wasm' }),
         AutoProcessor.from_pretrained('briaai/RMBG-1.4')
       ]);
       
       model = loadedModel;
       processor = loadedProcessor;
       
-      console.log('RMBG-1.4 loaded with WASM (mobile-optimized, 832px max)');
+      console.log('RMBG-1.4 loaded with WASM (832px max)');
       onProgress?.('Model ready', 25);
       
       return { model, processor };
@@ -90,10 +83,7 @@ export async function loadImageMobileFast(file: Blob): Promise<HTMLImageElement>
   try {
     const img = new Image();
     img.src = objectUrl;
-    
-    // Use decode() for non-blocking image decoding
     await img.decode();
-    
     return img;
   } finally {
     URL.revokeObjectURL(objectUrl);
@@ -107,22 +97,19 @@ export async function loadImageFromUrlFast(url: string): Promise<HTMLImageElemen
   const img = new Image();
   img.crossOrigin = 'anonymous';
   img.src = url;
-  
-  // Use decode() for non-blocking image decoding
   await img.decode();
-  
   return img;
 }
 
 /**
- * High-quality resize using createImageBitmap with maximum quality settings
+ * High-quality resize using createImageBitmap
  */
 async function resizeMobileFast(
   canvas: HTMLCanvasElement,
   ctx: CanvasRenderingContext2D,
   img: HTMLImageElement,
   maxSize: number = MAX_MOBILE_SIZE
-): Promise<{ w: number; h: number; originalW: number; originalH: number }> {
+): Promise<{ w: number; h: number }> {
   const originalW = img.naturalWidth;
   const originalH = img.naturalHeight;
   let w = originalW;
@@ -137,18 +124,16 @@ async function resizeMobileFast(
   canvas.width = w;
   canvas.height = h;
   
-  // Use createImageBitmap with high quality for better sharpness
   if (typeof createImageBitmap !== 'undefined') {
     try {
       const bitmap = await createImageBitmap(img, {
         resizeWidth: w,
         resizeHeight: h,
-        resizeQuality: 'high' // Maximum quality for sharpness
+        resizeQuality: 'high'
       });
       ctx.drawImage(bitmap, 0, 0);
       bitmap.close();
     } catch {
-      // Fallback with imageSmoothingQuality for better quality
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = 'high';
       ctx.drawImage(img, 0, 0, w, h);
@@ -159,15 +144,60 @@ async function resizeMobileFast(
     ctx.drawImage(img, 0, 0, w, h);
   }
   
-  return { w, h, originalW, originalH };
+  return { w, h };
 }
 
 /**
- * Remove background with mobile-optimized flow (~3s target, +30% quality)
- * - Fast image preloading with decode()
- * - Canvas reuse
- * - Direct alpha mask with smooth gradients
- * - High quality output at 832px max
+ * Build lookup table for mask to image coordinate mapping
+ * Pre-computes all mappings to avoid repeated calculations in the loop
+ */
+function buildCoordLookup(imgSize: number, maskSize: number): Uint16Array {
+  const lookup = new Uint16Array(imgSize);
+  const scale = maskSize / imgSize;
+  for (let i = 0; i < imgSize; i++) {
+    lookup[i] = Math.floor(i * scale);
+  }
+  return lookup;
+}
+
+/**
+ * Apply alpha mask using flat iteration with TypedArrays
+ * Optimized for mobile - no nested loops, direct memory access
+ */
+function applyAlphaMaskFast(
+  data: Uint8ClampedArray,
+  mask: Float32Array,
+  w: number,
+  h: number,
+  mw: number,
+  mh: number
+): void {
+  // Pre-compute coordinate lookup tables
+  const xLookup = buildCoordLookup(w, mw);
+  const yLookup = buildCoordLookup(h, mh);
+  
+  const pixelCount = w * h;
+  
+  // Flat iteration - single loop over all pixels
+  for (let i = 0; i < pixelCount; i++) {
+    const x = i % w;
+    const y = (i / w) | 0; // Fast integer division
+    
+    // Get mask value using pre-computed lookup
+    const mx = xLookup[x];
+    const my = yLookup[y];
+    const alpha = mask[my * mw + mx];
+    
+    // Simple threshold for clean edges (avoid complex math)
+    const finalAlpha = alpha < 0.1 ? 0 : alpha > 0.9 ? 255 : (alpha * 255) | 0;
+    
+    // Direct alpha channel write (every 4th byte starting at offset 3)
+    data[(i << 2) + 3] = finalAlpha;
+  }
+}
+
+/**
+ * Remove background with mobile-optimized flow (1-3s target, 832px, high quality)
  */
 export async function removeBackgroundMobile(
   image: HTMLImageElement,
@@ -175,7 +205,6 @@ export async function removeBackgroundMobile(
 ): Promise<Blob> {
   const startTime = performance.now();
   
-  // Get reusable canvases
   const canvas = getCanvas();
   const outCanvas = getCanvas();
   let raw: any = null;
@@ -190,7 +219,6 @@ export async function removeBackgroundMobile(
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     if (!ctx) throw new Error('Could not get canvas context');
     
-    // Use fast resize with high quality settings at 832px
     const { w, h } = await resizeMobileFast(canvas, ctx, image, MAX_MOBILE_SIZE);
     console.log(`Resize to ${w}x${h}: ${(performance.now() - startTime).toFixed(0)}ms`);
 
@@ -205,7 +233,7 @@ export async function removeBackgroundMobile(
 
     onProgress?.('Applying mask...', 75);
 
-    const mask = output[0][0].data;
+    const maskData = output[0][0].data as Float32Array;
     const mw = output[0][0].dims[1];
     const mh = output[0][0].dims[0];
 
@@ -217,26 +245,9 @@ export async function removeBackgroundMobile(
     outCtx.drawImage(canvas, 0, 0);
 
     const imgData = outCtx.getImageData(0, 0, w, h);
-    const data = imgData.data;
-
-    // Optimized alpha mask with smooth gradients for quality edges
-    const scaleX = mw / w;
-    const scaleY = mh / h;
     
-    // Direct alpha application - smooth gradients preserve edge quality
-    for (let y = 0; y < h; y++) {
-      const rowOffset = y * w;
-      const maskRowBase = Math.floor(y * scaleY) * mw;
-      
-      for (let x = 0; x < w; x++) {
-        const mx = Math.floor(x * scaleX);
-        const alpha = mask[maskRowBase + mx];
-        // Smooth alpha with slight contrast boost for cleaner edges
-        // Maps 0-1 to 0-255 with enhanced midtone contrast
-        const enhanced = alpha < 0.1 ? 0 : alpha > 0.9 ? 1 : alpha;
-        data[(rowOffset + x) * 4 + 3] = Math.round(enhanced * 255);
-      }
-    }
+    // Use optimized flat iteration for alpha mask
+    applyAlphaMaskFast(imgData.data, maskData, w, h, mw, mh);
 
     outCtx.putImageData(imgData, 0, 0);
 
@@ -244,7 +255,6 @@ export async function removeBackgroundMobile(
 
     return new Promise<Blob>((resolve, reject) => {
       outCanvas.toBlob((blob) => {
-        // Return canvases to pool
         returnCanvas(canvas);
         returnCanvas(outCanvas);
         raw = null;
@@ -258,11 +268,10 @@ export async function removeBackgroundMobile(
         } else {
           reject(new Error('Failed to create blob'));
         }
-      }, 'image/png', 1.0); // Full quality PNG for maximum sharpness
+      }, 'image/png', 1.0);
     });
     
   } catch (error) {
-    // Return canvases to pool on error
     returnCanvas(canvas);
     returnCanvas(outCanvas);
     console.error('Mobile background removal error:', error);
@@ -300,7 +309,6 @@ export function clearMobileModel() {
   processor = null;
   loadPromise = null;
   
-  // Clear canvas pool
   canvasPool.forEach(c => { c.width = c.height = 0; });
   canvasPool.length = 0;
   
