@@ -1,12 +1,10 @@
 import { useNavigate } from "react-router-dom";
 import { useState, memo, useRef, useEffect, useCallback, useMemo } from "react";
 import { getThumbnailUrl } from "@/lib/imageOptimizer";
+import { isImageCached, loadImage } from "@/lib/assetLoader";
 
 // Static proxy placeholder SVG - instant display, no network
 const PROXY_PLACEHOLDER = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='105' viewBox='0 0 140 105'%3E%3Crect fill='%231a1f2e' width='140' height='105'/%3E%3Crect fill='%23ffd34e' opacity='0.08' width='140' height='105'/%3E%3C/svg%3E";
-
-// Image cache for instant re-renders
-const imageCache = new Set<string>();
 
 interface BannerCardProps {
   id: string;
@@ -31,10 +29,11 @@ function BannerCardComponent({
 }: BannerCardProps) {
   const navigate = useNavigate();
   // Check if image is already cached - instant display
-  const isCached = useMemo(() => imageUrl ? imageCache.has(imageUrl) : false, [imageUrl]);
+  const isCached = useMemo(() => imageUrl ? isImageCached(imageUrl) : false, [imageUrl]);
   const [imageLoaded, setImageLoaded] = useState(isCached);
   const [isInView, setIsInView] = useState(isCached); // Skip observer if cached
   const cardRef = useRef<HTMLDivElement>(null);
+  const observerRef = useRef<IntersectionObserver | null>(null);
 
   // Instant navigation handler - zero delay
   const handleClick = useCallback((e: React.MouseEvent) => {
@@ -44,30 +43,36 @@ function BannerCardComponent({
 
   // Lazy load with Intersection Observer - skip if already cached
   useEffect(() => {
-    if (isCached || isInView) return;
+    if (isCached || isInView || !imageUrl) return;
     
     const element = cardRef.current;
     if (!element) return;
 
-    const observer = new IntersectionObserver(
+    observerRef.current = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
           setIsInView(true);
-          observer.disconnect();
+          observerRef.current?.disconnect();
         }
       },
-      { rootMargin: '200px', threshold: 0.01 } // Larger margin for earlier loading
+      { rootMargin: '150px', threshold: 0.01 } // Load before entering viewport
     );
 
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, [isCached, isInView]);
+    observerRef.current.observe(element);
+    
+    return () => {
+      observerRef.current?.disconnect();
+    };
+  }, [isCached, isInView, imageUrl]);
 
-  // Handle image load and cache
-  const handleImageLoad = useCallback(() => {
-    setImageLoaded(true);
-    if (imageUrl) imageCache.add(imageUrl);
-  }, [imageUrl]);
+  // Preload image when in view using centralized loader
+  useEffect(() => {
+    if (!isInView || !imageUrl || imageLoaded) return;
+    
+    loadImage(imageUrl).then((success) => {
+      if (success) setImageLoaded(true);
+    });
+  }, [isInView, imageUrl, imageLoaded]);
 
   const thumbnailUrl = useMemo(() => 
     imageUrl ? getThumbnailUrl(imageUrl, 40) : '', 
@@ -105,7 +110,6 @@ function BannerCardComponent({
                 className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-150 transform-gpu ${
                   imageLoaded ? 'opacity-100' : 'opacity-0'
                 }`}
-                onLoad={handleImageLoad}
                 loading="lazy"
                 decoding="async"
               />
