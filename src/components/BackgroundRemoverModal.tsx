@@ -10,6 +10,7 @@ interface BackgroundRemoverModalProps {
   isProcessing?: boolean;
   progress?: number;
   progressText?: string;
+  imageReady?: boolean;
 }
 
 export default function BackgroundRemoverModal({ 
@@ -19,12 +20,16 @@ export default function BackgroundRemoverModal({
   onClose,
   isProcessing = false,
   progress = 0,
-  progressText = ''
+  progressText = '',
+  imageReady = true
 }: BackgroundRemoverModalProps) {
+  // Show loading UI when modal opens but image not yet decoded
+  const isLoadingImage = !imageReady && !isProcessing;
+  
   return (
     <Dialog open={open} onOpenChange={isProcessing ? undefined : onClose}>
       <DialogContent className="bg-[#1a2744] border-2 border-primary max-w-md">
-        {!isProcessing && (
+        {!isProcessing && !isLoadingImage && (
           <button
             onClick={onClose}
             className="absolute top-4 right-4 w-8 h-8 bg-primary rounded-full flex items-center justify-center"
@@ -34,7 +39,20 @@ export default function BackgroundRemoverModal({
         )}
         
         <div className="text-center space-y-6 pt-4">
-          {isProcessing ? (
+          {isLoadingImage ? (
+            // Image loading UI - shown instantly, hidden when decode completes
+            <div className="py-8">
+              <div className="relative w-24 h-24 mx-auto mb-6">
+                <div className="absolute inset-0 rounded-full border-4 border-primary/20"></div>
+                <div 
+                  className="absolute inset-0 rounded-full border-4 border-transparent border-t-primary animate-spin"
+                  style={{ animationDuration: '0.8s' }}
+                ></div>
+              </div>
+              <h2 className="text-xl font-bold text-primary mb-2">Preparing Image</h2>
+              <p className="text-white/80 text-sm">Loading...</p>
+            </div>
+          ) : isProcessing ? (
             // Processing UI
             <div className="py-8">
               {/* Circular Loading Animation */}
@@ -94,7 +112,7 @@ export default function BackgroundRemoverModal({
               </div>
             </div>
           ) : (
-            // Selection UI
+            // Selection UI - shown after image is ready
             <>
               <h2 className="text-3xl font-bold text-primary">Background Remover</h2>
               

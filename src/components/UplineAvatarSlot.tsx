@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import ImageCropper from "./ImageCropper";
 import BackgroundRemoverModal from "./BackgroundRemoverModal";
-import { removeBackgroundMobile, loadImageMobile } from "@/lib/backgroundRemoverMobile";
+import { removeBackgroundMobile, preloadImageFast } from "@/lib/backgroundRemoverMobile";
 import { toast } from "sonner";
 import { logger } from "@/lib/logger";
 
@@ -35,6 +35,9 @@ export default function UplineAvatarSlot({
   const [showBgRemover, setShowBgRemover] = useState(false);
   const [tempImage, setTempImage] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
+  const [processingProgress, setProcessingProgress] = useState(0);
+  const [processingText, setProcessingText] = useState('');
+  const [imageReady, setImageReady] = useState(false);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -49,44 +52,65 @@ export default function UplineAvatarSlot({
     }
   };
 
-  const handleCropComplete = (croppedImage: string) => {
+  const handleCropComplete = async (croppedImage: string) => {
     setTempImage(croppedImage);
     setShowCrop(false);
     setShowBgRemover(true);
+    setImageReady(false);
+    
+    // Preload image fast
+    try {
+      const blob = await fetch(croppedImage).then(r => r.blob());
+      await preloadImageFast(blob);
+      setImageReady(true);
+    } catch {
+      setImageReady(true);
+    }
   };
 
   const handleKeepBackground = () => {
     if (tempImage) {
       onUpdate(tempImage, name || `Upline ${index + 1}`);
-      toast.success("Avatar updated successfully!");
+      toast.success("Avatar updated!");
     }
     setShowBgRemover(false);
     setTempImage(null);
+    setImageReady(false);
   };
 
   const handleRemoveBackground = async () => {
     if (!tempImage) return;
-    setShowBgRemover(false);
     setProcessing(true);
+    setProcessingProgress(5);
+    setProcessingText('Initializing...');
+    
     try {
-      const img = await loadImageMobile(await fetch(tempImage).then(r => r.blob()));
-      const processedBlob = await removeBackgroundMobile(img);
+      const blob = await fetch(tempImage).then(r => r.blob());
+      const img = await preloadImageFast(blob);
+      const processedBlob = await removeBackgroundMobile(img, (stage, percent) => {
+        setProcessingProgress(percent);
+        setProcessingText(stage);
+      });
       const reader = new FileReader();
       reader.onload = () => {
         const processedImage = reader.result as string;
         onUpdate(processedImage, name || `Upline ${index + 1}`);
-        toast.success("Background removed and avatar updated!");
+        toast.success("Background removed!");
       };
       reader.readAsDataURL(processedBlob);
     } catch (error) {
       logger.error("Background removal error:", error);
-      toast.error("Failed to remove background. Using original image.");
+      toast.error("Failed. Using original image.");
       if (tempImage) {
         onUpdate(tempImage, name || `Upline ${index + 1}`);
       }
     } finally {
       setProcessing(false);
+      setProcessingProgress(0);
+      setProcessingText('');
+      setShowBgRemover(false);
       setTempImage(null);
+      setImageReady(false);
     }
   };
 
@@ -183,9 +207,21 @@ export default function UplineAvatarSlot({
     </Dialog>
 
     {/* Background Remover Modal */}
-    <BackgroundRemoverModal open={showBgRemover} onKeep={handleKeepBackground} onRemove={handleRemoveBackground} onClose={() => {
-      setShowBgRemover(false);
-      setTempImage(null);
-    }} />
+    <BackgroundRemoverModal 
+      open={showBgRemover || processing} 
+      onKeep={handleKeepBackground} 
+      onRemove={handleRemoveBackground} 
+      onClose={() => {
+        if (!processing) {
+          setShowBgRemover(false);
+          setTempImage(null);
+          setImageReady(false);
+        }
+      }}
+      isProcessing={processing}
+      progress={processingProgress}
+      progressText={processingText}
+      imageReady={imageReady}
+    />
   </>;
 }
