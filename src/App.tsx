@@ -9,6 +9,7 @@ import OfflineBanner from "@/components/OfflineBanner";
 import AuthGuard from "@/components/AuthGuard";
 import { queryClient } from "@/lib/queryConfig";
 import { preloadCriticalModules, preloadFonts } from "@/lib/preloader";
+import { preloadMobileModel } from "@/lib/backgroundRemoverMobile";
 
 // Skeleton loaders
 import {
@@ -33,6 +34,14 @@ import RankSelection from "./pages/RankSelection";
 // Start preloading fonts and modules immediately on script load
 preloadFonts();
 setTimeout(() => preloadCriticalModules(), 50);
+
+// Preload background removal model for instant processing when needed
+// Delayed slightly to prioritize critical UI rendering first
+setTimeout(() => {
+  preloadMobileModel().catch(err => {
+    console.warn('Background removal model preload failed:', err);
+  });
+}, 2000);
 
 // Lazy load with retry and cache
 const lazyWithRetry = (componentImport: () => Promise<{ default: React.ComponentType<unknown> }>) =>
