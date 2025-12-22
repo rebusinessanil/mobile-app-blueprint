@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import ImageCropper from "./ImageCropper";
 import BackgroundRemoverModal from "./BackgroundRemoverModal";
-import { removeBackgroundMobile, preloadImageFast } from "@/lib/backgroundRemoverMobile";
+import { removeBackgroundMobile, loadImageMobile } from "@/lib/backgroundRemoverMobile";
 import { logger } from "@/lib/logger";
 
 interface PhotoUploadGridProps {
@@ -25,7 +25,6 @@ export default function PhotoUploadGrid({ photos, onPhotosChange, maxPhotos = 5,
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingProgress, setProcessingProgress] = useState(0);
   const [processingText, setProcessingText] = useState('');
-  const [imageReady, setImageReady] = useState(false);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     // Check if max limit reached
@@ -72,20 +71,10 @@ export default function PhotoUploadGrid({ photos, onPhotosChange, maxPhotos = 5,
     e.target.value = "";
   };
 
-  const handleCropComplete = async (croppedImageData: string) => {
+  const handleCropComplete = (croppedImageData: string) => {
     setCroppedImage(croppedImageData);
     setCropModalOpen(false);
     setBgRemovalModalOpen(true);
-    setImageReady(false);
-    
-    // Preload image fast in background
-    try {
-      const blob = await fetch(croppedImageData).then(r => r.blob());
-      await preloadImageFast(blob);
-      setImageReady(true);
-    } catch {
-      setImageReady(true); // Show buttons even if preload fails
-    }
   };
 
   const handleKeepOriginal = () => {
@@ -102,18 +91,20 @@ export default function PhotoUploadGrid({ photos, onPhotosChange, maxPhotos = 5,
     setCroppedImage("");
     setSelectedImage(null);
     setEditingIndex(null);
-    setImageReady(false);
   };
 
   const handleRemoveBackground = async () => {
     setIsProcessing(true);
-    setProcessingProgress(5);
-    setProcessingText('Initializing...');
+    setProcessingProgress(0);
+    setProcessingText('Starting...');
     
     try {
-      // Convert base64 to blob and use fast preload
-      const blob = await fetch(croppedImage).then(r => r.blob());
-      const img = await preloadImageFast(blob);
+      // Convert base64 to blob
+      const response = await fetch(croppedImage);
+      const blob = await response.blob();
+      
+      // Load image
+      const img = await loadImageMobile(blob);
       
       // Remove background with progress callback
       const processedBlob = await removeBackgroundMobile(img, (stage, percent) => {
@@ -143,13 +134,12 @@ export default function PhotoUploadGrid({ photos, onPhotosChange, maxPhotos = 5,
         setIsProcessing(false);
         setProcessingProgress(0);
         setProcessingText('');
-        setImageReady(false);
-        toast.success("Background removed!");
+        toast.success("Background removed successfully!");
       };
       reader.readAsDataURL(processedBlob);
     } catch (error) {
       logger.error("Background removal error:", error);
-      toast.error("Processing failed. Try another photo.");
+      toast.error("Image processing failed. Try another photo.");
       setIsProcessing(false);
       setProcessingProgress(0);
       setProcessingText('');
@@ -157,7 +147,6 @@ export default function PhotoUploadGrid({ photos, onPhotosChange, maxPhotos = 5,
       setCroppedImage("");
       setSelectedImage(null);
       setEditingIndex(null);
-      setImageReady(false);
     }
   };
 
@@ -271,7 +260,6 @@ export default function PhotoUploadGrid({ photos, onPhotosChange, maxPhotos = 5,
         isProcessing={isProcessing}
         progress={processingProgress}
         progressText={processingText}
-        imageReady={imageReady}
       />
     </>
   );

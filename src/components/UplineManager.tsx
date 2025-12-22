@@ -3,7 +3,7 @@ import { Upload, X, User } from "lucide-react";
 import { Button } from "./ui/button";
 import ImageCropper from "./ImageCropper";
 import BackgroundRemoverModal from "./BackgroundRemoverModal";
-import { removeBackgroundMobile, preloadImageFast } from "@/lib/backgroundRemoverMobile";
+import { removeBackgroundMobile, loadImageMobile } from "@/lib/backgroundRemoverMobile";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { logger } from "@/lib/logger";
@@ -31,7 +31,6 @@ export default function UplineManager({
   const [processing, setProcessing] = useState(false);
   const [processingProgress, setProcessingProgress] = useState(0);
   const [processingText, setProcessingText] = useState('');
-  const [imageReady, setImageReady] = useState(false);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>, index: number) => {
     const file = event.target.files?.[0];
@@ -49,36 +48,24 @@ export default function UplineManager({
     reader.readAsDataURL(file);
   };
 
-  const handleCropComplete = async (croppedImage: string) => {
+  const handleCropComplete = (croppedImage: string) => {
     setTempImage(croppedImage);
     setShowCrop(false);
     setShowBgRemover(true);
-    setImageReady(false);
-    
-    // Preload image fast
-    try {
-      const blob = await fetch(croppedImage).then(r => r.blob());
-      await preloadImageFast(blob);
-      setImageReady(true);
-    } catch {
-      setImageReady(true);
-    }
   };
 
   const handleKeepBackground = async () => {
     setShowBgRemover(false);
-    setImageReady(false);
     await uploadAvatar(tempImage);
   };
 
   const handleRemoveBackground = async () => {
     setProcessing(true);
-    setProcessingProgress(5);
-    setProcessingText('Initializing...');
+    setProcessingProgress(0);
+    setProcessingText('Starting...');
     
     try {
-      const blob = await fetch(tempImage).then(r => r.blob());
-      const img = await preloadImageFast(blob);
+      const img = await loadImageMobile(await fetch(tempImage).then(r => r.blob()));
       const processedBlob = await removeBackgroundMobile(img, (stage, percent) => {
         setProcessingProgress(percent);
         setProcessingText(stage);
@@ -97,7 +84,6 @@ export default function UplineManager({
       setProcessing(false);
       setProcessingProgress(0);
       setProcessingText('');
-      setImageReady(false);
     }
   };
 
@@ -201,13 +187,11 @@ export default function UplineManager({
             setShowBgRemover(false);
             setTempImage("");
             setEditingIndex(null);
-            setImageReady(false);
           }
         }}
         isProcessing={processing}
         progress={processingProgress}
         progressText={processingText}
-        imageReady={imageReady}
       />
     </div>
   );
