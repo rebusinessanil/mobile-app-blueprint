@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import ImageCropper from "./ImageCropper";
 import BackgroundRemoverModal from "./BackgroundRemoverModal";
-import { removeBackground, loadImage } from "@/lib/backgroundRemover";
+import { removeBackgroundMobile, loadImageMobile } from "@/lib/backgroundRemoverMobile";
 import { toast } from "sonner";
 import { logger } from "@/lib/logger";
 
@@ -69,8 +69,8 @@ export default function UplineAvatarSlot({
     setShowBgRemover(false);
     setProcessing(true);
     try {
-      const img = await loadImage(await fetch(tempImage).then(r => r.blob()));
-      const processedBlob = await removeBackground(img);
+      const img = await loadImageMobile(await fetch(tempImage).then(r => r.blob()));
+      const processedBlob = await removeBackgroundMobile(img);
       const reader = new FileReader();
       reader.onload = () => {
         const processedImage = reader.result as string;

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import ImageCropper from "./ImageCropper";
 import BackgroundRemoverModal from "./BackgroundRemoverModal";
-import { removeBackground, loadImage } from "@/lib/backgroundRemover";
+import { removeBackgroundMobile, loadImageMobile } from "@/lib/backgroundRemoverMobile";
 import { logger } from "@/lib/logger";
 
 interface PhotoUploadGridProps {
@@ -104,10 +104,10 @@ export default function PhotoUploadGrid({ photos, onPhotosChange, maxPhotos = 5,
       const blob = await response.blob();
       
       // Load image
-      const img = await loadImage(blob);
+      const img = await loadImageMobile(blob);
       
       // Remove background with progress callback
-      const processedBlob = await removeBackground(img, (stage, percent) => {
+      const processedBlob = await removeBackgroundMobile(img, (stage, percent) => {
         setProcessingProgress(percent);
         setProcessingText(stage);
       });

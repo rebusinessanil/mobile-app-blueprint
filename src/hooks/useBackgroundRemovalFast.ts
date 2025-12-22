@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef, startTransition } from 'react';
-import { removeBackground, loadImage, clearModel } from '@/lib/backgroundRemover';
+import { removeBackgroundMobile, clearMobileModel } from '@/lib/backgroundRemoverMobile';
 import { toast } from 'sonner';
 import { logger } from '@/lib/logger';
 
@@ -73,7 +73,7 @@ export const useBackgroundRemovalFast = (options?: UseBackgroundRemovalFastOptio
   useEffect(() => {
     return () => {
       abortRef.current = true;
-      clearModel();
+      clearMobileModel();
     };
   }, []);
 
@@ -118,14 +118,14 @@ export const useBackgroundRemovalFast = (options?: UseBackgroundRemovalFastOptio
       });
 
       if (abortRef.current) {
-        clearModel();
+        clearMobileModel();
         return null;
       }
 
       updateProgress(10, 'Processing...');
 
-      // Process with RMBG-1.4 model (WebGPU → WASM fallback)
-      const processedBlob = await removeBackground(img, (stage, percent) => {
+      // Process with mobile-optimized RMBG-1.4 model (CPU-safe)
+      const processedBlob = await removeBackgroundMobile(img, (stage, percent) => {
         if (!abortRef.current) {
           const adjustedPercent = 10 + Math.round(percent * 0.85);
           updateProgress(adjustedPercent, stage);
@@ -133,7 +133,7 @@ export const useBackgroundRemovalFast = (options?: UseBackgroundRemovalFastOptio
       });
 
       if (abortRef.current) {
-        clearModel();
+        clearMobileModel();
         return null;
       }
 
@@ -150,7 +150,7 @@ export const useBackgroundRemovalFast = (options?: UseBackgroundRemovalFastOptio
           
           // Release memory after processing
           setTimeout(() => {
-            clearModel();
+            clearMobileModel();
           }, 300);
           
           setTimeout(() => {
@@ -167,7 +167,7 @@ export const useBackgroundRemovalFast = (options?: UseBackgroundRemovalFastOptio
           }, 100);
         };
         reader.onerror = () => {
-          clearModel();
+          clearMobileModel();
           throw new Error('Failed to read processed image');
         };
         reader.readAsDataURL(processedBlob);
@@ -178,7 +178,7 @@ export const useBackgroundRemovalFast = (options?: UseBackgroundRemovalFastOptio
         retryCountRef.current++;
         logger.warn(`Background removal failed, retrying (${retryCountRef.current}/${MAX_RETRIES})...`);
         updateProgress(5, 'Retrying...');
-        clearModel();
+        clearMobileModel();
         return processRemovalInternal();
       }
       throw error;
@@ -198,7 +198,7 @@ export const useBackgroundRemovalFast = (options?: UseBackgroundRemovalFastOptio
       logger.error('Background removal error:', error);
       const errorMsg = error instanceof Error ? error.message : 'Unknown error';
       
-      clearModel();
+      clearMobileModel();
       
       startTransition(() => {
         setIsProcessing(false);
