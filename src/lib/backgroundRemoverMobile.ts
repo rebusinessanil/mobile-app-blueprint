@@ -39,14 +39,14 @@ async function loadMobileModel(onProgress?: (stage: string, percent: number) => 
   try {
     onProgress?.('Loading AI model...', 10);
     
-    // Use CPU for mobile-safe, predictable performance
+    // Use WASM for mobile-safe, predictable performance (CPU not supported)
     model = await AutoModel.from_pretrained('briaai/RMBG-1.4', {
-      device: 'cpu', // CPU-safe for all mobile devices
+      device: 'wasm', // WASM is mobile-safe and widely supported
     });
     
     processor = await AutoProcessor.from_pretrained('briaai/RMBG-1.4');
     
-    console.log('RMBG-1.4 loaded with CPU (mobile-optimized)');
+    console.log('RMBG-1.4 loaded with WASM (mobile-optimized)');
     onProgress?.('Model loaded', 25);
     
     return { model, processor };
