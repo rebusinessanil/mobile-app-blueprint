@@ -1,7 +1,7 @@
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Gift } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 interface WelcomeBonusModalProps {
   open: boolean;
@@ -15,48 +15,19 @@ export default function WelcomeBonusModal({
   onContinue 
 }: WelcomeBonusModalProps) {
   const [isClosing, setIsClosing] = useState(false);
-  const [isVisible, setIsVisible] = useState(false);
-
-  // Smooth fade-in when modal opens
-  useEffect(() => {
-    if (open && !isClosing) {
-      // Small delay for smooth fade-in
-      const timer = setTimeout(() => setIsVisible(true), 50);
-      return () => clearTimeout(timer);
-    } else {
-      setIsVisible(false);
-    }
-  }, [open, isClosing]);
-
-  // Reset closing state when modal reopens
-  useEffect(() => {
-    if (open) {
-      setIsClosing(false);
-    }
-  }, [open]);
 
   const handleContinue = () => {
-    if (isClosing) return;
-    
     setIsClosing(true);
-    setIsVisible(false);
-    
-    // Smooth fade-out animation (250ms) before calling onContinue
+    // Smooth fade-out animation (250ms) before redirect
     setTimeout(() => {
       onContinue();
     }, 250);
   };
 
-  if (!open) return null;
-
   return (
-    <Dialog open={open} modal={true}>
+    <Dialog open={open && !isClosing} modal={true}>
       <DialogContent 
-        className={`bg-gradient-to-b from-card to-background border-2 border-primary max-w-sm mx-auto transition-all duration-250 ease-out ${
-          isVisible && !isClosing 
-            ? 'opacity-100 scale-100' 
-            : 'opacity-0 scale-95'
-        }`}
+        className={`bg-gradient-to-b from-[#1a2744] to-[#0f1a2e] border-2 border-primary max-w-sm mx-auto transition-opacity duration-250 ${isClosing ? 'opacity-0' : 'opacity-100'}`}
         onPointerDownOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
         onInteractOutside={(e) => e.preventDefault()}
@@ -80,13 +51,13 @@ export default function WelcomeBonusModal({
             <p className="text-4xl font-bold text-primary">
               ₹{bonusAmount}
             </p>
-            <p className="text-foreground/80 mt-1">
+            <p className="text-white/80 mt-1">
               Credits added to your wallet!
             </p>
           </div>
           
           {/* Message */}
-          <p className="text-muted-foreground text-sm px-4">
+          <p className="text-white/70 text-sm px-4">
             Thank you for joining ReBusiness! Use these credits to create stunning banners.
           </p>
           

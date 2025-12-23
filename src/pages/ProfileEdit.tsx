@@ -342,10 +342,6 @@ export default function ProfileEdit() {
             console.error("Error calling welcome bonus function:", bonusError);
           } else {
             console.log("Welcome bonus result:", bonusResult);
-            // Show bonus credited message if successful and not skipped
-            if (bonusResult?.success && !bonusResult?.skipped) {
-              toast.success("₹199 Welcome Bonus credited to your wallet!");
-            }
           }
           
           localStorage.setItem(PROFILE_GATE_BYPASS_KEY, "true");

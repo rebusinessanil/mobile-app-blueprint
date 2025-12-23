@@ -18,10 +18,10 @@ export function useWelcomeBonus() {
         return;
       }
 
-      // Check profile for welcome_popup_seen and profile_completed status
+      // Check profile for welcome_popup_seen status
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('welcome_popup_seen, profile_completed, welcome_bonus_given')
+        .select('welcome_popup_seen')
         .eq('user_id', user.id)
         .single();
 
@@ -31,16 +31,8 @@ export function useWelcomeBonus() {
         return;
       }
 
-      // Show popup only if:
-      // 1. Profile is completed (first-time after profile completion)
-      // 2. welcome_popup_seen is explicitly false
-      // 3. Welcome bonus has been given
-      const shouldShowModal = 
-        profile?.profile_completed === true &&
-        profile?.welcome_popup_seen === false &&
-        profile?.welcome_bonus_given === true;
-
-      if (shouldShowModal) {
+      // Show popup if welcome_popup_seen is explicitly false
+      if (profile?.welcome_popup_seen === false) {
         setShowWelcomeModal(true);
       }
 
@@ -54,12 +46,9 @@ export function useWelcomeBonus() {
   const handleContinue = useCallback(async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        setShowWelcomeModal(false);
-        return;
-      }
+      if (!user) return;
 
-      // Set welcome_popup_seen = true in database immediately
+      // Set welcome_popup_seen = true in database
       const { error } = await supabase
         .from('profiles')
         .update({ welcome_popup_seen: true })
@@ -69,12 +58,12 @@ export function useWelcomeBonus() {
         logger.error('Error updating welcome_popup_seen:', error);
       }
 
-      // Set localStorage bypass flag for profile gate
+      // Set localStorage bypass flag
       try {
         localStorage.setItem(PROFILE_GATE_BYPASS_KEY, "true");
       } catch {}
 
-      // Close modal - user stays on dashboard instantly
+      // Close modal - user stays on dashboard
       setShowWelcomeModal(false);
     } catch (error) {
       logger.error('Error handling continue:', error);
