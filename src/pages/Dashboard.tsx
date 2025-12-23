@@ -4,6 +4,7 @@ import BottomNav from "@/components/BottomNav";
 import { Menu, Bell, Star, Calendar, Zap, Award, Wallet } from "lucide-react";
 import { useTemplateCategories, useTemplates } from "@/hooks/useTemplates";
 import { useProfile } from "@/hooks/useProfile";
+import { useRealtimeWallet } from "@/hooks/useRealtimeWallet";
 import { supabase } from "@/integrations/supabase/client";
 import { useRanks } from "@/hooks/useTemplates";
 import { useBonanzaTrips } from "@/hooks/useBonanzaTrips";
@@ -89,6 +90,10 @@ export default function Dashboard() {
   const {
     profile
   } = useProfile(userId ?? undefined);
+  
+  // Use real-time wallet for instant balance updates
+  const { wallet } = useRealtimeWallet(userId);
+  
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const hasLoadedRef = useRef(dashboardLoadedOnce);
   
@@ -212,13 +217,13 @@ export default function Dashboard() {
             </div>
           </div>
           <div className="flex items-center gap-1.5 flex-shrink-0">
-            {/* Wallet Balance */}
+            {/* Wallet Balance - Using real-time wallet data */}
             <Link 
               to="/wallet" 
               className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-primary/10 border border-primary/30 hover:bg-primary/20 transition-colors"
             >
               <Wallet className="w-4 h-4 text-primary" />
-              <span className="text-sm font-bold text-primary">₹{profile?.balance || 0}</span>
+              <span className="text-sm font-bold text-primary">₹{wallet.balance}</span>
             </Link>
             <Sheet open={isProfileOpen} onOpenChange={setIsProfileOpen}>
               <SheetTrigger asChild>
