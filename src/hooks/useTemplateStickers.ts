@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 
 export interface TemplateSticker {
   id: string;
@@ -32,29 +31,35 @@ export const useTemplateStickers = (templateId?: string) => {
       try {
         setLoading(true);
         
-        // First get the template's rank_id to find associated stickers
+        // Get the template's category_id and (optional) rank_id
         const { data: template, error: templateError } = await supabase
           .from('templates')
           .select('rank_id, category_id')
           .eq('id', templateId)
-          .single();
+          .maybeSingle();
         
         if (templateError) throw templateError;
-        
-        if (!template?.rank_id) {
-          // No rank associated, return empty
+        if (!template?.category_id) {
           setStickers([]);
           setLoading(false);
           return;
         }
 
-        // Fetch stickers for this template's rank
-        const { data, error } = await supabase
+        // Fetch stickers for this template's category.
+        // If the template is rank-based, also filter by rank_id.
+        let query = supabase
           .from('stickers')
           .select('*')
-          .eq('rank_id', template.rank_id)
+          .eq('category_id', template.category_id)
           .order('slot_number', { ascending: true });
 
+        if (template.rank_id) {
+          query = query.eq('rank_id', template.rank_id);
+        } else {
+          query = query.is('rank_id', null);
+        }
+
+        const { data, error } = await query;
         if (error) throw error;
 
         setStickers(data || []);
@@ -99,19 +104,20 @@ export const uploadTemplateSticker = async (
   name?: string
 ): Promise<{ url?: string; error?: Error }> => {
   try {
-    // Get template's rank_id
+    // Get template's category_id and (optional) rank_id
     const { data: template, error: templateError } = await supabase
       .from('templates')
       .select('rank_id, category_id')
       .eq('id', templateId)
-      .single();
+      .maybeSingle();
     
     if (templateError) throw templateError;
-    if (!template?.rank_id) throw new Error('Template has no associated rank');
+    if (!template?.category_id) throw new Error('Template has no associated category');
 
     // Upload image to storage
     const fileExt = file.name.split('.').pop();
-    const fileName = `${template.rank_id}-${templateId}-slot-${slotNumber}-${Date.now()}.${fileExt}`;
+    const safeRank = template.rank_id ?? 'no-rank';
+    const fileName = `${safeRank}-${templateId}-slot-${slotNumber}-${Date.now()}.${fileExt}`;
 
     const { error: uploadError } = await supabase.storage
       .from('stickers')
@@ -124,13 +130,20 @@ export const uploadTemplateSticker = async (
       .from('stickers')
       .getPublicUrl(fileName);
 
-    // Check if sticker exists for this rank and slot
-    const { data: existing } = await supabase
+    // Check if sticker exists for this category (+ rank if applicable) and slot
+    let existingQuery = supabase
       .from('stickers')
       .select('id, image_url')
-      .eq('rank_id', template.rank_id)
-      .eq('slot_number', slotNumber)
-      .maybeSingle();
+      .eq('category_id', template.category_id)
+      .eq('slot_number', slotNumber);
+
+    if (template.rank_id) {
+      existingQuery = existingQuery.eq('rank_id', template.rank_id);
+    } else {
+      existingQuery = existingQuery.is('rank_id', null);
+    }
+
+    const { data: existing } = await existingQuery.maybeSingle();
 
     if (existing) {
       // Update existing sticker
@@ -157,7 +170,7 @@ export const uploadTemplateSticker = async (
       const { error: insertError } = await supabase
         .from('stickers')
         .insert({
-          rank_id: template.rank_id,
+          rank_id: template.rank_id ?? null,
           category_id: template.category_id,
           slot_number: slotNumber,
           name: name || `Slot ${slotNumber}`,
