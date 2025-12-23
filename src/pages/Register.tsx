@@ -226,9 +226,9 @@ export default function Register() {
           })} className="border-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground h-4 w-4" />
             <label className="text-xs text-foreground">
               I agree to the{" "}
-              <a href="#" className="text-primary underline">
-                Privacy Policy
-              </a>
+              <Link to="/privacy-policy" className="text-primary underline">
+                Terms & Conditions and Privacy Policy
+              </Link>
             </label>
           </div>
 
