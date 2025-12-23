@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState, useEffect, useRef } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import AdminLayout from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -56,12 +56,14 @@ interface SlotState {
 }
 
 export default function AdminStickerLibrary() {
-  const queryClient = useQueryClient();
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [selectedRank, setSelectedRank] = useState<string>("");
-  const [selectedSlot, setSelectedSlot] = useState<number>(1);
+  const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
   const [slotStates, setSlotStates] = useState<Record<number, SlotState>>({});
   const [isSaving, setIsSaving] = useState(false);
+  
+  // Refs for file inputs per slot
+  const fileInputRefs = useRef<Record<number, HTMLInputElement | null>>({});
   
   // Transform controls for selected slot
   const [position, setPosition] = useState({ x: 50, y: 50 });
@@ -133,6 +135,7 @@ export default function AdminStickerLibrary() {
 
   // Update transform controls when selected slot changes
   useEffect(() => {
+    if (selectedSlot === null) return;
     const slotState = slotStates[selectedSlot];
     if (slotState?.sticker) {
       setPosition({ x: slotState.sticker.position_x, y: slotState.sticker.position_y });
@@ -145,6 +148,17 @@ export default function AdminStickerLibrary() {
     }
   }, [selectedSlot, slotStates]);
 
+  // Handle slot click - opens file picker immediately
+  const handleSlotClick = (slotNum: number) => {
+    setSelectedSlot(slotNum);
+    // If no sticker and no pending upload, open file picker
+    const slotState = slotStates[slotNum];
+    if (!slotState?.sticker && !slotState?.pendingFile) {
+      fileInputRefs.current[slotNum]?.click();
+    }
+  };
+
+  // Handle file selection for a specific slot
   const handleFileSelect = (slotNumber: number, file: File) => {
     const previewUrl = URL.createObjectURL(file);
     const name = file.name.replace(/\.[^/.]+$/, "");
@@ -159,11 +173,11 @@ export default function AdminStickerLibrary() {
       }
     }));
     
-    // Auto-select this slot
     setSelectedSlot(slotNumber);
     toast.info(`File ready for Slot ${slotNumber}. Click "Confirm Upload" to save.`);
   };
 
+  // Confirm upload for a specific slot
   const handleConfirmUpload = async (slotNumber: number) => {
     const slotState = slotStates[slotNumber];
     if (!slotState?.pendingFile || !selectedCategory || !selectedRank) {
@@ -215,7 +229,7 @@ export default function AdminStickerLibrary() {
           await supabase.storage.from('stickers').remove([oldPath]);
         }
       } else {
-        // Insert new sticker
+        // Insert new sticker (is_active = false by default, not auto-selected)
         const { error: insertError } = await supabase
           .from('stickers')
           .insert({
@@ -228,7 +242,7 @@ export default function AdminStickerLibrary() {
             position_y: 50,
             scale: 2.5,
             rotation: 0,
-            is_active: true,
+            is_active: false, // Not auto-activated
           });
 
         if (insertError) throw insertError;
@@ -256,9 +270,9 @@ export default function AdminStickerLibrary() {
       // Refetch stickers
       refetchStickers();
       
-    } catch (error) {
+    } catch (error: any) {
       console.error("Upload error:", error);
-      toast.error("Failed to upload sticker");
+      toast.error(`Slot ${slotNumber}: ${error?.message || 'Failed to upload sticker'}`);
       setSlotStates(prev => ({
         ...prev,
         [slotNumber]: { ...prev[slotNumber], isUploading: false }
@@ -266,6 +280,7 @@ export default function AdminStickerLibrary() {
     }
   };
 
+  // Cancel pending upload
   const handleCancelUpload = (slotNumber: number) => {
     const slotState = slotStates[slotNumber];
     if (slotState?.pendingPreview) {
@@ -284,7 +299,31 @@ export default function AdminStickerLibrary() {
     toast.info("Upload cancelled");
   };
 
+  // Activate/deactivate sticker (separate from upload)
+  const handleToggleActive = async (slotNumber: number) => {
+    const slotState = slotStates[slotNumber];
+    if (!slotState?.sticker) return;
+
+    try {
+      const newActiveState = !slotState.sticker.is_active;
+      const { error } = await supabase
+        .from('stickers')
+        .update({ is_active: newActiveState })
+        .eq('id', slotState.sticker.id);
+
+      if (error) throw error;
+
+      toast.success(`Sticker ${newActiveState ? 'activated' : 'deactivated'}`);
+      refetchStickers();
+    } catch (error) {
+      console.error("Toggle error:", error);
+      toast.error("Failed to update sticker status");
+    }
+  };
+
+  // Save transform settings
   const handleSaveTransform = async () => {
+    if (selectedSlot === null) return;
     const slotState = slotStates[selectedSlot];
     if (!slotState?.sticker) {
       toast.error("No sticker to save");
@@ -315,6 +354,7 @@ export default function AdminStickerLibrary() {
     }
   };
 
+  // Delete sticker
   const handleDelete = async (slotNumber: number) => {
     const slotState = slotStates[slotNumber];
     if (!slotState?.sticker) return;
@@ -344,7 +384,9 @@ export default function AdminStickerLibrary() {
     }
   };
 
+  // Reset transform to saved values
   const handleReset = () => {
+    if (selectedSlot === null) return;
     const slotState = slotStates[selectedSlot];
     if (slotState?.sticker) {
       setPosition({ x: slotState.sticker.position_x, y: slotState.sticker.position_y });
@@ -354,7 +396,12 @@ export default function AdminStickerLibrary() {
     }
   };
 
-  const currentSlotState = slotStates[selectedSlot];
+  // Upload button click - opens file picker for selected slot
+  const handleUploadButtonClick = (slotNumber: number) => {
+    fileInputRefs.current[slotNumber]?.click();
+  };
+
+  const currentSlotState = selectedSlot !== null ? slotStates[selectedSlot] : null;
   const currentSticker = currentSlotState?.sticker;
   const hasPending = currentSlotState?.pendingFile;
 
@@ -366,7 +413,7 @@ export default function AdminStickerLibrary() {
             <div>
               <h1 className="text-3xl font-bold text-primary">Sticker Library</h1>
               <p className="text-muted-foreground mt-2">
-                Upload and manage stickers with square previews. Select file → Confirm upload.
+                Click any slot to upload. Confirm to save. Toggle "Select Sticker" to activate.
               </p>
             </div>
           </div>
@@ -377,7 +424,10 @@ export default function AdminStickerLibrary() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label>Category</Label>
-                  <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                  <Select value={selectedCategory} onValueChange={(val) => {
+                    setSelectedCategory(val);
+                    setSelectedSlot(null);
+                  }}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
@@ -393,7 +443,10 @@ export default function AdminStickerLibrary() {
 
                 <div>
                   <Label>Rank</Label>
-                  <Select value={selectedRank} onValueChange={setSelectedRank}>
+                  <Select value={selectedRank} onValueChange={(val) => {
+                    setSelectedRank(val);
+                    setSelectedSlot(null);
+                  }}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select rank" />
                     </SelectTrigger>
@@ -418,7 +471,7 @@ export default function AdminStickerLibrary() {
                   <CardHeader>
                     <CardTitle className="text-primary">Sticker Slots (1-16)</CardTitle>
                     <p className="text-sm text-muted-foreground">
-                      Click to select, or upload a new sticker to any slot
+                      Click any slot to upload a sticker to that specific slot
                     </p>
                   </CardHeader>
                   <CardContent>
@@ -429,6 +482,7 @@ export default function AdminStickerLibrary() {
                         const hasPendingUpload = !!slotState?.pendingFile;
                         const isSelected = selectedSlot === slotNum;
                         const isUploading = slotState?.isUploading;
+                        const isActive = slotState?.sticker?.is_active;
 
                         const imageUrl = hasPendingUpload 
                           ? slotState.pendingPreview 
@@ -438,18 +492,19 @@ export default function AdminStickerLibrary() {
                           <div
                             key={slotNum}
                             className={cn(
-                              "relative aspect-square rounded-lg border-2 overflow-hidden cursor-pointer transition-all",
+                              "relative aspect-square rounded-lg border-2 overflow-hidden cursor-pointer transition-all group",
                               isSelected 
                                 ? "border-primary ring-2 ring-primary/50" 
                                 : hasSticker || hasPendingUpload
                                   ? "border-primary/40 hover:border-primary/60"
                                   : "border-dashed border-muted-foreground/30 hover:border-primary/40",
-                              hasPendingUpload && "ring-2 ring-yellow-500/50"
+                              hasPendingUpload && "ring-2 ring-yellow-500/50",
+                              hasSticker && isActive && "ring-2 ring-green-500/30"
                             )}
-                            onClick={() => setSelectedSlot(slotNum)}
+                            onClick={() => handleSlotClick(slotNum)}
                           >
                             {/* Slot Number Badge */}
-                            <div className="absolute top-1 left-1 z-10 bg-background/80 px-1.5 py-0.5 rounded text-xs font-bold">
+                            <div className="absolute top-1 left-1 z-10 bg-background/90 px-1.5 py-0.5 rounded text-xs font-bold">
                               {slotNum}
                             </div>
 
@@ -460,8 +515,11 @@ export default function AdminStickerLibrary() {
                               </div>
                             )}
                             {hasSticker && !hasPendingUpload && (
-                              <div className="absolute top-1 right-1 z-10 bg-green-500 px-1.5 py-0.5 rounded text-xs font-bold text-white">
-                                Active
+                              <div className={cn(
+                                "absolute top-1 right-1 z-10 px-1.5 py-0.5 rounded text-xs font-bold",
+                                isActive ? "bg-green-500 text-white" : "bg-gray-500 text-white"
+                              )}>
+                                {isActive ? 'Active' : 'Inactive'}
                               </div>
                             )}
 
@@ -475,16 +533,18 @@ export default function AdminStickerLibrary() {
                                 />
                               </div>
                             ) : (
-                              <div className="absolute inset-0 flex items-center justify-center">
-                                <ImageIcon className="w-8 h-8 text-muted-foreground/30" />
+                              <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 group-hover:bg-primary/5 transition-colors">
+                                <Upload className="w-6 h-6 text-muted-foreground/40 group-hover:text-primary/60 transition-colors" />
+                                <span className="text-xs text-muted-foreground/50 group-hover:text-primary/60">Click</span>
                               </div>
                             )}
 
-                            {/* Upload Input - Hidden but covers slot */}
+                            {/* Hidden File Input per slot */}
                             <input
+                              ref={(el) => { fileInputRefs.current[slotNum] = el; }}
                               type="file"
                               accept="image/*"
-                              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
+                              className="hidden"
                               onChange={(e) => {
                                 if (e.target.files?.[0]) {
                                   handleFileSelect(slotNum, e.target.files[0]);
@@ -510,159 +570,207 @@ export default function AdminStickerLibrary() {
 
               {/* Controls Panel */}
               <div className="lg:col-span-1 space-y-4">
-                {/* Selected Slot Info */}
-                <Card className="bg-card border-2 border-primary/20">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-primary">Slot {selectedSlot}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {/* Pending Upload Actions */}
-                    {hasPending && (
-                      <div className="space-y-3 p-3 bg-yellow-500/10 rounded-lg border border-yellow-500/30">
-                        <p className="text-sm font-medium text-yellow-500">Pending Upload</p>
-                        <Input
-                          value={currentSlotState?.pendingName || ''}
-                          onChange={(e) => setSlotStates(prev => ({
-                            ...prev,
-                            [selectedSlot]: { ...prev[selectedSlot], pendingName: e.target.value }
-                          }))}
-                          placeholder="Sticker name"
-                          className="bg-background"
-                        />
-                        <div className="flex gap-2">
-                          <Button
-                            onClick={() => handleConfirmUpload(selectedSlot)}
-                            disabled={currentSlotState?.isUploading}
-                            className="flex-1"
-                            size="sm"
-                          >
-                            <Check className="w-4 h-4 mr-1" />
-                            {currentSlotState?.isUploading ? "Uploading..." : "Confirm Upload"}
-                          </Button>
-                          <Button
-                            onClick={() => handleCancelUpload(selectedSlot)}
-                            variant="outline"
-                            size="sm"
-                          >
-                            <X className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Current Sticker Info */}
-                    {currentSticker && !hasPending && (
-                      <>
-                        <div className="p-3 bg-primary/5 rounded-lg">
-                          <p className="text-sm text-muted-foreground">Name</p>
-                          <p className="font-medium">{currentSticker.name}</p>
-                        </div>
-
-                        {/* Transform Controls */}
-                        <div className="space-y-4">
-                          <div>
-                            <div className="flex items-center justify-between mb-2">
-                              <Label className="text-sm">Scale</Label>
-                              <span className="text-sm text-primary font-bold">
-                                {Math.round(scale * 100)}%
-                              </span>
-                            </div>
-                            <Slider
-                              value={[scale]}
-                              onValueChange={(val) => setScale(val[0])}
-                              min={0.5}
-                              max={5}
-                              step={0.1}
+                {selectedSlot !== null ? (
+                  <Card className="bg-card border-2 border-primary/20">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-primary">Slot {selectedSlot}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {/* Pending Upload Actions */}
+                      {hasPending && (
+                        <div className="space-y-3 p-3 bg-yellow-500/10 rounded-lg border border-yellow-500/30">
+                          <p className="text-sm font-medium text-yellow-500">Pending Upload</p>
+                          
+                          {/* Preview */}
+                          <div className="w-full aspect-square bg-gradient-to-br from-gray-900 to-gray-800 rounded-lg overflow-hidden flex items-center justify-center">
+                            <img
+                              src={currentSlotState?.pendingPreview!}
+                              alt="Preview"
+                              className="max-w-full max-h-full object-contain"
                             />
                           </div>
-
-                          <div>
-                            <div className="flex items-center justify-between mb-2">
-                              <Label className="text-sm">Position X</Label>
-                              <span className="text-sm text-primary font-bold">{position.x}%</span>
-                            </div>
-                            <Slider
-                              value={[position.x]}
-                              onValueChange={(val) => setPosition(prev => ({ ...prev, x: val[0] }))}
-                              min={0}
-                              max={100}
-                              step={1}
-                            />
-                          </div>
-
-                          <div>
-                            <div className="flex items-center justify-between mb-2">
-                              <Label className="text-sm">Position Y</Label>
-                              <span className="text-sm text-primary font-bold">{position.y}%</span>
-                            </div>
-                            <Slider
-                              value={[position.y]}
-                              onValueChange={(val) => setPosition(prev => ({ ...prev, y: val[0] }))}
-                              min={0}
-                              max={100}
-                              step={1}
-                            />
-                          </div>
-
-                          <div>
-                            <div className="flex items-center justify-between mb-2">
-                              <Label className="text-sm">Rotation</Label>
-                              <span className="text-sm text-primary font-bold">{rotation}°</span>
-                            </div>
-                            <Slider
-                              value={[rotation]}
-                              onValueChange={(val) => setRotation(val[0])}
-                              min={0}
-                              max={360}
-                              step={1}
-                            />
-                          </div>
-
+                          
+                          <Input
+                            value={currentSlotState?.pendingName || ''}
+                            onChange={(e) => setSlotStates(prev => ({
+                              ...prev,
+                              [selectedSlot]: { ...prev[selectedSlot], pendingName: e.target.value }
+                            }))}
+                            placeholder="Sticker name"
+                            className="bg-background"
+                          />
                           <div className="flex gap-2">
                             <Button
-                              onClick={handleSaveTransform}
-                              disabled={isSaving}
+                              onClick={() => handleConfirmUpload(selectedSlot)}
+                              disabled={currentSlotState?.isUploading}
                               className="flex-1"
                               size="sm"
                             >
-                              <Save className="w-4 h-4 mr-2" />
-                              {isSaving ? "Saving..." : "Save Position"}
+                              <Check className="w-4 h-4 mr-1" />
+                              {currentSlotState?.isUploading ? "Uploading..." : "Confirm Upload"}
                             </Button>
                             <Button
-                              onClick={handleReset}
+                              onClick={() => handleCancelUpload(selectedSlot)}
                               variant="outline"
                               size="sm"
                             >
-                              <RefreshCw className="w-4 h-4" />
+                              <X className="w-4 h-4" />
                             </Button>
                           </div>
                         </div>
+                      )}
 
-                        <Button
-                          onClick={() => handleDelete(selectedSlot)}
-                          variant="destructive"
-                          size="sm"
-                          className="w-full"
-                        >
-                          <Trash2 className="w-4 h-4 mr-2" />
-                          Delete Sticker
-                        </Button>
-                      </>
-                    )}
+                      {/* Current Sticker Info */}
+                      {currentSticker && !hasPending && (
+                        <>
+                          <div className="p-3 bg-primary/5 rounded-lg space-y-2">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="text-sm text-muted-foreground">Name</p>
+                                <p className="font-medium">{currentSticker.name}</p>
+                              </div>
+                              <Button
+                                onClick={() => handleUploadButtonClick(selectedSlot)}
+                                variant="outline"
+                                size="sm"
+                              >
+                                <Upload className="w-4 h-4 mr-1" />
+                                Replace
+                              </Button>
+                            </div>
+                          </div>
 
-                    {/* Empty Slot */}
-                    {!currentSticker && !hasPending && (
-                      <div className="text-center py-8 text-muted-foreground">
-                        <ImageIcon className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                        <p className="text-sm">No sticker in this slot</p>
-                        <p className="text-xs mt-1">Click the slot to upload</p>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
+                          {/* Select/Activate Button - Separate from Upload */}
+                          <Button
+                            onClick={() => handleToggleActive(selectedSlot)}
+                            variant={currentSticker.is_active ? "default" : "outline"}
+                            className="w-full"
+                            size="sm"
+                          >
+                            <Check className="w-4 h-4 mr-2" />
+                            {currentSticker.is_active ? "Sticker Active (Click to Deactivate)" : "Select Sticker (Activate)"}
+                          </Button>
 
-                {/* Live Preview */}
-                {(currentSticker || hasPending) && (
+                          {/* Transform Controls */}
+                          <div className="space-y-4 pt-2">
+                            <div>
+                              <div className="flex items-center justify-between mb-2">
+                                <Label className="text-sm">Scale</Label>
+                                <span className="text-sm text-primary font-bold">
+                                  {Math.round(scale * 100)}%
+                                </span>
+                              </div>
+                              <Slider
+                                value={[scale]}
+                                onValueChange={(val) => setScale(val[0])}
+                                min={0.5}
+                                max={5}
+                                step={0.1}
+                              />
+                            </div>
+
+                            <div>
+                              <div className="flex items-center justify-between mb-2">
+                                <Label className="text-sm">Position X</Label>
+                                <span className="text-sm text-primary font-bold">{position.x}%</span>
+                              </div>
+                              <Slider
+                                value={[position.x]}
+                                onValueChange={(val) => setPosition(prev => ({ ...prev, x: val[0] }))}
+                                min={0}
+                                max={100}
+                                step={1}
+                              />
+                            </div>
+
+                            <div>
+                              <div className="flex items-center justify-between mb-2">
+                                <Label className="text-sm">Position Y</Label>
+                                <span className="text-sm text-primary font-bold">{position.y}%</span>
+                              </div>
+                              <Slider
+                                value={[position.y]}
+                                onValueChange={(val) => setPosition(prev => ({ ...prev, y: val[0] }))}
+                                min={0}
+                                max={100}
+                                step={1}
+                              />
+                            </div>
+
+                            <div>
+                              <div className="flex items-center justify-between mb-2">
+                                <Label className="text-sm">Rotation</Label>
+                                <span className="text-sm text-primary font-bold">{rotation}°</span>
+                              </div>
+                              <Slider
+                                value={[rotation]}
+                                onValueChange={(val) => setRotation(val[0])}
+                                min={0}
+                                max={360}
+                                step={1}
+                              />
+                            </div>
+
+                            <div className="flex gap-2">
+                              <Button
+                                onClick={handleSaveTransform}
+                                disabled={isSaving}
+                                className="flex-1"
+                                size="sm"
+                              >
+                                <Save className="w-4 h-4 mr-2" />
+                                {isSaving ? "Saving..." : "Save Position"}
+                              </Button>
+                              <Button
+                                onClick={handleReset}
+                                variant="outline"
+                                size="sm"
+                              >
+                                <RefreshCw className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+
+                          <Button
+                            onClick={() => handleDelete(selectedSlot)}
+                            variant="destructive"
+                            size="sm"
+                            className="w-full"
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Delete Sticker
+                          </Button>
+                        </>
+                      )}
+
+                      {/* Empty Slot - Show upload button */}
+                      {!currentSticker && !hasPending && (
+                        <div className="text-center py-6 text-muted-foreground">
+                          <ImageIcon className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                          <p className="text-sm mb-3">No sticker in Slot {selectedSlot}</p>
+                          <Button 
+                            onClick={() => handleUploadButtonClick(selectedSlot)}
+                            variant="outline"
+                            className="w-full"
+                          >
+                            <Upload className="w-4 h-4 mr-2" />
+                            Upload to Slot {selectedSlot}
+                          </Button>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <Card className="bg-card border-2 border-dashed border-muted-foreground/30">
+                    <CardContent className="py-12 text-center">
+                      <ImageIcon className="w-12 h-12 mx-auto mb-3 text-muted-foreground/30" />
+                      <p className="text-muted-foreground text-sm">Click a slot to manage it</p>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Live Preview - only for existing stickers */}
+                {currentSticker && !hasPending && (
                   <Card className="bg-card border-2 border-primary/20">
                     <CardHeader className="pb-3">
                       <CardTitle className="text-primary text-sm">Live Preview</CardTitle>
@@ -670,7 +778,7 @@ export default function AdminStickerLibrary() {
                     <CardContent>
                       <div className="relative w-full aspect-square bg-gradient-to-br from-gray-900 to-gray-800 rounded-lg overflow-hidden">
                         <img
-                          src={hasPending ? currentSlotState?.pendingPreview! : currentSticker?.image_url}
+                          src={currentSticker.image_url}
                           alt="Preview"
                           className="absolute"
                           style={{
