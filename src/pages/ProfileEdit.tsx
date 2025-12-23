@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { ArrowLeft, FileText, Award, Check, Eye, EyeOff } from "lucide-react";
+import { ArrowLeft, FileText, Award, Check, Eye, EyeOff, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { useProfile } from "@/hooks/useProfile";
 import { useProfilePhotos } from "@/hooks/useProfilePhotos";
 import { supabase } from "@/integrations/supabase/client";
+import DeleteAccountModal from "@/components/DeleteAccountModal";
 const PROFILE_GATE_BYPASS_KEY = "rebusiness_profile_completed";
 export default function ProfileEdit() {
   const navigate = useNavigate();
@@ -70,6 +71,9 @@ export default function ProfileEdit() {
   const [pinError, setPinError] = useState("");
   const [showCreatePin, setShowCreatePin] = useState(false);
   const [showConfirmPin, setShowConfirmPin] = useState(false);
+  
+  // Delete account modal
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   // Load profile data when available, with prefill from registration
   useEffect(() => {
@@ -596,7 +600,34 @@ export default function ProfileEdit() {
             {photos.length === 0 && <p className="text-sm text-destructive">• At least 1 profile photo required</p>}
             {!isPinValid() && <p className="text-sm text-destructive">• Valid 4-digit PIN required</p>}
           </div>}
+
+        {/* Danger Zone - Delete Account */}
+        <div className="mt-12 pt-6 border-t border-destructive/30">
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Trash2 className="w-5 h-5 text-destructive" />
+              <h3 className="text-lg font-semibold text-destructive">Danger Zone</h3>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Once you delete your account, there is no going back. Please be certain.
+            </p>
+            <Button
+              variant="destructive"
+              onClick={() => setShowDeleteModal(true)}
+              className="w-full h-12 font-semibold"
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Permanently Delete Account
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
+
+    {/* Delete Account Modal */}
+    <DeleteAccountModal 
+      open={showDeleteModal} 
+      onOpenChange={setShowDeleteModal} 
+    />
   </>;
 }
