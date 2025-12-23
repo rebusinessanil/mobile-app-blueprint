@@ -10,6 +10,10 @@ export interface Profile {
   rank: string | null;
   role: string | null;
   profile_photo: string | null;
+  profile_completed: boolean | null;
+  welcome_bonus_given: boolean | null;
+  profile_completion_bonus_given: boolean | null;
+  welcome_popup_seen: boolean | null;
   created_at: string;
   updated_at: string;
   balance?: number; // Wallet balance from user_credits

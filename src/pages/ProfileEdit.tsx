@@ -601,26 +601,28 @@ export default function ProfileEdit() {
             {!isPinValid() && <p className="text-sm text-destructive">• Valid 4-digit PIN required</p>}
           </div>}
 
-        {/* Danger Zone - Delete Account */}
-        <div className="mt-12 pt-6 border-t border-destructive/30">
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <Trash2 className="w-5 h-5 text-destructive" />
-              <h3 className="text-lg font-semibold text-destructive">Danger Zone</h3>
+        {/* Danger Zone - Delete Account - Only show for completed profiles */}
+        {profile?.profile_completed && profile?.welcome_bonus_given && (
+          <div className="mt-12 pt-6 border-t border-destructive/30">
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <Trash2 className="w-5 h-5 text-destructive" />
+                <h3 className="text-lg font-semibold text-destructive">Danger Zone</h3>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Once you delete your account, there is no going back. Please be certain.
+              </p>
+              <Button
+                variant="destructive"
+                onClick={() => setShowDeleteModal(true)}
+                className="w-full h-12 font-semibold"
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Permanently Delete Account
+              </Button>
             </div>
-            <p className="text-sm text-muted-foreground">
-              Once you delete your account, there is no going back. Please be certain.
-            </p>
-            <Button
-              variant="destructive"
-              onClick={() => setShowDeleteModal(true)}
-              className="w-full h-12 font-semibold"
-            >
-              <Trash2 className="w-4 h-4 mr-2" />
-              Permanently Delete Account
-            </Button>
           </div>
-        </div>
+        )}
       </div>
     </div>
 
