@@ -77,6 +77,22 @@ export default function Register() {
     }
     setIsLoading(true);
 
+    // Check if email is blocked (previously deleted account)
+    try {
+      const { data: blockData } = await supabase.functions.invoke('check-email-blocked', {
+        body: { email: formData.email.trim().toLowerCase() }
+      });
+      
+      if (blockData?.blocked) {
+        toast.error("This email cannot be used for registration. Please use a different email address.");
+        setIsLoading(false);
+        return;
+      }
+    } catch (blockError) {
+      console.log('Email block check failed, proceeding with registration:', blockError);
+      // Continue with registration if check fails
+    }
+
     // Create password from PIN
     const password = `ReBiz${pinCode}${Date.now()}`;
     const result = await withConnectionCheck(async () => {
