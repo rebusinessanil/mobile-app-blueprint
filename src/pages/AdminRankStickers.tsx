@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,9 +15,12 @@ export default function AdminRankStickers() {
   const navigate = useNavigate();
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedTemplate, setSelectedTemplate] = useState<string>('');
-  const [uploading, setUploading] = useState(false);
+  const [uploadingSlot, setUploadingSlot] = useState<number | null>(null);
   const [bulkUploading, setBulkUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number } | null>(null);
+  
+  // Refs for slot-specific file inputs
+  const slotInputRefs = useRef<Record<number, HTMLInputElement | null>>({});
 
   // Fetch categories
   const { data: categories, isLoading: categoriesLoading } = useQuery({
@@ -55,39 +58,40 @@ export default function AdminRankStickers() {
   // Fetch stickers for selected template
   const { stickers, loading: stickersLoading } = useTemplateStickers(selectedTemplate);
 
-  const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  // Handle slot click - open file picker for that specific slot
+  const handleSlotClick = (slotNumber: number) => {
+    const input = slotInputRefs.current[slotNumber];
+    if (input) {
+      input.click();
+    }
+  };
+
+  // Handle file selection for a specific slot
+  const handleSlotUpload = async (slotNumber: number, event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file || !selectedTemplate) return;
 
-    if (stickers.length >= 16) {
-      toast.error('Maximum 16 stickers per template');
-      return;
-    }
-
-    // Find next available slot (1-16)
-    const usedSlots = stickers.map(s => s.slot_number);
-    const nextSlot = Array.from({ length: 16 }, (_, i) => i + 1).find(i => !usedSlots.includes(i)) ?? (stickers.length + 1);
-
-    setUploading(true);
+    setUploadingSlot(slotNumber);
     try {
       const { url, error } = await uploadTemplateSticker(
         selectedTemplate,
         file,
-        nextSlot
+        slotNumber
       );
 
       if (error) {
-        toast.error('Failed to upload sticker');
+        toast.error(`Failed to upload sticker to slot ${slotNumber}`);
         console.error(error);
       } else {
-        toast.success(`Sticker uploaded to slot ${nextSlot}`);
+        toast.success(`Sticker uploaded to slot ${slotNumber}`);
       }
     } finally {
-      setUploading(false);
+      setUploadingSlot(null);
       event.target.value = '';
     }
   };
 
+  // Handle bulk upload - assigns to available slots
   const handleBulkUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (!files || files.length === 0 || !selectedTemplate) return;
@@ -268,33 +272,18 @@ export default function AdminRankStickers() {
           </Card>
         )}
 
-        {/* Sticker Management */}
+        {/* Sticker Management - 16 Fixed Slots */}
         {selectedTemplate && (
           <Card>
             <CardHeader>
               <CardTitle>Template Stickers (16 Slots)</CardTitle>
               <CardDescription>
-                Each template supports up to 16 stickers. Users will see these stickers on their banners.
+                Click on any slot to upload a sticker directly to that slot. Each template supports up to 16 stickers.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* Upload Section */}
+              {/* Bulk Upload Section */}
               <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="sticker-upload">Upload Single Sticker</Label>
-                  <div className="flex items-center gap-4">
-                    <Input
-                      id="sticker-upload"
-                      type="file"
-                      accept="image/png,image/jpeg,image/jpg,image/webp"
-                      onChange={handleUpload}
-                      disabled={uploading || bulkUploading || stickers.length >= 16}
-                      className="flex-1"
-                    />
-                    {uploading && <Loader2 className="h-5 w-5 animate-spin text-gold" />}
-                  </div>
-                </div>
-
                 <div className="space-y-2">
                   <Label htmlFor="bulk-sticker-upload">Bulk Upload Stickers (Up to 16)</Label>
                   <div className="flex items-center gap-4">
@@ -304,7 +293,7 @@ export default function AdminRankStickers() {
                       accept="image/png,image/jpeg,image/jpg,image/webp"
                       multiple
                       onChange={handleBulkUpload}
-                      disabled={uploading || bulkUploading || stickers.length >= 16}
+                      disabled={uploadingSlot !== null || bulkUploading || stickers.length >= 16}
                       className="flex-1"
                     />
                     {bulkUploading && (
@@ -331,21 +320,39 @@ export default function AdminRankStickers() {
 
               {/* 16-Slot Grid */}
               {stickersLoading ? (
-                <Loader2 className="h-6 w-6 animate-spin text-gold" />
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-gold" />
+                </div>
               ) : (
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4">
                   {Array.from({ length: 16 }, (_, index) => {
                     const slotNumber = index + 1;
                     const sticker = stickers.find(s => s.slot_number === slotNumber);
+                    const isUploading = uploadingSlot === slotNumber;
+
                     return (
-                      <Card key={slotNumber} className={sticker ? (sticker.is_active ? '' : 'opacity-50') : 'border-dashed'}>
+                      <Card 
+                        key={slotNumber} 
+                        className={`${sticker ? (sticker.is_active ? '' : 'opacity-50') : 'border-dashed cursor-pointer hover:border-primary/50'}`}
+                      >
                         <CardContent className="p-4 space-y-2">
+                          {/* Hidden file input for this slot */}
+                          <input
+                            ref={(el) => (slotInputRefs.current[slotNumber] = el)}
+                            type="file"
+                            accept="image/png,image/jpeg,image/jpg,image/webp"
+                            onChange={(e) => handleSlotUpload(slotNumber, e)}
+                            className="hidden"
+                          />
+                          
                           <div className="text-xs font-medium text-muted-foreground mb-1">
                             Slot {slotNumber}
                           </div>
+                          
                           {sticker ? (
                             <>
-                              <div className="w-full h-32 bg-secondary/30 rounded flex items-center justify-center">
+                              {/* Square preview container */}
+                              <div className="w-full aspect-square bg-secondary/30 rounded flex items-center justify-center overflow-hidden">
                                 <img
                                   src={sticker.image_url}
                                   alt={`Sticker ${slotNumber}`}
@@ -357,7 +364,7 @@ export default function AdminRankStickers() {
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  onClick={() => handleToggleActive(sticker.id, sticker.is_active)}
+                                  onClick={() => handleToggleActive(sticker.id, sticker.is_active ?? true)}
                                   className="flex-1"
                                 >
                                   {sticker.is_active ? (
@@ -376,8 +383,15 @@ export default function AdminRankStickers() {
                               </div>
                             </>
                           ) : (
-                            <div className="w-full h-32 flex items-center justify-center border-2 border-dashed rounded bg-muted/10">
-                              <Upload className="h-8 w-8 text-muted-foreground/50" />
+                            <div 
+                              onClick={() => !isUploading && handleSlotClick(slotNumber)}
+                              className="w-full aspect-square flex items-center justify-center border-2 border-dashed rounded bg-muted/10 cursor-pointer hover:bg-muted/20 hover:border-primary/40 transition-colors"
+                            >
+                              {isUploading ? (
+                                <Loader2 className="h-8 w-8 animate-spin text-gold" />
+                              ) : (
+                                <Upload className="h-8 w-8 text-muted-foreground/50" />
+                              )}
                             </div>
                           )}
                         </CardContent>
