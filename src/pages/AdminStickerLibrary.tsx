@@ -61,6 +61,10 @@ interface Sticker {
   name: string;
   image_url: string;
   rank_id: string | null;
+  trip_id: string | null;
+  birthday_id: string | null;
+  anniversary_id: string | null;
+  motivational_banner_id: string | null;
   category_id: string | null;
   banner_category: string | null;
   slot_number: number | null;
@@ -189,6 +193,39 @@ export default function AdminStickerLibrary() {
     setSelectedSlot(null);
   }, [selectedBannerCategory]);
 
+  // Helper function to get the correct ID column based on banner category
+  const getItemIdColumn = (bannerCategory: string): string => {
+    switch (bannerCategory) {
+      case 'rank-promotion': return 'rank_id';
+      case 'bonanza-promotion': return 'trip_id';
+      case 'birthday': return 'birthday_id';
+      case 'anniversary': return 'anniversary_id';
+      case 'motivational': return 'motivational_banner_id';
+      default: return 'rank_id';
+    }
+  };
+
+  // Helper function to build insert data with correct ID column
+  const getItemIdData = (bannerCategory: string, itemId: string): Record<string, string | null> => {
+    const columns = {
+      rank_id: null as string | null,
+      trip_id: null as string | null,
+      birthday_id: null as string | null,
+      anniversary_id: null as string | null,
+      motivational_banner_id: null as string | null,
+    };
+    
+    switch (bannerCategory) {
+      case 'rank-promotion': columns.rank_id = itemId; break;
+      case 'bonanza-promotion': columns.trip_id = itemId; break;
+      case 'birthday': columns.birthday_id = itemId; break;
+      case 'anniversary': columns.anniversary_id = itemId; break;
+      case 'motivational': columns.motivational_banner_id = itemId; break;
+    }
+    
+    return columns;
+  };
+
   // Fetch all stickers for selected category + banner category + item
   const { data: stickers = [], refetch: refetchStickers } = useQuery<Sticker[]>({
     queryKey: ['stickers-all', selectedCategory, selectedBannerCategory, selectedItem?.id],
@@ -200,14 +237,26 @@ export default function AdminStickerLibrary() {
         .select('*')
         .eq('category_id', selectedCategory)
         .eq('banner_category', selectedBannerCategory);
-
-      // For rank-promotion, use rank_id; for others, store item id in rank_id field
-      if (selectedBannerCategory === 'rank-promotion') {
-        query = query.eq('rank_id', selectedItem.id);
-      } else {
-        query = query.eq('rank_id', selectedItem.id);
+      
+      // Apply the correct filter based on banner category
+      switch (selectedBannerCategory) {
+        case 'rank-promotion':
+          query = query.eq('rank_id', selectedItem.id);
+          break;
+        case 'bonanza-promotion':
+          query = query.eq('trip_id', selectedItem.id);
+          break;
+        case 'birthday':
+          query = query.eq('birthday_id', selectedItem.id);
+          break;
+        case 'anniversary':
+          query = query.eq('anniversary_id', selectedItem.id);
+          break;
+        case 'motivational':
+          query = query.eq('motivational_banner_id', selectedItem.id);
+          break;
       }
-
+      
       const { data, error } = await query.order('slot_number');
       
       if (error) throw error;
@@ -215,6 +264,31 @@ export default function AdminStickerLibrary() {
     },
     enabled: !!selectedCategory && !!selectedBannerCategory && !!selectedItem
   });
+
+  // Real-time subscription for stickers
+  useEffect(() => {
+    if (!selectedCategory || !selectedBannerCategory || !selectedItem) return;
+
+    const channel = supabase
+      .channel(`stickers-library-${selectedItem.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'stickers',
+        },
+        (payload) => {
+          console.log('Sticker changed:', payload);
+          refetchStickers();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [selectedCategory, selectedBannerCategory, selectedItem?.id, refetchStickers]);
 
   // Initialize slot states when stickers load
   useEffect(() => {
@@ -322,6 +396,8 @@ export default function AdminStickerLibrary() {
           await supabase.storage.from('stickers').remove([oldPath]);
         }
       } else {
+        const itemIdData = getItemIdData(selectedBannerCategory, selectedItem.id);
+        
         const { error: insertError } = await supabase
           .from('stickers')
           .insert({
@@ -329,7 +405,7 @@ export default function AdminStickerLibrary() {
             image_url: publicUrl,
             category_id: selectedCategory,
             banner_category: selectedBannerCategory,
-            rank_id: selectedItem.id,
+            ...itemIdData,
             slot_number: slotNumber,
             position_x: 50,
             position_y: 50,
