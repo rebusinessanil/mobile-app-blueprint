@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/lib/logger";
 import type { User } from "@supabase/supabase-js";
 
+const PROFILE_GATE_BYPASS_KEY = "rebusiness_profile_completed";
+
 interface AuthGuardProps {
   children: React.ReactNode;
 }
@@ -34,17 +36,32 @@ export default function AuthGuard({ children }: AuthGuardProps) {
       
       setUser(session.user);
       
-      // Check if profile is already complete - redirect to dashboard immediately
+      // Check profile completion status from DATABASE (not localStorage)
       if (!isProfileRoute) {
         const { data: profile } = await supabase
           .from('profiles')
-          .select('profile_completed')
+          .select('profile_completed, welcome_bonus_given')
           .eq('user_id', session.user.id)
           .single();
         
-        // If profile is complete, allow access; if on profile-edit, redirect to dashboard
-        if (profile?.profile_completed === true && location.pathname === '/profile-edit') {
-          navigate("/dashboard", { replace: true });
+        const profileCompleted = profile?.profile_completed === true;
+        const welcomeBonusGiven = profile?.welcome_bonus_given === true;
+        
+        // If both flags are true, user is fully complete
+        if (profileCompleted && welcomeBonusGiven) {
+          // Set localStorage bypass for faster future checks
+          try {
+            localStorage.setItem(PROFILE_GATE_BYPASS_KEY, "true");
+          } catch {}
+          
+          // If on profile-edit but already complete, redirect to dashboard
+          if (location.pathname === '/profile-edit') {
+            navigate("/dashboard", { replace: true });
+            return;
+          }
+        } else if (location.pathname !== '/profile-edit') {
+          // Not complete and not on profile-edit - redirect there
+          navigate("/profile-edit", { replace: true });
           return;
         }
       }
@@ -60,6 +77,10 @@ export default function AuthGuard({ children }: AuthGuardProps) {
         setUser(session?.user ?? null);
         
         if (event === 'SIGNED_OUT') {
+          // Clear localStorage bypass on sign out
+          try {
+            localStorage.removeItem(PROFILE_GATE_BYPASS_KEY);
+          } catch {}
           navigate("/login", { replace: true });
         }
       }

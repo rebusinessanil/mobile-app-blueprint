@@ -12,6 +12,8 @@ export interface ProfileCompletionStatus {
   completionPercentage: number;
   loading: boolean;
   isOldUser: boolean;
+  profileCompleted: boolean;
+  welcomeBonusGiven: boolean;
 }
 
 export const useProfileCompletion = (userId?: string) => {
@@ -21,6 +23,8 @@ export const useProfileCompletion = (userId?: string) => {
     completionPercentage: 0,
     loading: true,
     isOldUser: false,
+    profileCompleted: false,
+    welcomeBonusGiven: false,
   });
 
   useEffect(() => {
@@ -31,34 +35,52 @@ export const useProfileCompletion = (userId?: string) => {
 
     const checkProfileCompletion = async () => {
       try {
-        // Check localStorage bypass first
-        try {
-          if (localStorage.getItem(PROFILE_GATE_BYPASS_KEY) === "true") {
-            setStatus({
-              isComplete: true,
-              missingFields: [],
-              completionPercentage: 100,
-              loading: false,
-              isOldUser: false,
-            });
-            return;
-          }
-        } catch {}
-
-        // Fetch profile data
+        // Fetch profile data from database - this is the source of truth
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('*')
           .eq('user_id', userId)
           .maybeSingle();
 
-        // Check if this is an OLD user
+        if (profileError) {
+          logger.error('Error fetching profile:', profileError);
+          setStatus(prev => ({ ...prev, loading: false }));
+          return;
+        }
+
+        // Check if this is an OLD user (created before update release date)
         const profileCreatedAt = profile?.created_at ? new Date(profile.created_at) : null;
         const isOldUser = profileCreatedAt ? profileCreatedAt < UPDATE_RELEASE_DATE : false;
 
-        // If welcome_popup_seen is true, user has completed the flow
+        // Get database flags
+        const profileCompleted = profile?.profile_completed === true;
+        const welcomeBonusGiven = profile?.welcome_bonus_given === true;
+
+        // For NEW users: Both flags must be true to be complete
+        // For OLD users: Check welcome_popup_seen or fieldsComplete
+        if (!isOldUser) {
+          // NEW USER: Strict check - both DB flags must be true
+          if (profileCompleted && welcomeBonusGiven) {
+            // Set localStorage bypass for faster future checks
+            try {
+              localStorage.setItem(PROFILE_GATE_BYPASS_KEY, "true");
+            } catch {}
+            
+            setStatus({
+              isComplete: true,
+              missingFields: [],
+              completionPercentage: 100,
+              loading: false,
+              isOldUser: false,
+              profileCompleted: true,
+              welcomeBonusGiven: true,
+            });
+            return;
+          }
+        }
+
+        // If welcome_popup_seen is true (legacy), user has completed the flow
         if (profile?.welcome_popup_seen === true) {
-          // Set localStorage bypass for future checks
           try {
             localStorage.setItem(PROFILE_GATE_BYPASS_KEY, "true");
           } catch {}
@@ -69,12 +91,14 @@ export const useProfileCompletion = (userId?: string) => {
             completionPercentage: 100,
             loading: false,
             isOldUser,
+            profileCompleted,
+            welcomeBonusGiven,
           });
           return;
         }
 
         // Fetch profile photos count
-        const { data: photos, error: photosError } = await supabase
+        const { data: photos } = await supabase
           .from('profile_photos')
           .select('id')
           .eq('user_id', userId);
@@ -91,7 +115,6 @@ export const useProfileCompletion = (userId?: string) => {
         }
 
         // Check mobile - extract digits and validate 10-digit format
-        // Reject placeholder values like +000000000000 or all zeros
         const rawMobile = profile?.mobile || '';
         const mobileDigits = rawMobile.replace(/\D/g, '').slice(-10);
         const isPlaceholder = rawMobile === '+000000000000' || mobileDigits === '0000000000' || /^0+$/.test(mobileDigits);
@@ -128,7 +151,6 @@ export const useProfileCompletion = (userId?: string) => {
             .update({ welcome_popup_seen: true })
             .eq('user_id', userId);
 
-          // Set localStorage bypass
           try {
             localStorage.setItem(PROFILE_GATE_BYPASS_KEY, "true");
           } catch {}
@@ -139,16 +161,21 @@ export const useProfileCompletion = (userId?: string) => {
             completionPercentage: 100,
             loading: false,
             isOldUser: true,
+            profileCompleted,
+            welcomeBonusGiven,
           });
           return;
         }
 
+        // For NEW users: Not complete until both DB flags are true
         setStatus({
-          isComplete: fieldsComplete,
+          isComplete: false,
           missingFields,
           completionPercentage,
           loading: false,
           isOldUser,
+          profileCompleted,
+          welcomeBonusGiven,
         });
       } catch (error) {
         logger.error('Error checking profile completion:', error);
