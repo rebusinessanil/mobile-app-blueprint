@@ -23,6 +23,7 @@ import WelcomeBonusModal from "@/components/WelcomeBonusModal";
 import { useWelcomeBonus } from "@/hooks/useWelcomeBonus";
 import DashboardSkeleton from "@/components/skeletons/DashboardSkeleton";
 import { preloadBannerPreviewSystem, preloadImages } from "@/lib/preloader";
+import { useRealtimeWallet } from "@/hooks/useRealtimeWallet";
 
 // Static proxy placeholder for instant card rendering
 const PROXY_PLACEHOLDER = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='105' viewBox='0 0 140 105'%3E%3Crect fill='%231a1f2e' width='140' height='105'/%3E%3Crect fill='%23ffd34e' opacity='0.1' width='140' height='105'/%3E%3C/svg%3E";
@@ -91,6 +92,9 @@ export default function Dashboard() {
   } = useProfile(userId ?? undefined);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const hasLoadedRef = useRef(dashboardLoadedOnce);
+  
+  // Real-time wallet for instant balance updates
+  const { wallet } = useRealtimeWallet(userId);
   
   // Welcome bonus modal
   const { showWelcomeModal, bonusAmount, handleContinue } = useWelcomeBonus();
@@ -218,7 +222,7 @@ export default function Dashboard() {
               className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-primary/10 border border-primary/30 hover:bg-primary/20 transition-colors"
             >
               <Wallet className="w-4 h-4 text-primary" />
-              <span className="text-sm font-bold text-primary">₹{profile?.balance || 0}</span>
+              <span className="text-sm font-bold text-primary">₹{wallet.balance}</span>
             </Link>
             <Sheet open={isProfileOpen} onOpenChange={setIsProfileOpen}>
               <SheetTrigger asChild>

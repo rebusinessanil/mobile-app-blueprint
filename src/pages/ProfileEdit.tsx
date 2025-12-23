@@ -332,7 +332,7 @@ export default function ProfileEdit() {
       // If profile is complete, credit welcome bonus via atomic edge function
       if (isProfileComplete() && userId) {
         try {
-          // Call atomic edge function for welcome bonus
+          // Call atomic edge function for welcome bonus and WAIT for success
           const { data: bonusResult, error: bonusError } = await supabase.functions.invoke(
             'credit-welcome-bonus',
             { body: { user_id: userId } }
@@ -342,17 +342,23 @@ export default function ProfileEdit() {
             console.error("Error calling welcome bonus function:", bonusError);
           } else {
             console.log("Welcome bonus result:", bonusResult);
+            // Only set bypass after successful bonus credit
+            if (bonusResult?.success) {
+              localStorage.setItem(PROFILE_GATE_BYPASS_KEY, "true");
+              toast.success("Profile updated successfully!");
+              // Navigate AFTER bonus is credited so dashboard shows correct balance
+              navigate("/dashboard", { replace: true });
+              return;
+            }
           }
-          
-          localStorage.setItem(PROFILE_GATE_BYPASS_KEY, "true");
         } catch (e) {
           console.error("Error setting up welcome bonus:", e);
         }
+        // Fallback if bonus fails - still proceed
+        localStorage.setItem(PROFILE_GATE_BYPASS_KEY, "true");
       }
       toast.success("Profile updated successfully!");
-      navigate("/dashboard", {
-        replace: true
-      });
+      navigate("/dashboard", { replace: true });
     } catch (err) {
       console.error("Unexpected error during profile update:", err);
       toast.error("An unexpected error occurred. Please try again.");
