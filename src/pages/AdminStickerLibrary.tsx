@@ -14,16 +14,32 @@ import {
   RefreshCw, 
   Image as ImageIcon,
   Check,
-  X
+  X,
+  Trophy,
+  Gift,
+  Calendar,
+  Star,
+  Zap
 } from "lucide-react";
 import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AdminGuard } from "@/components/AdminGuard";
 import { cn } from "@/lib/utils";
 
-interface Rank {
+// Icon mapping for template categories
+const categoryIcons: Record<string, React.ReactNode> = {
+  'Trophy': <Trophy className="w-4 h-4" />,
+  'Gift': <Gift className="w-4 h-4" />,
+  'Calendar': <Calendar className="w-4 h-4" />,
+  'Star': <Star className="w-4 h-4" />,
+  'Zap': <Zap className="w-4 h-4" />,
+};
+
+interface TemplateCategory {
   id: string;
   name: string;
+  slug: string;
+  icon_name: string | null;
   display_order: number;
 }
 
@@ -57,7 +73,7 @@ interface SlotState {
 
 export default function AdminStickerLibrary() {
   const [selectedCategory, setSelectedCategory] = useState<string>("");
-  const [selectedRank, setSelectedRank] = useState<string>("");
+  const [selectedBannerCategory, setSelectedBannerCategory] = useState<string>("");
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
   const [slotStates, setSlotStates] = useState<Record<number, SlotState>>({});
   const [isSaving, setIsSaving] = useState(false);
@@ -84,13 +100,14 @@ export default function AdminStickerLibrary() {
     }
   });
 
-  // Fetch ranks
-  const { data: ranks = [] } = useQuery<Rank[]>({
-    queryKey: ['ranks'],
+  // Fetch banner categories (template categories)
+  const { data: bannerCategories = [] } = useQuery<TemplateCategory[]>({
+    queryKey: ['template-categories-for-stickers'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('ranks')
-        .select('*')
+        .from('template_categories')
+        .select('id, name, slug, icon_name, display_order')
+        .eq('is_active', true)
         .order('display_order');
       
       if (error) throw error;
@@ -98,23 +115,23 @@ export default function AdminStickerLibrary() {
     }
   });
 
-  // Fetch all stickers for selected category + rank
+  // Fetch all stickers for selected category + banner category
   const { data: stickers = [], refetch: refetchStickers } = useQuery<Sticker[]>({
-    queryKey: ['stickers-all', selectedCategory, selectedRank],
+    queryKey: ['stickers-all', selectedCategory, selectedBannerCategory],
     queryFn: async () => {
-      if (!selectedCategory || !selectedRank) return [];
+      if (!selectedCategory || !selectedBannerCategory) return [];
 
       const { data, error } = await supabase
         .from('stickers')
         .select('*')
         .eq('category_id', selectedCategory)
-        .eq('rank_id', selectedRank)
+        .eq('banner_category', selectedBannerCategory)
         .order('slot_number');
       
       if (error) throw error;
       return data || [];
     },
-    enabled: !!selectedCategory && !!selectedRank
+    enabled: !!selectedCategory && !!selectedBannerCategory
   });
 
   // Initialize slot states when stickers load
@@ -180,7 +197,7 @@ export default function AdminStickerLibrary() {
   // Confirm upload for a specific slot
   const handleConfirmUpload = async (slotNumber: number) => {
     const slotState = slotStates[slotNumber];
-    if (!slotState?.pendingFile || !selectedCategory || !selectedRank) {
+    if (!slotState?.pendingFile || !selectedCategory || !selectedBannerCategory) {
       toast.error("No file to upload or missing selection");
       return;
     }
@@ -194,7 +211,7 @@ export default function AdminStickerLibrary() {
       // Upload to storage
       const fileExt = slotState.pendingFile.name.split('.').pop();
       const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
-      const filePath = `${selectedCategory}/${selectedRank}/${fileName}`;
+      const filePath = `${selectedCategory}/${selectedBannerCategory}/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from('stickers')
@@ -236,7 +253,7 @@ export default function AdminStickerLibrary() {
             name: slotState.pendingName || `Sticker ${slotNumber}`,
             image_url: publicUrl,
             category_id: selectedCategory,
-            rank_id: selectedRank,
+            banner_category: selectedBannerCategory,
             slot_number: slotNumber,
             position_x: 50,
             position_y: 50,
@@ -442,18 +459,21 @@ export default function AdminStickerLibrary() {
                 </div>
 
                 <div>
-                  <Label>Rank</Label>
-                  <Select value={selectedRank} onValueChange={(val) => {
-                    setSelectedRank(val);
+                  <Label>Banner Category</Label>
+                  <Select value={selectedBannerCategory} onValueChange={(val) => {
+                    setSelectedBannerCategory(val);
                     setSelectedSlot(null);
                   }}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select rank" />
+                      <SelectValue placeholder="Select category" />
                     </SelectTrigger>
                     <SelectContent>
-                      {ranks.map((rank) => (
-                        <SelectItem key={rank.id} value={rank.id}>
-                          {rank.name}
+                      {bannerCategories.map((cat) => (
+                        <SelectItem key={cat.slug} value={cat.slug}>
+                          <div className="flex items-center gap-2">
+                            {cat.icon_name && categoryIcons[cat.icon_name]}
+                            <span>{cat.name}</span>
+                          </div>
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -463,7 +483,7 @@ export default function AdminStickerLibrary() {
             </CardContent>
           </Card>
 
-          {selectedCategory && selectedRank && (
+          {selectedCategory && selectedBannerCategory && (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Slots Grid */}
               <div className="lg:col-span-2">
@@ -800,11 +820,11 @@ export default function AdminStickerLibrary() {
           )}
 
           {/* No Selection Message */}
-          {(!selectedCategory || !selectedRank) && (
+          {(!selectedCategory || !selectedBannerCategory) && (
             <Card className="bg-card border-2 border-dashed border-muted-foreground/30">
               <CardContent className="py-16 text-center">
                 <ImageIcon className="w-16 h-16 mx-auto mb-4 text-muted-foreground/30" />
-                <p className="text-muted-foreground">Select a category and rank to manage stickers</p>
+                <p className="text-muted-foreground">Select a sticker category and banner category to manage stickers</p>
               </CardContent>
             </Card>
           )}
