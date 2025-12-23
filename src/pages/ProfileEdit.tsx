@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { ArrowLeft, FileText, Award, Check, Eye, EyeOff, Lock } from "lucide-react";
+import { ArrowLeft, FileText, Award, Check, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -10,8 +10,7 @@ import { toast } from "sonner";
 import { useProfile } from "@/hooks/useProfile";
 import { useProfilePhotos } from "@/hooks/useProfilePhotos";
 import { supabase } from "@/integrations/supabase/client";
-import { useProfileCompletion } from "@/hooks/useProfileCompletion";
-
+const PROFILE_GATE_BYPASS_KEY = "rebusiness_profile_completed";
 export default function ProfileEdit() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -33,18 +32,8 @@ export default function ProfileEdit() {
   const {
     photos: profilePhotos
   } = useProfilePhotos(userId || undefined);
-  
-  // Check if profile is complete and can navigate away
-  const { canAccessDashboard } = useProfileCompletion(userId || undefined);
-  
-  // Handle back button - only allow if profile is complete
-  const handleBackNavigation = () => {
-    if (canAccessDashboard) {
-      navigate("/profile");
-    } else {
-      toast.error("Please complete your profile first");
-    }
-  };
+
+  // Get authenticated user
   useEffect(() => {
     const getUser = async () => {
       const {
@@ -340,9 +329,10 @@ export default function ProfileEdit() {
         toast.success("PIN updated successfully!");
       }
 
-      // Credit welcome bonus via atomic edge function - REQUIRED before dashboard access
+      // If profile is complete, credit welcome bonus via atomic edge function
       if (isProfileComplete() && userId) {
         try {
+          // Call atomic edge function for welcome bonus
           const { data: bonusResult, error: bonusError } = await supabase.functions.invoke(
             'credit-welcome-bonus',
             { body: { user_id: userId } }
@@ -350,26 +340,19 @@ export default function ProfileEdit() {
 
           if (bonusError) {
             console.error("Error calling welcome bonus function:", bonusError);
-            toast.error("Failed to credit welcome bonus. Please try again.");
-            return; // Don't navigate if bonus fails
-          }
-          
-          console.log("Welcome bonus result:", bonusResult);
-          
-          // Verify bonus was credited before navigating
-          if (bonusResult?.success || bonusResult?.already_credited) {
-            toast.success("Profile completed! Welcome bonus credited!");
-            navigate("/dashboard", { replace: true });
           } else {
-            toast.error("Welcome bonus could not be credited. Please try again.");
+            console.log("Welcome bonus result:", bonusResult);
           }
+          
+          localStorage.setItem(PROFILE_GATE_BYPASS_KEY, "true");
         } catch (e) {
-          console.error("Error crediting welcome bonus:", e);
-          toast.error("An error occurred. Please try again.");
+          console.error("Error setting up welcome bonus:", e);
         }
-      } else {
-        toast.success("Profile updated successfully!");
       }
+      toast.success("Profile updated successfully!");
+      navigate("/dashboard", {
+        replace: true
+      });
     } catch (err) {
       console.error("Unexpected error during profile update:", err);
       toast.error("An unexpected error occurred. Please try again.");
@@ -382,27 +365,12 @@ export default function ProfileEdit() {
       {/* Header */}
       <header className="sticky top-0 bg-navy-dark/95 backdrop-blur-sm z-40 px-6 py-4 border-b border-primary/20">
         <div className="flex items-center justify-between">
-          <button 
-            onClick={handleBackNavigation} 
-            className={`w-10 h-10 rounded-xl border-2 flex items-center justify-center transition-colors ${
-              canAccessDashboard 
-                ? 'border-primary hover:bg-primary/10' 
-                : 'border-muted-foreground/30 cursor-not-allowed'
-            }`}
-          >
-            {canAccessDashboard ? (
-              <ArrowLeft className="w-5 h-5 text-primary" />
-            ) : (
-              <Lock className="w-4 h-4 text-muted-foreground" />
-            )}
+          <button onClick={() => navigate("/profile")} className="w-10 h-10 rounded-xl border-2 border-primary flex items-center justify-center hover:bg-primary/10 transition-colors">
+            <ArrowLeft className="w-5 h-5 text-primary" />
           </button>
           <div className="text-center">
-            <h1 className="text-xl font-bold text-primary">
-              {canAccessDashboard ? 'Profile' : 'Complete Your Profile'}
-            </h1>
-            <p className="text-sm text-foreground">
-              {canAccessDashboard ? 'Here is your profile details.' : 'Fill all fields to continue'}
-            </p>
+            <h1 className="text-xl font-bold text-primary">Profile</h1>
+            <p className="text-sm text-foreground">Here is your profile details.</p>
           </div>
           <div className="w-10" />
         </div>

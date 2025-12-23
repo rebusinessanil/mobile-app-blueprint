@@ -112,18 +112,17 @@ export default function OTPVerification() {
           console.error('Welcome bonus error:', bonusError);
         }
 
-        // Check if profile is complete AND welcome bonus credited
+        // Check if profile is already complete (returning user)
         const { data: profileData } = await supabase
           .from('profiles')
-          .select('profile_completed, welcome_bonus_given')
+          .select('profile_completed')
           .eq('user_id', data.user.id)
           .single();
         
         toast.success("Email verified successfully!");
         
-        // Only go to dashboard if BOTH conditions are met
-        if (profileData?.profile_completed && profileData?.welcome_bonus_given) {
-          // Existing user with complete profile and bonus - go to dashboard
+        if (profileData?.profile_completed) {
+          // Existing user with complete profile - go to dashboard
           navigate("/dashboard", { replace: true });
         } else {
           // New user or incomplete profile - go to profile-edit with prefilled data

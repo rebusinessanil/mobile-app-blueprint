@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { logger } from '@/lib/logger';
 
 const WELCOME_BONUS_AMOUNT = 199;
+const PROFILE_GATE_BYPASS_KEY = "rebusiness_profile_completed";
 
 export function useWelcomeBonus() {
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
@@ -17,10 +18,10 @@ export function useWelcomeBonus() {
         return;
       }
 
-      // Check profile for welcome_popup_seen and welcome_bonus_given status
+      // Check profile for welcome_popup_seen status
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('welcome_popup_seen, welcome_bonus_given')
+        .select('welcome_popup_seen')
         .eq('user_id', user.id)
         .single();
 
@@ -30,8 +31,8 @@ export function useWelcomeBonus() {
         return;
       }
 
-      // Show popup if welcome bonus was given but popup not yet seen
-      if (profile?.welcome_bonus_given === true && profile?.welcome_popup_seen === false) {
+      // Show popup if welcome_popup_seen is explicitly false
+      if (profile?.welcome_popup_seen === false) {
         setShowWelcomeModal(true);
       }
 
@@ -47,7 +48,7 @@ export function useWelcomeBonus() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Set welcome_popup_seen = true in database (server-side validation)
+      // Set welcome_popup_seen = true in database
       const { error } = await supabase
         .from('profiles')
         .update({ welcome_popup_seen: true })
@@ -56,6 +57,11 @@ export function useWelcomeBonus() {
       if (error) {
         logger.error('Error updating welcome_popup_seen:', error);
       }
+
+      // Set localStorage bypass flag
+      try {
+        localStorage.setItem(PROFILE_GATE_BYPASS_KEY, "true");
+      } catch {}
 
       // Close modal - user stays on dashboard
       setShowWelcomeModal(false);

@@ -74,19 +74,18 @@ export default function AuthCallback() {
               logger.error('Welcome bonus error:', bonusError);
             }
 
-            // Check if profile is complete AND welcome bonus credited
+            // Check if profile is already complete
             const { data: profileData } = await supabase
               .from('profiles')
-              .select('profile_completed, welcome_bonus_given')
+              .select('profile_completed')
               .eq('user_id', data.session.user.id)
               .single();
             
-            // Only redirect to dashboard if BOTH conditions are met
-            if (profileData?.profile_completed && profileData?.welcome_bonus_given) {
-              logger.log("Profile complete and bonus credited, redirecting to dashboard");
+            if (profileData?.profile_completed) {
+              logger.log("Profile complete, redirecting to dashboard");
               if (isMounted) navigate("/dashboard", { replace: true });
             } else {
-              logger.log("Profile incomplete or bonus not credited, redirecting to profile-edit");
+              logger.log("Session created via code exchange, redirecting to profile-edit");
               if (isMounted) navigate("/profile-edit", { replace: true });
             }
             return;
@@ -126,19 +125,18 @@ export default function AuthCallback() {
               logger.error('Welcome bonus error:', bonusError);
             }
 
-            // Check if profile is complete AND welcome bonus credited
+            // Check if profile is already complete
             const { data: profileData } = await supabase
               .from('profiles')
-              .select('profile_completed, welcome_bonus_given')
+              .select('profile_completed')
               .eq('user_id', data.session.user.id)
               .single();
             
-            // Only redirect to dashboard if BOTH conditions are met
-            if (profileData?.profile_completed && profileData?.welcome_bonus_given) {
-              logger.log("Profile complete and bonus credited, redirecting to dashboard");
+            if (profileData?.profile_completed) {
+              logger.log("Profile complete, redirecting to dashboard");
               if (isMounted) navigate("/dashboard", { replace: true });
             } else {
-              logger.log("Profile incomplete or bonus not credited, redirecting to profile-edit");
+              logger.log("Session set from tokens, redirecting to profile-edit");
               if (isMounted) navigate("/profile-edit", { replace: true });
             }
             return;
@@ -148,19 +146,18 @@ export default function AuthCallback() {
         // Check if session already exists
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.access_token && session?.refresh_token) {
-          // Check if profile is complete AND welcome bonus credited
+          // Check if profile is already complete
           const { data: profileData } = await supabase
             .from('profiles')
-            .select('profile_completed, welcome_bonus_given')
+            .select('profile_completed')
             .eq('user_id', session.user.id)
             .single();
           
-          // Only redirect to dashboard if BOTH conditions are met
-          if (profileData?.profile_completed && profileData?.welcome_bonus_given) {
-            logger.log("Profile complete and bonus credited, redirecting to dashboard");
+          if (profileData?.profile_completed) {
+            logger.log("Profile complete, redirecting to dashboard");
             if (isMounted) navigate("/dashboard", { replace: true });
           } else {
-            logger.log("Profile incomplete or bonus not credited, redirecting to profile-edit");
+            logger.log("Existing session found, redirecting to profile-edit");
             if (isMounted) navigate("/profile-edit", { replace: true });
           }
           return;

@@ -1,109 +1,97 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useProfileCompletion } from "@/hooks/useProfileCompletion";
+
+const PROFILE_GATE_BYPASS_KEY = "rebusiness_profile_completed";
+
+// Check localStorage synchronously to prevent flash
+const getProfileBypassStatus = (): boolean => {
+  try {
+    return localStorage.getItem(PROFILE_GATE_BYPASS_KEY) === "true";
+  } catch {
+    return false;
+  }
+};
 
 interface ProfileCompletionGateProps {
   userId: string | null;
   children: React.ReactNode;
 }
 
-/**
- * Strict Profile Completion Gate
- * 
- * This gate BLOCKS access to any protected route until:
- * 1. Profile is 100% complete (verified by database flag)
- * 2. Welcome bonus has been credited (verified by database flag)
- * 
- * NO localStorage bypasses - everything is server-validated
- */
 export default function ProfileCompletionGate({
   userId,
   children
 }: ProfileCompletionGateProps) {
   const navigate = useNavigate();
   const location = useLocation();
-  const [hasNavigated, setHasNavigated] = useState(false);
+  
+  // Check localStorage synchronously FIRST - this is instant
+  const profileBypassed = getProfileBypassStatus();
   
   const {
-    canAccessDashboard,
+    isComplete,
     loading,
-    isOldUser,
+    isOldUser
   } = useProfileCompletion(userId || undefined);
 
   // Prevent back navigation when profile is incomplete
   useEffect(() => {
-    // Skip for old users or if already has dashboard access
-    if (isOldUser || canAccessDashboard) return;
-    if (loading) return;
+    if (profileBypassed || loading || isOldUser) return;
     
-    // If on profile-edit, allow - this is where they need to be
-    if (location.pathname === "/profile-edit") return;
-
-    // Push state to prevent back navigation
-    window.history.pushState(null, "", window.location.href);
-    
-    const handlePopState = () => {
-      // Always push back to prevent escape and redirect to profile-edit
+    if (!isComplete && location.pathname !== "/profile-edit") {
+      // Push state to prevent back navigation
       window.history.pushState(null, "", window.location.href);
-      navigate("/profile-edit", { replace: true });
-    };
-    
-    window.addEventListener("popstate", handlePopState);
-    return () => window.removeEventListener("popstate", handlePopState);
-  }, [canAccessDashboard, loading, isOldUser, location.pathname, navigate]);
+      
+      const handlePopState = () => {
+        // Always push back to prevent escape
+        window.history.pushState(null, "", window.location.href);
+        navigate("/profile-edit", { replace: true });
+      };
+      
+      window.addEventListener("popstate", handlePopState);
+      return () => window.removeEventListener("popstate", handlePopState);
+    }
+  }, [isComplete, loading, profileBypassed, isOldUser, location.pathname, navigate]);
 
-  // Main redirect logic - STRICT enforcement
+  // Redirect to profile-edit if profile is incomplete (NEW users only)
   useEffect(() => {
-    // Skip if still loading or is old user
+    if (profileBypassed || isOldUser) return;
     if (loading) return;
-    if (isOldUser) return;
     
-    // Already on profile-edit - allow access
-    if (location.pathname === "/profile-edit") {
-      setHasNavigated(false);
-      return;
-    }
-
-    // If cannot access dashboard, redirect to profile-edit
-    if (!canAccessDashboard && !hasNavigated) {
-      setHasNavigated(true);
+    if (!isComplete && location.pathname !== "/profile-edit") {
       navigate("/profile-edit", { replace: true });
     }
-  }, [canAccessDashboard, loading, isOldUser, location.pathname, navigate, hasNavigated]);
+  }, [isComplete, loading, profileBypassed, isOldUser, location.pathname, navigate]);
 
-  // Reset navigation flag when location changes
-  useEffect(() => {
-    setHasNavigated(false);
-  }, [location.pathname]);
-
-  // Old users bypass the gate completely
-  if (isOldUser) {
+  // If localStorage bypass is set OR is old user, show children immediately
+  if (profileBypassed || isOldUser) {
     return <>{children}</>;
   }
 
-  // Show loading state while checking
+  // Show blank loading state until profile check completes
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-background">
+        {/* Completely blank with same background */}
       </div>
     );
   }
 
-  // If on profile-edit page, always allow access
+  // If on profile-edit page, allow access
   if (location.pathname === "/profile-edit") {
     return <>{children}</>;
   }
 
-  // If can access dashboard, show children
-  if (canAccessDashboard) {
+  // If profile is complete, show children
+  if (isComplete) {
     return <>{children}</>;
   }
 
-  // Cannot access - show loading while redirect happens
+  // Profile incomplete and not on profile-edit - will redirect via useEffect
+  // Show blank screen during redirect
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center">
-      <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+    <div className="min-h-screen bg-background">
+      {/* Redirecting to profile-edit */}
     </div>
   );
 }

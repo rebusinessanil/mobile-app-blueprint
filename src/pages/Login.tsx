@@ -76,22 +76,12 @@ export default function Login() {
     }, { showToast: true, retryOnFail: true });
 
     if (result.success && result.data?.user) {
-      // Check if profile is complete AND welcome bonus credited
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('profile_completed, welcome_bonus_given')
-        .eq('user_id', result.data.user.id)
-        .single();
-      
+      // Set bypass flag to skip profile completion checks
+      try {
+        localStorage.setItem("rebusiness_profile_completed", "true");
+      } catch {}
       toast.success("Login successful!");
-      
-      // Only go to dashboard if BOTH conditions are met
-      if (profileData?.profile_completed && profileData?.welcome_bonus_given) {
-        navigate("/dashboard", { replace: true });
-      } else {
-        // Incomplete profile - redirect to profile-edit
-        navigate("/profile-edit", { replace: true });
-      }
+      navigate("/dashboard", { replace: true });
     }
 
     setLoading(false);
