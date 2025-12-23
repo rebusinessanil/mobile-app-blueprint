@@ -86,6 +86,7 @@ const OTPVerification = lazyWithRetry(() => import("./pages/OTPVerification"));
 const ComingSoon = lazyWithRetry(() => import("./pages/ComingSoon"));
 const NotFound = lazyWithRetry(() => import("./pages/NotFound"));
 const MeetingBannerCreate = lazyWithRetry(() => import("./pages/MeetingBannerCreate"));
+const PrivacyPolicy = lazyWithRetry(() => import("./pages/PrivacyPolicy"));
 
 // Admin pages
 const AdminDashboard = lazyWithRetry(() => import("./pages/AdminDashboard"));
@@ -169,6 +170,7 @@ const App = () => (
               <Route path="/" element={<Login />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
               <Route path="/otp-verification" element={<OTPVerification />} />
               <Route path="/auth/callback" element={<AuthCallback />} />
               
