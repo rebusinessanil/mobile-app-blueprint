@@ -126,13 +126,13 @@ export default function Register() {
     setIsLoading(false);
   };
   return (
-    <div className="h-screen bg-navy-dark flex items-center justify-center p-3 overflow-hidden relative">
+    <div className="h-screen bg-background flex items-center justify-center p-3 overflow-hidden relative">
       {/* Locked Dashboard Preview Background */}
       <LockedDashboardPreview />
       
-      {/* Registration Form - Foreground */}
+      {/* Registration Form - Foreground with transparency */}
       <div className="w-full max-w-md relative z-10">
-        <div className="gold-border bg-card/95 backdrop-blur-sm p-4 space-y-3 my-0 mx-[24px] px-[13px] py-[13px] border-2">
+        <div className="gold-border bg-card/80 backdrop-blur-md p-4 space-y-3 my-0 mx-[24px] px-[13px] py-[13px] border-2 shadow-2xl">
           {/* Icon */}
           <div className="flex justify-center">
             <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center">
