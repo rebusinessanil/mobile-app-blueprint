@@ -6,14 +6,12 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { useRankStickers } from '@/hooks/useRankStickers';
 import { useStickerCategories } from '@/hooks/useStickers';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import AdminLayout from '@/components/admin/AdminLayout';
-import { AdminGuard } from "@/components/AdminGuard";
 
 interface Rank {
   id: string;
@@ -177,28 +175,38 @@ const AdminRankStickers = () => {
 
         {selectedRank && (
           <>
-            {/* Category Tabs */}
+            {/* Category Selection */}
             <Card className="p-6 mb-6">
-              <Tabs value={selectedCategory} onValueChange={handleCategoryChange}>
-                <TabsList className="grid w-full grid-cols-4 mb-6">
-                  {categories.map((category) => (
-                    <TabsTrigger key={category.id} value={category.id}>
-                      {category.name}
-                    </TabsTrigger>
-                  ))}
-                </TabsList>
-
+              <Label className="text-base font-semibold mb-3 block">Select Sticker Category</Label>
+              <div className="flex flex-wrap gap-2 mb-4">
                 {categories.map((category) => (
-                  <TabsContent key={category.id} value={category.id}>
-                    <div>
-                      <h3 className="text-lg font-semibold mb-2">{category.name} Stickers</h3>
-                      {category.description && (
-                        <p className="text-sm text-muted-foreground">{category.description}</p>
-                      )}
-                    </div>
-                  </TabsContent>
+                  <Button
+                    key={category.id}
+                    variant={selectedCategory === category.id ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => handleCategoryChange(category.id)}
+                    className={`transition-all ${
+                      selectedCategory === category.id 
+                        ? 'ring-2 ring-primary ring-offset-2' 
+                        : 'hover:bg-primary/10'
+                    }`}
+                  >
+                    {category.name}
+                  </Button>
                 ))}
-              </Tabs>
+              </div>
+              
+              {selectedCategoryData && (
+                <div className="p-4 bg-secondary/20 rounded-lg">
+                  <h3 className="text-lg font-semibold mb-1">{selectedCategoryData.name} Stickers</h3>
+                  {selectedCategoryData.description && (
+                    <p className="text-sm text-muted-foreground">{selectedCategoryData.description}</p>
+                  )}
+                  <p className="text-xs text-muted-foreground mt-2">
+                    {stickers.filter(s => s.image_url).length} of 16 slots filled
+                  </p>
+                </div>
+              )}
             </Card>
 
             {/* 16 Slot Grid */}
