@@ -107,7 +107,7 @@ serve(async (req) => {
         .eq("user_id", user_id);
 
       return new Response(
-        JSON.stringify({ success: true, skipped: true, message: "Welcome bonus already credited" }),
+        JSON.stringify({ success: true, already_credited: true, message: "Welcome bonus already credited" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
