@@ -5,8 +5,11 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.81.1";
 const ALLOWED_ORIGINS = [
   "https://gjlrxikynlbpsvrpwebp.lovableproject.com",
   "https://rebusiness.lovable.app",
+  "https://rebusiness.in",
+  "https://www.rebusiness.in",
   /^https:\/\/.*\.lovableproject\.com$/,
   /^https:\/\/.*\.lovable\.app$/,
+  /^https:\/\/.*rebusiness\.in$/,
   "http://localhost:5173",
   "http://localhost:3000",
 ];
