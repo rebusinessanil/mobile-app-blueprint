@@ -342,10 +342,9 @@ export default function ProfileEdit() {
             console.error("Error calling welcome bonus function:", bonusError);
           } else {
             console.log("Welcome bonus result:", bonusResult);
-            // Verify the new balance was returned and is correct
-            if (bonusResult?.success && !bonusResult?.skipped && bonusResult?.new_balance) {
-              console.log("✅ Welcome bonus verified. New balance:", bonusResult.new_balance);
-              // The modal will be shown on Dashboard once it verifies the balance
+            // Show bonus credited message if successful and not skipped
+            if (bonusResult?.success && !bonusResult?.skipped) {
+              toast.success("₹199 Welcome Bonus credited to your wallet!");
             }
           }
           

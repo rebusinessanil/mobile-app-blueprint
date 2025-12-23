@@ -9,7 +9,6 @@ export function useWelcomeBonus() {
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const [bonusAmount] = useState(WELCOME_BONUS_AMOUNT);
   const [isChecking, setIsChecking] = useState(true);
-  const [verifiedBalance, setVerifiedBalance] = useState<number | null>(null);
 
   const checkWelcomeBonus = useCallback(async () => {
     try {
@@ -22,7 +21,7 @@ export function useWelcomeBonus() {
       // Check profile for welcome_popup_seen status
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('welcome_popup_seen, welcome_bonus_given')
+        .select('welcome_popup_seen')
         .eq('user_id', user.id)
         .single();
 
@@ -32,59 +31,9 @@ export function useWelcomeBonus() {
         return;
       }
 
-      // Only proceed if welcome_popup_seen is explicitly false AND bonus was given
-      if (profile?.welcome_popup_seen === false && profile?.welcome_bonus_given === true) {
-        // CRITICAL: Verify actual wallet balance before showing modal
-        const { data: credits, error: creditsError } = await supabase
-          .from('user_credits')
-          .select('balance')
-          .eq('user_id', user.id)
-          .maybeSingle();
-
-        if (creditsError) {
-          logger.error('Error fetching credits:', creditsError);
-          setIsChecking(false);
-          return;
-        }
-
-        // Only show modal if balance is at least the bonus amount (confirms bonus was credited)
-        if (credits && credits.balance >= WELCOME_BONUS_AMOUNT) {
-          logger.log('✅ Welcome bonus verified in wallet:', credits.balance);
-          setVerifiedBalance(credits.balance);
-          setShowWelcomeModal(true);
-        } else {
-          logger.log('⏳ Waiting for wallet balance update...');
-          // Set up real-time subscription to wait for balance update
-          const channel = supabase
-            .channel('welcome-bonus-verification')
-            .on(
-              'postgres_changes',
-              {
-                event: '*',
-                schema: 'public',
-                table: 'user_credits',
-                filter: `user_id=eq.${user.id}`,
-              },
-              (payload) => {
-                logger.log('🔄 Wallet update received:', payload);
-                if (payload.new && 'balance' in payload.new) {
-                  const newBalance = (payload.new as any).balance;
-                  if (newBalance >= WELCOME_BONUS_AMOUNT) {
-                    logger.log('✅ Welcome bonus now verified:', newBalance);
-                    setVerifiedBalance(newBalance);
-                    setShowWelcomeModal(true);
-                    supabase.removeChannel(channel);
-                  }
-                }
-              }
-            )
-            .subscribe();
-
-          // Cleanup after 10 seconds if no update received
-          setTimeout(() => {
-            supabase.removeChannel(channel);
-          }, 10000);
-        }
+      // Show popup if welcome_popup_seen is explicitly false
+      if (profile?.welcome_popup_seen === false) {
+        setShowWelcomeModal(true);
       }
 
       setIsChecking(false);
@@ -129,7 +78,6 @@ export function useWelcomeBonus() {
   return {
     showWelcomeModal,
     bonusAmount,
-    verifiedBalance,
     isChecking,
     handleContinue,
     checkWelcomeBonus
