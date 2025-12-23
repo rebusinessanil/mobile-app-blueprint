@@ -91,9 +91,9 @@ export default function Login() {
       {/* Locked Dashboard Preview Background */}
       <LockedDashboardPreview />
       
-      {/* Login Form - Foreground with transparency */}
+      {/* Login Form - Foreground */}
       <div className="w-full max-w-md relative z-10">
-        <div className="gold-border bg-card/80 backdrop-blur-md p-8 space-y-6 shadow-2xl">
+        <div className="gold-border bg-card/95 backdrop-blur-sm p-8 space-y-6">
           {/* Icon */}
           <div className="flex justify-center">
             <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center">
