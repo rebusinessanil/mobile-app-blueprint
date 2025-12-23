@@ -56,6 +56,22 @@ export default function AuthCallback() {
           }
 
         if (data?.session?.access_token && data?.session?.refresh_token) {
+          // Credit welcome bonus via edge function
+          try {
+            const { error: bonusError } = await supabase.functions.invoke('credit-welcome-bonus', {
+              headers: {
+                Authorization: `Bearer ${data.session.access_token}`
+              }
+            });
+            if (bonusError) {
+              logger.error("Welcome bonus error:", bonusError);
+            } else {
+              logger.log("Welcome bonus credited successfully");
+            }
+          } catch (bonusErr) {
+            logger.error("Failed to credit welcome bonus:", bonusErr);
+          }
+
           // Check if profile is already complete
           const { data: profileData } = await supabase
             .from('profiles')
@@ -89,6 +105,22 @@ export default function AuthCallback() {
           }
 
         if (data?.session) {
+          // Credit welcome bonus via edge function
+          try {
+            const { error: bonusError } = await supabase.functions.invoke('credit-welcome-bonus', {
+              headers: {
+                Authorization: `Bearer ${data.session.access_token}`
+              }
+            });
+            if (bonusError) {
+              logger.error("Welcome bonus error:", bonusError);
+            } else {
+              logger.log("Welcome bonus credited successfully");
+            }
+          } catch (bonusErr) {
+            logger.error("Failed to credit welcome bonus:", bonusErr);
+          }
+
           // Check if profile is already complete
           const { data: profileData } = await supabase
             .from('profiles')

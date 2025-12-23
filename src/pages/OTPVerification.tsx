@@ -92,7 +92,23 @@ export default function OTPVerification() {
 
       if (error) throw error;
 
-      if (data?.user) {
+      if (data?.user && data?.session) {
+        // Credit welcome bonus via edge function
+        try {
+          const { error: bonusError } = await supabase.functions.invoke('credit-welcome-bonus', {
+            headers: {
+              Authorization: `Bearer ${data.session.access_token}`
+            }
+          });
+          if (bonusError) {
+            console.error("Welcome bonus error:", bonusError);
+          } else {
+            console.log("Welcome bonus credited successfully");
+          }
+        } catch (bonusErr) {
+          console.error("Failed to credit welcome bonus:", bonusErr);
+        }
+
         // Check if profile is already complete (returning user)
         const { data: profileData } = await supabase
           .from('profiles')
