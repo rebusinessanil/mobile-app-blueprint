@@ -126,6 +126,8 @@ serve(async (req) => {
     // ATOMIC TRANSACTION: Credit the welcome bonus
     console.log("[credit-welcome-bonus] Crediting 199 welcome bonus...");
 
+    let newBalance = 199;
+
     // Step 1: Check if user_credits exists
     const { data: existingCredits } = await supabase
       .from("user_credits")
@@ -134,11 +136,12 @@ serve(async (req) => {
       .maybeSingle();
 
     if (existingCredits) {
+      newBalance = existingCredits.balance + 199;
       // Update existing credits by adding 199
       const { error: creditError } = await supabase
         .from("user_credits")
         .update({
-          balance: existingCredits.balance + 199,
+          balance: newBalance,
           total_earned: existingCredits.total_earned + 199,
           updated_at: new Date().toISOString(),
         })
@@ -195,7 +198,22 @@ serve(async (req) => {
       );
     }
 
-    // Step 3: Mark welcome_bonus_given = true
+    // Step 3: Verify the balance was actually updated by reading it back
+    const { data: verifiedCredits, error: verifyError } = await supabase
+      .from("user_credits")
+      .select("balance, total_earned")
+      .eq("user_id", user_id)
+      .single();
+
+    if (verifyError || !verifiedCredits) {
+      console.error("[credit-welcome-bonus] Balance verification error:", verifyError);
+      return new Response(
+        JSON.stringify({ success: false, error: "Failed to verify balance update" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Step 4: Mark welcome_bonus_given = true and welcome_popup_seen = false
     const { error: flagError } = await supabase
       .from("profiles")
       .update({ 
@@ -208,13 +226,15 @@ serve(async (req) => {
       console.error("[credit-welcome-bonus] Flag update error:", flagError);
     }
 
-    console.log("[credit-welcome-bonus] ✅ Welcome bonus credited successfully");
+    console.log("[credit-welcome-bonus] ✅ Welcome bonus credited successfully. New balance:", verifiedCredits.balance);
 
     return new Response(
       JSON.stringify({ 
         success: true, 
         message: "Welcome bonus credited", 
         amount: 199,
+        new_balance: verifiedCredits.balance,
+        total_earned: verifiedCredits.total_earned,
         user_id 
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
