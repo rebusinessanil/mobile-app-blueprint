@@ -55,39 +55,34 @@ export default function AuthCallback() {
             return;
           }
 
-        if (data?.session?.access_token && data?.session?.refresh_token) {
-          // Credit welcome bonus via edge function
-          try {
+          if (data?.session?.access_token && data?.session?.refresh_token) {
+            // Credit welcome bonus via edge function (idempotent)
             const { error: bonusError } = await supabase.functions.invoke('credit-welcome-bonus', {
               headers: {
-                Authorization: `Bearer ${data.session.access_token}`
-              }
+                Authorization: `Bearer ${data.session.access_token}`,
+              },
             });
-            if (bonusError) {
-              logger.error("Welcome bonus error:", bonusError);
-            } else {
-              logger.log("Welcome bonus credited successfully");
-            }
-          } catch (bonusErr) {
-            logger.error("Failed to credit welcome bonus:", bonusErr);
-          }
 
-          // Check if profile is already complete
-          const { data: profileData } = await supabase
-            .from('profiles')
-            .select('profile_completed')
-            .eq('user_id', data.session.user.id)
-            .single();
-          
-          if (profileData?.profile_completed) {
-            logger.log("Profile complete, redirecting to dashboard");
-            if (isMounted) navigate("/dashboard", { replace: true });
-          } else {
-            logger.log("Session created via code exchange, redirecting to profile-edit");
-            if (isMounted) navigate("/profile-edit", { replace: true });
+            if (bonusError) {
+              logger.error('Welcome bonus error:', bonusError);
+            }
+
+            // Check if profile is already complete
+            const { data: profileData } = await supabase
+              .from('profiles')
+              .select('profile_completed')
+              .eq('user_id', data.session.user.id)
+              .single();
+            
+            if (profileData?.profile_completed) {
+              logger.log("Profile complete, redirecting to dashboard");
+              if (isMounted) navigate("/dashboard", { replace: true });
+            } else {
+              logger.log("Session created via code exchange, redirecting to profile-edit");
+              if (isMounted) navigate("/profile-edit", { replace: true });
+            }
+            return;
           }
-          return;
-        }
         }
 
         // Handle implicit grant flow (tokens in hash) - FALLBACK
@@ -104,39 +99,34 @@ export default function AuthCallback() {
             return;
           }
 
-        if (data?.session) {
-          // Credit welcome bonus via edge function
-          try {
+          if (data?.session) {
+            // Credit welcome bonus via edge function (idempotent)
             const { error: bonusError } = await supabase.functions.invoke('credit-welcome-bonus', {
               headers: {
-                Authorization: `Bearer ${data.session.access_token}`
-              }
+                Authorization: `Bearer ${data.session.access_token}`,
+              },
             });
-            if (bonusError) {
-              logger.error("Welcome bonus error:", bonusError);
-            } else {
-              logger.log("Welcome bonus credited successfully");
-            }
-          } catch (bonusErr) {
-            logger.error("Failed to credit welcome bonus:", bonusErr);
-          }
 
-          // Check if profile is already complete
-          const { data: profileData } = await supabase
-            .from('profiles')
-            .select('profile_completed')
-            .eq('user_id', data.session.user.id)
-            .single();
-          
-          if (profileData?.profile_completed) {
-            logger.log("Profile complete, redirecting to dashboard");
-            if (isMounted) navigate("/dashboard", { replace: true });
-          } else {
-            logger.log("Session set from tokens, redirecting to profile-edit");
-            if (isMounted) navigate("/profile-edit", { replace: true });
+            if (bonusError) {
+              logger.error('Welcome bonus error:', bonusError);
+            }
+
+            // Check if profile is already complete
+            const { data: profileData } = await supabase
+              .from('profiles')
+              .select('profile_completed')
+              .eq('user_id', data.session.user.id)
+              .single();
+            
+            if (profileData?.profile_completed) {
+              logger.log("Profile complete, redirecting to dashboard");
+              if (isMounted) navigate("/dashboard", { replace: true });
+            } else {
+              logger.log("Session set from tokens, redirecting to profile-edit");
+              if (isMounted) navigate("/profile-edit", { replace: true });
+            }
+            return;
           }
-          return;
-        }
         }
 
         // Check if session already exists

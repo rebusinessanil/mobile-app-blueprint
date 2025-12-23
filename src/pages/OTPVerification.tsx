@@ -93,20 +93,16 @@ export default function OTPVerification() {
       if (error) throw error;
 
       if (data?.user && data?.session) {
-        // Credit welcome bonus via edge function
-        try {
-          const { error: bonusError } = await supabase.functions.invoke('credit-welcome-bonus', {
-            headers: {
-              Authorization: `Bearer ${data.session.access_token}`
-            }
-          });
-          if (bonusError) {
-            console.error("Welcome bonus error:", bonusError);
-          } else {
-            console.log("Welcome bonus credited successfully");
-          }
-        } catch (bonusErr) {
-          console.error("Failed to credit welcome bonus:", bonusErr);
+        // Credit welcome bonus via edge function (idempotent)
+        const { error: bonusError } = await supabase.functions.invoke('credit-welcome-bonus', {
+          headers: {
+            Authorization: `Bearer ${data.session.access_token}`,
+          },
+        });
+
+        if (bonusError) {
+          // Don't block onboarding; wallet will still work without bonus
+          console.error('Welcome bonus error:', bonusError);
         }
 
         // Check if profile is already complete (returning user)

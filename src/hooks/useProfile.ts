@@ -37,16 +37,18 @@ export const useProfile = (userId?: string) => {
 
         if (profileError) throw profileError;
 
-        // Fetch credit balance
-        const { data: creditsData } = await supabase
+        // Fetch credit balance (may not exist yet for brand new users)
+        const { data: creditsData, error: creditsError } = await supabase
           .from('user_credits')
           .select('balance')
           .eq('user_id', userId)
-          .single();
+          .maybeSingle();
+
+        if (creditsError) throw creditsError;
 
         setProfile({
           ...profileData,
-          balance: creditsData?.balance || 0,
+          balance: creditsData?.balance ?? 0,
         });
       } catch (err) {
         setError(err as Error);
@@ -88,11 +90,9 @@ export const useProfile = (userId?: string) => {
           if (payload.new && 'balance' in payload.new) {
             setProfile(prev => prev ? {
               ...prev,
-              balance: (payload.new as any).balance
+              balance: (payload.new as any).balance ?? prev.balance ?? 0,
             } : null);
           }
-          // Also fetch full profile to ensure consistency
-          fetchProfile();
         }
       )
       .subscribe();
