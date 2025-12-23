@@ -8,7 +8,6 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { z } from "zod";
 import { useSupabaseConnection } from "@/hooks/useSupabaseConnection";
-import LockedDashboardPreview from "@/components/LockedDashboardPreview";
 
 // Zod validation schema for registration
 const registrationSchema = z.object({
@@ -125,14 +124,9 @@ export default function Register() {
 
     setIsLoading(false);
   };
-  return (
-    <div className="h-screen bg-navy-dark flex items-center justify-center p-3 overflow-hidden relative">
-      {/* Locked Dashboard Preview Background */}
-      <LockedDashboardPreview />
-      
-      {/* Registration Form - Foreground */}
-      <div className="w-full max-w-md relative z-10">
-        <div className="gold-border bg-card/95 backdrop-blur-sm p-4 space-y-3 my-0 mx-[24px] px-[13px] py-[13px] border-2">
+  return <div className="h-screen bg-navy-dark flex items-center justify-center p-3 overflow-hidden">
+      <div className="w-full max-w-md">
+        <div className="gold-border bg-card p-4 space-y-3 my-0 mx-[24px] px-[13px] py-[13px] border-2">
           {/* Icon */}
           <div className="flex justify-center">
             <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center">
@@ -260,7 +254,9 @@ export default function Register() {
             </Link>
           </p>
         </div>
+
+        {/* WhatsApp FAB */}
+        
       </div>
-    </div>
-  );
+    </div>;
 }

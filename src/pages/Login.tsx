@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { z } from "zod";
 import { useSupabaseConnection } from "@/hooks/useSupabaseConnection";
-import LockedDashboardPreview from "@/components/LockedDashboardPreview";
+
 // Zod validation schema for login
 const loginSchema = z.object({
   email: z.string().trim().email("Please enter a valid email address").max(255, "Email must be less than 255 characters"),
@@ -86,14 +86,9 @@ export default function Login() {
 
     setLoading(false);
   };
-  return (
-    <div className="min-h-screen bg-navy-dark flex items-center justify-center p-6 relative overflow-hidden">
-      {/* Locked Dashboard Preview Background */}
-      <LockedDashboardPreview />
-      
-      {/* Login Form - Foreground */}
-      <div className="w-full max-w-md relative z-10">
-        <div className="gold-border bg-card/95 backdrop-blur-sm p-8 space-y-6">
+  return <div className="min-h-screen bg-navy-dark flex items-center justify-center p-6">
+      <div className="w-full max-w-md">
+        <div className="gold-border bg-card p-8 space-y-6">
           {/* Icon */}
           <div className="flex justify-center">
             <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center">
@@ -154,6 +149,8 @@ export default function Login() {
           </p>
         </div>
       </div>
-    </div>
-  );
+
+      {/* WhatsApp FAB - Always visible on login page, cannot be closed */}
+      
+    </div>;
 }
