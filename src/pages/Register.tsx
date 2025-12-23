@@ -16,11 +16,12 @@ const registrationSchema = z.object({
   mobile: z.string().trim().min(10, "Mobile number must be at least 10 digits").max(16, "Mobile number is too long"),
   pin: z.string().length(4, "PIN must be exactly 4 digits").regex(/^\d{4}$/, "PIN must contain only numbers")
 });
-
 export default function Register() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
-  const { withConnectionCheck } = useSupabaseConnection();
+  const {
+    withConnectionCheck
+  } = useSupabaseConnection();
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -31,7 +32,6 @@ export default function Register() {
     agreeToTerms: false
   });
   const [pin, setPin] = useState(["", "", "", ""]);
-
   const handlePinChange = (index: number, value: string) => {
     if (value.length <= 1 && /^\d*$/.test(value)) {
       const newPin = [...pin];
@@ -42,7 +42,6 @@ export default function Register() {
       }
     }
   };
-
   const handleSendOTP = async () => {
     const pinCode = pin.join("");
 
@@ -53,7 +52,6 @@ export default function Register() {
       mobile: formData.mobile,
       pin: pinCode
     });
-
     if (!validationResult.success) {
       const firstError = validationResult.error.errors[0];
       toast.error(firstError.message);
@@ -65,7 +63,6 @@ export default function Register() {
     const e164Pattern = /^\+[1-9]\d{9,14}$/;
     const plainPattern = /^\d{10}$/;
     let formattedMobile = mobileNumber;
-
     if (e164Pattern.test(mobileNumber)) {
       formattedMobile = mobileNumber;
     } else if (plainPattern.test(mobileNumber)) {
@@ -74,19 +71,19 @@ export default function Register() {
       toast.error("Please enter a valid mobile number (10 digits or +[country code][number])");
       return;
     }
-
     if (!formData.agreeToTerms) {
       toast.error("Please agree to the Terms & Conditions");
       return;
     }
-
     setIsLoading(true);
 
     // Create password from PIN
     const password = `ReBiz${pinCode}${Date.now()}`;
-
     const result = await withConnectionCheck(async () => {
-      const { data, error } = await supabase.auth.signUp({
+      const {
+        data,
+        error
+      } = await supabase.auth.signUp({
         email: formData.email,
         password: password,
         phone: formattedMobile,
@@ -95,20 +92,17 @@ export default function Register() {
           data: {
             full_name: formData.fullName,
             mobile: formattedMobile,
-            whatsapp: formData.differentWhatsApp 
-              ? formData.whatsappNumber.startsWith('+') 
-                ? formData.whatsappNumber 
-                : `+91${formData.whatsappNumber}` 
-              : formattedMobile,
+            whatsapp: formData.differentWhatsApp ? formData.whatsappNumber.startsWith('+') ? formData.whatsappNumber : `+91${formData.whatsappNumber}` : formattedMobile,
             gender: formData.gender
           }
         }
       });
-
       if (error) throw error;
       return data;
-    }, { showToast: true, retryOnFail: true });
-
+    }, {
+      showToast: true,
+      retryOnFail: true
+    });
     if (result.success && result.data?.user) {
       toast.success("Registration successful! Check your email for OTP.");
       navigate("/otp-verification", {
@@ -121,7 +115,6 @@ export default function Register() {
         }
       });
     }
-
     setIsLoading(false);
   };
   return <div className="h-screen bg-navy-dark flex items-center justify-center p-3 overflow-hidden">
@@ -138,26 +131,24 @@ export default function Register() {
           <h1 className="text-2xl font-bold text-center text-foreground">REGISTRATION</h1>
 
           {/* Continue with Google */}
-          <Button 
-            type="button" 
-            onClick={async () => {
-              try {
-                const { error } = await supabase.auth.signInWithOAuth({
-                  provider: 'google',
-                  options: {
-                    redirectTo: `${window.location.origin}/auth/callback`,
-                    queryParams: {
-                      prompt: 'select_account'
-                    }
-                  }
-                });
-                if (error) throw error;
-              } catch (error: any) {
-                toast.error(error.message || "Google sign-up failed");
+          <Button type="button" onClick={async () => {
+          try {
+            const {
+              error
+            } = await supabase.auth.signInWithOAuth({
+              provider: 'google',
+              options: {
+                redirectTo: `${window.location.origin}/auth/callback`,
+                queryParams: {
+                  prompt: 'select_account'
+                }
               }
-            }} 
-            className="w-full h-10 bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 font-medium flex items-center justify-center gap-2 text-sm"
-          >
+            });
+            if (error) throw error;
+          } catch (error: any) {
+            toast.error(error.message || "Google sign-up failed");
+          }
+        }} className="w-full h-10 bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 font-medium flex items-center justify-center gap-2 text-sm">
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
               <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
@@ -236,7 +227,7 @@ export default function Register() {
             <label className="text-xs text-foreground">
               I agree to the{" "}
               <a href="#" className="text-primary underline">
-                Terms & Conditions
+                Privacy Policy
               </a>
             </label>
           </div>
