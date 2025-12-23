@@ -126,39 +126,21 @@ serve(async (req) => {
     // ATOMIC TRANSACTION: Use RPC call or perform all operations
     console.log("[credit-welcome-bonus] Crediting 199 welcome bonus...");
 
-    // Step 1: Check if user_credits exists
-    const { data: existingCredits } = await supabase
+    // Step 1: Upsert user_credits with welcome bonus
+    const { error: creditError } = await supabase
       .from("user_credits")
-      .select("balance, total_earned")
-      .eq("user_id", user_id)
-      .single();
-
-    let creditError;
-    if (existingCredits) {
-      // Update existing record - ADD 199 to current balance
-      const { error } = await supabase
-        .from("user_credits")
-        .update({
-          balance: existingCredits.balance + 199,
-          total_earned: existingCredits.total_earned + 199,
-        })
-        .eq("user_id", user_id);
-      creditError = error;
-    } else {
-      // Insert new record
-      const { error } = await supabase
-        .from("user_credits")
-        .insert({
+      .upsert(
+        {
           user_id,
           balance: 199,
           total_earned: 199,
           total_spent: 0,
-        });
-      creditError = error;
-    }
+        },
+        { onConflict: "user_id" }
+      );
 
     if (creditError) {
-      console.error("[credit-welcome-bonus] Credit update error:", creditError);
+      console.error("[credit-welcome-bonus] Credit upsert error:", creditError);
       return new Response(
         JSON.stringify({ success: false, error: "Failed to credit balance" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
