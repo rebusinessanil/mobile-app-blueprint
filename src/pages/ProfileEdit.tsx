@@ -330,12 +330,9 @@ export default function ProfileEdit() {
       }
 
       // If profile is complete, credit welcome bonus via atomic edge function
-      // IMPORTANT: Wait for edge function to complete BEFORE navigating
       if (isProfileComplete() && userId) {
         try {
-          toast.loading("Setting up your account...", { id: "welcome-bonus" });
-          
-          // Call atomic edge function for welcome bonus and WAIT for it
+          // Call atomic edge function for welcome bonus
           const { data: bonusResult, error: bonusError } = await supabase.functions.invoke(
             'credit-welcome-bonus',
             { body: { user_id: userId } }
@@ -343,26 +340,16 @@ export default function ProfileEdit() {
 
           if (bonusError) {
             console.error("Error calling welcome bonus function:", bonusError);
-            toast.dismiss("welcome-bonus");
           } else {
             console.log("Welcome bonus result:", bonusResult);
-            if (bonusResult?.success && !bonusResult?.skipped) {
-              toast.success("🎉 ₹199 Welcome Bonus credited!", { id: "welcome-bonus" });
-            } else {
-              toast.dismiss("welcome-bonus");
-            }
           }
           
           localStorage.setItem(PROFILE_GATE_BYPASS_KEY, "true");
         } catch (e) {
           console.error("Error setting up welcome bonus:", e);
-          toast.dismiss("welcome-bonus");
         }
       }
-      
       toast.success("Profile updated successfully!");
-      
-      // Navigate AFTER bonus is credited
       navigate("/dashboard", {
         replace: true
       });
