@@ -57,13 +57,20 @@ export default function AuthCallback() {
 
           if (data?.session?.access_token && data?.session?.refresh_token) {
             // Credit welcome bonus via edge function (idempotent)
-            const { error: bonusError } = await supabase.functions.invoke('credit-welcome-bonus', {
-              headers: {
-                Authorization: `Bearer ${data.session.access_token}`,
-              },
-            });
-
-            if (bonusError) {
+            try {
+              const response = await fetch(
+                'https://gjlrxikynlbpsvrpwebp.supabase.co/functions/v1/credit-welcome-bonus',
+                {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${data.session.access_token}`,
+                  },
+                }
+              );
+              const bonusResult = await response.json();
+              logger.log('[Welcome Bonus]', bonusResult);
+            } catch (bonusError) {
               logger.error('Welcome bonus error:', bonusError);
             }
 
@@ -101,13 +108,20 @@ export default function AuthCallback() {
 
           if (data?.session) {
             // Credit welcome bonus via edge function (idempotent)
-            const { error: bonusError } = await supabase.functions.invoke('credit-welcome-bonus', {
-              headers: {
-                Authorization: `Bearer ${data.session.access_token}`,
-              },
-            });
-
-            if (bonusError) {
+            try {
+              const response = await fetch(
+                'https://gjlrxikynlbpsvrpwebp.supabase.co/functions/v1/credit-welcome-bonus',
+                {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${data.session.access_token}`,
+                  },
+                }
+              );
+              const bonusResult = await response.json();
+              logger.log('[Welcome Bonus]', bonusResult);
+            } catch (bonusError) {
               logger.error('Welcome bonus error:', bonusError);
             }
 
