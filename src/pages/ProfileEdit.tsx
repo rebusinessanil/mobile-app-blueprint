@@ -344,7 +344,10 @@ export default function ProfileEdit() {
             console.log("Welcome bonus result:", bonusResult);
             // Show bonus credited message if successful and not skipped
             if (bonusResult?.success && !bonusResult?.skipped) {
-              toast.success("₹199 Welcome Bonus credited to your wallet!");
+              toast.success("🎉 ₹199 Welcome Bonus credited to your wallet!");
+              
+              // Small delay to ensure real-time subscription can sync before navigation
+              await new Promise(resolve => setTimeout(resolve, 500));
             }
           }
           

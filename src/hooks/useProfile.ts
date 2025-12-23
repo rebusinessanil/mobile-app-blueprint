@@ -69,6 +69,7 @@ export const useProfile = (userId?: string) => {
           filter: `user_id=eq.${userId}`,
         },
         (payload) => {
+          console.log('🔄 Profile updated via realtime:', payload);
           setProfile(prev => ({
             ...(payload.new as Profile),
             balance: prev?.balance || 0,
@@ -84,18 +85,42 @@ export const useProfile = (userId?: string) => {
           filter: `user_id=eq.${userId}`,
         },
         (payload) => {
+          console.log('🔄 Credits updated via realtime:', payload);
           // Immediately update balance from payload for instant sync
           if (payload.new && 'balance' in payload.new) {
+            const newBalance = (payload.new as any).balance;
+            console.log('💰 New balance:', newBalance);
             setProfile(prev => prev ? {
               ...prev,
-              balance: (payload.new as any).balance
+              balance: newBalance
             } : null);
           }
-          // Also fetch full profile to ensure consistency
-          fetchProfile();
         }
       )
-      .subscribe();
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'user_credits',
+          filter: `user_id=eq.${userId}`,
+        },
+        (payload) => {
+          console.log('🆕 New credits record via realtime:', payload);
+          // Handle first-time credit record creation
+          if (payload.new && 'balance' in payload.new) {
+            const newBalance = (payload.new as any).balance;
+            console.log('💰 Initial balance:', newBalance);
+            setProfile(prev => prev ? {
+              ...prev,
+              balance: newBalance
+            } : null);
+          }
+        }
+      )
+      .subscribe((status) => {
+        console.log('📡 Profile subscription status:', status);
+      });
 
     return () => {
       supabase.removeChannel(channel);
