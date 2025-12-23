@@ -123,28 +123,52 @@ serve(async (req) => {
       );
     }
 
-    // ATOMIC TRANSACTION: Use RPC call or perform all operations
+    // ATOMIC TRANSACTION: Credit the welcome bonus
     console.log("[credit-welcome-bonus] Crediting 199 welcome bonus...");
 
-    // Step 1: Upsert user_credits with welcome bonus
-    const { error: creditError } = await supabase
+    // Step 1: Check if user_credits exists
+    const { data: existingCredits } = await supabase
       .from("user_credits")
-      .upsert(
-        {
+      .select("balance, total_earned")
+      .eq("user_id", user_id)
+      .maybeSingle();
+
+    if (existingCredits) {
+      // Update existing credits by adding 199
+      const { error: creditError } = await supabase
+        .from("user_credits")
+        .update({
+          balance: existingCredits.balance + 199,
+          total_earned: existingCredits.total_earned + 199,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("user_id", user_id);
+
+      if (creditError) {
+        console.error("[credit-welcome-bonus] Credit update error:", creditError);
+        return new Response(
+          JSON.stringify({ success: false, error: "Failed to credit balance" }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    } else {
+      // Create new user_credits record
+      const { error: creditError } = await supabase
+        .from("user_credits")
+        .insert({
           user_id,
           balance: 199,
           total_earned: 199,
           total_spent: 0,
-        },
-        { onConflict: "user_id" }
-      );
+        });
 
-    if (creditError) {
-      console.error("[credit-welcome-bonus] Credit upsert error:", creditError);
-      return new Response(
-        JSON.stringify({ success: false, error: "Failed to credit balance" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      if (creditError) {
+        console.error("[credit-welcome-bonus] Credit insert error:", creditError);
+        return new Response(
+          JSON.stringify({ success: false, error: "Failed to credit balance" }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
 
     // Step 2: Create transaction log
