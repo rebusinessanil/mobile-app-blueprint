@@ -663,7 +663,9 @@ export type Database = {
       }
       stickers: {
         Row: {
+          anniversary_id: string | null
           banner_category: string | null
+          birthday_id: string | null
           category_id: string | null
           created_at: string | null
           description: string | null
@@ -671,6 +673,7 @@ export type Database = {
           id: string
           image_url: string
           is_active: boolean | null
+          motivational_banner_id: string | null
           name: string
           position_x: number | null
           position_y: number | null
@@ -678,10 +681,13 @@ export type Database = {
           rotation: number | null
           scale: number | null
           slot_number: number | null
+          trip_id: string | null
           updated_at: string | null
         }
         Insert: {
+          anniversary_id?: string | null
           banner_category?: string | null
+          birthday_id?: string | null
           category_id?: string | null
           created_at?: string | null
           description?: string | null
@@ -689,6 +695,7 @@ export type Database = {
           id?: string
           image_url: string
           is_active?: boolean | null
+          motivational_banner_id?: string | null
           name: string
           position_x?: number | null
           position_y?: number | null
@@ -696,10 +703,13 @@ export type Database = {
           rotation?: number | null
           scale?: number | null
           slot_number?: number | null
+          trip_id?: string | null
           updated_at?: string | null
         }
         Update: {
+          anniversary_id?: string | null
           banner_category?: string | null
+          birthday_id?: string | null
           category_id?: string | null
           created_at?: string | null
           description?: string | null
@@ -707,6 +717,7 @@ export type Database = {
           id?: string
           image_url?: string
           is_active?: boolean | null
+          motivational_banner_id?: string | null
           name?: string
           position_x?: number | null
           position_y?: number | null
@@ -714,6 +725,7 @@ export type Database = {
           rotation?: number | null
           scale?: number | null
           slot_number?: number | null
+          trip_id?: string | null
           updated_at?: string | null
         }
         Relationships: [
@@ -722,13 +734,6 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "sticker_categories"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "stickers_rank_id_fkey"
-            columns: ["rank_id"]
-            isOneToOne: false
-            referencedRelation: "ranks"
             referencedColumns: ["id"]
           },
         ]
