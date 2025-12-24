@@ -14,15 +14,16 @@ const loginSchema = z.object({
   email: z.string().trim().email("Please enter a valid email address").max(255, "Email must be less than 255 characters"),
   pin: z.string().length(4, "PIN must be exactly 4 digits").regex(/^\d{4}$/, "PIN must contain only numbers")
 });
-
 export default function Login() {
   const navigate = useNavigate();
   const [emailOrMobile, setEmailOrMobile] = useState("");
   const [pin, setPin] = useState(["", "", "", ""]);
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { withConnectionCheck, isChecking } = useSupabaseConnection();
-
+  const {
+    withConnectionCheck,
+    isChecking
+  } = useSupabaseConnection();
   const handlePinChange = (index: number, value: string) => {
     if (value.length <= 1 && /^\d*$/.test(value)) {
       const newPin = [...pin];
@@ -33,7 +34,6 @@ export default function Login() {
       }
     }
   };
-
   const handlePinKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Backspace' && !pin[index] && index > 0) {
       document.getElementById(`pin-${index - 1}`)?.focus();
@@ -42,7 +42,6 @@ export default function Login() {
 
   // PIN prefix to meet Supabase 6-character minimum password requirement
   const PIN_PREFIX = "pin_";
-
   const handleLogin = async () => {
     const pinString = pin.join("");
 
@@ -51,39 +50,39 @@ export default function Login() {
       email: emailOrMobile,
       pin: pinString
     });
-
     if (!validationResult.success) {
       const firstError = validationResult.error.errors[0];
       toast.error(firstError.message);
       return;
     }
-
     setLoading(true);
-
     const paddedPassword = PIN_PREFIX + pinString;
-
     const result = await withConnectionCheck(async () => {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const {
+        data,
+        error
+      } = await supabase.auth.signInWithPassword({
         email: emailOrMobile.trim(),
         password: paddedPassword
       });
-
       if (error) {
         throw error;
       }
-
       return data;
-    }, { showToast: true, retryOnFail: true });
-
+    }, {
+      showToast: true,
+      retryOnFail: true
+    });
     if (result.success && result.data?.user) {
       // Set bypass flag to skip profile completion checks
       try {
         localStorage.setItem("rebusiness_profile_completed", "true");
       } catch {}
       toast.success("Login successful!");
-      navigate("/dashboard", { replace: true });
+      navigate("/dashboard", {
+        replace: true
+      });
     }
-
     setLoading(false);
   };
   return <div className="min-h-screen bg-navy-dark flex items-center justify-center p-6">
@@ -92,7 +91,7 @@ export default function Login() {
           {/* Icon */}
           <div className="flex justify-center">
             <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center">
-              <Lock className="w-8 h-8 text-primary-foreground" />
+              <Lock className="w-8 h-8 text-primary-foreground bg-primary" />
             </div>
           </div>
 
@@ -136,7 +135,7 @@ export default function Login() {
           </div>
 
           {/* Login Button */}
-          <Button onClick={handleLogin} disabled={loading} className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-base rounded-xl disabled:opacity-50">
+          <Button onClick={handleLogin} disabled={loading} className="w-full h-12 text-primary-foreground font-bold text-base rounded-xl disabled:opacity-50 bg-secondary">
             {loading ? "Logging in..." : "LOGIN"}
           </Button>
 
