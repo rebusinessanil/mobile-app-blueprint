@@ -1,19 +1,14 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, Upload, X } from 'lucide-react';
+import { ArrowLeft, Layers } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { useRankStickers } from '@/hooks/useRankStickers';
-import { useStickerCategories } from '@/hooks/useStickers';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 import AdminLayout from '@/components/admin/AdminLayout';
-import { AdminGuard } from "@/components/AdminGuard";
-import AddCategoryModal from '@/components/admin/AddCategoryModal';
+import RankCategoryStickerGrid from '@/components/admin/RankCategoryStickerGrid';
 
 interface Rank {
   id: string;
@@ -22,23 +17,27 @@ interface Rank {
   gradient: string;
 }
 
+interface TemplateCategory {
+  id: string;
+  name: string;
+  slug: string;
+  icon?: string;
+  description?: string;
+  display_order?: number;
+}
+
 const AdminRankStickers = () => {
   const navigate = useNavigate();
   const [ranks, setRanks] = useState<Rank[]>([]);
+  const [categories, setCategories] = useState<TemplateCategory[]>([]);
   const [selectedRank, setSelectedRank] = useState<string>();
-  const [selectedCategory, setSelectedCategory] = useState<string>();
-  const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
-  const [uploadName, setUploadName] = useState('');
-  const [uploadFile, setUploadFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [uploading, setUploading] = useState(false);
-
-  const { categories, refetch: refetchCategories } = useStickerCategories();
-  const { stickers, loading, uploadSticker, deleteSticker } = useRankStickers(selectedRank, selectedCategory);
+  const [loadingRanks, setLoadingRanks] = useState(true);
+  const [loadingCategories, setLoadingCategories] = useState(true);
 
   // Load ranks on mount
   useEffect(() => {
     const loadRanks = async () => {
+      setLoadingRanks(true);
       const { data } = await supabase
         .from('ranks')
         .select('*')
@@ -46,304 +45,136 @@ const AdminRankStickers = () => {
         .order('display_order');
       
       if (data) setRanks(data);
+      setLoadingRanks(false);
     };
     loadRanks();
   }, []);
 
-  // Set first category as default when categories load
+  // Load template categories (dashboard categories)
   useEffect(() => {
-    if (categories.length > 0 && !selectedCategory) {
-      setSelectedCategory(categories[0].id);
-    }
-  }, [categories, selectedCategory]);
+    const loadCategories = async () => {
+      setLoadingCategories(true);
+      const { data } = await supabase
+        .from('template_categories')
+        .select('*')
+        .eq('is_active', true)
+        .order('display_order');
+      
+      if (data) setCategories(data);
+      setLoadingCategories(false);
+    };
+    loadCategories();
+  }, []);
 
   const handleRankChange = (rankId: string) => {
     setSelectedRank(rankId);
-    setSelectedSlot(null);
-    setPreviewUrl(null);
-    setUploadFile(null);
-    setUploadName('');
-  };
-
-  const handleCategoryChange = (categoryId: string) => {
-    setSelectedCategory(categoryId);
-    setSelectedSlot(null);
-    setPreviewUrl(null);
-    setUploadFile(null);
-    setUploadName('');
-  };
-
-  const handleSlotSelect = (slotNum: number) => {
-    setSelectedSlot(slotNum);
-    setUploadFile(null);
-    setPreviewUrl(null);
-    setUploadName('');
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setUploadFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreviewUrl(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleUpload = async () => {
-    if (!selectedRank || !selectedCategory || selectedSlot === null || !uploadFile) {
-      toast.error('Please select rank, category, slot, and upload file');
-      return;
-    }
-
-    setUploading(true);
-    const name = uploadName || `Slot ${selectedSlot}`;
-    await uploadSticker(uploadFile, selectedSlot, name);
-    setUploading(false);
-    
-    setUploadFile(null);
-    setPreviewUrl(null);
-    setUploadName('');
-  };
-
-  const handleDelete = async (slotNumber: number, imageUrl: string) => {
-    if (window.confirm(`Delete sticker from Slot ${slotNumber}?`)) {
-      await deleteSticker(slotNumber, imageUrl);
-      if (selectedSlot === slotNumber) {
-        setSelectedSlot(null);
-      }
-    }
   };
 
   const selectedRankData = ranks.find(r => r.id === selectedRank);
-  const selectedCategoryData = categories.find(c => c.id === selectedCategory);
-  const currentSlotSticker = stickers.find(s => s.slot_number === selectedSlot);
 
   return (
     <AdminLayout>
-      <div className="container mx-auto p-6 max-w-7xl">
+      <div className="container mx-auto p-4 md:p-6 max-w-5xl">
         {/* Header */}
         <div className="flex items-center gap-4 mb-6">
           <Button variant="ghost" size="icon" onClick={() => navigate('/admin')}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
-            <h1 className="text-3xl font-bold">Rank Stickers Management</h1>
+            <h1 className="text-2xl md:text-3xl font-bold">Rank Stickers Management</h1>
             <p className="text-sm text-muted-foreground mt-1">
-              Upload and manage achievement stickers for each rank and category
+              Upload and manage stickers for each rank across all dashboard categories
             </p>
           </div>
         </div>
 
-        {/* Editing Context Badge */}
-        {selectedRankData && selectedCategoryData && (
+        {/* Rank Selection */}
+        <Card className="p-4 md:p-6 mb-6">
+          <Label className="text-base font-semibold mb-3 block">Select Rank</Label>
+          {loadingRanks ? (
+            <div className="h-10 bg-muted animate-pulse rounded-md w-full max-w-md" />
+          ) : (
+            <Select value={selectedRank} onValueChange={handleRankChange}>
+              <SelectTrigger className="w-full max-w-md">
+                <SelectValue placeholder="Choose a rank to manage stickers..." />
+              </SelectTrigger>
+              <SelectContent>
+                {ranks.map((rank) => (
+                  <SelectItem key={rank.id} value={rank.id}>
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded-full" style={{ background: rank.gradient }} />
+                      {rank.name}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        </Card>
+
+        {/* Selected Rank Context Badge */}
+        {selectedRankData && (
           <Card className="p-4 mb-6 bg-primary/5 border-primary/20">
             <div className="flex items-center gap-3 flex-wrap">
-              <Badge variant="default" className="text-sm px-3 py-1">Currently Editing</Badge>
-              <span className="text-lg font-semibold">
-                {selectedRankData.name} - {selectedCategoryData.name}
-              </span>
-              {selectedSlot !== null && (
-                <>
-                  <span className="text-muted-foreground">•</span>
-                  <Badge variant="secondary" className="text-sm">Slot {selectedSlot}</Badge>
-                </>
-              )}
+              <div 
+                className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold"
+                style={{ background: selectedRankData.gradient }}
+              >
+                {selectedRankData.name.charAt(0)}
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Managing stickers for</p>
+                <h2 className="text-lg font-bold text-foreground">{selectedRankData.name}</h2>
+              </div>
+              <Badge variant="secondary" className="ml-auto">
+                <Layers className="h-3 w-3 mr-1" />
+                {categories.length} Categories
+              </Badge>
             </div>
           </Card>
         )}
 
-        {/* Rank Selection */}
-        <Card className="p-6 mb-6">
-          <Label className="text-base font-semibold mb-3 block">Select Rank</Label>
-          <Select value={selectedRank} onValueChange={handleRankChange}>
-            <SelectTrigger className="w-full max-w-md">
-              <SelectValue placeholder="Choose a rank..." />
-            </SelectTrigger>
-            <SelectContent>
-              {ranks.map((rank) => (
-                <SelectItem key={rank.id} value={rank.id}>
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 rounded-full" style={{ background: rank.gradient }} />
-                    {rank.name}
-                  </div>
-                </SelectItem>
+        {/* Categories Grid - All dashboard categories */}
+        {selectedRank ? (
+          loadingCategories ? (
+            <div className="space-y-3">
+              {[1, 2, 3, 4].map(i => (
+                <div key={i} className="h-16 bg-muted animate-pulse rounded-lg" />
               ))}
-            </SelectContent>
-          </Select>
-        </Card>
-
-        {/* Category Selection */}
-        <Card className="p-6 mb-6">
-          <div className="flex items-center justify-between mb-3">
-            <Label className="text-base font-semibold">Select Category</Label>
-            <AddCategoryModal onCategoryAdded={refetchCategories} />
-          </div>
-          <Select value={selectedCategory} onValueChange={handleCategoryChange}>
-            <SelectTrigger className="w-full max-w-md">
-              <SelectValue placeholder="Choose a category..." />
-            </SelectTrigger>
-            <SelectContent>
-              {categories.map((category) => (
-                <SelectItem key={category.id} value={category.id}>
-                  <div className="flex items-center gap-2">
-                    <span>{category.name}</span>
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {selectedCategoryData?.description && (
-            <p className="text-sm text-muted-foreground mt-2">{selectedCategoryData.description}</p>
-          )}
-        </Card>
-
-        {selectedRank && selectedCategory && (
-          <>
-            {/* 16 Slot Grid */}
-            <Card className="p-6 mb-6">
-              <div className="mb-4">
-                <h3 className="text-lg font-semibold">Select Slot (1-16)</h3>
-                <p className="text-sm text-muted-foreground">
-                  Choose a slot to upload or manage sticker
+            </div>
+          ) : categories.length > 0 ? (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-medium text-muted-foreground">
+                  Dashboard Categories ({categories.length})
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  Click to expand and manage stickers
                 </p>
               </div>
-              
-              {loading ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                </div>
-              ) : (
-                <div className="grid grid-cols-4 sm:grid-cols-8 gap-3">
-                  {Array.from({ length: 16 }, (_, i) => i + 1).map((slotNum) => {
-                    const slotSticker = stickers.find(s => s.slot_number === slotNum);
-                    const isSelected = selectedSlot === slotNum;
-                    
-                    return (
-                      <button
-                        key={slotNum}
-                        onClick={() => handleSlotSelect(slotNum)}
-                        className={`
-                          relative aspect-square rounded-lg border-2 transition-all
-                          ${isSelected 
-                            ? 'border-primary bg-primary/10 shadow-lg' 
-                            : 'border-border hover:border-primary/50 bg-muted/20'
-                          }
-                        `}
-                      >
-                        {slotSticker ? (
-                          <div className="absolute inset-0 p-1">
-                            <img
-                              src={slotSticker.image_url}
-                              alt={slotSticker.name}
-                              className="w-full h-full object-contain rounded"
-                            />
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDelete(slotNum, slotSticker.image_url);
-                              }}
-                              className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1 shadow-lg hover:bg-destructive/90"
-                            >
-                              <X className="h-3 w-3" />
-                            </button>
-                          </div>
-                        ) : (
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <span className="text-xs font-semibold text-muted-foreground">{slotNum}</span>
-                          </div>
-                        )}
-                        
-                        {isSelected && (
-                          <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-primary rounded-full shadow-lg" />
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
+              {categories.map((category, index) => (
+                <RankCategoryStickerGrid
+                  key={category.id}
+                  rankId={selectedRank}
+                  rankName={selectedRankData?.name || 'Unknown'}
+                  category={category}
+                  defaultOpen={index === 0}
+                />
+              ))}
+            </div>
+          ) : (
+            <Card className="p-12 text-center">
+              <p className="text-muted-foreground">No categories found. Add categories from the dashboard.</p>
             </Card>
-
-            {/* Upload Form */}
-            {selectedSlot !== null && (
-              <Card className="p-6">
-                <h3 className="text-lg font-semibold mb-4">
-                  Upload Sticker for Slot {selectedSlot}
-                </h3>
-
-                {currentSlotSticker && (
-                  <div className="mb-6 p-4 bg-secondary/20 rounded-lg">
-                    <p className="text-sm font-medium text-muted-foreground mb-2">Current Sticker:</p>
-                    <div className="flex items-center gap-4">
-                      <div className="w-20 h-20 bg-background rounded-lg border-2 border-border p-2">
-                        <img src={currentSlotSticker.image_url} alt={currentSlotSticker.name} className="w-full h-full object-contain" />
-                      </div>
-                      <div>
-                        <p className="font-medium">{currentSlotSticker.name}</p>
-                        <Badge variant="outline" className="mt-1">Slot {selectedSlot}</Badge>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="sticker-name">Sticker Name (Optional)</Label>
-                    <Input
-                      id="sticker-name"
-                      value={uploadName}
-                      onChange={(e) => setUploadName(e.target.value)}
-                      placeholder="e.g., Trophy Gold, Achievement Badge..."
-                      className="mt-1"
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="sticker-file">Upload Image</Label>
-                    <div className="mt-1">
-                      <Input
-                        id="sticker-file"
-                        type="file"
-                        accept="image/*"
-                        onChange={handleFileChange}
-                        className="cursor-pointer"
-                      />
-                      <p className="text-xs text-muted-foreground mt-1">
-                        PNG or JPG recommended. Transparent backgrounds work best.
-                      </p>
-                    </div>
-                  </div>
-
-                  {previewUrl && (
-                    <div>
-                      <Label>Preview</Label>
-                      <div className="mt-1 w-32 h-32 bg-secondary/20 rounded-lg border-2 border-dashed border-border p-4 flex items-center justify-center">
-                        <img src={previewUrl} alt="Preview" className="max-w-full max-h-full object-contain" />
-                      </div>
-                    </div>
-                  )}
-
-                  <Button onClick={handleUpload} disabled={!uploadFile || uploading} className="w-full">
-                    <Upload className="mr-2 h-4 w-4" />
-                    {uploading ? 'Uploading...' : currentSlotSticker ? 'Replace Sticker' : 'Upload Sticker'}
-                  </Button>
-                </div>
-              </Card>
-            )}
-          </>
-        )}
-
-        {!selectedRank && (
+          )
+        ) : (
           <Card className="p-12 text-center">
-            <p className="text-muted-foreground">Please select a rank to begin managing stickers</p>
-          </Card>
-        )}
-
-        {selectedRank && !selectedCategory && (
-          <Card className="p-12 text-center">
-            <p className="text-muted-foreground">Please select a category to view and manage stickers</p>
+            <Layers className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Select a Rank to Begin</h3>
+            <p className="text-muted-foreground max-w-md mx-auto">
+              Choose a rank from the dropdown above to manage stickers across all dashboard categories.
+              Each rank can have unique stickers for every category.
+            </p>
           </Card>
         )}
       </div>
