@@ -85,9 +85,33 @@ export default function Login() {
     }
     setLoading(false);
   };
-  return <div className="min-h-screen bg-navy-dark flex items-center justify-center p-6">
-      <div className="w-full max-w-md">
-        <div className="gold-border bg-card p-8 space-y-6">
+  return (
+    <div className="min-h-screen bg-black relative overflow-hidden flex items-center justify-center p-6">
+      {/* Ambient glow backdrop - radiates from behind the card */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <div 
+          className="w-[800px] h-[800px] rounded-full opacity-40"
+          style={{
+            background: 'radial-gradient(circle, rgba(212,175,55,0.35) 0%, rgba(180,140,40,0.2) 25%, rgba(100,70,20,0.1) 50%, rgba(0,0,0,0) 70%)',
+            filter: 'blur(60px)',
+          }}
+        />
+      </div>
+      
+      {/* Secondary subtle navy ambient */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(10,30,50,0.4)_0%,transparent_50%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom,rgba(10,20,35,0.6)_0%,transparent_60%)]" />
+      
+      {/* Subtle grain texture */}
+      <div 
+        className="absolute inset-0 opacity-[0.03] pointer-events-none"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
+        }}
+      />
+
+      <div className="w-full max-w-md relative z-10">
+        <div className="gold-border bg-card/95 backdrop-blur-sm p-8 space-y-6 shadow-2xl shadow-primary/10">
           {/* Icon */}
           <div className="flex justify-center">
             <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center">
@@ -151,5 +175,6 @@ export default function Login() {
 
       {/* WhatsApp FAB - Always visible on login page, cannot be closed */}
       
-    </div>;
+    </div>
+  );
 }
