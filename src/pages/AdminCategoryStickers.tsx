@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import AdminLayout from '@/components/admin/AdminLayout';
@@ -250,26 +251,28 @@ const AdminCategoryStickers = () => {
           </Card>
         )}
 
-        {/* Banner Category Selection */}
+        {/* Banner Category Selection - Dropdown */}
         <Card className="mb-6">
           <CardHeader>
             <CardTitle>Select Banner Category</CardTitle>
             <CardDescription>Choose a banner category to manage its stickers</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {bannerCategories?.map((category) => (
-                <Button
-                  key={category.id}
-                  variant={selectedBannerCategory === category.id ? 'default' : 'outline'}
-                  onClick={() => handleBannerCategoryChange(category.id)}
-                  className="h-auto py-4 flex flex-col items-center gap-2"
-                >
-                  <span className="text-2xl">{category.icon}</span>
-                  <span className="text-sm font-medium">{category.name}</span>
-                </Button>
-              ))}
-            </div>
+            <Select value={selectedBannerCategory} onValueChange={handleBannerCategoryChange}>
+              <SelectTrigger className="w-full md:w-[400px]">
+                <SelectValue placeholder="Select a category..." />
+              </SelectTrigger>
+              <SelectContent className="bg-background border border-border z-50">
+                {bannerCategories?.map((category) => (
+                  <SelectItem key={category.id} value={category.id}>
+                    <span className="flex items-center gap-2">
+                      <span>{category.icon}</span>
+                      <span>{category.name}</span>
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </CardContent>
         </Card>
 
