@@ -6,7 +6,6 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { useRankStickers } from '@/hooks/useRankStickers';
 import { useStickerCategories } from '@/hooks/useStickers';
@@ -14,6 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { AdminGuard } from "@/components/AdminGuard";
+import AddCategoryModal from '@/components/admin/AddCategoryModal';
 
 interface Rank {
   id: string;
@@ -33,7 +33,7 @@ const AdminRankStickers = () => {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
 
-  const { categories } = useStickerCategories();
+  const { categories, refetch: refetchCategories } = useStickerCategories();
   const { stickers, loading, uploadSticker, deleteSticker } = useRankStickers(selectedRank, selectedCategory);
 
   // Load ranks on mount
@@ -140,7 +140,7 @@ const AdminRankStickers = () => {
         {/* Editing Context Badge */}
         {selectedRankData && selectedCategoryData && (
           <Card className="p-4 mb-6 bg-primary/5 border-primary/20">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-wrap">
               <Badge variant="default" className="text-sm px-3 py-1">Currently Editing</Badge>
               <span className="text-lg font-semibold">
                 {selectedRankData.name} - {selectedCategoryData.name}
@@ -175,42 +175,47 @@ const AdminRankStickers = () => {
           </Select>
         </Card>
 
-        {selectedRank && (
+        {/* Category Selection */}
+        <Card className="p-6 mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <Label className="text-base font-semibold">Select Category</Label>
+            <AddCategoryModal onCategoryAdded={refetchCategories} />
+          </div>
+          <Select value={selectedCategory} onValueChange={handleCategoryChange}>
+            <SelectTrigger className="w-full max-w-md">
+              <SelectValue placeholder="Choose a category..." />
+            </SelectTrigger>
+            <SelectContent>
+              {categories.map((category) => (
+                <SelectItem key={category.id} value={category.id}>
+                  <div className="flex items-center gap-2">
+                    <span>{category.name}</span>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {selectedCategoryData?.description && (
+            <p className="text-sm text-muted-foreground mt-2">{selectedCategoryData.description}</p>
+          )}
+        </Card>
+
+        {selectedRank && selectedCategory && (
           <>
-            {/* Category Tabs */}
-            <Card className="p-6 mb-6">
-              <Tabs value={selectedCategory} onValueChange={handleCategoryChange}>
-                <TabsList className="grid w-full grid-cols-4 mb-6">
-                  {categories.map((category) => (
-                    <TabsTrigger key={category.id} value={category.id}>
-                      {category.name}
-                    </TabsTrigger>
-                  ))}
-                </TabsList>
-
-                {categories.map((category) => (
-                  <TabsContent key={category.id} value={category.id}>
-                    <div>
-                      <h3 className="text-lg font-semibold mb-2">{category.name} Stickers</h3>
-                      {category.description && (
-                        <p className="text-sm text-muted-foreground">{category.description}</p>
-                      )}
-                    </div>
-                  </TabsContent>
-                ))}
-              </Tabs>
-            </Card>
-
             {/* 16 Slot Grid */}
-            {selectedCategory && (
-              <Card className="p-6 mb-6">
-                <div className="mb-4">
-                  <h3 className="text-lg font-semibold">Select Slot (1-16)</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Choose a slot to upload or manage sticker
-                  </p>
+            <Card className="p-6 mb-6">
+              <div className="mb-4">
+                <h3 className="text-lg font-semibold">Select Slot (1-16)</h3>
+                <p className="text-sm text-muted-foreground">
+                  Choose a slot to upload or manage sticker
+                </p>
+              </div>
+              
+              {loading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                 </div>
-                
+              ) : (
                 <div className="grid grid-cols-4 sm:grid-cols-8 gap-3">
                   {Array.from({ length: 16 }, (_, i) => i + 1).map((slotNum) => {
                     const slotSticker = stickers.find(s => s.slot_number === slotNum);
@@ -258,8 +263,8 @@ const AdminRankStickers = () => {
                     );
                   })}
                 </div>
-              </Card>
-            )}
+              )}
+            </Card>
 
             {/* Upload Form */}
             {selectedSlot !== null && (
@@ -333,6 +338,12 @@ const AdminRankStickers = () => {
         {!selectedRank && (
           <Card className="p-12 text-center">
             <p className="text-muted-foreground">Please select a rank to begin managing stickers</p>
+          </Card>
+        )}
+
+        {selectedRank && !selectedCategory && (
+          <Card className="p-12 text-center">
+            <p className="text-muted-foreground">Please select a category to view and manage stickers</p>
           </Card>
         )}
       </div>
