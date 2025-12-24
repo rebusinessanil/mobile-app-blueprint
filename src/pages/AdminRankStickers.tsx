@@ -1,409 +1,343 @@
-import { useState, useRef } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState, useEffect } from 'react';
+import { ArrowLeft, Upload, X } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
+import { useRankStickers } from '@/hooks/useRankStickers';
+import { useStickerCategories } from '@/hooks/useStickers';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Loader2, Upload, Trash2, Eye, EyeOff, ArrowLeft } from 'lucide-react';
-import { useTemplateStickers, uploadTemplateSticker, removeTemplateSticker, toggleStickerActive } from '@/hooks/useTemplateStickers';
 import AdminLayout from '@/components/admin/AdminLayout';
-import { useNavigate } from 'react-router-dom';
+import { AdminGuard } from "@/components/AdminGuard";
 
-export default function AdminRankStickers() {
+interface Rank {
+  id: string;
+  name: string;
+  color: string;
+  gradient: string;
+}
+
+const AdminRankStickers = () => {
   const navigate = useNavigate();
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
-  const [selectedTemplate, setSelectedTemplate] = useState<string>('');
-  const [uploadingSlot, setUploadingSlot] = useState<number | null>(null);
-  const [bulkUploading, setBulkUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number } | null>(null);
-  
-  // Refs for slot-specific file inputs
-  const slotInputRefs = useRef<Record<number, HTMLInputElement | null>>({});
+  const [ranks, setRanks] = useState<Rank[]>([]);
+  const [selectedRank, setSelectedRank] = useState<string>();
+  const [selectedCategory, setSelectedCategory] = useState<string>();
+  const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
+  const [uploadName, setUploadName] = useState('');
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
 
-  // Fetch categories
-  const { data: categories, isLoading: categoriesLoading } = useQuery({
-    queryKey: ['template-categories'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('template_categories')
+  const { categories } = useStickerCategories();
+  const { stickers, loading, uploadSticker, deleteSticker } = useRankStickers(selectedRank, selectedCategory);
+
+  // Load ranks on mount
+  useEffect(() => {
+    const loadRanks = async () => {
+      const { data } = await supabase
+        .from('ranks')
         .select('*')
         .eq('is_active', true)
-        .order('display_order', { ascending: true });
+        .order('display_order');
       
-      if (error) throw error;
-      return data;
-    },
-  });
+      if (data) setRanks(data);
+    };
+    loadRanks();
+  }, []);
 
-  // Fetch templates for selected category with rank info
-  const { data: templates, isLoading: templatesLoading } = useQuery({
-    queryKey: ['templates-with-ranks', selectedCategory],
-    queryFn: async () => {
-      if (!selectedCategory) return [];
-      const { data, error } = await supabase
-        .from('templates')
-        .select('*, ranks(id, name, color, icon, gradient)')
-        .eq('category_id', selectedCategory)
-        .eq('is_active', true)
-        .order('display_order', { ascending: true });
-      
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!selectedCategory,
-  });
+  // Set first category as default when categories load
+  useEffect(() => {
+    if (categories.length > 0 && !selectedCategory) {
+      setSelectedCategory(categories[0].id);
+    }
+  }, [categories, selectedCategory]);
 
-  // Fetch stickers for selected template
-  const { stickers, loading: stickersLoading } = useTemplateStickers(selectedTemplate);
+  const handleRankChange = (rankId: string) => {
+    setSelectedRank(rankId);
+    setSelectedSlot(null);
+    setPreviewUrl(null);
+    setUploadFile(null);
+    setUploadName('');
+  };
 
-  // Handle slot click - open file picker for that specific slot
-  const handleSlotClick = (slotNumber: number) => {
-    const input = slotInputRefs.current[slotNumber];
-    if (input) {
-      input.click();
+  const handleCategoryChange = (categoryId: string) => {
+    setSelectedCategory(categoryId);
+    setSelectedSlot(null);
+    setPreviewUrl(null);
+    setUploadFile(null);
+    setUploadName('');
+  };
+
+  const handleSlotSelect = (slotNum: number) => {
+    setSelectedSlot(slotNum);
+    setUploadFile(null);
+    setPreviewUrl(null);
+    setUploadName('');
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setUploadFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
-  // Handle file selection for a specific slot
-  const handleSlotUpload = async (slotNumber: number, event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file || !selectedTemplate) return;
-
-    setUploadingSlot(slotNumber);
-    try {
-      const { url, error } = await uploadTemplateSticker(
-        selectedTemplate,
-        file,
-        slotNumber
-      );
-
-      if (error) {
-        toast.error(`Failed to upload sticker to slot ${slotNumber}`);
-        console.error(error);
-      } else {
-        toast.success(`Sticker uploaded to slot ${slotNumber}`);
-      }
-    } finally {
-      setUploadingSlot(null);
-      event.target.value = '';
-    }
-  };
-
-  // Handle bulk upload - assigns to available slots
-  const handleBulkUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (!files || files.length === 0 || !selectedTemplate) return;
-
-    const filesToUpload = Array.from(files).slice(0, 16);
-    const usedSlots = stickers.map(s => s.slot_number);
-    const availableSlots = Array.from({ length: 16 }, (_, i) => i + 1).filter(i => !usedSlots.includes(i));
-
-    if (availableSlots.length === 0) {
-      toast.error('All 16 slots are filled. Delete some stickers first.');
+  const handleUpload = async () => {
+    if (!selectedRank || !selectedCategory || selectedSlot === null || !uploadFile) {
+      toast.error('Please select rank, category, slot, and upload file');
       return;
     }
 
-    if (filesToUpload.length > availableSlots.length) {
-      toast.warning(`Only ${availableSlots.length} slots available. Uploading first ${availableSlots.length} images.`);
-    }
+    setUploading(true);
+    const name = uploadName || `Slot ${selectedSlot}`;
+    await uploadSticker(uploadFile, selectedSlot, name);
+    setUploading(false);
+    
+    setUploadFile(null);
+    setPreviewUrl(null);
+    setUploadName('');
+  };
 
-    setBulkUploading(true);
-    setUploadProgress({ current: 0, total: Math.min(filesToUpload.length, availableSlots.length) });
-
-    let successCount = 0;
-    let failCount = 0;
-
-    for (let i = 0; i < Math.min(filesToUpload.length, availableSlots.length); i++) {
-      const file = filesToUpload[i];
-      const slot = availableSlots[i];
-
-      setUploadProgress({ current: i + 1, total: Math.min(filesToUpload.length, availableSlots.length) });
-
-      try {
-        const { error } = await uploadTemplateSticker(selectedTemplate, file, slot);
-        if (error) {
-          failCount++;
-          console.error(`Failed to upload to slot ${slot}:`, error);
-        } else {
-          successCount++;
-        }
-      } catch (err) {
-        failCount++;
-        console.error(`Error uploading to slot ${slot}:`, err);
+  const handleDelete = async (slotNumber: number, imageUrl: string) => {
+    if (window.confirm(`Delete sticker from Slot ${slotNumber}?`)) {
+      await deleteSticker(slotNumber, imageUrl);
+      if (selectedSlot === slotNumber) {
+        setSelectedSlot(null);
       }
     }
-
-    setBulkUploading(false);
-    setUploadProgress(null);
-    event.target.value = '';
-
-    if (successCount > 0 && failCount === 0) {
-      toast.success(`Successfully uploaded ${successCount} stickers!`);
-    } else if (successCount > 0 && failCount > 0) {
-      toast.warning(`Uploaded ${successCount} stickers. ${failCount} failed.`);
-    } else {
-      toast.error('Failed to upload stickers');
-    }
   };
 
-  const handleRemove = async (stickerId: string) => {
-    if (!confirm('Are you sure you want to remove this sticker?')) return;
-
-    const { error } = await removeTemplateSticker(stickerId);
-    if (error) {
-      toast.error('Failed to remove sticker');
-    } else {
-      toast.success('Sticker removed');
-    }
-  };
-
-  const handleToggleActive = async (stickerId: string, isActive: boolean) => {
-    const { error } = await toggleStickerActive(stickerId, !isActive);
-    if (error) {
-      toast.error('Failed to update sticker status');
-    } else {
-      toast.success(`Sticker ${!isActive ? 'activated' : 'deactivated'}`);
-    }
-  };
-
-  if (categoriesLoading) {
-    return (
-      <AdminLayout>
-        <div className="flex items-center justify-center h-96">
-          <Loader2 className="h-8 w-8 animate-spin text-gold" />
-        </div>
-      </AdminLayout>
-    );
-  }
+  const selectedRankData = ranks.find(r => r.id === selectedRank);
+  const selectedCategoryData = categories.find(c => c.id === selectedCategory);
+  const currentSlotSticker = stickers.find(s => s.slot_number === selectedSlot);
 
   return (
     <AdminLayout>
-      <div className="container mx-auto p-6 space-y-6">
+      <div className="container mx-auto p-6 max-w-7xl">
         {/* Header */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 mb-6">
           <Button variant="ghost" size="icon" onClick={() => navigate('/admin')}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Rank Stickers</h1>
-            <p className="text-muted-foreground">Manage stickers for banner templates</p>
+            <h1 className="text-3xl font-bold">Rank Stickers Management</h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Upload and manage achievement stickers for each rank and category
+            </p>
           </div>
         </div>
 
-        {/* Category Selection */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Select Category</CardTitle>
-            <CardDescription>Choose a banner category to manage templates</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {categories?.map((category) => (
-                <Button
-                  key={category.id}
-                  variant={selectedCategory === category.id ? 'default' : 'outline'}
-                  onClick={() => {
-                    setSelectedCategory(category.id);
-                    setSelectedTemplate('');
-                  }}
-                  className="h-auto py-4 flex flex-col items-center gap-2"
-                >
-                  <span className="text-2xl">{category.icon}</span>
-                  <span className="text-sm font-medium">{category.name}</span>
-                </Button>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Template Selection */}
-        {selectedCategory && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Select Template ({templates?.length || 0} available)</CardTitle>
-              <CardDescription>Choose a template to manage its 16 sticker slots</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {templatesLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-gold" />
-                </div>
-              ) : !templates || templates.length === 0 ? (
-                <p className="text-muted-foreground text-sm py-4 text-center">No templates found for this category</p>
-              ) : (
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {templates.map((template: any) => (
-                    <Button
-                      key={template.id}
-                      variant={selectedTemplate === template.id ? 'default' : 'outline'}
-                      onClick={() => setSelectedTemplate(template.id)}
-                      className={`h-auto p-4 flex flex-col items-center gap-2 ${
-                        selectedTemplate === template.id 
-                          ? 'bg-primary text-primary-foreground border-primary' 
-                          : 'bg-card hover:bg-card/80 border-primary/30'
-                      }`}
-                    >
-                      <div className="w-full aspect-square bg-secondary rounded-lg overflow-hidden">
-                        <img
-                          src={template.cover_thumbnail_url}
-                          alt={template.name}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <div className="w-full space-y-1">
-                        <span className="text-sm font-medium truncate block">{template.name}</span>
-                        {template.ranks && (
-                          <div className="flex items-center gap-1.5 justify-center">
-                            <span className="text-lg">{template.ranks.icon}</span>
-                            <span className="text-xs opacity-75 truncate">{template.ranks.name}</span>
-                          </div>
-                        )}
-                        {!template.ranks && template.description && (
-                          <span className="text-xs opacity-75 truncate block text-center">{template.description}</span>
-                        )}
-                      </div>
-                    </Button>
-                  ))}
-                </div>
+        {/* Editing Context Badge */}
+        {selectedRankData && selectedCategoryData && (
+          <Card className="p-4 mb-6 bg-primary/5 border-primary/20">
+            <div className="flex items-center gap-3">
+              <Badge variant="default" className="text-sm px-3 py-1">Currently Editing</Badge>
+              <span className="text-lg font-semibold">
+                {selectedRankData.name} - {selectedCategoryData.name}
+              </span>
+              {selectedSlot !== null && (
+                <>
+                  <span className="text-muted-foreground">•</span>
+                  <Badge variant="secondary" className="text-sm">Slot {selectedSlot}</Badge>
+                </>
               )}
-            </CardContent>
+            </div>
           </Card>
         )}
 
-        {/* Sticker Management - 16 Fixed Slots */}
-        {selectedTemplate && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Template Stickers (16 Slots)</CardTitle>
-              <CardDescription>
-                Click on any slot to upload a sticker directly to that slot. Each template supports up to 16 stickers.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Bulk Upload Section */}
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="bulk-sticker-upload">Bulk Upload Stickers (Up to 16)</Label>
-                  <div className="flex items-center gap-4">
-                    <Input
-                      id="bulk-sticker-upload"
-                      type="file"
-                      accept="image/png,image/jpeg,image/jpg,image/webp"
-                      multiple
-                      onChange={handleBulkUpload}
-                      disabled={uploadingSlot !== null || bulkUploading || stickers.length >= 16}
-                      className="flex-1"
-                    />
-                    {bulkUploading && (
-                      <div className="flex items-center gap-2">
-                        <Loader2 className="h-5 w-5 animate-spin text-gold" />
-                        {uploadProgress && (
-                          <span className="text-sm text-muted-foreground">
-                            {uploadProgress.current} / {uploadProgress.total}
-                          </span>
-                        )}
-                      </div>
-                    )}
+        {/* Rank Selection */}
+        <Card className="p-6 mb-6">
+          <Label className="text-base font-semibold mb-3 block">Select Rank</Label>
+          <Select value={selectedRank} onValueChange={handleRankChange}>
+            <SelectTrigger className="w-full max-w-md">
+              <SelectValue placeholder="Choose a rank..." />
+            </SelectTrigger>
+            <SelectContent>
+              {ranks.map((rank) => (
+                <SelectItem key={rank.id} value={rank.id}>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 rounded-full" style={{ background: rank.gradient }} />
+                    {rank.name}
                   </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </Card>
+
+        {selectedRank && (
+          <>
+            {/* Category Tabs */}
+            <Card className="p-6 mb-6">
+              <Tabs value={selectedCategory} onValueChange={handleCategoryChange}>
+                <TabsList className="grid w-full grid-cols-4 mb-6">
+                  {categories.map((category) => (
+                    <TabsTrigger key={category.id} value={category.id}>
+                      {category.name}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+
+                {categories.map((category) => (
+                  <TabsContent key={category.id} value={category.id}>
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2">{category.name} Stickers</h3>
+                      {category.description && (
+                        <p className="text-sm text-muted-foreground">{category.description}</p>
+                      )}
+                    </div>
+                  </TabsContent>
+                ))}
+              </Tabs>
+            </Card>
+
+            {/* 16 Slot Grid */}
+            {selectedCategory && (
+              <Card className="p-6 mb-6">
+                <div className="mb-4">
+                  <h3 className="text-lg font-semibold">Select Slot (1-16)</h3>
                   <p className="text-sm text-muted-foreground">
-                    Select multiple images to upload. They will be assigned to available slots automatically. PNG with transparent background recommended.
+                    Choose a slot to upload or manage sticker
                   </p>
                 </div>
-
-                <p className="text-sm text-muted-foreground font-medium">
-                  {stickers.length} of 16 slots filled
-                  {stickers.length >= 16 && " (Maximum reached)"}
-                </p>
-              </div>
-
-              {/* 16-Slot Grid */}
-              {stickersLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-gold" />
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4">
-                  {Array.from({ length: 16 }, (_, index) => {
-                    const slotNumber = index + 1;
-                    const sticker = stickers.find(s => s.slot_number === slotNumber);
-                    const isUploading = uploadingSlot === slotNumber;
-
+                
+                <div className="grid grid-cols-4 sm:grid-cols-8 gap-3">
+                  {Array.from({ length: 16 }, (_, i) => i + 1).map((slotNum) => {
+                    const slotSticker = stickers.find(s => s.slot_number === slotNum);
+                    const isSelected = selectedSlot === slotNum;
+                    
                     return (
-                      <Card 
-                        key={slotNumber} 
-                        className={`${sticker ? (sticker.is_active ? '' : 'opacity-50') : 'border-dashed cursor-pointer hover:border-primary/50'}`}
+                      <button
+                        key={slotNum}
+                        onClick={() => handleSlotSelect(slotNum)}
+                        className={`
+                          relative aspect-square rounded-lg border-2 transition-all
+                          ${isSelected 
+                            ? 'border-primary bg-primary/10 shadow-lg' 
+                            : 'border-border hover:border-primary/50 bg-muted/20'
+                          }
+                        `}
                       >
-                        <CardContent className="p-4 space-y-2">
-                          {/* Hidden file input for this slot */}
-                          <input
-                            ref={(el) => (slotInputRefs.current[slotNumber] = el)}
-                            type="file"
-                            accept="image/png,image/jpeg,image/jpg,image/webp"
-                            onChange={(e) => handleSlotUpload(slotNumber, e)}
-                            className="hidden"
-                          />
-                          
-                          <div className="text-xs font-medium text-muted-foreground mb-1">
-                            Slot {slotNumber}
-                          </div>
-                          
-                          {sticker ? (
-                            <>
-                              {/* Square preview container */}
-                              <div className="w-full aspect-square bg-secondary/30 rounded flex items-center justify-center overflow-hidden">
-                                <img
-                                  src={sticker.image_url}
-                                  alt={`Sticker ${slotNumber}`}
-                                  className="max-w-full max-h-full object-contain"
-                                />
-                              </div>
-                              <p className="text-xs text-muted-foreground truncate">{sticker.name}</p>
-                              <div className="flex gap-2">
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => handleToggleActive(sticker.id, sticker.is_active ?? true)}
-                                  className="flex-1"
-                                >
-                                  {sticker.is_active ? (
-                                    <><EyeOff className="h-4 w-4 mr-1" /> Hide</>
-                                  ) : (
-                                    <><Eye className="h-4 w-4 mr-1" /> Show</>
-                                  )}
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="destructive"
-                                  onClick={() => handleRemove(sticker.id)}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </>
-                          ) : (
-                            <div 
-                              onClick={() => !isUploading && handleSlotClick(slotNumber)}
-                              className="w-full aspect-square flex items-center justify-center border-2 border-dashed rounded bg-muted/10 cursor-pointer hover:bg-muted/20 hover:border-primary/40 transition-colors"
+                        {slotSticker ? (
+                          <div className="absolute inset-0 p-1">
+                            <img
+                              src={slotSticker.image_url}
+                              alt={slotSticker.name}
+                              className="w-full h-full object-contain rounded"
+                            />
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDelete(slotNum, slotSticker.image_url);
+                              }}
+                              className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1 shadow-lg hover:bg-destructive/90"
                             >
-                              {isUploading ? (
-                                <Loader2 className="h-8 w-8 animate-spin text-gold" />
-                              ) : (
-                                <Upload className="h-8 w-8 text-muted-foreground/50" />
-                              )}
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
+                              <X className="h-3 w-3" />
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <span className="text-xs font-semibold text-muted-foreground">{slotNum}</span>
+                          </div>
+                        )}
+                        
+                        {isSelected && (
+                          <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-primary rounded-full shadow-lg" />
+                        )}
+                      </button>
                     );
                   })}
                 </div>
-              )}
-            </CardContent>
+              </Card>
+            )}
+
+            {/* Upload Form */}
+            {selectedSlot !== null && (
+              <Card className="p-6">
+                <h3 className="text-lg font-semibold mb-4">
+                  Upload Sticker for Slot {selectedSlot}
+                </h3>
+
+                {currentSlotSticker && (
+                  <div className="mb-6 p-4 bg-secondary/20 rounded-lg">
+                    <p className="text-sm font-medium text-muted-foreground mb-2">Current Sticker:</p>
+                    <div className="flex items-center gap-4">
+                      <div className="w-20 h-20 bg-background rounded-lg border-2 border-border p-2">
+                        <img src={currentSlotSticker.image_url} alt={currentSlotSticker.name} className="w-full h-full object-contain" />
+                      </div>
+                      <div>
+                        <p className="font-medium">{currentSlotSticker.name}</p>
+                        <Badge variant="outline" className="mt-1">Slot {selectedSlot}</Badge>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="sticker-name">Sticker Name (Optional)</Label>
+                    <Input
+                      id="sticker-name"
+                      value={uploadName}
+                      onChange={(e) => setUploadName(e.target.value)}
+                      placeholder="e.g., Trophy Gold, Achievement Badge..."
+                      className="mt-1"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="sticker-file">Upload Image</Label>
+                    <div className="mt-1">
+                      <Input
+                        id="sticker-file"
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileChange}
+                        className="cursor-pointer"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        PNG or JPG recommended. Transparent backgrounds work best.
+                      </p>
+                    </div>
+                  </div>
+
+                  {previewUrl && (
+                    <div>
+                      <Label>Preview</Label>
+                      <div className="mt-1 w-32 h-32 bg-secondary/20 rounded-lg border-2 border-dashed border-border p-4 flex items-center justify-center">
+                        <img src={previewUrl} alt="Preview" className="max-w-full max-h-full object-contain" />
+                      </div>
+                    </div>
+                  )}
+
+                  <Button onClick={handleUpload} disabled={!uploadFile || uploading} className="w-full">
+                    <Upload className="mr-2 h-4 w-4" />
+                    {uploading ? 'Uploading...' : currentSlotSticker ? 'Replace Sticker' : 'Upload Sticker'}
+                  </Button>
+                </div>
+              </Card>
+            )}
+          </>
+        )}
+
+        {!selectedRank && (
+          <Card className="p-12 text-center">
+            <p className="text-muted-foreground">Please select a rank to begin managing stickers</p>
           </Card>
         )}
       </div>
     </AdminLayout>
   );
-}
+};
+
+export default AdminRankStickers;
