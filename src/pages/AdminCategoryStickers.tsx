@@ -406,27 +406,27 @@ const AdminCategoryStickers = () => {
 
                 <div className="space-y-4">
                   <div>
-                    <Label htmlFor="sticker-name">Sticker Name (Optional)</Label>
+                    <Label htmlFor="sticker-name" className="text-muted-foreground text-sm">Sticker Name (Optional)</Label>
                     <Input
                       id="sticker-name"
                       value={uploadName}
                       onChange={(e) => setUploadName(e.target.value)}
                       placeholder="e.g., Trophy Gold, Achievement Badge..."
-                      className="mt-1"
+                      className="mt-1 bg-background/50 border-0 border-b-2 border-muted-foreground/20 rounded-none focus:border-primary focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 transition-colors placeholder:text-muted-foreground/40"
                     />
                   </div>
 
                   <div>
-                    <Label htmlFor="sticker-file">Upload Image</Label>
+                    <Label htmlFor="sticker-file" className="text-muted-foreground text-sm">Upload Image</Label>
                     <div className="mt-1">
                       <Input
                         id="sticker-file"
                         type="file"
                         accept="image/*"
                         onChange={handleFileChange}
-                        className="cursor-pointer"
+                        className="cursor-pointer bg-background/50 border-0 border-b-2 border-muted-foreground/20 rounded-none focus:border-primary focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 transition-colors file:bg-primary/10 file:text-primary file:border-0 file:rounded file:px-3 file:py-1 file:mr-3"
                       />
-                      <p className="text-xs text-muted-foreground mt-1">
+                      <p className="text-xs text-muted-foreground/60 mt-2">
                         PNG or JPG recommended. Transparent backgrounds work best.
                       </p>
                     </div>
