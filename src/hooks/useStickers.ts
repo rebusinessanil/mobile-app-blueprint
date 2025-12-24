@@ -66,32 +66,27 @@ export const useStickerCategories = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
-  const fetchCategories = async () => {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('sticker_categories')
-        .select('*')
-        .order('display_order', { ascending: true });
-
-      if (error) throw error;
-      setCategories(data || []);
-    } catch (err) {
-      setError(err as Error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('sticker_categories')
+          .select('*')
+          .order('display_order', { ascending: true });
+
+        if (error) throw error;
+        setCategories(data || []);
+      } catch (err) {
+        setError(err as Error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchCategories();
   }, []);
 
-  const refetch = () => {
-    fetchCategories();
-  };
-
-  return { categories, loading, error, refetch };
+  return { categories, loading, error };
 };
 
 export const useAdminStickers = () => {
