@@ -105,7 +105,7 @@ export default function Login() {
           </div>
 
           {/* PIN Input */}
-          <div className="space-y-2">
+          <div className="space-y-2 border-secondary">
             <label className="text-sm text-foreground">4-Digit PIN</label>
             <div className="flex gap-3 justify-between">
               {pin.map((digit, index) => <input key={index} id={`pin-${index}`} type="password" maxLength={1} value={digit} onChange={e => handlePinChange(index, e.target.value)} onKeyDown={e => handlePinKeyDown(index, e)} className="pin-input" />)}
