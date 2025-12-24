@@ -219,7 +219,13 @@ const AdminCategoryStickers = () => {
 
   return (
     <AdminLayout>
-      <div className="container mx-auto p-6 max-w-7xl">
+      <div className="min-h-screen bg-gradient-to-br from-[#0a1e2e] via-[#0b1622] to-black relative overflow-hidden">
+        {/* Radial glow overlays for depth */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(212,175,55,0.06)_0%,transparent_50%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,rgba(0,40,60,0.4)_0%,transparent_60%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(10,30,46,0.3)_0%,transparent_70%)]" />
+        
+        <div className="relative z-10 container mx-auto p-6 max-w-7xl">
         {/* Header */}
         <div className="flex items-center gap-4 mb-6">
           <Button variant="ghost" size="icon" onClick={() => navigate('/admin')}>
@@ -442,6 +448,7 @@ const AdminCategoryStickers = () => {
             <p className="text-muted-foreground">Please select a banner category to begin managing stickers</p>
           </Card>
         )}
+        </div>
       </div>
     </AdminLayout>
   );
