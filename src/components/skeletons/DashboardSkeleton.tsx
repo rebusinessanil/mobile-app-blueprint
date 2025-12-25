@@ -1,10 +1,10 @@
 import { memo } from "react";
 
 const DashboardSkeleton = memo(() => (
-  <div className="min-h-screen bg-navy-dark pb-24">
+  <div className="app-shell bg-navy-dark">
     {/* Header Skeleton */}
-    <header className="fixed top-0 left-0 right-0 bg-navy-dark/95 z-50 px-4 py-3 border-b border-primary/20">
-      <div className="flex items-center justify-between">
+    <header className="app-header bg-navy-dark/95 border-b border-primary/20">
+      <div className="h-full flex items-center justify-between px-4">
         <div className="flex items-center gap-2">
           <div className="w-10 h-10 bg-secondary/50 rounded-xl animate-pulse" />
           <div className="space-y-1">
@@ -20,41 +20,42 @@ const DashboardSkeleton = memo(() => (
       </div>
     </header>
 
-    <div className="h-16" />
-
-    <div className="py-6 space-y-6">
-      {/* Stories Section Skeleton */}
-      <div className="space-y-3">
-        <div className="h-5 w-28 bg-secondary/50 rounded animate-pulse ml-4" />
-        <div className="flex gap-2 overflow-hidden pl-4">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="w-[72px] h-[100px] bg-secondary/30 rounded-2xl animate-pulse flex-shrink-0" />
-          ))}
-        </div>
-      </div>
-
-      {/* Category Sections Skeleton */}
-      {[1, 2, 3].map((section) => (
-        <div key={section} className="space-y-3">
-          <div className="flex justify-between items-center px-4">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 bg-secondary/50 rounded animate-pulse" />
-              <div className="h-5 w-36 bg-secondary/50 rounded animate-pulse" />
-            </div>
-            <div className="h-4 w-14 bg-secondary/40 rounded animate-pulse" />
-          </div>
-          <div className="flex gap-3 overflow-hidden pl-4">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="w-[calc(33.333%-8px)] min-w-[110px] max-w-[140px] aspect-[4/5] bg-secondary/30 rounded-2xl animate-pulse flex-shrink-0" />
+    {/* Scrollable Main Content */}
+    <main className="app-main">
+      <div className="py-6 space-y-6">
+        {/* Stories Section Skeleton */}
+        <div className="space-y-3">
+          <div className="h-5 w-28 bg-secondary/50 rounded animate-pulse ml-4" />
+          <div className="flex gap-2 overflow-hidden pl-4">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="w-[72px] h-[100px] bg-secondary/30 rounded-2xl animate-pulse flex-shrink-0" />
             ))}
           </div>
         </div>
-      ))}
-    </div>
+
+        {/* Category Sections Skeleton */}
+        {[1, 2, 3].map((section) => (
+          <div key={section} className="space-y-3">
+            <div className="flex justify-between items-center px-4">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 bg-secondary/50 rounded animate-pulse" />
+                <div className="h-5 w-36 bg-secondary/50 rounded animate-pulse" />
+              </div>
+              <div className="h-4 w-14 bg-secondary/40 rounded animate-pulse" />
+            </div>
+            <div className="flex gap-3 overflow-hidden pl-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="w-[calc(33.333%-8px)] min-w-[110px] max-w-[140px] aspect-[4/5] bg-secondary/30 rounded-2xl animate-pulse flex-shrink-0" />
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </main>
 
     {/* Bottom Nav Skeleton */}
-    <div className="fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-sm border-t border-primary/20 px-6 py-3 z-50">
-      <div className="flex justify-around">
+    <div className="app-bottom-nav bg-card/95 border-t border-primary/20">
+      <div className="h-full flex items-center justify-around px-6">
         {[1, 2, 3, 4].map((i) => (
           <div key={i} className="flex flex-col items-center gap-1">
             <div className="w-6 h-6 bg-secondary/50 rounded animate-pulse" />

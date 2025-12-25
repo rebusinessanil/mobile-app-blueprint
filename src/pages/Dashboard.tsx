@@ -241,10 +241,10 @@ export default function Dashboard() {
     children: React.ReactNode;
   }) => <>{children}</>;
   return <ContentWrapper userId={userId}>
-      <div className="min-h-screen bg-navy-dark pb-24 overflow-x-hidden overflow-y-auto">
+      <div className="app-shell bg-navy-dark">
       {/* Fixed Header */}
-      <header className="fixed top-0 left-0 right-0 bg-navy-dark/95 backdrop-blur-sm z-50 px-4 py-3 border-b border-primary/20">
-        <div className="flex items-center justify-between gap-2 max-w-full">
+      <header className="app-header bg-navy-dark/95 backdrop-blur-sm border-b border-primary/20">
+        <div className="h-full flex items-center justify-between gap-2 px-4 max-w-full">
           <div className="flex items-center gap-2 min-w-0 flex-shrink">
             <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center flex-shrink-0">
               <Star className="w-5 h-5 text-primary-foreground" />
@@ -288,23 +288,22 @@ export default function Dashboard() {
         </div>
       </header>
 
-      {/* Spacer for fixed header */}
-      <div className="h-16"></div>
+      {/* Scrollable Main Content */}
+      <main className="app-main">
+        {/* Guest Banner - Show value proposition with Carousel */}
+        {isGuest && <div className="mx-4 mt-4 rounded-2xl bg-gradient-to-r from-primary/20 via-primary/10 to-secondary/20 border border-primary/30 overflow-hidden">
+            <GuestBannerCarousel />
+            <div className="p-4">
+              
+              
+              <Button onClick={() => navigate("/register")} className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold text-xs">
+                Sign up to unlock all templates, get 199 free  
+              </Button>
+            </div>
+          </div>}
 
-      {/* Guest Banner - Show value proposition with Carousel */}
-      {isGuest && <div className="mx-4 mt-4 rounded-2xl bg-gradient-to-r from-primary/20 via-primary/10 to-secondary/20 border border-primary/30 overflow-hidden">
-          <GuestBannerCarousel />
-          <div className="p-4">
-            
-            
-            <Button onClick={() => navigate("/register")} className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold text-xs">
-              Sign up to unlock all templates, get 199 free  
-            </Button>
-          </div>
-        </div>}
-
-      {/* Compact Status Bar for Guests */}
-      {isGuest && <GuestStatusBar />}
+        {/* Compact Status Bar for Guests */}
+        {isGuest && <GuestStatusBar />}
 
       {/* Content */}
       <div className="py-6 space-y-6">
@@ -388,9 +387,10 @@ export default function Dashboard() {
             </div>;
         })}
       </div>
+      </main>
 
-        <BottomNav />
-      </div>
+      <BottomNav />
+    </div>
       
       {/* Welcome Bonus Modal - only for authenticated users */}
       {isAuthenticated && <WelcomeBonusModal open={showWelcomeModal} bonusAmount={bonusAmount} onContinue={handleContinue} />}
