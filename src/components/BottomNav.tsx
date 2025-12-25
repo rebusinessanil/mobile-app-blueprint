@@ -12,7 +12,7 @@ export default function BottomNav() {
   ];
 
   return (
-    <nav className="flex-shrink-0 bg-card border-t border-primary/30 px-6 py-3 z-50 safe-area-bottom">
+    <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-primary/30 px-6 py-3 z-50 safe-area-bottom">
       <div className="max-w-screen-lg mx-auto flex items-center justify-around">
         {navItems.map((item) => {
           const Icon = item.icon;
