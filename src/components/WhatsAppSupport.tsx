@@ -116,6 +116,9 @@ export default function WhatsAppSupport() {
   // Show close button only for authenticated users (not on auth pages)
   const showCloseButton = isAuthenticated && !isAuthPage;
 
+  // Check if on auth pages to apply gold styling
+  const useGoldStyle = isAuthPage;
+
   return (
     <div className="fixed bottom-24 left-6 z-50 group">
       <button
@@ -123,7 +126,11 @@ export default function WhatsAppSupport() {
         className="relative w-14 h-14 transition-all duration-300 hover:scale-110"
         aria-label="Contact support on WhatsApp"
       >
-        <img src={whatsappIcon} alt="WhatsApp" className="w-full h-full object-contain" />
+        <img 
+          src={whatsappIcon} 
+          alt="WhatsApp" 
+          className={`w-full h-full object-contain ${useGoldStyle ? 'whatsapp-gold' : ''}`} 
+        />
       </button>
       {showCloseButton && (
         <button

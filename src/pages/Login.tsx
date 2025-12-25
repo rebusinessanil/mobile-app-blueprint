@@ -11,6 +11,7 @@ import { z } from "zod";
 import { useSupabaseConnection } from "@/hooks/useSupabaseConnection";
 import { getUserRoleAndRedirect } from "@/hooks/useUserRole";
 import LiveActivityTicker from "@/components/LiveActivityTicker";
+import FloatingParticles from "@/components/FloatingParticles";
 
 // Zod validation schema for login
 const loginSchema = z.object({
@@ -97,11 +98,9 @@ export default function Login() {
   // Show full-screen gold coin animation during login
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-900 relative overflow-hidden flex items-center justify-center">
-        {/* Aurora Background (dimmed) */}
-        <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-cyan-500 rounded-full opacity-20 blur-[120px]" />
-        <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] bg-purple-600 rounded-full opacity-25 blur-[150px]" />
-        <div className="absolute top-[30%] right-[10%] w-[40%] h-[40%] bg-blue-800 rounded-full opacity-30 blur-[100px]" />
+      <div className="min-h-screen relative overflow-hidden flex items-center justify-center" style={{ background: 'radial-gradient(ellipse at center, #0a1f1a 0%, #030a08 50%, #000000 100%)' }}>
+        {/* Floating Particles */}
+        <FloatingParticles />
         
         {/* Gold Coin Spinning Animation */}
         <div className="flex flex-col items-center gap-6">
@@ -187,46 +186,86 @@ export default function Login() {
     );
   }
 
-  return <div className="min-h-screen bg-gray-900 relative overflow-hidden flex items-center justify-center p-6">
-      {/* Aurora/Mesh Gradient Background Blobs */}
-      <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-cyan-500 rounded-full opacity-40 blur-[120px]" />
-      <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] bg-purple-600 rounded-full opacity-50 blur-[150px]" />
-      <div className="absolute top-[30%] right-[10%] w-[40%] h-[40%] bg-blue-800 rounded-full opacity-60 blur-[100px]" />
-      <div className="absolute bottom-[20%] left-[5%] w-[35%] h-[35%] bg-violet-500 rounded-full opacity-30 blur-[130px]" />
+  return (
+    <div 
+      className="min-h-screen relative overflow-hidden flex items-center justify-center p-6"
+      style={{ background: 'radial-gradient(ellipse at center, #0a1f1a 0%, #030a08 50%, #000000 100%)' }}
+    >
+      {/* Floating Particles */}
+      <FloatingParticles />
+      
+      {/* Subtle Emerald Glow Orbs */}
+      <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-emerald-900/30 rounded-full blur-[150px]" />
+      <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] bg-emerald-950/40 rounded-full blur-[180px]" />
+      <div className="absolute top-[40%] right-[5%] w-[30%] h-[30%] bg-primary/10 rounded-full blur-[120px]" />
+      
+      {/* Dynamic Island Ticker at Top */}
+      <LiveActivityTicker />
       
       <div className="w-full max-w-md relative z-10">
-        <div className="gold-border bg-card p-8 space-y-6">
+        <motion.div 
+          className="royal-card p-8 space-y-6"
+          initial={{ opacity: 0, y: 20, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+        >
           {/* Lock Icon */}
-          <div className="flex justify-center">
-            <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center overflow-hidden">
-              <LockOpen className="w-8 h-8 text-primary-foreground" />
+          <motion.div 
+            className="flex justify-center"
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+          >
+            <div className="w-16 h-16 bg-gradient-to-br from-primary via-yellow-400 to-amber-600 rounded-2xl flex items-center justify-center overflow-hidden shadow-lg shadow-primary/30">
+              <LockOpen className="w-8 h-8 text-black" />
             </div>
-          </div>
+          </motion.div>
 
-          {/* Animated Shimmer Title */}
-          <h1 className="text-3xl font-bold text-center login-shimmer-text">LOGIN</h1>
+          {/* Serif Gold Gradient Title */}
+          <h1 className="text-4xl text-center royal-heading tracking-wide">LOGIN</h1>
 
           {/* Email/Mobile Input */}
           <div className="space-y-2">
-            <label className="text-sm text-foreground">Email / Mobile</label>
-            <Input type="text" placeholder="Enter email or mobile number" value={emailOrMobile} onChange={e => setEmailOrMobile(e.target.value)} className="gold-border bg-secondary text-foreground placeholder:text-muted-foreground h-12" />
+            <label className="text-sm text-foreground/80">Email / Mobile</label>
+            <Input 
+              type="text" 
+              placeholder="Enter email or mobile number" 
+              value={emailOrMobile} 
+              onChange={e => setEmailOrMobile(e.target.value)} 
+              className="royal-input" 
+            />
           </div>
 
           {/* PIN Input */}
           <div className="space-y-2">
-            <label className="text-sm text-foreground">4-Digit PIN</label>
+            <label className="text-sm text-foreground/80">4-Digit PIN</label>
             <div className="flex gap-3 justify-between">
-              {pin.map((digit, index) => <input key={index} id={`pin-${index}`} type="password" maxLength={1} value={digit} onChange={e => handlePinChange(index, e.target.value)} onKeyDown={e => handlePinKeyDown(index, e)} className="pin-input" />)}
+              {pin.map((digit, index) => (
+                <input 
+                  key={index} 
+                  id={`pin-${index}`} 
+                  type="password" 
+                  maxLength={1} 
+                  value={digit} 
+                  onChange={e => handlePinChange(index, e.target.value)} 
+                  onKeyDown={e => handlePinKeyDown(index, e)} 
+                  className="pin-input" 
+                />
+              ))}
             </div>
           </div>
 
           {/* Remember Me & Forgot Password */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Checkbox checked={rememberMe} onCheckedChange={checked => setRememberMe(checked as boolean)} className="border-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground" />
-              <label className="text-sm text-foreground">Remember Me</label>
+              <Checkbox 
+                checked={rememberMe} 
+                onCheckedChange={checked => setRememberMe(checked as boolean)} 
+                className="border-primary/50 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground" 
+              />
+              <label className="text-sm text-foreground/80">Remember Me</label>
             </div>
-            <Link to="/forgot-password" className="text-sm text-primary hover:underline">
+            <Link to="/forgot-password" className="text-sm text-primary hover:text-primary/80 transition-colors">
               Forgot Password?
             </Link>
           </div>
@@ -234,26 +273,28 @@ export default function Login() {
           {/* Divider */}
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-muted"></div>
+              <div className="w-full border-t border-white/10"></div>
             </div>
           </div>
 
-          {/* Login Button */}
-          <Button onClick={handleLogin} disabled={loading} className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-base rounded-xl disabled:opacity-50">
+          {/* Login Button - Metallic Gold */}
+          <Button 
+            onClick={handleLogin} 
+            disabled={loading} 
+            className="w-full h-12 metallic-gold-btn text-base rounded-xl disabled:opacity-50 border-0"
+          >
             LOGIN
           </Button>
 
           {/* Sign Up Link */}
-          <p className="text-center text-sm text-foreground">
+          <p className="text-center text-sm text-foreground/70">
             Don't have an account?{" "}
-            <Link to="/register" className="text-primary font-semibold hover:underline">
+            <Link to="/register" className="text-primary font-semibold hover:text-primary/80 transition-colors">
               Sign Up Now
             </Link>
           </p>
-        </div>
+        </motion.div>
       </div>
-
-      {/* Live Activity Ticker */}
-      <LiveActivityTicker />
-    </div>;
+    </div>
+  );
 }
