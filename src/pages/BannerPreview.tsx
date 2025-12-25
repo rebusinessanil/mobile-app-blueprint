@@ -13,12 +13,12 @@ import { useProfilePhotos } from "@/hooks/useProfilePhotos";
 import { useBannerSettings } from "@/hooks/useBannerSettings";
 import { useGlobalBackgroundSlots, getSlotBackgroundStyle } from "@/hooks/useGlobalBackgroundSlots";
 import { useBannerDefaults } from "@/hooks/useBannerDefaults";
+import { useUnifiedStickerSlots, mapBannerDataToStickerOptions } from "@/hooks/useUnifiedStickerSlots";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Sticker } from "@/hooks/useStickers";
 import { toPng } from "html-to-image";
 import download from "downloadjs";
-import { useRealtimeStickerSync } from "@/hooks/useRealtimeStickerSync";
 import { useWalletDeduction } from "@/hooks/useWalletDeduction";
 import InsufficientBalanceModal from "@/components/InsufficientBalanceModal";
 interface Upline {
@@ -41,13 +41,17 @@ interface BannerData {
   categoryType?: 'rank' | 'bonanza' | 'birthday' | 'anniversary' | 'meeting' | 'festival' | 'motivational' | 'story';
   message?: string;
   tripName?: string;
+  tripId?: string;
+  birthdayId?: string;
+  anniversaryId?: string;
+  festivalId?: string;
   eventTitle?: string;
   eventDate?: string;
   eventVenue?: string;
   quote?: string;
   motivationalBannerId?: string;
-  storyId?: string; // For story background slots
-  eventId?: string; // For story background slots (alias)
+  storyId?: string;
+  eventId?: string;
 }
 export default function BannerPreview() {
   const navigate = useNavigate();
@@ -261,167 +265,32 @@ export default function BannerPreview() {
     categoryType: bannerData?.categoryType
   });
 
-  // Real-time sync for sticker updates from admin panel - handles INSERT, UPDATE, DELETE
-  useRealtimeStickerSync({
-    categoryId: bannerData?.templateId || currentTemplateId,
-    rankId: bannerData?.rankId,
-    bannerCategory: bannerData?.categoryType || 'rank',
-    showToast: false,
-    // Don't show toasts to regular users
-    onUpdate: () => {
-      // Refetch sticker images when admin updates stickers
-      console.log('Sticker update detected via realtime, refetching images...');
-      fetchStickerImages();
-    },
-    onInsert: newSticker => {
-      console.log('New sticker inserted via realtime:', newSticker);
-      if (newSticker.slot_number) {
-        setStickerImages(prev => {
-          const slot = newSticker.slot_number;
-          const existing = prev[slot] || [];
-          // Don't add if already exists
-          if (existing.some(s => s.id === newSticker.id)) return prev;
-          return {
-            ...prev,
-            [slot]: [...existing, {
-              id: newSticker.id,
-              url: newSticker.image_url,
-              position_x: newSticker.position_x ?? 50,
-              position_y: newSticker.position_y ?? 50,
-              scale: newSticker.scale ?? 1.0,
-              rotation: newSticker.rotation ?? 0
-            }]
-          };
-        });
-      }
-    },
-    onDelete: stickerId => {
-      console.log('Sticker deleted via realtime:', stickerId);
-      setStickerImages(prev => {
-        const updated = {
-          ...prev
-        };
-        for (const slot in updated) {
-          updated[slot] = updated[slot].filter(s => s.id !== stickerId);
-        }
-        return updated;
-      });
-    }
+  // UNIFIED STICKER SLOTS - Single source of truth for all categories
+  // Maps bannerData to sticker options using the unified system
+  const stickerOptions = bannerData ? mapBannerDataToStickerOptions({
+    categoryType: bannerData.categoryType,
+    rankId: bannerData.rankId,
+    tripId: bannerData.tripId,
+    birthdayId: bannerData.birthdayId,
+    anniversaryId: bannerData.anniversaryId,
+    motivationalBannerId: bannerData.motivationalBannerId,
+    festivalId: bannerData.festivalId,
+    storyId: bannerData.storyId,
+    eventId: bannerData.eventId,
+  }) : {};
+
+  const { slotsByNumber: unifiedStickerImages, loading: stickersLoading } = useUnifiedStickerSlots({
+    ...stickerOptions,
+    enableRealtime: true,
+    activeOnly: true,
   });
 
-  // Fetch sticker images for each slot independently
-  const fetchStickerImages = async () => {
-    // If no slotStickers or rankId, fetch all stickers for this rank
-    if (bannerData?.rankId && (!slotStickers || Object.keys(slotStickers).length === 0)) {
-      const {
-        data,
-        error
-      } = await supabase.from('stickers').select('id, image_url, position_x, position_y, scale, rotation, slot_number').eq('rank_id', bannerData.rankId).eq('is_active', true);
-      if (!error && data) {
-        const newStickerImages: Record<number, {
-          id: string;
-          url: string;
-          position_x?: number;
-          position_y?: number;
-          scale?: number;
-          rotation?: number;
-        }[]> = {};
-        data.forEach(s => {
-          if (s.slot_number) {
-            if (!newStickerImages[s.slot_number]) {
-              newStickerImages[s.slot_number] = [];
-            }
-            newStickerImages[s.slot_number].push({
-              id: s.id,
-              url: s.image_url,
-              position_x: s.position_x ?? 50,
-              position_y: s.position_y ?? 50,
-              scale: s.scale ?? 1.0,
-              rotation: s.rotation ?? 0
-            });
-          }
-        });
-        setStickerImages(newStickerImages);
-        return;
-      }
-    }
-
-    // Otherwise use slotStickers structure
-    const newStickerImages: Record<number, {
-      id: string;
-      url: string;
-      position_x?: number;
-      position_y?: number;
-      scale?: number;
-      rotation?: number;
-    }[]> = {};
-    for (const [slotNum, stickerIds] of Object.entries(slotStickers)) {
-      if (stickerIds.length === 0) continue;
-      const {
-        data,
-        error
-      } = await supabase.from('stickers').select('id, image_url, position_x, position_y, scale, rotation').in('id', stickerIds);
-      if (!error && data) {
-        newStickerImages[parseInt(slotNum)] = data.map(s => ({
-          id: s.id,
-          url: s.image_url,
-          position_x: s.position_x ?? 50,
-          position_y: s.position_y ?? 50,
-          scale: s.scale ?? 1.0,
-          rotation: s.rotation ?? 0
-        }));
-      }
-    }
-    setStickerImages(newStickerImages);
-  };
+  // Sync unified sticker data to local state for compatibility with existing code
   useEffect(() => {
-    fetchStickerImages();
-  }, [slotStickers, bannerData?.rankId]);
-
-  // Direct realtime subscription for immediate sticker position/scale/rotation updates
-  useEffect(() => {
-    if (!bannerData?.rankId) return;
-    const channel = supabase.channel(`banner-stickers-live-${bannerData.rankId}`).on('postgres_changes', {
-      event: 'UPDATE',
-      schema: 'public',
-      table: 'stickers'
-    }, payload => {
-      const updated = payload.new as any;
-
-      // Only process if this sticker belongs to current rank
-      if (updated.rank_id !== bannerData.rankId) return;
-      console.log('🔄 Live sticker update received:', updated);
-
-      // Replace sticker in state with updated values - no refetch needed
-      setStickerImages(prev => {
-        const newState = {
-          ...prev
-        };
-        for (const slot in newState) {
-          newState[slot] = newState[slot].map(s => s.id === updated.id ? {
-            id: updated.id,
-            url: updated.image_url,
-            position_x: updated.position_x ?? 50,
-            position_y: updated.position_y ?? 50,
-            scale: updated.scale ?? 1.0,
-            rotation: updated.rotation ?? 0
-          } : s);
-        }
-        return newState;
-      });
-
-      // Also update scale state if this is the selected sticker
-      if (selectedStickerId === updated.id) {
-        setStickerScale(prev => ({
-          ...prev,
-          [updated.id]: updated.scale ?? 1.0
-        }));
-      }
-    }).subscribe();
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [bannerData?.rankId, selectedStickerId]);
+    if (unifiedStickerImages && Object.keys(unifiedStickerImages).length > 0) {
+      setStickerImages(unifiedStickerImages);
+    }
+  }, [unifiedStickerImages]);
 
   // Auto-select sticker when there's only one in the current slot
   useEffect(() => {
