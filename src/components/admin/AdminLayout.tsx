@@ -12,7 +12,8 @@ import {
   LogOut,
   Menu,
   X,
-  Library
+  Library,
+  Images
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -35,6 +36,7 @@ const adminRoutes = [
   { path: "/admin/sticker-management", icon: Sticker, label: "Sticker Slots" },
   { path: "/admin/rank-stickers", icon: Award, label: "Rank Stickers" },
   { path: "/admin/template-backgrounds", icon: Image, label: "Backgrounds" },
+  { path: "/admin/banner-carousel", icon: Images, label: "Banner Carousel" },
   { path: "/admin/banner-defaults", icon: Settings, label: "Banner Defaults" },
   { path: "/admin/banner-preview-defaults", icon: Settings, label: "Banner Preview Defaults" },
 ];
