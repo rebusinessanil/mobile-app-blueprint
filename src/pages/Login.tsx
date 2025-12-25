@@ -91,8 +91,14 @@ export default function Login() {
 
     setLoading(false);
   };
-  return <div className="min-h-screen bg-navy-dark flex items-center justify-center p-6">
-      <div className="w-full max-w-md">
+  return <div className="min-h-screen bg-gray-900 relative overflow-hidden flex items-center justify-center p-6">
+      {/* Aurora/Mesh Gradient Background Blobs */}
+      <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-cyan-500 rounded-full opacity-40 blur-[120px]" />
+      <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] bg-purple-600 rounded-full opacity-50 blur-[150px]" />
+      <div className="absolute top-[30%] right-[10%] w-[40%] h-[40%] bg-blue-800 rounded-full opacity-60 blur-[100px]" />
+      <div className="absolute bottom-[20%] left-[5%] w-[35%] h-[35%] bg-violet-500 rounded-full opacity-30 blur-[130px]" />
+      
+      <div className="w-full max-w-md relative z-10">
         <div className="gold-border bg-card p-8 space-y-6">
           {/* Icon */}
           <div className="flex justify-center">
