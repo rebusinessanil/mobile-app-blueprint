@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useBannerCarousel } from '@/hooks/useBannerCarousel';
-import { isIOS, getOptimizedImageUrl } from '@/lib/adaptiveAssets';
+import { isIOS, getOptimizedImageUrl, shouldDisableAnimations } from '@/lib/adaptiveAssets';
 
 const GuestBannerCarousel = () => {
   const { data: images, isLoading } = useBannerCarousel();
@@ -11,25 +11,26 @@ const GuestBannerCarousel = () => {
   const navigate = useNavigate();
   const trackRef = useRef<HTMLDivElement>(null);
   const [isiOSDevice] = useState(() => isIOS());
+  const [animationsDisabled] = useState(() => shouldDisableAnimations());
 
   const totalSlides = images?.length || 0;
 
   const nextSlide = useCallback(() => {
-    if (!totalSlides || isiOSDevice) return;
+    if (!totalSlides || isiOSDevice || animationsDisabled) return;
     setIsTransitioning(true);
     setCurrentIndex((prev) => prev + 1);
-  }, [totalSlides, isiOSDevice]);
+  }, [totalSlides, isiOSDevice, animationsDisabled]);
 
   const prevSlide = useCallback(() => {
-    if (!totalSlides || isiOSDevice) return;
+    if (!totalSlides || isiOSDevice || animationsDisabled) return;
     setIsTransitioning(true);
     setCurrentIndex((prev) => prev - 1);
-  }, [totalSlides, isiOSDevice]);
+  }, [totalSlides, isiOSDevice, animationsDisabled]);
 
-  // Handle infinite loop jump - DISABLED on iOS
+  // Handle infinite loop jump - disabled on iOS/mobile stability mode
   useEffect(() => {
-    if (!totalSlides || isiOSDevice) return;
-    
+    if (!totalSlides || isiOSDevice || animationsDisabled) return;
+
     const handleTransitionEnd = () => {
       if (currentIndex === 0) {
         setIsTransitioning(false);
@@ -46,18 +47,18 @@ const GuestBannerCarousel = () => {
       track.addEventListener('transitionend', handleTransitionEnd);
       return () => track.removeEventListener('transitionend', handleTransitionEnd);
     }
-  }, [currentIndex, totalSlides, isiOSDevice]);
+  }, [currentIndex, totalSlides, isiOSDevice, animationsDisabled]);
 
   const handleCarouselClick = () => {
     navigate('/login');
   };
 
-  // Auto-advance every 4 seconds - DISABLED on iOS to prevent crash loops
+  // Auto-advance every 4 seconds - disabled for stability mode
   useEffect(() => {
-    if (!totalSlides || totalSlides <= 1 || isiOSDevice) return;
+    if (!totalSlides || totalSlides <= 1 || isiOSDevice || animationsDisabled) return;
     const interval = setInterval(nextSlide, 4000);
     return () => clearInterval(interval);
-  }, [totalSlides, nextSlide, isiOSDevice]);
+  }, [totalSlides, nextSlide, isiOSDevice, animationsDisabled]);
 
   if (isLoading) {
     return (
@@ -71,10 +72,10 @@ const GuestBannerCarousel = () => {
     return null;
   }
 
-  // iOS: Static single image display - no carousel, no timers, no transitions
-  if (isiOSDevice) {
+  // iOS/mobile stability mode: Static single image display - no carousel, no timers, no transitions
+  if (isiOSDevice || animationsDisabled) {
     return (
-      <div 
+      <div
         className="relative w-full aspect-[16/9] overflow-hidden rounded-2xl cursor-pointer"
         onClick={handleCarouselClick}
       >
@@ -99,12 +100,8 @@ const GuestBannerCarousel = () => {
     );
   }
 
-  // Non-iOS: Full carousel with animations
-  const slides = [
-    images[images.length - 1],
-    ...images,
-    images[0],
-  ];
+  // Full carousel with animations
+  const slides = [images[images.length - 1], ...images, images[0]];
 
   const getRealIndex = () => {
     if (currentIndex === 0) return totalSlides - 1;
@@ -113,11 +110,11 @@ const GuestBannerCarousel = () => {
   };
 
   return (
-    <div 
+    <div
       className="relative w-full aspect-[16/9] overflow-hidden rounded-2xl group cursor-pointer"
       onClick={handleCarouselClick}
     >
-      <div 
+      <div
         ref={trackRef}
         className={`flex h-full ${isTransitioning ? 'transition-transform duration-300 ease-out' : ''}`}
         style={{ transform: `translateX(-${currentIndex * 100}%)` }}
@@ -137,13 +134,19 @@ const GuestBannerCarousel = () => {
       {images.length > 1 && (
         <>
           <button
-            onClick={(e) => { e.stopPropagation(); prevSlide(); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              prevSlide();
+            }}
             className="absolute left-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-background/60 border border-border/30 text-foreground/80 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-background/80"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
           <button
-            onClick={(e) => { e.stopPropagation(); nextSlide(); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              nextSlide();
+            }}
             className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-background/60 border border-border/30 text-foreground/80 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-background/80"
           >
             <ChevronRight className="w-4 h-4" />
@@ -156,15 +159,13 @@ const GuestBannerCarousel = () => {
           {images.map((_, index) => (
             <button
               key={index}
-              onClick={(e) => { 
-                e.stopPropagation(); 
+              onClick={(e) => {
+                e.stopPropagation();
                 setIsTransitioning(true);
-                setCurrentIndex(index + 1); 
+                setCurrentIndex(index + 1);
               }}
               className={`w-2 h-2 rounded-full transition-all ${
-                index === getRealIndex()
-                  ? 'bg-primary w-4'
-                  : 'bg-foreground/40 hover:bg-foreground/60'
+                index === getRealIndex() ? 'bg-primary w-4' : 'bg-foreground/40 hover:bg-foreground/60'
               }`}
             />
           ))}
@@ -175,3 +176,4 @@ const GuestBannerCarousel = () => {
 };
 
 export default GuestBannerCarousel;
+
