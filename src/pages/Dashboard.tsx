@@ -28,7 +28,6 @@ import { preloadBannerPreviewSystem, preloadImages } from "@/lib/preloader";
 import { useAdminSync } from "@/hooks/useAdminSync";
 import { useGuestMode } from "@/hooks/useGuestMode";
 import { Button } from "@/components/ui/button";
-
 import LockedCard from "@/components/dashboard/LockedCard";
 import GuestStatusBar from "@/components/dashboard/GuestStatusBar";
 import GuestBannerCarousel from "@/components/dashboard/GuestBannerCarousel";
@@ -38,10 +37,14 @@ const PROXY_PLACEHOLDER = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/20
 
 // Track if dashboard has been loaded once
 let dashboardLoadedOnce = false;
-
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { userId, isGuest, isAuthenticated, isLoading: authLoading } = useGuestMode();
+  const {
+    userId,
+    isGuest,
+    isAuthenticated,
+    isLoading: authLoading
+  } = useGuestMode();
   const [showLoginModal, setShowLoginModal] = useState(false);
 
   // Fetch real data - will gracefully fail for guests due to RLS
@@ -81,16 +84,21 @@ export default function Dashboard() {
     stories: generatedStories,
     loading: storiesLoading
   } = useGeneratedStories();
-  
+
   // Fetch stories_events with aggressive caching
-  const { data: storiesEvents = [], isLoading: storiesEventsLoading } = useQuery({
+  const {
+    data: storiesEvents = [],
+    isLoading: storiesEventsLoading
+  } = useQuery({
     queryKey: ["stories-events"],
     queryFn: async () => {
       try {
-        const { data, error } = await supabase
-          .from("stories_events")
-          .select("*")
-          .order("event_date", { ascending: true });
+        const {
+          data,
+          error
+        } = await supabase.from("stories_events").select("*").order("event_date", {
+          ascending: true
+        });
         if (error) throw error;
         return data || [];
       } catch (error) {
@@ -102,20 +110,25 @@ export default function Dashboard() {
     staleTime: 30 * 60 * 1000,
     gcTime: 60 * 60 * 1000,
     refetchOnMount: false,
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: false
   });
-  
   const {
     profile: realProfile
   } = useProfile(userId ?? undefined);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const hasLoadedRef = useRef(dashboardLoadedOnce);
-  
+
   // Welcome bonus modal - only for authenticated users
-  const { showWelcomeModal, bonusAmount, handleContinue } = useWelcomeBonus();
-  
+  const {
+    showWelcomeModal,
+    bonusAmount,
+    handleContinue
+  } = useWelcomeBonus();
+
   // Real-time sync for admin updates
-  useAdminSync({ enabled: isAuthenticated });
+  useAdminSync({
+    enabled: isAuthenticated
+  });
 
   // Use real public data for everyone - no demo fallback
   const categories = realCategories;
@@ -131,7 +144,7 @@ export default function Dashboard() {
   // Check if data is loading AND no cached data exists AND first load
   const hasNoData = categories.length === 0 && allTemplates.length === 0 && ranks.length === 0;
   const isInitialLoading = (categoriesLoading || templatesLoading || ranksLoading) && hasNoData && !hasLoadedRef.current;
-  
+
   // Mark dashboard as loaded once data arrives
   useEffect(() => {
     if (!isInitialLoading && (categories.length > 0 || ranks.length > 0)) {
@@ -144,23 +157,18 @@ export default function Dashboard() {
   const getRankTemplates = useMemo(() => {
     return allTemplates.filter((t: any) => t.rank_id && ranks.some((r: any) => r.id === t.rank_id));
   }, [allTemplates, ranks]);
-
   const getTripTemplates = useMemo(() => {
     return allTemplates.filter((t: any) => t.trip_id && trips.some((trip: any) => trip.id === t.trip_id));
   }, [allTemplates, trips]);
-
   const getBirthdayTemplates = useMemo(() => {
     return allTemplates.filter((t: any) => t.birthday_id && birthdays.some((birthday: any) => birthday.id === t.birthday_id));
   }, [allTemplates, birthdays]);
-
   const getAnniversaryTemplates = useMemo(() => {
     return allTemplates.filter((t: any) => t.anniversary_id && anniversaries.some((anniversary: any) => anniversary.id === t.anniversary_id));
   }, [allTemplates, anniversaries]);
-
   const getMotivationalBannerTemplates = useMemo(() => {
     return allTemplates.filter((t: any) => t.motivational_banner_id && motivationalBanners.some((mb: any) => mb.id === t.motivational_banner_id));
   }, [allTemplates, motivationalBanners]);
-
   const getFestivalTemplates = useMemo(() => {
     return allTemplates.filter((t: any) => t.festival_id && festivals.some((f: any) => f.id === t.festival_id));
   }, [allTemplates, festivals]);
@@ -175,12 +183,7 @@ export default function Dashboard() {
   // Preload template images when data loads
   useEffect(() => {
     if (!isInitialLoading && ranks.length > 0) {
-      const imageUrls = [
-        ...ranks.map((r: any) => r.icon).filter(Boolean),
-        ...trips.map((t: any) => t.trip_image_url).filter(Boolean),
-        ...birthdays.map((b: any) => b.Birthday_image_url).filter(Boolean),
-        ...allTemplates.slice(0, 10).map((t: any) => t.cover_thumbnail_url).filter(Boolean),
-      ];
+      const imageUrls = [...ranks.map((r: any) => r.icon).filter(Boolean), ...trips.map((t: any) => t.trip_image_url).filter(Boolean), ...birthdays.map((b: any) => b.Birthday_image_url).filter(Boolean), ...allTemplates.slice(0, 10).map((t: any) => t.cover_thumbnail_url).filter(Boolean)];
       if (imageUrls.length > 0) {
         preloadImages(imageUrls as string[]);
       }
@@ -226,18 +229,18 @@ export default function Dashboard() {
     if (isGuest) {
       return <DashboardSkeleton />;
     }
-    return (
-      <ProfileCompletionGate userId={userId}>
+    return <ProfileCompletionGate userId={userId}>
         <DashboardSkeleton />
-      </ProfileCompletionGate>
-    );
+      </ProfileCompletionGate>;
   }
 
   // Content wrapper - ProfileCompletionGate only for authenticated users
-  const ContentWrapper = isAuthenticated ? ProfileCompletionGate : ({ children }: { children: React.ReactNode }) => <>{children}</>;
-
-  return (
-    <ContentWrapper userId={userId}>
+  const ContentWrapper = isAuthenticated ? ProfileCompletionGate : ({
+    children
+  }: {
+    children: React.ReactNode;
+  }) => <>{children}</>;
+  return <ContentWrapper userId={userId}>
       <div className="min-h-screen bg-navy-dark pb-24 overflow-x-hidden overflow-y-auto">
       {/* Fixed Header */}
       <header className="fixed top-0 left-0 right-0 bg-navy-dark/95 backdrop-blur-sm z-50 px-4 py-3 border-b border-primary/20">
@@ -254,22 +257,13 @@ export default function Dashboard() {
             </div>
           </div>
           <div className="flex items-center gap-1.5 flex-shrink-0">
-            {isGuest ? (
-              /* Guest: Show Login Button */
-              <Button 
-                onClick={() => navigate("/login")}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 text-sm font-semibold"
-              >
+            {isGuest ? (/* Guest: Show Login Button */
+            <Button onClick={() => navigate("/login")} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 text-sm font-semibold">
                 <LogIn className="w-4 h-4" />
                 Login
-              </Button>
-            ) : (
-              /* Authenticated: Show Wallet & Profile */
-              <>
-                <Link 
-                  to="/wallet" 
-                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-primary/10 border border-primary/30 hover:bg-primary/20 transition-colors"
-                >
+              </Button>) : (/* Authenticated: Show Wallet & Profile */
+            <>
+                <Link to="/wallet" className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-primary/10 border border-primary/30 hover:bg-primary/20 transition-colors">
                   <Wallet className="w-4 h-4 text-primary" />
                   <span className="text-sm font-bold text-primary">₹{(profile as any)?.balance || 0}</span>
                 </Link>
@@ -289,8 +283,7 @@ export default function Dashboard() {
                     2
                   </span>
                 </Link>
-              </>
-            )}
+              </>)}
           </div>
         </div>
       </header>
@@ -299,25 +292,16 @@ export default function Dashboard() {
       <div className="h-16"></div>
 
       {/* Guest Banner - Show value proposition with Carousel */}
-      {isGuest && (
-        <div className="mx-4 mt-4 rounded-2xl bg-gradient-to-r from-primary/20 via-primary/10 to-secondary/20 border border-primary/30 overflow-hidden">
+      {isGuest && <div className="mx-4 mt-4 rounded-2xl bg-gradient-to-r from-primary/20 via-primary/10 to-secondary/20 border border-primary/30 overflow-hidden">
           <GuestBannerCarousel />
           <div className="p-4">
-            <h2 className="text-lg font-bold text-foreground mb-1">
-              Create Stunning Business Banners
-            </h2>
-            <p className="text-sm text-muted-foreground mb-3">
-              Sign up to unlock all templates, get 199 free tokens, and start creating professional promotional materials!
-            </p>
-            <Button 
-              onClick={() => navigate("/register")}
-              className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold"
-            >
-              Get Started Free →
+            
+            
+            <Button onClick={() => navigate("/register")} className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold text-xs">
+              Sign up to unlock all templates, get 199 free  
             </Button>
           </div>
-        </div>
-      )}
+        </div>}
 
       {/* Compact Status Bar for Guests */}
       {isGuest && <GuestStatusBar />}
@@ -325,201 +309,82 @@ export default function Dashboard() {
       {/* Content */}
       <div className="py-6 space-y-6">
         {/* Unified Stories Section */}
-        <StoriesSection 
-          festivals={festivals as any}
-          storiesEvents={storiesEvents}
-          generatedStories={generatedStories as any}
-        />
+        <StoriesSection festivals={festivals as any} storiesEvents={storiesEvents} generatedStories={generatedStories as any} />
 
         {/* Category Sections */}
         {categories.map((category: any) => {
-        const categoryTemplates = getCategoryTemplates(category.id);
-        const isRankPromotion = category.slug === 'rank-promotion';
-        const isBonanzaPromotion = category.slug === 'bonanza-promotion';
-        const isBirthday = category.slug === 'birthday';
-        const isAnniversary = category.slug === 'anniversary';
-        const isMotivational = category.slug === 'motivational';
-        const isFestival = category.slug === 'festival';
-        
-        // Get the "See All" link path
-        const seeAllPath = isRankPromotion ? '/rank-selection' 
-          : isBonanzaPromotion ? '/categories/bonanza-trips' 
-          : isBirthday ? '/categories/birthdays' 
-          : isAnniversary ? '/categories/anniversaries' 
-          : isMotivational ? '/categories/motivational' 
-          : isFestival ? '/categories/festival' 
-          : `/categories/${category.slug}`;
+          const categoryTemplates = getCategoryTemplates(category.id);
+          const isRankPromotion = category.slug === 'rank-promotion';
+          const isBonanzaPromotion = category.slug === 'bonanza-promotion';
+          const isBirthday = category.slug === 'birthday';
+          const isAnniversary = category.slug === 'anniversary';
+          const isMotivational = category.slug === 'motivational';
+          const isFestival = category.slug === 'festival';
 
-        return <div key={category.id} className="space-y-3">
+          // Get the "See All" link path
+          const seeAllPath = isRankPromotion ? '/rank-selection' : isBonanzaPromotion ? '/categories/bonanza-trips' : isBirthday ? '/categories/birthdays' : isAnniversary ? '/categories/anniversaries' : isMotivational ? '/categories/motivational' : isFestival ? '/categories/festival' : `/categories/${category.slug}`;
+          return <div key={category.id} className="space-y-3">
               {/* Section Header */}
               <div className="flex items-center justify-between pl-4 pr-4">
                 <div className="flex items-center gap-2">
                   <span className="text-2xl">{category.icon}</span>
                   <h2 className="text-lg font-bold text-foreground">{category.name}</h2>
                 </div>
-                {isAuthenticated ? (
-                  <Link to={seeAllPath} className="text-primary text-sm font-semibold hover:underline">
+                {isAuthenticated ? <Link to={seeAllPath} className="text-primary text-sm font-semibold hover:underline">
                     See All →
-                  </Link>
-                ) : (
-                  <button 
-                    onClick={() => setShowLoginModal(true)}
-                    className="text-primary text-sm font-semibold hover:underline"
-                  >
+                  </Link> : <button onClick={() => setShowLoginModal(true)} className="text-primary text-sm font-semibold hover:underline">
                     See All →
-                  </button>
-                )}
+                  </button>}
               </div>
 
-              {isRankPromotion ? (
-                <div className="flex gap-3 overflow-x-auto pb-2 pl-4 pr-4 scrollbar-hide scroll-smooth transform-gpu">
+              {isRankPromotion ? <div className="flex gap-3 overflow-x-auto pb-2 pl-4 pr-4 scrollbar-hide scroll-smooth transform-gpu">
                   {getRankTemplates.map((template: any) => {
-                    const rank = ranks.find((r: any) => r.id === template.rank_id);
-                    return (
-                      <GuestBannerCard 
-                        key={template.id}
-                        id={template.id}
-                        title={template.name}
-                        imageUrl={template.cover_thumbnail_url}
-                        fallbackIcon={rank?.icon || '🏆'}
-                        fallbackGradient={rank?.gradient || 'bg-gradient-to-br from-secondary to-card'}
-                        linkTo={`/rank-banner-create/${template.rank_id}`}
-                        isAuthenticated={isAuthenticated}
-                        onAuthenticatedClick={() => navigate(`/rank-banner-create/${template.rank_id}`)}
-                      />
-                    );
-                  })}
-                </div>
-              ) : isBonanzaPromotion ? (
-                <div className="flex gap-3 overflow-x-auto pb-2 pl-4 pr-4 scrollbar-hide scroll-smooth transform-gpu">
+                const rank = ranks.find((r: any) => r.id === template.rank_id);
+                return <GuestBannerCard key={template.id} id={template.id} title={template.name} imageUrl={template.cover_thumbnail_url} fallbackIcon={rank?.icon || '🏆'} fallbackGradient={rank?.gradient || 'bg-gradient-to-br from-secondary to-card'} linkTo={`/rank-banner-create/${template.rank_id}`} isAuthenticated={isAuthenticated} onAuthenticatedClick={() => navigate(`/rank-banner-create/${template.rank_id}`)} />;
+              })}
+                </div> : isBonanzaPromotion ? <div className="flex gap-3 overflow-x-auto pb-2 pl-4 pr-4 scrollbar-hide scroll-smooth transform-gpu">
                   {getTripTemplates.map((template: any) => {
-                    const trip = trips.find((t: any) => t.id === template.trip_id);
-                    return (
-                      <GuestBannerCard 
-                        key={template.id}
-                        id={template.id}
-                        title={template.name}
-                        imageUrl={template.cover_thumbnail_url}
-                        fallbackIcon={(trip as any)?.short_title || '🎁'}
-                        fallbackGradient="bg-gradient-to-br from-red-600 to-orange-600"
-                        linkTo={`/banner-create/bonanza?tripId=${template.trip_id}`}
-                        isAuthenticated={isAuthenticated}
-                        onAuthenticatedClick={() => navigate(`/banner-create/bonanza?tripId=${template.trip_id}`)}
-                      />
-                    );
-                  })}
-                </div>
-              ) : isBirthday ? (
-                <div className="flex gap-3 overflow-x-auto pb-2 pl-4 pr-4 scrollbar-hide scroll-smooth transform-gpu">
+                const trip = trips.find((t: any) => t.id === template.trip_id);
+                return <GuestBannerCard key={template.id} id={template.id} title={template.name} imageUrl={template.cover_thumbnail_url} fallbackIcon={(trip as any)?.short_title || '🎁'} fallbackGradient="bg-gradient-to-br from-red-600 to-orange-600" linkTo={`/banner-create/bonanza?tripId=${template.trip_id}`} isAuthenticated={isAuthenticated} onAuthenticatedClick={() => navigate(`/banner-create/bonanza?tripId=${template.trip_id}`)} />;
+              })}
+                </div> : isBirthday ? <div className="flex gap-3 overflow-x-auto pb-2 pl-4 pr-4 scrollbar-hide scroll-smooth transform-gpu">
                   {getBirthdayTemplates.map((template: any) => {
-                    const birthday = birthdays.find((b: any) => b.id === template.birthday_id);
-                    return (
-                      <GuestBannerCard 
-                        key={template.id}
-                        id={template.id}
-                        title={template.name}
-                        imageUrl={template.cover_thumbnail_url}
-                        fallbackIcon={(birthday as any)?.short_title || '🎂'}
-                        fallbackGradient="bg-gradient-to-br from-pink-600 to-purple-600"
-                        linkTo={`/banner-create/birthday?birthdayId=${template.birthday_id}`}
-                        isAuthenticated={isAuthenticated}
-                        onAuthenticatedClick={() => navigate(`/banner-create/birthday?birthdayId=${template.birthday_id}`)}
-                      />
-                    );
-                  })}
-                </div>
-              ) : isAnniversary ? (
-                <div className="flex gap-3 overflow-x-auto pb-2 pl-4 pr-4 scrollbar-hide scroll-smooth transform-gpu">
+                const birthday = birthdays.find((b: any) => b.id === template.birthday_id);
+                return <GuestBannerCard key={template.id} id={template.id} title={template.name} imageUrl={template.cover_thumbnail_url} fallbackIcon={(birthday as any)?.short_title || '🎂'} fallbackGradient="bg-gradient-to-br from-pink-600 to-purple-600" linkTo={`/banner-create/birthday?birthdayId=${template.birthday_id}`} isAuthenticated={isAuthenticated} onAuthenticatedClick={() => navigate(`/banner-create/birthday?birthdayId=${template.birthday_id}`)} />;
+              })}
+                </div> : isAnniversary ? <div className="flex gap-3 overflow-x-auto pb-2 pl-4 pr-4 scrollbar-hide scroll-smooth transform-gpu">
                   {getAnniversaryTemplates.map((template: any) => {
-                    const anniversary = anniversaries.find((a: any) => a.id === template.anniversary_id);
-                    return (
-                      <GuestBannerCard 
-                        key={template.id}
-                        id={template.id}
-                        title={template.name}
-                        imageUrl={template.cover_thumbnail_url}
-                        fallbackIcon={(anniversary as any)?.short_title || '💞'}
-                        fallbackGradient="bg-gradient-to-br from-rose-600 to-pink-600"
-                        linkTo={`/banner-create/anniversary?anniversaryId=${template.anniversary_id}`}
-                        isAuthenticated={isAuthenticated}
-                        onAuthenticatedClick={() => navigate(`/banner-create/anniversary?anniversaryId=${template.anniversary_id}`)}
-                      />
-                    );
-                  })}
-                </div>
-              ) : isMotivational ? (
-                <div className="flex gap-3 overflow-x-auto pb-2 pl-4 pr-4 scrollbar-hide scroll-smooth transform-gpu">
+                const anniversary = anniversaries.find((a: any) => a.id === template.anniversary_id);
+                return <GuestBannerCard key={template.id} id={template.id} title={template.name} imageUrl={template.cover_thumbnail_url} fallbackIcon={(anniversary as any)?.short_title || '💞'} fallbackGradient="bg-gradient-to-br from-rose-600 to-pink-600" linkTo={`/banner-create/anniversary?anniversaryId=${template.anniversary_id}`} isAuthenticated={isAuthenticated} onAuthenticatedClick={() => navigate(`/banner-create/anniversary?anniversaryId=${template.anniversary_id}`)} />;
+              })}
+                </div> : isMotivational ? <div className="flex gap-3 overflow-x-auto pb-2 pl-4 pr-4 scrollbar-hide scroll-smooth transform-gpu">
                   {getMotivationalBannerTemplates.map((template: any) => {
-                    const motivationalBanner = motivationalBanners.find((mb: any) => mb.id === template.motivational_banner_id);
-                    return (
-                      <GuestBannerCard 
-                        key={template.id}
-                        id={template.id}
-                        title={template.name}
-                        imageUrl={template.cover_thumbnail_url}
-                        fallbackIcon={(motivationalBanner as any)?.short_title || '⚡'}
-                        fallbackGradient="bg-gradient-to-br from-yellow-600 to-orange-600"
-                        linkTo={`/motivational-preview/${template.motivational_banner_id}`}
-                        isAuthenticated={isAuthenticated}
-                        onAuthenticatedClick={() => navigate(`/motivational-preview/${template.motivational_banner_id}`)}
-                      />
-                    );
-                  })}
-                </div>
-              ) : isFestival ? (
-                <div className="flex gap-3 overflow-x-auto pb-2 pl-4 pr-4 scrollbar-hide scroll-smooth transform-gpu">
+                const motivationalBanner = motivationalBanners.find((mb: any) => mb.id === template.motivational_banner_id);
+                return <GuestBannerCard key={template.id} id={template.id} title={template.name} imageUrl={template.cover_thumbnail_url} fallbackIcon={(motivationalBanner as any)?.short_title || '⚡'} fallbackGradient="bg-gradient-to-br from-yellow-600 to-orange-600" linkTo={`/motivational-preview/${template.motivational_banner_id}`} isAuthenticated={isAuthenticated} onAuthenticatedClick={() => navigate(`/motivational-preview/${template.motivational_banner_id}`)} />;
+              })}
+                </div> : isFestival ? <div className="flex gap-3 overflow-x-auto pb-2 pl-4 pr-4 scrollbar-hide scroll-smooth transform-gpu">
                   {getFestivalTemplates.map((template: any) => {
-                    const festival = festivals.find((f: any) => f.id === template.festival_id);
-                    return (
-                      <GuestBannerCard 
-                        key={template.id}
-                        id={template.id}
-                        title={template.name}
-                        subtitle={(festival as any)?.festival_name}
-                        imageUrl={template.cover_thumbnail_url}
-                        fallbackIcon="🎉"
-                        fallbackGradient="bg-gradient-to-br from-purple-600 to-pink-600"
-                        linkTo={`/festival-preview/${template.festival_id}`}
-                        isAuthenticated={isAuthenticated}
-                        onAuthenticatedClick={() => navigate(`/festival-preview/${template.festival_id}`)}
-                      />
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="flex gap-3 overflow-x-auto pb-2 pl-4 pr-4 scrollbar-hide scroll-smooth">
+                const festival = festivals.find((f: any) => f.id === template.festival_id);
+                return <GuestBannerCard key={template.id} id={template.id} title={template.name} subtitle={(festival as any)?.festival_name} imageUrl={template.cover_thumbnail_url} fallbackIcon="🎉" fallbackGradient="bg-gradient-to-br from-purple-600 to-pink-600" linkTo={`/festival-preview/${template.festival_id}`} isAuthenticated={isAuthenticated} onAuthenticatedClick={() => navigate(`/festival-preview/${template.festival_id}`)} />;
+              })}
+                </div> : <div className="flex gap-3 overflow-x-auto pb-2 pl-4 pr-4 scrollbar-hide scroll-smooth">
                   {categoryTemplates.length > 0 ? categoryTemplates.map((template: any) => {
-                    const getCategoryRoute = () => {
-                      const routeMap: Record<string, string> = {
-                        'bonanza-promotion': '/banner-create/bonanza',
-                        'birthday': '/banner-create/birthday',
-                        'anniversary': '/banner-create/anniversary',
-                        'meeting': '/banner-create/meeting',
-                        'festival': '/banner-create/festival',
-                        'motivational': '/banner-create/motivational'
-                      };
-                      return routeMap[category.slug] || `/template/${template.id}`;
-                    };
-                    return (
-                      <GuestBannerCard 
-                        key={template.id}
-                        id={template.id}
-                        title={template.name}
-                        imageUrl={template.cover_thumbnail_url}
-                        fallbackIcon="📋"
-                        fallbackGradient="bg-gradient-to-br from-secondary to-card"
-                        linkTo={getCategoryRoute()}
-                        isAuthenticated={isAuthenticated}
-                        onAuthenticatedClick={() => navigate(getCategoryRoute())}
-                      />
-                    );
-                  }) : (
-                    <div className="w-[calc(33.333%-8px)] min-w-[110px] max-w-[140px] gold-border bg-card rounded-2xl overflow-hidden flex-shrink-0 p-4">
+                const getCategoryRoute = () => {
+                  const routeMap: Record<string, string> = {
+                    'bonanza-promotion': '/banner-create/bonanza',
+                    'birthday': '/banner-create/birthday',
+                    'anniversary': '/banner-create/anniversary',
+                    'meeting': '/banner-create/meeting',
+                    'festival': '/banner-create/festival',
+                    'motivational': '/banner-create/motivational'
+                  };
+                  return routeMap[category.slug] || `/template/${template.id}`;
+                };
+                return <GuestBannerCard key={template.id} id={template.id} title={template.name} imageUrl={template.cover_thumbnail_url} fallbackIcon="📋" fallbackGradient="bg-gradient-to-br from-secondary to-card" linkTo={getCategoryRoute()} isAuthenticated={isAuthenticated} onAuthenticatedClick={() => navigate(getCategoryRoute())} />;
+              }) : <div className="w-[calc(33.333%-8px)] min-w-[110px] max-w-[140px] gold-border bg-card rounded-2xl overflow-hidden flex-shrink-0 p-4">
                       <p className="text-xs text-muted-foreground text-center">No templates yet</p>
-                    </div>
-                  )}
-                </div>
-              )}
+                    </div>}
+                </div>}
             </div>;
         })}
       </div>
@@ -528,20 +393,9 @@ export default function Dashboard() {
       </div>
       
       {/* Welcome Bonus Modal - only for authenticated users */}
-      {isAuthenticated && (
-        <WelcomeBonusModal
-          open={showWelcomeModal}
-          bonusAmount={bonusAmount}
-          onContinue={handleContinue}
-        />
-      )}
+      {isAuthenticated && <WelcomeBonusModal open={showWelcomeModal} bonusAmount={bonusAmount} onContinue={handleContinue} />}
       
       {/* Login Prompt Modal for guest interactions */}
-      <LoginPromptModal 
-        open={showLoginModal}
-        onOpenChange={setShowLoginModal}
-        featureName="this feature"
-      />
-    </ContentWrapper>
-  );
+      <LoginPromptModal open={showLoginModal} onOpenChange={setShowLoginModal} featureName="this feature" />
+    </ContentWrapper>;
 }
