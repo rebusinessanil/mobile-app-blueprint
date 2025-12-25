@@ -22,6 +22,7 @@ import download from "downloadjs";
 import { useWalletDeduction } from "@/hooks/useWalletDeduction";
 import InsufficientBalanceModal from "@/components/InsufficientBalanceModal";
 import { useBannerAssetPreloader } from "@/hooks/useBannerAssetPreloader";
+import BannerWatermarks from "@/components/BannerWatermarks";
 interface Upline {
   id: string;
   name: string;
@@ -1441,8 +1442,15 @@ export default function BannerPreview() {
           height: `${FIXED_SIZE}px`
         },
         filter: node => {
-          // Exclude UI elements from export
-          if (node.classList?.contains("slot-selector") || node.classList?.contains("control-buttons") || node.classList?.contains("whatsapp-float") || node.id === "ignore-download") {
+          // Exclude UI elements and PREVIEW-ONLY brand watermark from export
+          // Keep mobile-watermark-permanent in final download
+          if (
+            node.classList?.contains("slot-selector") || 
+            node.classList?.contains("control-buttons") || 
+            node.classList?.contains("whatsapp-float") || 
+            node.id === "ignore-download" ||
+            node.id === "brand-watermark-preview" // Exclude preview-only watermark
+          ) {
             return false;
           }
           return true;
@@ -1556,34 +1564,6 @@ export default function BannerPreview() {
                 >
               <div className="absolute inset-0" style={backgroundStyle}>
                 {/* Background automatically from global slot system (image or default color) */}
-
-                {/* Horizontal Divider Line 1 - Through center of Achiever Photo (top: 162px, height: 792px, center: 558px) */}
-                <div 
-                  className="absolute"
-                  style={{
-                    top: '558px',
-                    left: 0,
-                    right: 0,
-                    height: '2px',
-                    backgroundColor: '#000000',
-                    zIndex: 2,
-                    pointerEvents: 'none'
-                  }}
-                />
-
-                {/* Horizontal Divider Line 2 - Through center of User Photo (bottom: 0, height: 540px, center: 1080px from top) */}
-                <div 
-                  className="absolute"
-                  style={{
-                    top: '1080px',
-                    left: 0,
-                    right: 0,
-                    height: '2px',
-                    backgroundColor: '#000000',
-                    zIndex: 2,
-                    pointerEvents: 'none'
-                  }}
-                />
 
                 {/* Story Category: Three Dark-Theme Upper Bars */}
                 {bannerData.categoryType === 'story' && <>
@@ -2154,6 +2134,12 @@ export default function BannerPreview() {
 
                 {/* BOTTOM RIGHT - Mentor Name and Title (Moved to bottom-most position) */}
                 
+
+                {/* WATERMARKS - Two layers for preview and download */}
+                <BannerWatermarks 
+                  showBrandWatermark={true}  // Preview only - excluded during download via filter
+                  showMobileWatermark={true} // Permanent - included in final download
+                />
 
               </div>
                 </div>
