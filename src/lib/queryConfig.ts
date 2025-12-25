@@ -1,24 +1,28 @@
 import { QueryClient } from '@tanstack/react-query';
 
+// 24 hours in milliseconds
+const TWENTY_FOUR_HOURS = 1000 * 60 * 60 * 24;
+
 /**
- * Ultra-optimized QueryClient for instant page loads
- * - Aggressive caching with long stale times
+ * Ultra-optimized QueryClient for Zero Crash stability
+ * - staleTime: Infinity for critical data (Load Once rule)
+ * - 24-hour garbage collection
  * - Offline-first network mode
- * - Smart background refetching
+ * - No refetching on tab/window focus
  */
 export const createOptimizedQueryClient = () => {
   return new QueryClient({
     defaultOptions: {
       queries: {
-        // Cache data for 10 minutes (increased for faster loads)
-        staleTime: 10 * 60 * 1000,
-        // Keep unused data in cache for 1 hour
-        gcTime: 60 * 60 * 1000,
-        // Don't refetch on window focus (saves bandwidth)
+        // CRITICAL: Data never goes stale - Load Once rule
+        staleTime: Infinity,
+        // Keep data in cache for 24 hours
+        gcTime: TWENTY_FOUR_HOURS,
+        // Never refetch on window focus
         refetchOnWindowFocus: false,
-        // Only refetch on reconnect if data is stale
+        // Never refetch on reconnect
         refetchOnReconnect: false,
-        // Don't refetch on mount if data exists
+        // Never refetch on mount if data exists
         refetchOnMount: false,
         // Only retry once on failure
         retry: 1,
