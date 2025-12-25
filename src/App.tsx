@@ -101,6 +101,7 @@ const AdminBannerDefaults = lazyWithRetry(() => import("./pages/AdminBannerDefau
 const AdminBannerPreviewDefaults = lazyWithRetry(() => import("./pages/AdminBannerPreviewDefaults"));
 const AdminTemplateBackgrounds = lazyWithRetry(() => import("./pages/AdminTemplateBackgrounds"));
 const AdminStickerLibrary = lazyWithRetry(() => import("./pages/AdminStickerLibrary"));
+const AdminStickerManagement = lazyWithRetry(() => import("./pages/AdminStickerManagement"));
 
 // Error Boundary for lazy loading failures
 interface ErrorBoundaryState {
@@ -219,6 +220,7 @@ const App = () => (
               <Route path="/admin/banner-preview-defaults" element={<AuthGuard><AdminBannerPreviewDefaults /></AuthGuard>} />
               <Route path="/admin/template-backgrounds" element={<AuthGuard><AdminTemplateBackgrounds /></AuthGuard>} />
               <Route path="/admin/sticker-library" element={<AuthGuard><AdminStickerLibrary /></AuthGuard>} />
+              <Route path="/admin/sticker-management" element={<AuthGuard><AdminStickerManagement /></AuthGuard>} />
               <Route path="/admin/auto-stories" element={<AuthGuard><AdminAutoStories /></AuthGuard>} />
               
               {/* Catch-all for undefined routes */}
