@@ -46,24 +46,23 @@ export const useStickerSlots = (options: UseStickerSlotsOptions) => {
         .not('slot_number', 'is', null)
         .order('slot_number', { ascending: true });
 
-      // Apply filters based on what's provided
+      // Apply filters consistently across all categories (same rules as rank-promotion)
+      // Priority: specific entity ID > banner category
       if (rankId) {
         query = query.eq('rank_id', rankId);
+      } else if (tripId) {
+        query = query.eq('trip_id', tripId);
+      } else if (birthdayId) {
+        query = query.eq('birthday_id', birthdayId);
+      } else if (anniversaryId) {
+        query = query.eq('anniversary_id', anniversaryId);
+      } else if (motivationalBannerId) {
+        query = query.eq('motivational_banner_id', motivationalBannerId);
       }
+
+      // Always filter by banner_category when provided for consistent categorization
       if (bannerCategory) {
         query = query.eq('banner_category', bannerCategory);
-      }
-      if (tripId) {
-        query = query.eq('trip_id', tripId);
-      }
-      if (birthdayId) {
-        query = query.eq('birthday_id', birthdayId);
-      }
-      if (anniversaryId) {
-        query = query.eq('anniversary_id', anniversaryId);
-      }
-      if (motivationalBannerId) {
-        query = query.eq('motivational_banner_id', motivationalBannerId);
       }
 
       const { data, error: fetchError } = await query;
