@@ -2,7 +2,6 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { isMobileDevice, isLowMemoryDevice } from './useMobileLiteMode';
 
 interface PreloadConfig {
-  // All assets to preload - backgrounds, stickers, logos, photos
   activeBackgroundUrl?: string;
   primaryPhotoUrl?: string;
   downloadIconUrl?: string;
@@ -19,15 +18,20 @@ interface PreloadState {
   timedOut: boolean;
 }
 
-// Global timeout to ensure UI never gets stuck
-const GLOBAL_TIMEOUT_MS = 12000;
-const THROTTLE_MS = 100;
+// Mobile-safe timeouts
+const GLOBAL_TIMEOUT_MS = 8000;
+const PER_IMAGE_TIMEOUT_MS = 4000;
+const PROGRESS_THROTTLE_MS = 150;
+
+// Image cache to prevent duplicate requests
+const imageCache = new Map<string, Promise<boolean>>();
 
 /**
- * Banner asset preloader - waits for 100% loading before showing preview
- * - Loads all assets (backgrounds, stickers, icons, photos) before rendering
- * - Shows progress until fully loaded
- * - Fallback timeout to unblock UI if assets fail
+ * Optimized Banner asset preloader
+ * - Deduplicates requests via cache
+ * - Batched loading with mobile-safe limits
+ * - Throttled progress updates to reduce re-renders
+ * - Async image decoding for smooth performance
  */
 export const useBannerAssetPreloader = () => {
   const [state, setState] = useState<PreloadState>({
@@ -39,61 +43,57 @@ export const useBannerAssetPreloader = () => {
   const isMobile = isMobileDevice();
   const isLowMemory = isLowMemoryDevice();
   const lastProgressUpdate = useRef(0);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const abortRef = useRef(false);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
       abortRef.current = true;
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
   }, []);
 
   /**
-   * Load a single image with async decoding
+   * Load single image with caching and async decode
    */
   const loadImage = useCallback((url: string): Promise<boolean> => {
-    return new Promise((resolve) => {
-      if (!url || typeof url !== 'string' || url.trim() === '') {
-        resolve(true);
-        return;
-      }
+    if (!url || typeof url !== 'string' || url.trim() === '') {
+      return Promise.resolve(true);
+    }
 
+    // Return cached promise if already loading/loaded
+    if (imageCache.has(url)) {
+      return imageCache.get(url)!;
+    }
+
+    const promise = new Promise<boolean>((resolve) => {
       const img = new Image();
+      if ('decode' in img) img.decoding = 'async';
       
-      // Use async decoding on supported browsers
-      if ('decode' in img) {
-        img.decoding = 'async';
-      }
-      
-      // Per-image timeout (5 seconds)
-      const imgTimeout = setTimeout(() => {
-        resolve(false);
-      }, 5000);
+      const imgTimeout = setTimeout(() => resolve(true), PER_IMAGE_TIMEOUT_MS);
       
       img.onload = async () => {
         clearTimeout(imgTimeout);
         try {
-          if ('decode' in img) {
-            await img.decode();
-          }
+          if ('decode' in img) await img.decode();
         } catch {
-          // Decode failed, but image is loaded
+          // Decode failed but image is loaded
         }
         resolve(true);
       };
       
       img.onerror = () => {
         clearTimeout(imgTimeout);
-        resolve(false);
+        resolve(true); // Continue on error
       };
       
       img.crossOrigin = 'anonymous';
       img.src = url;
     });
+
+    imageCache.set(url, promise);
+    return promise;
   }, []);
 
   /**
@@ -101,88 +101,76 @@ export const useBannerAssetPreloader = () => {
    */
   const updateProgress = useCallback((progress: number) => {
     const now = Date.now();
-    if (now - lastProgressUpdate.current >= THROTTLE_MS) {
+    if (now - lastProgressUpdate.current >= PROGRESS_THROTTLE_MS || progress >= 100) {
       lastProgressUpdate.current = now;
       setState(prev => ({ ...prev, progress: Math.round(progress) }));
     }
   }, []);
 
   /**
-   * Main preload function - loads ALL assets before showing preview
+   * Main preload - batched loading with deduplication
    */
   const preloadAssets = useCallback(async (config: PreloadConfig): Promise<void> => {
     abortRef.current = false;
     setState({ allLoaded: false, progress: 0, timedOut: false });
 
-    // Collect ALL assets to preload
-    const allUrls: string[] = [];
+    // Collect all URLs, deduplicated
+    const allUrls = new Set<string>();
     
-    // Critical assets first
-    if (config.activeBackgroundUrl) allUrls.push(config.activeBackgroundUrl);
-    if (config.primaryPhotoUrl) allUrls.push(config.primaryPhotoUrl);
-    if (config.downloadIconUrl) allUrls.push(config.downloadIconUrl);
-    if (config.logoUrls) allUrls.push(...config.logoUrls.filter(Boolean));
-    if (config.visibleStickerUrls) allUrls.push(...config.visibleStickerUrls.filter(Boolean));
-    
-    // Non-critical assets (other backgrounds, stickers, avatars)
-    if (config.otherBackgroundUrls) allUrls.push(...config.otherBackgroundUrls.filter(Boolean));
-    if (config.otherStickerUrls) allUrls.push(...config.otherStickerUrls.filter(Boolean));
-    if (config.uplineAvatarUrls) allUrls.push(...config.uplineAvatarUrls.filter(Boolean));
+    if (config.activeBackgroundUrl) allUrls.add(config.activeBackgroundUrl);
+    if (config.primaryPhotoUrl) allUrls.add(config.primaryPhotoUrl);
+    if (config.downloadIconUrl) allUrls.add(config.downloadIconUrl);
+    config.logoUrls?.forEach(url => url && allUrls.add(url));
+    config.visibleStickerUrls?.forEach(url => url && allUrls.add(url));
+    config.otherBackgroundUrls?.forEach(url => url && allUrls.add(url));
+    config.otherStickerUrls?.forEach(url => url && allUrls.add(url));
+    config.uplineAvatarUrls?.forEach(url => url && allUrls.add(url));
 
-    // Remove duplicates
-    const uniqueUrls = [...new Set(allUrls)].filter(Boolean);
+    const uniqueUrls = Array.from(allUrls);
     
     if (uniqueUrls.length === 0) {
       setState({ allLoaded: true, progress: 100, timedOut: false });
       return;
     }
 
-    console.log(`📦 Loading ${uniqueUrls.length} assets for banner preview...`);
+    console.log(`📦 Preloading ${uniqueUrls.length} unique assets...`);
 
-    // Set global timeout fallback
+    // Global timeout fallback
     timeoutRef.current = setTimeout(() => {
-      if (!abortRef.current && !state.allLoaded) {
-        console.log('⚠️ Global timeout - forcing ready');
+      if (!abortRef.current) {
+        console.log('⚠️ Timeout reached - showing preview');
         setState({ allLoaded: true, progress: 100, timedOut: true });
       }
     }, GLOBAL_TIMEOUT_MS);
 
+    // Batch size based on device capability
+    const batchSize = isLowMemory ? 2 : isMobile ? 3 : 6;
     let loaded = 0;
     const total = uniqueUrls.length;
 
-    // Load in batches to avoid overwhelming mobile
-    const batchSize = isLowMemory ? 2 : (isMobile ? 3 : 5);
-    
     for (let i = 0; i < uniqueUrls.length; i += batchSize) {
       if (abortRef.current) break;
       
       const batch = uniqueUrls.slice(i, i + batchSize);
-      await Promise.all(batch.map(url => loadImage(url)));
+      await Promise.all(batch.map(loadImage));
       
       loaded += batch.length;
-      const progress = (loaded / total) * 100;
-      updateProgress(progress);
-      
-      // Small delay between batches on low-memory devices
-      if (isLowMemory && i + batchSize < uniqueUrls.length) {
-        await new Promise(r => setTimeout(r, 30));
-      }
+      updateProgress((loaded / total) * 100);
     }
 
-    // Clear timeout
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
     }
 
     if (!abortRef.current) {
-      console.log('✅ All assets loaded successfully');
+      console.log('✅ All assets loaded');
       setState({ allLoaded: true, progress: 100, timedOut: false });
     }
-  }, [isMobile, isLowMemory, loadImage, updateProgress, state.allLoaded]);
+  }, [isMobile, isLowMemory, loadImage, updateProgress]);
 
   /**
-   * Reset the preloader state
+   * Reset preloader state
    */
   const reset = useCallback(() => {
     abortRef.current = true;
@@ -200,7 +188,6 @@ export const useBannerAssetPreloader = () => {
     progress: state.progress,
     timedOut: state.timedOut,
     isMobile,
-    // Legacy aliases for compatibility
     criticalLoaded: state.allLoaded,
   };
 };

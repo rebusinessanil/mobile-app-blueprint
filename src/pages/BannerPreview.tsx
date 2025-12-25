@@ -395,41 +395,39 @@ export default function BannerPreview() {
     !backgroundsLoading &&
     bannerDefaults !== undefined;
 
-  // Memoize asset URLs to prevent unnecessary recalculation
+  // Memoize asset URLs - collect once to prevent duplicate requests
   const assetConfig = useMemo(() => {
     if (!bannerData || !isDataReady) return null;
 
-    // Get current slot background (critical)
+    // Current slot background
     const activeSlot = globalBackgroundSlots.find(slot => slot.slotNumber === selectedTemplate + 1);
     const activeBackgroundUrl = activeSlot?.imageUrl || undefined;
 
-    // Get visible stickers for current slot only (critical)
+    // Visible stickers for current slot
     const visibleStickerUrls = (stickerImages[selectedTemplate + 1] || [])
       .map(s => s.url)
       .filter(Boolean);
 
-    // Logo URLs (critical)
+    // Logo URLs
     const logoUrls = [
       bannerDefaults?.logo_left,
       bannerDefaults?.logo_right,
       bannerDefaults?.congratulations_image,
     ].filter(Boolean) as string[];
 
-    // Primary photo (critical)
+    // Primary photo
     const primaryPhotoUrl = bannerData?.photo || profile?.profile_photo || undefined;
 
-    // Other background URLs (load all for slot switching)
+    // Other backgrounds for slot switching
     const otherBackgroundUrls = globalBackgroundSlots
       .filter(slot => slot.slotNumber !== selectedTemplate + 1 && slot.imageUrl)
       .map(slot => slot.imageUrl!);
 
-    // Other sticker URLs (load all slots)
+    // Other stickers
     const otherStickerUrls: string[] = [];
     Object.entries(stickerImages).forEach(([slotNum, stickers]) => {
       if (Number(slotNum) !== selectedTemplate + 1) {
-        stickers.forEach(s => {
-          if (s.url) otherStickerUrls.push(s.url);
-        });
+        stickers.forEach(s => s.url && otherStickerUrls.push(s.url));
       }
     });
 
@@ -448,23 +446,12 @@ export default function BannerPreview() {
       otherStickerUrls,
       uplineAvatarUrls,
     };
-  }, [
-    bannerData,
-    isDataReady,
-    globalBackgroundSlots,
-    selectedTemplate,
-    stickerImages,
-    bannerDefaults,
-    profile,
-    displayUplines,
-  ]);
+  }, [bannerData, isDataReady, globalBackgroundSlots, selectedTemplate, stickerImages, bannerDefaults, profile, displayUplines]);
 
-  // Trigger preloading when data is ready
+  // Trigger preload once when config is ready
   useEffect(() => {
     if (preloadStarted || !assetConfig) return;
-    
     setPreloadStarted(true);
-    console.log('🚀 Starting full asset preload...');
     preloadAssets(assetConfig);
   }, [assetConfig, preloadStarted, preloadAssets]);
 
