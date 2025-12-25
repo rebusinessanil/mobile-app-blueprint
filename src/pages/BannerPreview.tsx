@@ -22,6 +22,7 @@ import download from "downloadjs";
 import { useWalletDeduction } from "@/hooks/useWalletDeduction";
 import InsufficientBalanceModal from "@/components/InsufficientBalanceModal";
 import { useBannerAssetPreloader } from "@/hooks/useBannerAssetPreloader";
+import BannerWatermarks from "@/components/BannerWatermarks";
 interface Upline {
   id: string;
   name: string;
@@ -1441,8 +1442,15 @@ export default function BannerPreview() {
           height: `${FIXED_SIZE}px`
         },
         filter: node => {
-          // Exclude UI elements from export
-          if (node.classList?.contains("slot-selector") || node.classList?.contains("control-buttons") || node.classList?.contains("whatsapp-float") || node.id === "ignore-download") {
+          // Exclude UI elements and PREVIEW-ONLY brand watermark from export
+          // Keep mobile-watermark-permanent in final download
+          if (
+            node.classList?.contains("slot-selector") || 
+            node.classList?.contains("control-buttons") || 
+            node.classList?.contains("whatsapp-float") || 
+            node.id === "ignore-download" ||
+            node.id === "brand-watermark-preview" // Exclude preview-only watermark
+          ) {
             return false;
           }
           return true;
@@ -2126,6 +2134,12 @@ export default function BannerPreview() {
 
                 {/* BOTTOM RIGHT - Mentor Name and Title (Moved to bottom-most position) */}
                 
+
+                {/* WATERMARKS - Two layers for preview and download */}
+                <BannerWatermarks 
+                  showBrandWatermark={true}  // Preview only - excluded during download via filter
+                  showMobileWatermark={true} // Permanent - included in final download
+                />
 
               </div>
                 </div>
