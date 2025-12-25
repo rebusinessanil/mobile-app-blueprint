@@ -1,11 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useBannerCarousel } from '@/hooks/useBannerCarousel';
 
 const GuestBannerCarousel = () => {
   const { data: images, isLoading } = useBannerCarousel();
   const [currentIndex, setCurrentIndex] = useState(0);
+  const navigate = useNavigate();
 
   const nextSlide = useCallback(() => {
     if (!images?.length) return;
@@ -17,6 +19,10 @@ const GuestBannerCarousel = () => {
     setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
   }, [images?.length]);
 
+  const handleCarouselClick = () => {
+    navigate('/login');
+  };
+
   // Auto-advance every 4 seconds
   useEffect(() => {
     if (!images?.length || images.length <= 1) return;
@@ -26,7 +32,7 @@ const GuestBannerCarousel = () => {
 
   if (isLoading) {
     return (
-      <div className="w-full h-40 bg-background/20 rounded-t-2xl animate-pulse flex items-center justify-center">
+      <div className="w-full aspect-[16/9] bg-background/20 rounded-2xl animate-pulse flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
       </div>
     );
@@ -37,7 +43,10 @@ const GuestBannerCarousel = () => {
   }
 
   return (
-    <div className="relative w-full h-40 overflow-hidden rounded-t-2xl group">
+    <div 
+      className="relative w-full aspect-[16/9] overflow-hidden rounded-2xl group cursor-pointer"
+      onClick={handleCarouselClick}
+    >
       <AnimatePresence mode="wait">
         <motion.img
           key={currentIndex}
@@ -51,20 +60,17 @@ const GuestBannerCarousel = () => {
         />
       </AnimatePresence>
 
-      {/* Gradient overlay for text readability */}
-      <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent opacity-60" />
-
       {/* Navigation arrows - only show if more than 1 image */}
       {images.length > 1 && (
         <>
           <button
-            onClick={prevSlide}
+            onClick={(e) => { e.stopPropagation(); prevSlide(); }}
             className="absolute left-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-background/60 backdrop-blur-sm border border-border/30 text-foreground/80 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-background/80"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
           <button
-            onClick={nextSlide}
+            onClick={(e) => { e.stopPropagation(); nextSlide(); }}
             className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-background/60 backdrop-blur-sm border border-border/30 text-foreground/80 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-background/80"
           >
             <ChevronRight className="w-4 h-4" />
@@ -78,7 +84,7 @@ const GuestBannerCarousel = () => {
           {images.map((_, index) => (
             <button
               key={index}
-              onClick={() => setCurrentIndex(index)}
+              onClick={(e) => { e.stopPropagation(); setCurrentIndex(index); }}
               className={`w-2 h-2 rounded-full transition-all ${
                 index === currentIndex
                   ? 'bg-primary w-4'
