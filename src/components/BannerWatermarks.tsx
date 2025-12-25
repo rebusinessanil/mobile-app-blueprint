@@ -9,66 +9,88 @@ interface BannerWatermarksProps {
  * Banner Watermarks Component
  * 
  * Two layers:
- * 1. Brand Watermark (Preview Only) - "ReBusiness" repeated diagonally
+ * 1. Brand Watermark (Preview Only) - "Re Business" vertical along left and right edges
  * 2. Mobile Watermark (Permanent) - Promotional call number on left edge
  */
 const BannerWatermarks: React.FC<BannerWatermarksProps> = ({
   showBrandWatermark = true,
   showMobileWatermark = true,
 }) => {
+  // Number of watermark repetitions along each edge
+  const repeatCount = 8;
+
   return (
     <>
-      {/* PREVIEW-ONLY: Brand Watermark - Diagonal repeated "ReBusiness" */}
+      {/* PREVIEW-ONLY: Brand Watermark - Vertical "Re Business" along left and right edges */}
       {showBrandWatermark && (
         <div
           id="brand-watermark-preview"
           className="absolute inset-0 pointer-events-none overflow-hidden"
-          style={{
-            zIndex: 100,
-          }}
+          style={{ zIndex: 100 }}
         >
-          {/* Diagonal pattern container */}
+          {/* Left Edge Watermarks */}
           <div
-            className="absolute"
-            style={{
-              width: '200%',
-              height: '200%',
-              top: '-50%',
-              left: '-50%',
-              transform: 'rotate(-30deg)',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '120px',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
+            className="absolute left-0 top-0 bottom-0 flex flex-col justify-between py-4"
+            style={{ width: '40px' }}
           >
-            {/* Generate repeated watermark rows */}
-            {Array.from({ length: 12 }).map((_, rowIndex) => (
+            {Array.from({ length: repeatCount }).map((_, index) => (
               <div
-                key={rowIndex}
-                className="flex gap-16 whitespace-nowrap"
+                key={`left-${index}`}
+                className="flex items-center justify-center"
                 style={{
-                  marginLeft: rowIndex % 2 === 0 ? '0' : '150px',
+                  writingMode: 'vertical-rl',
+                  textOrientation: 'mixed',
+                  transform: 'rotate(180deg)',
                 }}
               >
-                {Array.from({ length: 8 }).map((_, colIndex) => (
-                  <span
-                    key={colIndex}
-                    style={{
-                      fontSize: '72px',
-                      fontWeight: 800,
-                      fontFamily: 'Poppins, sans-serif',
-                      color: 'rgba(255, 255, 255, 0.12)',
-                      letterSpacing: '4px',
-                      textTransform: 'uppercase',
-                      userSelect: 'none',
-                      textShadow: '0 0 20px rgba(0,0,0,0.1)',
-                    }}
-                  >
-                    ReBusiness
-                  </span>
-                ))}
+                <span
+                  style={{
+                    fontSize: '14px',
+                    fontWeight: 700,
+                    fontFamily: 'Poppins, Arial, sans-serif',
+                    color: 'rgba(255, 255, 255, 0.25)',
+                    letterSpacing: '3px',
+                    textTransform: 'uppercase',
+                    userSelect: 'none',
+                    textShadow: '1px 1px 2px rgba(0, 0, 0, 0.3), -1px -1px 1px rgba(255, 255, 255, 0.1)',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  Re Business
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {/* Right Edge Watermarks */}
+          <div
+            className="absolute right-0 top-0 bottom-0 flex flex-col justify-between py-4"
+            style={{ width: '40px' }}
+          >
+            {Array.from({ length: repeatCount }).map((_, index) => (
+              <div
+                key={`right-${index}`}
+                className="flex items-center justify-center"
+                style={{
+                  writingMode: 'vertical-rl',
+                  textOrientation: 'mixed',
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: '14px',
+                    fontWeight: 700,
+                    fontFamily: 'Poppins, Arial, sans-serif',
+                    color: 'rgba(255, 255, 255, 0.25)',
+                    letterSpacing: '3px',
+                    textTransform: 'uppercase',
+                    userSelect: 'none',
+                    textShadow: '1px 1px 2px rgba(0, 0, 0, 0.3), -1px -1px 1px rgba(255, 255, 255, 0.1)',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  Re Business
+                </span>
               </div>
             ))}
           </div>
@@ -91,10 +113,10 @@ const BannerWatermarks: React.FC<BannerWatermarksProps> = ({
         >
           <span
             style={{
-              fontSize: '14px',
+              fontSize: '12px',
               fontWeight: 500,
               fontFamily: 'Inter, sans-serif',
-              color: 'rgba(255, 255, 255, 0.10)',
+              color: 'rgba(255, 255, 255, 0.08)',
               letterSpacing: '1.5px',
               userSelect: 'none',
               textShadow: '0 1px 2px rgba(0,0,0,0.2)',
