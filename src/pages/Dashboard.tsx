@@ -31,6 +31,7 @@ import { Button } from "@/components/ui/button";
 
 import LockedCard from "@/components/dashboard/LockedCard";
 import GuestStatusBar from "@/components/dashboard/GuestStatusBar";
+import GuestBannerCarousel from "@/components/dashboard/GuestBannerCarousel";
 
 // Static proxy placeholder for instant card rendering
 const PROXY_PLACEHOLDER = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='105' viewBox='0 0 140 105'%3E%3Crect fill='%231a1f2e' width='140' height='105'/%3E%3Crect fill='%23ffd34e' opacity='0.1' width='140' height='105'/%3E%3C/svg%3E";
@@ -297,21 +298,24 @@ export default function Dashboard() {
       {/* Spacer for fixed header */}
       <div className="h-16"></div>
 
-      {/* Guest Banner - Show value proposition */}
+      {/* Guest Banner - Show value proposition with Carousel */}
       {isGuest && (
-        <div className="mx-4 mt-4 p-4 rounded-2xl bg-gradient-to-r from-primary/20 via-primary/10 to-secondary/20 border border-primary/30">
-          <h2 className="text-lg font-bold text-foreground mb-1">
-            Create Stunning Business Banners
-          </h2>
-          <p className="text-sm text-muted-foreground mb-3">
-            Sign up to unlock all templates, get 199 free tokens, and start creating professional promotional materials!
-          </p>
-          <Button 
-            onClick={() => navigate("/register")}
-            className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold"
-          >
-            Get Started Free →
-          </Button>
+        <div className="mx-4 mt-4 rounded-2xl bg-gradient-to-r from-primary/20 via-primary/10 to-secondary/20 border border-primary/30 overflow-hidden">
+          <GuestBannerCarousel />
+          <div className="p-4">
+            <h2 className="text-lg font-bold text-foreground mb-1">
+              Create Stunning Business Banners
+            </h2>
+            <p className="text-sm text-muted-foreground mb-3">
+              Sign up to unlock all templates, get 199 free tokens, and start creating professional promotional materials!
+            </p>
+            <Button 
+              onClick={() => navigate("/register")}
+              className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold"
+            >
+              Get Started Free →
+            </Button>
+          </div>
         </div>
       )}
 
