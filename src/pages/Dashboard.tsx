@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback, memo, useRef } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import BottomNav from "@/components/BottomNav";
-import { Menu, Bell, Star, Calendar, Zap, Award, Wallet } from "lucide-react";
+import { Menu, Bell, Star, Calendar, Zap, Award, Wallet, LogIn } from "lucide-react";
 import { useTemplateCategories, useTemplates } from "@/hooks/useTemplates";
 import { useProfile } from "@/hooks/useProfile";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,11 +19,29 @@ import { useQuery } from "@tanstack/react-query";
 import ProfileCompletionGate from "@/components/ProfileCompletionGate";
 import StoriesSection from "@/components/dashboard/StoriesSection";
 import BannerCard from "@/components/dashboard/BannerCard";
+import GuestBannerCard from "@/components/dashboard/GuestBannerCard";
 import WelcomeBonusModal from "@/components/WelcomeBonusModal";
+import LoginPromptModal from "@/components/LoginPromptModal";
 import { useWelcomeBonus } from "@/hooks/useWelcomeBonus";
 import DashboardSkeleton from "@/components/skeletons/DashboardSkeleton";
 import { preloadBannerPreviewSystem, preloadImages } from "@/lib/preloader";
 import { useAdminSync } from "@/hooks/useAdminSync";
+import { useGuestMode } from "@/hooks/useGuestMode";
+import { Button } from "@/components/ui/button";
+
+// Demo data imports
+import {
+  DEMO_PROFILE,
+  DEMO_RANKS,
+  DEMO_TRIPS,
+  DEMO_BIRTHDAYS,
+  DEMO_ANNIVERSARIES,
+  DEMO_MOTIVATIONAL,
+  DEMO_FESTIVALS,
+  DEMO_CATEGORIES,
+  DEMO_STORIES,
+  DEMO_TEMPLATES,
+} from "@/data/demoData";
 
 // Static proxy placeholder for instant card rendering
 const PROXY_PLACEHOLDER = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='105' viewBox='0 0 140 105'%3E%3Crect fill='%231a1f2e' width='140' height='105'/%3E%3Crect fill='%23ffd34e' opacity='0.1' width='140' height='105'/%3E%3C/svg%3E";
@@ -32,36 +50,41 @@ const PROXY_PLACEHOLDER = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/20
 let dashboardLoadedOnce = false;
 
 export default function Dashboard() {
+  const navigate = useNavigate();
+  const { userId, isGuest, isAuthenticated, isLoading: authLoading } = useGuestMode();
+  const [showLoginModal, setShowLoginModal] = useState(false);
+
+  // Fetch real data - will gracefully fail for guests due to RLS
   const {
-    categories,
+    categories: realCategories,
     loading: categoriesLoading
   } = useTemplateCategories();
   const {
-    templates: allTemplates,
+    templates: realTemplates,
     loading: templatesLoading
   } = useTemplates();
   const {
-    ranks,
+    ranks: realRanks,
     loading: ranksLoading
   } = useRanks();
   const {
-    trips,
+    trips: realTrips,
     loading: tripsLoading
   } = useBonanzaTrips();
   const {
-    birthdays,
+    birthdays: realBirthdays,
     loading: birthdaysLoading
   } = useBirthdays();
   const {
-    anniversaries,
+    anniversaries: realAnniversaries,
     loading: anniversariesLoading
   } = useAnniversaries();
   const {
-    motivationalBanners,
+    motivationalBanners: realMotivationalBanners,
     loading: motivationalLoading
   } = useMotivationalBanners();
   const {
-    festivals,
+    festivals: realFestivals,
     loading: festivalsLoading
   } = useFestivals();
   const {
@@ -73,35 +96,86 @@ export default function Dashboard() {
   const { data: storiesEvents = [], isLoading: storiesEventsLoading } = useQuery({
     queryKey: ["stories-events"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("stories_events")
-        .select("*")
-        .order("event_date", { ascending: true });
-      if (error) throw error;
-      return data || [];
+      try {
+        const { data, error } = await supabase
+          .from("stories_events")
+          .select("*")
+          .order("event_date", { ascending: true });
+        if (error) throw error;
+        return data || [];
+      } catch (error) {
+        // Silently fall back for guests
+        console.warn('Stories events fetch failed (likely RLS):', error);
+        return [];
+      }
     },
-    staleTime: 30 * 60 * 1000, // 30 minutes - prevent re-fetching
-    gcTime: 60 * 60 * 1000, // 1 hour cache
+    staleTime: 30 * 60 * 1000,
+    gcTime: 60 * 60 * 1000,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
   });
   
-  const [userId, setUserId] = useState<string | null>(null);
   const {
-    profile
+    profile: realProfile
   } = useProfile(userId ?? undefined);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const hasLoadedRef = useRef(dashboardLoadedOnce);
   
-  // Welcome bonus modal
+  // Welcome bonus modal - only for authenticated users
   const { showWelcomeModal, bonusAmount, handleContinue } = useWelcomeBonus();
   
-  // Real-time sync for admin updates - automatically invalidates queries when admin makes changes
-  useAdminSync({ enabled: true });
+  // Real-time sync for admin updates
+  useAdminSync({ enabled: isAuthenticated });
+
+  // Use demo data for guests, real data for authenticated users
+  const categories = useMemo(() => {
+    if (isGuest || realCategories.length === 0) return DEMO_CATEGORIES;
+    return realCategories;
+  }, [isGuest, realCategories]);
+
+  const allTemplates = useMemo(() => {
+    if (isGuest || realTemplates.length === 0) return DEMO_TEMPLATES;
+    return realTemplates;
+  }, [isGuest, realTemplates]);
+
+  const ranks = useMemo(() => {
+    if (isGuest || realRanks.length === 0) return DEMO_RANKS;
+    return realRanks;
+  }, [isGuest, realRanks]);
+
+  const trips = useMemo(() => {
+    if (isGuest || realTrips.length === 0) return DEMO_TRIPS;
+    return realTrips;
+  }, [isGuest, realTrips]);
+
+  const birthdays = useMemo(() => {
+    if (isGuest || realBirthdays.length === 0) return DEMO_BIRTHDAYS;
+    return realBirthdays;
+  }, [isGuest, realBirthdays]);
+
+  const anniversaries = useMemo(() => {
+    if (isGuest || realAnniversaries.length === 0) return DEMO_ANNIVERSARIES;
+    return realAnniversaries;
+  }, [isGuest, realAnniversaries]);
+
+  const motivationalBanners = useMemo(() => {
+    if (isGuest || realMotivationalBanners.length === 0) return DEMO_MOTIVATIONAL;
+    return realMotivationalBanners;
+  }, [isGuest, realMotivationalBanners]);
+
+  const festivals = useMemo(() => {
+    if (isGuest || realFestivals.length === 0) return DEMO_FESTIVALS;
+    return realFestivals;
+  }, [isGuest, realFestivals]);
+
+  const profile = useMemo(() => {
+    if (isGuest) return DEMO_PROFILE;
+    return realProfile;
+  }, [isGuest, realProfile]);
 
   // Check if data is loading AND no cached data exists AND first load
   const hasNoData = categories.length === 0 && allTemplates.length === 0 && ranks.length === 0;
-  const isInitialLoading = (categoriesLoading || templatesLoading || ranksLoading) && hasNoData && !hasLoadedRef.current;
+  const isInitialLoading = (categoriesLoading || templatesLoading || ranksLoading) && hasNoData && !hasLoadedRef.current && !isGuest;
   
   // Mark dashboard as loaded once data arrives
   useEffect(() => {
@@ -111,53 +185,46 @@ export default function Dashboard() {
     }
   }, [isInitialLoading, categories.length, ranks.length]);
 
-  // Memoized template filters to prevent recalculation
+  // Memoized template filters
   const getRankTemplates = useMemo(() => {
-    return allTemplates.filter(t => t.rank_id && ranks.some(r => r.id === t.rank_id));
+    return allTemplates.filter((t: any) => t.rank_id && ranks.some((r: any) => r.id === t.rank_id));
   }, [allTemplates, ranks]);
 
   const getTripTemplates = useMemo(() => {
-    return allTemplates.filter(t => t.trip_id && trips.some(trip => trip.id === t.trip_id));
+    return allTemplates.filter((t: any) => t.trip_id && trips.some((trip: any) => trip.id === t.trip_id));
   }, [allTemplates, trips]);
 
   const getBirthdayTemplates = useMemo(() => {
-    return allTemplates.filter(t => t.birthday_id && birthdays.some(birthday => birthday.id === t.birthday_id));
+    return allTemplates.filter((t: any) => t.birthday_id && birthdays.some((birthday: any) => birthday.id === t.birthday_id));
   }, [allTemplates, birthdays]);
 
   const getAnniversaryTemplates = useMemo(() => {
-    return allTemplates.filter(t => t.anniversary_id && anniversaries.some(anniversary => anniversary.id === t.anniversary_id));
+    return allTemplates.filter((t: any) => t.anniversary_id && anniversaries.some((anniversary: any) => anniversary.id === t.anniversary_id));
   }, [allTemplates, anniversaries]);
 
   const getMotivationalBannerTemplates = useMemo(() => {
-    return allTemplates.filter(t => t.motivational_banner_id && motivationalBanners.some(mb => mb.id === t.motivational_banner_id));
+    return allTemplates.filter((t: any) => t.motivational_banner_id && motivationalBanners.some((mb: any) => mb.id === t.motivational_banner_id));
   }, [allTemplates, motivationalBanners]);
 
   const getFestivalTemplates = useMemo(() => {
-    return allTemplates.filter(t => t.festival_id && festivals.some(f => f.id === t.festival_id));
+    return allTemplates.filter((t: any) => t.festival_id && festivals.some((f: any) => f.id === t.festival_id));
   }, [allTemplates, festivals]);
 
-  // Get authenticated user
+  // Preload Banner Preview system in background
   useEffect(() => {
-    supabase.auth.getSession().then(({
-      data: {
-        session
-      }
-    }) => {
-      setUserId(session?.user?.id ?? null);
-    });
-    
-    // Preload Banner Preview system in background for instant navigation
-    preloadBannerPreviewSystem();
-  }, []);
+    if (isAuthenticated) {
+      preloadBannerPreviewSystem();
+    }
+  }, [isAuthenticated]);
 
   // Preload template images when data loads
   useEffect(() => {
     if (!isInitialLoading && ranks.length > 0) {
       const imageUrls = [
-        ...ranks.map(r => r.icon).filter(Boolean),
-        ...trips.map(t => t.trip_image_url).filter(Boolean),
-        ...birthdays.map(b => b.Birthday_image_url).filter(Boolean),
-        ...allTemplates.slice(0, 10).map(t => t.cover_thumbnail_url).filter(Boolean),
+        ...ranks.map((r: any) => r.icon).filter(Boolean),
+        ...trips.map((t: any) => t.trip_image_url).filter(Boolean),
+        ...birthdays.map((b: any) => b.Birthday_image_url).filter(Boolean),
+        ...allTemplates.slice(0, 10).map((t: any) => t.cover_thumbnail_url).filter(Boolean),
       ];
       if (imageUrls.length > 0) {
         preloadImages(imageUrls as string[]);
@@ -186,11 +253,20 @@ export default function Dashboard() {
 
   // Memoized category templates getter
   const getCategoryTemplates = useCallback((categoryId: string) => {
-    return allTemplates.filter(t => t.category_id === categoryId).slice(0, 3);
+    return allTemplates.filter((t: any) => t.category_id === categoryId).slice(0, 3);
   }, [allTemplates]);
 
-  // Show skeleton only on initial load with no cached data
-  if (isInitialLoading) {
+  // Protected navigation handler
+  const handleProtectedNavigation = useCallback((path: string) => {
+    if (!isAuthenticated) {
+      setShowLoginModal(true);
+      return;
+    }
+    navigate(path);
+  }, [isAuthenticated, navigate]);
+
+  // Show skeleton only on initial load with no cached data (not for guests)
+  if (isInitialLoading && !isGuest) {
     return (
       <ProfileCompletionGate userId={userId}>
         <DashboardSkeleton />
@@ -198,8 +274,11 @@ export default function Dashboard() {
     );
   }
 
+  // Content wrapper - ProfileCompletionGate only for authenticated users
+  const ContentWrapper = isAuthenticated ? ProfileCompletionGate : ({ children }: { children: React.ReactNode }) => <>{children}</>;
+
   return (
-    <ProfileCompletionGate userId={userId}>
+    <ContentWrapper userId={userId}>
       <div className="min-h-screen bg-navy-dark pb-24 overflow-x-hidden overflow-y-auto">
       {/* Fixed Header */}
       <header className="fixed top-0 left-0 right-0 bg-navy-dark/95 backdrop-blur-sm z-50 px-4 py-3 border-b border-primary/20">
@@ -211,35 +290,48 @@ export default function Dashboard() {
             <div className="min-w-0">
               <h1 className="text-lg font-bold text-foreground leading-tight">ReBusiness</h1>
               <p className="text-xs text-muted-foreground truncate">
-                Welcome back, {profile?.name || "User"}!
+                {isGuest ? "Welcome! Explore our templates" : `Welcome back, ${profile?.name || "User"}!`}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-1.5 flex-shrink-0">
-            {/* Wallet Balance */}
-            <Link 
-              to="/wallet" 
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-primary/10 border border-primary/30 hover:bg-primary/20 transition-colors"
-            >
-              <Wallet className="w-4 h-4 text-primary" />
-              <span className="text-sm font-bold text-primary">₹{profile?.balance || 0}</span>
-            </Link>
-            <Sheet open={isProfileOpen} onOpenChange={setIsProfileOpen}>
-              <SheetTrigger asChild>
-                <button className="w-9 h-9 rounded-xl border-2 border-primary flex items-center justify-center hover:bg-primary/10 transition-colors">
-                  <Menu className="w-5 h-5 text-primary" />
-                </button>
-              </SheetTrigger>
-              <SheetContent side="right" className="w-full p-0 border-l border-primary/20 overflow-y-auto">
-                <Profile />
-              </SheetContent>
-            </Sheet>
-            <Link to="/messages" className="relative w-9 h-9 rounded-xl border-2 border-primary flex items-center justify-center hover:bg-primary/10 transition-colors">
-              <Bell className="w-5 h-5 text-primary" />
-              <span className="absolute -top-1 -right-1 w-5 h-5 bg-destructive rounded-full text-xs font-bold flex items-center justify-center text-white">
-                2
-              </span>
-            </Link>
+            {isGuest ? (
+              /* Guest: Show Login Button */
+              <Button 
+                onClick={() => navigate("/login")}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 text-sm font-semibold"
+              >
+                <LogIn className="w-4 h-4" />
+                Login
+              </Button>
+            ) : (
+              /* Authenticated: Show Wallet & Profile */
+              <>
+                <Link 
+                  to="/wallet" 
+                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-primary/10 border border-primary/30 hover:bg-primary/20 transition-colors"
+                >
+                  <Wallet className="w-4 h-4 text-primary" />
+                  <span className="text-sm font-bold text-primary">₹{(profile as any)?.balance || 0}</span>
+                </Link>
+                <Sheet open={isProfileOpen} onOpenChange={setIsProfileOpen}>
+                  <SheetTrigger asChild>
+                    <button className="w-9 h-9 rounded-xl border-2 border-primary flex items-center justify-center hover:bg-primary/10 transition-colors">
+                      <Menu className="w-5 h-5 text-primary" />
+                    </button>
+                  </SheetTrigger>
+                  <SheetContent side="right" className="w-full p-0 border-l border-primary/20 overflow-y-auto">
+                    <Profile />
+                  </SheetContent>
+                </Sheet>
+                <Link to="/messages" className="relative w-9 h-9 rounded-xl border-2 border-primary flex items-center justify-center hover:bg-primary/10 transition-colors">
+                  <Bell className="w-5 h-5 text-primary" />
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-destructive rounded-full text-xs font-bold flex items-center justify-center text-white">
+                    2
+                  </span>
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -247,17 +339,35 @@ export default function Dashboard() {
       {/* Spacer for fixed header */}
       <div className="h-16"></div>
 
+      {/* Guest Banner - Show value proposition */}
+      {isGuest && (
+        <div className="mx-4 mt-4 p-4 rounded-2xl bg-gradient-to-r from-primary/20 via-primary/10 to-secondary/20 border border-primary/30">
+          <h2 className="text-lg font-bold text-foreground mb-1">
+            Create Stunning Business Banners
+          </h2>
+          <p className="text-sm text-muted-foreground mb-3">
+            Sign up to unlock all templates, get 199 free tokens, and start creating professional promotional materials!
+          </p>
+          <Button 
+            onClick={() => navigate("/register")}
+            className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold"
+          >
+            Get Started Free →
+          </Button>
+        </div>
+      )}
+
       {/* Content */}
       <div className="py-6 space-y-6">
-        {/* Unified Stories Section - Lazy loaded */}
+        {/* Unified Stories Section */}
         <StoriesSection 
-          festivals={festivals}
+          festivals={festivals as any}
           storiesEvents={storiesEvents}
-          generatedStories={generatedStories}
+          generatedStories={generatedStories as any}
         />
 
-        {/* Category Sections - Backend Integrated */}
-        {categories.map(category => {
+        {/* Category Sections */}
+        {categories.map((category: any) => {
         const categoryTemplates = getCategoryTemplates(category.id);
         const isRankPromotion = category.slug === 'rank-promotion';
         const isBonanzaPromotion = category.slug === 'bonanza-promotion';
@@ -265,141 +375,208 @@ export default function Dashboard() {
         const isAnniversary = category.slug === 'anniversary';
         const isMotivational = category.slug === 'motivational';
         const isFestival = category.slug === 'festival';
+        
+        // Get the "See All" link path
+        const seeAllPath = isRankPromotion ? '/rank-selection' 
+          : isBonanzaPromotion ? '/categories/bonanza-trips' 
+          : isBirthday ? '/categories/birthdays' 
+          : isAnniversary ? '/categories/anniversaries' 
+          : isMotivational ? '/categories/motivational' 
+          : isFestival ? '/categories/festival' 
+          : `/categories/${category.slug}`;
+
         return <div key={category.id} className="space-y-3">
-              {/* Section Header with 16px padding */}
+              {/* Section Header */}
               <div className="flex items-center justify-between pl-4 pr-4">
                 <div className="flex items-center gap-2">
                   <span className="text-2xl">{category.icon}</span>
                   <h2 className="text-lg font-bold text-foreground">{category.name}</h2>
                 </div>
-                <Link to={isRankPromotion ? '/rank-selection' : isBonanzaPromotion ? '/categories/bonanza-trips' : isBirthday ? '/categories/birthdays' : isAnniversary ? '/categories/anniversaries' : isMotivational ? '/categories/motivational' : isFestival ? '/categories/festival' : `/categories/${category.slug}`} className="text-primary text-sm font-semibold hover:underline">
-                  See All →
-                </Link>
+                {isAuthenticated ? (
+                  <Link to={seeAllPath} className="text-primary text-sm font-semibold hover:underline">
+                    See All →
+                  </Link>
+                ) : (
+                  <button 
+                    onClick={() => setShowLoginModal(true)}
+                    className="text-primary text-sm font-semibold hover:underline"
+                  >
+                    See All →
+                  </button>
+                )}
               </div>
 
-              {isRankPromotion ? <div className="flex gap-3 overflow-x-auto pb-2 pl-4 pr-4 scrollbar-hide scroll-smooth transform-gpu">
-                  {getRankTemplates.map(template => {
-              const rank = ranks.find(r => r.id === template.rank_id);
-              return <BannerCard 
-                key={template.id}
-                id={template.id}
-                title={template.name}
-                imageUrl={template.cover_thumbnail_url}
-                fallbackIcon={rank?.icon || '🏆'}
-                fallbackGradient={rank?.gradient || 'bg-gradient-to-br from-secondary to-card'}
-                linkTo={`/rank-banner-create/${template.rank_id}`}
-              />;
-            })}
-                </div> : isBonanzaPromotion ? (
-          <div className="flex gap-3 overflow-x-auto pb-2 pl-4 pr-4 scrollbar-hide scroll-smooth transform-gpu">
-                  {getTripTemplates.map(template => {
-              const trip = trips.find(t => t.id === template.trip_id);
-              return <BannerCard 
-                key={template.id}
-                id={template.id}
-                title={template.name}
-                imageUrl={template.cover_thumbnail_url}
-                fallbackIcon={trip?.short_title || '🎁'}
-                fallbackGradient="bg-gradient-to-br from-red-600 to-orange-600"
-                linkTo={`/banner-create/bonanza?tripId=${template.trip_id}`}
-              />;
-            })}
-                </div>) : isBirthday ? (
-          <div className="flex gap-3 overflow-x-auto pb-2 pl-4 pr-4 scrollbar-hide scroll-smooth transform-gpu">
-                  {getBirthdayTemplates.map(template => {
-              const birthday = birthdays.find(b => b.id === template.birthday_id);
-              return <BannerCard 
-                key={template.id}
-                id={template.id}
-                title={template.name}
-                imageUrl={template.cover_thumbnail_url}
-                fallbackIcon={birthday?.short_title || '🎂'}
-                fallbackGradient="bg-gradient-to-br from-pink-600 to-purple-600"
-                linkTo={`/banner-create/birthday?birthdayId=${template.birthday_id}`}
-              />;
-            })}
-                </div>) : isAnniversary ? (
-          <div className="flex gap-3 overflow-x-auto pb-2 pl-4 pr-4 scrollbar-hide scroll-smooth transform-gpu">
-                  {getAnniversaryTemplates.map(template => {
-              const anniversary = anniversaries.find(a => a.id === template.anniversary_id);
-              return <BannerCard 
-                key={template.id}
-                id={template.id}
-                title={template.name}
-                imageUrl={template.cover_thumbnail_url}
-                fallbackIcon={anniversary?.short_title || '💞'}
-                fallbackGradient="bg-gradient-to-br from-rose-600 to-pink-600"
-                linkTo={`/banner-create/anniversary?anniversaryId=${template.anniversary_id}`}
-              />;
-            })}
-                </div>) : isMotivational ? (
-          <div className="flex gap-3 overflow-x-auto pb-2 pl-4 pr-4 scrollbar-hide scroll-smooth transform-gpu">
-                  {getMotivationalBannerTemplates.map(template => {
-              const motivationalBanner = motivationalBanners.find(mb => mb.id === template.motivational_banner_id);
-              return <BannerCard 
-                key={template.id}
-                id={template.id}
-                title={template.name}
-                imageUrl={template.cover_thumbnail_url}
-                fallbackIcon={motivationalBanner?.short_title || '⚡'}
-                fallbackGradient="bg-gradient-to-br from-yellow-600 to-orange-600"
-                linkTo={`/motivational-preview/${template.motivational_banner_id}`}
-              />;
-            })}
-                </div>) : isFestival ? (
-          <div className="flex gap-3 overflow-x-auto pb-2 pl-4 pr-4 scrollbar-hide scroll-smooth transform-gpu">
-                  {getFestivalTemplates.map(template => {
-              const festival = festivals.find(f => f.id === template.festival_id);
-              return <BannerCard 
-                key={template.id}
-                id={template.id}
-                title={template.name}
-                subtitle={festival?.festival_name}
-                imageUrl={template.cover_thumbnail_url}
-                fallbackIcon="🎉"
-                fallbackGradient="bg-gradient-to-br from-purple-600 to-pink-600"
-                linkTo={`/festival-preview/${template.festival_id}`}
-              />;
-            })}
-                </div>) : (/* Template Scroll - 3 per row */
-          <div className="flex gap-3 overflow-x-auto pb-2 pl-4 pr-4 scrollbar-hide scroll-smooth">
-                  {categoryTemplates.length > 0 ? categoryTemplates.map(template => {
-              const getCategoryRoute = () => {
-                const routeMap: Record<string, string> = {
-                  'bonanza-promotion': '/banner-create/bonanza',
-                  'birthday': '/banner-create/birthday',
-                  'anniversary': '/banner-create/anniversary',
-                  'meeting': '/banner-create/meeting',
-                  'festival': '/banner-create/festival',
-                  'motivational': '/banner-create/motivational'
-                };
-                return routeMap[category.slug] || `/template/${template.id}`;
-              };
-              return <BannerCard 
-                key={template.id}
-                id={template.id}
-                title={template.name}
-                imageUrl={template.cover_thumbnail_url}
-                fallbackIcon="📋"
-                fallbackGradient="bg-gradient-to-br from-secondary to-card"
-                linkTo={getCategoryRoute()}
-              />;
-            }) : <div className="w-[calc(33.333%-8px)] min-w-[110px] max-w-[140px] gold-border bg-card rounded-2xl overflow-hidden flex-shrink-0 p-4">
+              {isRankPromotion ? (
+                <div className="flex gap-3 overflow-x-auto pb-2 pl-4 pr-4 scrollbar-hide scroll-smooth transform-gpu">
+                  {getRankTemplates.map((template: any) => {
+                    const rank = ranks.find((r: any) => r.id === template.rank_id);
+                    return (
+                      <GuestBannerCard 
+                        key={template.id}
+                        id={template.id}
+                        title={template.name}
+                        imageUrl={template.cover_thumbnail_url}
+                        fallbackIcon={rank?.icon || '🏆'}
+                        fallbackGradient={rank?.gradient || 'bg-gradient-to-br from-secondary to-card'}
+                        linkTo={`/rank-banner-create/${template.rank_id}`}
+                        isAuthenticated={isAuthenticated}
+                        onAuthenticatedClick={() => navigate(`/rank-banner-create/${template.rank_id}`)}
+                      />
+                    );
+                  })}
+                </div>
+              ) : isBonanzaPromotion ? (
+                <div className="flex gap-3 overflow-x-auto pb-2 pl-4 pr-4 scrollbar-hide scroll-smooth transform-gpu">
+                  {getTripTemplates.map((template: any) => {
+                    const trip = trips.find((t: any) => t.id === template.trip_id);
+                    return (
+                      <GuestBannerCard 
+                        key={template.id}
+                        id={template.id}
+                        title={template.name}
+                        imageUrl={template.cover_thumbnail_url}
+                        fallbackIcon={(trip as any)?.short_title || '🎁'}
+                        fallbackGradient="bg-gradient-to-br from-red-600 to-orange-600"
+                        linkTo={`/banner-create/bonanza?tripId=${template.trip_id}`}
+                        isAuthenticated={isAuthenticated}
+                        onAuthenticatedClick={() => navigate(`/banner-create/bonanza?tripId=${template.trip_id}`)}
+                      />
+                    );
+                  })}
+                </div>
+              ) : isBirthday ? (
+                <div className="flex gap-3 overflow-x-auto pb-2 pl-4 pr-4 scrollbar-hide scroll-smooth transform-gpu">
+                  {getBirthdayTemplates.map((template: any) => {
+                    const birthday = birthdays.find((b: any) => b.id === template.birthday_id);
+                    return (
+                      <GuestBannerCard 
+                        key={template.id}
+                        id={template.id}
+                        title={template.name}
+                        imageUrl={template.cover_thumbnail_url}
+                        fallbackIcon={(birthday as any)?.short_title || '🎂'}
+                        fallbackGradient="bg-gradient-to-br from-pink-600 to-purple-600"
+                        linkTo={`/banner-create/birthday?birthdayId=${template.birthday_id}`}
+                        isAuthenticated={isAuthenticated}
+                        onAuthenticatedClick={() => navigate(`/banner-create/birthday?birthdayId=${template.birthday_id}`)}
+                      />
+                    );
+                  })}
+                </div>
+              ) : isAnniversary ? (
+                <div className="flex gap-3 overflow-x-auto pb-2 pl-4 pr-4 scrollbar-hide scroll-smooth transform-gpu">
+                  {getAnniversaryTemplates.map((template: any) => {
+                    const anniversary = anniversaries.find((a: any) => a.id === template.anniversary_id);
+                    return (
+                      <GuestBannerCard 
+                        key={template.id}
+                        id={template.id}
+                        title={template.name}
+                        imageUrl={template.cover_thumbnail_url}
+                        fallbackIcon={(anniversary as any)?.short_title || '💞'}
+                        fallbackGradient="bg-gradient-to-br from-rose-600 to-pink-600"
+                        linkTo={`/banner-create/anniversary?anniversaryId=${template.anniversary_id}`}
+                        isAuthenticated={isAuthenticated}
+                        onAuthenticatedClick={() => navigate(`/banner-create/anniversary?anniversaryId=${template.anniversary_id}`)}
+                      />
+                    );
+                  })}
+                </div>
+              ) : isMotivational ? (
+                <div className="flex gap-3 overflow-x-auto pb-2 pl-4 pr-4 scrollbar-hide scroll-smooth transform-gpu">
+                  {getMotivationalBannerTemplates.map((template: any) => {
+                    const motivationalBanner = motivationalBanners.find((mb: any) => mb.id === template.motivational_banner_id);
+                    return (
+                      <GuestBannerCard 
+                        key={template.id}
+                        id={template.id}
+                        title={template.name}
+                        imageUrl={template.cover_thumbnail_url}
+                        fallbackIcon={(motivationalBanner as any)?.short_title || '⚡'}
+                        fallbackGradient="bg-gradient-to-br from-yellow-600 to-orange-600"
+                        linkTo={`/motivational-preview/${template.motivational_banner_id}`}
+                        isAuthenticated={isAuthenticated}
+                        onAuthenticatedClick={() => navigate(`/motivational-preview/${template.motivational_banner_id}`)}
+                      />
+                    );
+                  })}
+                </div>
+              ) : isFestival ? (
+                <div className="flex gap-3 overflow-x-auto pb-2 pl-4 pr-4 scrollbar-hide scroll-smooth transform-gpu">
+                  {getFestivalTemplates.map((template: any) => {
+                    const festival = festivals.find((f: any) => f.id === template.festival_id);
+                    return (
+                      <GuestBannerCard 
+                        key={template.id}
+                        id={template.id}
+                        title={template.name}
+                        subtitle={(festival as any)?.festival_name}
+                        imageUrl={template.cover_thumbnail_url}
+                        fallbackIcon="🎉"
+                        fallbackGradient="bg-gradient-to-br from-purple-600 to-pink-600"
+                        linkTo={`/festival-preview/${template.festival_id}`}
+                        isAuthenticated={isAuthenticated}
+                        onAuthenticatedClick={() => navigate(`/festival-preview/${template.festival_id}`)}
+                      />
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="flex gap-3 overflow-x-auto pb-2 pl-4 pr-4 scrollbar-hide scroll-smooth">
+                  {categoryTemplates.length > 0 ? categoryTemplates.map((template: any) => {
+                    const getCategoryRoute = () => {
+                      const routeMap: Record<string, string> = {
+                        'bonanza-promotion': '/banner-create/bonanza',
+                        'birthday': '/banner-create/birthday',
+                        'anniversary': '/banner-create/anniversary',
+                        'meeting': '/banner-create/meeting',
+                        'festival': '/banner-create/festival',
+                        'motivational': '/banner-create/motivational'
+                      };
+                      return routeMap[category.slug] || `/template/${template.id}`;
+                    };
+                    return (
+                      <GuestBannerCard 
+                        key={template.id}
+                        id={template.id}
+                        title={template.name}
+                        imageUrl={template.cover_thumbnail_url}
+                        fallbackIcon="📋"
+                        fallbackGradient="bg-gradient-to-br from-secondary to-card"
+                        linkTo={getCategoryRoute()}
+                        isAuthenticated={isAuthenticated}
+                        onAuthenticatedClick={() => navigate(getCategoryRoute())}
+                      />
+                    );
+                  }) : (
+                    <div className="w-[calc(33.333%-8px)] min-w-[110px] max-w-[140px] gold-border bg-card rounded-2xl overflow-hidden flex-shrink-0 p-4">
                       <p className="text-xs text-muted-foreground text-center">No templates yet</p>
-                    </div>}
-                </div>)}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>;
-      })}
+        })}
       </div>
 
         <BottomNav />
       </div>
-      {/* Welcome Bonus Modal */}
-      <WelcomeBonusModal
-        open={showWelcomeModal}
-        bonusAmount={bonusAmount}
-        onContinue={handleContinue}
+      
+      {/* Welcome Bonus Modal - only for authenticated users */}
+      {isAuthenticated && (
+        <WelcomeBonusModal
+          open={showWelcomeModal}
+          bonusAmount={bonusAmount}
+          onContinue={handleContinue}
+        />
+      )}
+      
+      {/* Login Prompt Modal for guest interactions */}
+      <LoginPromptModal 
+        open={showLoginModal}
+        onOpenChange={setShowLoginModal}
+        featureName="this feature"
       />
-    </ProfileCompletionGate>
+    </ContentWrapper>
   );
 }

@@ -168,15 +168,17 @@ const App = () => (
           <Suspense fallback={<RouteSkeleton />}>
             <Routes>
               {/* Public routes - no auth required */}
-              <Route path="/" element={<Login />} />
+              <Route path="/" element={<Dashboard />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/privacy-policy" element={<PrivacyPolicy />} />
               <Route path="/otp-verification" element={<OTPVerification />} />
               <Route path="/auth/callback" element={<AuthCallback />} />
               
+              {/* Dashboard - public with guest mode (deferred login) */}
+              <Route path="/dashboard" element={<Dashboard />} />
+              
               {/* Protected routes - auth required */}
-              <Route path="/dashboard" element={<AuthGuard><Dashboard /></AuthGuard>} />
               <Route path="/categories" element={<AuthGuard><Categories /></AuthGuard>} />
               <Route path="/categories/bonanza-trips" element={<AuthGuard><BonanzaTripsSelection /></AuthGuard>} />
               <Route path="/categories/birthdays" element={<AuthGuard><BirthdaysSelection /></AuthGuard>} />
