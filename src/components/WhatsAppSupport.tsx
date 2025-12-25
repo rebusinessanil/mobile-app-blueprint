@@ -111,13 +111,12 @@ export default function WhatsAppSupport() {
   };
 
   // Don't render if hidden (only applies to authenticated users who closed it)
+  // Also don't render on auth pages since we use WhatsAppDiscovery there
   if (isHidden && isAuthenticated) return null;
+  if (isAuthPage) return null;
 
-  // Show close button only for authenticated users (not on auth pages)
-  const showCloseButton = isAuthenticated && !isAuthPage;
-
-  // Check if on auth pages to apply gold styling
-  const useGoldStyle = isAuthPage;
+  // Show close button only for authenticated users
+  const showCloseButton = isAuthenticated;
 
   return (
     <div className="fixed bottom-24 left-6 z-50 group">
@@ -129,7 +128,7 @@ export default function WhatsAppSupport() {
         <img 
           src={whatsappIcon} 
           alt="WhatsApp" 
-          className={`w-full h-full object-contain ${useGoldStyle ? 'whatsapp-gold' : ''}`} 
+          className="w-full h-full object-contain" 
         />
       </button>
       {showCloseButton && (
