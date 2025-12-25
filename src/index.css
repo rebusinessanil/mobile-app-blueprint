@@ -383,6 +383,11 @@
     -webkit-overflow-scrolling: touch;
     scroll-behavior: smooth;
   }
+  
+  /* Webkit touch scrolling for iOS */
+  .-webkit-overflow-scrolling-touch {
+    -webkit-overflow-scrolling: touch;
+  }
 }
 
 /* ========================================
