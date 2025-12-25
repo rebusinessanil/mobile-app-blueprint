@@ -1557,6 +1557,34 @@ export default function BannerPreview() {
               <div className="absolute inset-0" style={backgroundStyle}>
                 {/* Background automatically from global slot system (image or default color) */}
 
+                {/* Horizontal Divider Line 1 - Through center of Achiever Photo (top: 162px, height: 792px, center: 558px) */}
+                <div 
+                  className="absolute"
+                  style={{
+                    top: '558px',
+                    left: 0,
+                    right: 0,
+                    height: '2px',
+                    backgroundColor: '#000000',
+                    zIndex: 2,
+                    pointerEvents: 'none'
+                  }}
+                />
+
+                {/* Horizontal Divider Line 2 - Through center of User Photo (bottom: 0, height: 540px, center: 1080px from top) */}
+                <div 
+                  className="absolute"
+                  style={{
+                    top: '1080px',
+                    left: 0,
+                    right: 0,
+                    height: '2px',
+                    backgroundColor: '#000000',
+                    zIndex: 2,
+                    pointerEvents: 'none'
+                  }}
+                />
+
                 {/* Story Category: Three Dark-Theme Upper Bars */}
                 {bannerData.categoryType === 'story' && <>
                     {/* Upper Bar 1 - Top */}
