@@ -2,39 +2,39 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useBannerCarousel } from '@/hooks/useBannerCarousel';
+import { isIOS, getOptimizedImageUrl } from '@/lib/adaptiveAssets';
 
 const GuestBannerCarousel = () => {
   const { data: images, isLoading } = useBannerCarousel();
-  const [currentIndex, setCurrentIndex] = useState(1); // Start at 1 because of cloned first slide
+  const [currentIndex, setCurrentIndex] = useState(1);
   const [isTransitioning, setIsTransitioning] = useState(true);
   const navigate = useNavigate();
   const trackRef = useRef<HTMLDivElement>(null);
+  const [isiOSDevice] = useState(() => isIOS());
 
   const totalSlides = images?.length || 0;
 
   const nextSlide = useCallback(() => {
-    if (!totalSlides) return;
+    if (!totalSlides || isiOSDevice) return;
     setIsTransitioning(true);
     setCurrentIndex((prev) => prev + 1);
-  }, [totalSlides]);
+  }, [totalSlides, isiOSDevice]);
 
   const prevSlide = useCallback(() => {
-    if (!totalSlides) return;
+    if (!totalSlides || isiOSDevice) return;
     setIsTransitioning(true);
     setCurrentIndex((prev) => prev - 1);
-  }, [totalSlides]);
+  }, [totalSlides, isiOSDevice]);
 
-  // Handle infinite loop jump
+  // Handle infinite loop jump - DISABLED on iOS
   useEffect(() => {
-    if (!totalSlides) return;
+    if (!totalSlides || isiOSDevice) return;
     
     const handleTransitionEnd = () => {
-      // If we're at the cloned last slide (index 0), jump to real last slide
       if (currentIndex === 0) {
         setIsTransitioning(false);
         setCurrentIndex(totalSlides);
       }
-      // If we're at the cloned first slide (index totalSlides + 1), jump to real first slide
       if (currentIndex === totalSlides + 1) {
         setIsTransitioning(false);
         setCurrentIndex(1);
@@ -46,18 +46,18 @@ const GuestBannerCarousel = () => {
       track.addEventListener('transitionend', handleTransitionEnd);
       return () => track.removeEventListener('transitionend', handleTransitionEnd);
     }
-  }, [currentIndex, totalSlides]);
+  }, [currentIndex, totalSlides, isiOSDevice]);
 
   const handleCarouselClick = () => {
     navigate('/login');
   };
 
-  // Auto-advance every 4 seconds
+  // Auto-advance every 4 seconds - DISABLED on iOS to prevent crash loops
   useEffect(() => {
-    if (!totalSlides || totalSlides <= 1) return;
+    if (!totalSlides || totalSlides <= 1 || isiOSDevice) return;
     const interval = setInterval(nextSlide, 4000);
     return () => clearInterval(interval);
-  }, [totalSlides, nextSlide]);
+  }, [totalSlides, nextSlide, isiOSDevice]);
 
   if (isLoading) {
     return (
@@ -71,14 +71,41 @@ const GuestBannerCarousel = () => {
     return null;
   }
 
-  // Create slides array with clones for infinite loop: [lastClone, ...originals, firstClone]
+  // iOS: Static single image display - no carousel, no timers, no transitions
+  if (isiOSDevice) {
+    return (
+      <div 
+        className="relative w-full aspect-[16/9] overflow-hidden rounded-2xl cursor-pointer"
+        onClick={handleCarouselClick}
+      >
+        <img
+          src={getOptimizedImageUrl(images[0].image_url)}
+          alt="Banner"
+          className="w-full h-full object-cover"
+          loading="lazy"
+          decoding="async"
+        />
+        {images.length > 1 && (
+          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5">
+            {images.map((_, index) => (
+              <span
+                key={index}
+                className={`w-2 h-2 rounded-full ${index === 0 ? 'bg-primary w-4' : 'bg-foreground/40'}`}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Non-iOS: Full carousel with animations
   const slides = [
-    images[images.length - 1], // Clone of last slide
+    images[images.length - 1],
     ...images,
-    images[0], // Clone of first slide
+    images[0],
   ];
 
-  // Get real index for dot indicators (0-based)
   const getRealIndex = () => {
     if (currentIndex === 0) return totalSlides - 1;
     if (currentIndex === totalSlides + 1) return 0;
@@ -98,32 +125,32 @@ const GuestBannerCarousel = () => {
         {slides.map((image, index) => (
           <img
             key={`${image.id}-${index}`}
-            src={image.image_url}
+            src={getOptimizedImageUrl(image.image_url)}
             alt={`Banner ${index + 1}`}
             className="w-full h-full object-cover flex-shrink-0"
+            loading="lazy"
+            decoding="async"
           />
         ))}
       </div>
 
-      {/* Navigation arrows - only show if more than 1 image */}
       {images.length > 1 && (
         <>
           <button
             onClick={(e) => { e.stopPropagation(); prevSlide(); }}
-            className="absolute left-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-background/60 backdrop-blur-sm border border-border/30 text-foreground/80 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-background/80"
+            className="absolute left-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-background/60 border border-border/30 text-foreground/80 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-background/80"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
           <button
             onClick={(e) => { e.stopPropagation(); nextSlide(); }}
-            className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-background/60 backdrop-blur-sm border border-border/30 text-foreground/80 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-background/80"
+            className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-background/60 border border-border/30 text-foreground/80 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-background/80"
           >
             <ChevronRight className="w-4 h-4" />
           </button>
         </>
       )}
 
-      {/* Dot indicators */}
       {images.length > 1 && (
         <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5">
           {images.map((_, index) => (

@@ -6,6 +6,15 @@
 const MOBILE_BREAKPOINT = 768;
 
 /**
+ * Detect iOS devices (iPhone, iPad, iPod)
+ */
+export const isIOS = (): boolean => {
+  if (typeof navigator === 'undefined') return false;
+  return /iPhone|iPad|iPod/i.test(navigator.userAgent) || 
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+};
+
+/**
  * Get optimized image URL with Supabase transformations
  * @param url - Original image URL
  * @param width - Optional target width (auto-detected if not provided)
@@ -23,12 +32,18 @@ export const getOptimizedImageUrl = (
   }
 
   const isMobile = typeof window !== 'undefined' && window.innerWidth < MOBILE_BREAKPOINT;
+  const isiOSDevice = isIOS();
   
   // Parse existing URL
   const urlObj = new URL(url);
   
-  // Mobile: Low quality, small size
-  if (isMobile) {
+  // iOS: Aggressive downscaling to prevent memory crashes
+  if (isiOSDevice) {
+    urlObj.searchParams.set('width', String(Math.min(width || 300, 300)));
+    urlObj.searchParams.set('quality', '40');
+    urlObj.searchParams.set('format', 'webp');
+  } else if (isMobile) {
+    // Mobile (non-iOS): Low quality, small size
     urlObj.searchParams.set('width', String(width || 400));
     urlObj.searchParams.set('quality', '50');
     urlObj.searchParams.set('format', 'webp');
