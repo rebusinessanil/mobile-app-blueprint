@@ -3,7 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Lock } from "lucide-react";
+import { Lock, LockOpen } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -100,15 +101,37 @@ export default function Login() {
       
       <div className="w-full max-w-md relative z-10">
         <div className="gold-border bg-card p-8 space-y-6">
-          {/* Icon */}
+          {/* Animated Lock Icon */}
           <div className="flex justify-center">
-            <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center">
-              <Lock className="w-8 h-8 text-primary-foreground" />
+            <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center overflow-hidden">
+              <AnimatePresence mode="wait">
+                {loading ? (
+                  <motion.div
+                    key="locked"
+                    initial={{ y: -10, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    exit={{ y: 10, opacity: 0 }}
+                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                  >
+                    <Lock className="w-8 h-8 text-primary-foreground" />
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="unlocked"
+                    initial={{ y: -10, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    exit={{ y: 10, opacity: 0 }}
+                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                  >
+                    <LockOpen className="w-8 h-8 text-primary-foreground" />
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </div>
 
-          {/* Title */}
-          <h1 className="text-3xl font-bold text-center text-foreground">LOGIN</h1>
+          {/* Animated Shimmer Title */}
+          <h1 className="text-3xl font-bold text-center login-shimmer-text">LOGIN</h1>
 
           {/* Email/Mobile Input */}
           <div className="space-y-2">

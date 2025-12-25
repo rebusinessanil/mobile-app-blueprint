@@ -130,6 +130,32 @@
   .gold-border {
     @apply border-2 border-primary rounded-2xl;
   }
+
+  /* Login Shimmer Text Animation */
+  .login-shimmer-text {
+    background: linear-gradient(
+      90deg,
+      #FFD700 0%,
+      #F59E0B 25%,
+      #FEF3C7 50%,
+      #F59E0B 75%,
+      #FFD700 100%
+    );
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shimmer 3s ease-in-out infinite;
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
+  }
   
   .gold-glow {
     box-shadow: var(--shadow-gold);
