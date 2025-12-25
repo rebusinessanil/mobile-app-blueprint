@@ -3,96 +3,92 @@ import React from 'react';
 interface BannerWatermarksProps {
   showBrandWatermark?: boolean; // Preview only watermark
   showMobileWatermark?: boolean; // Permanent watermark
+  // Face center positions as percentages (0-100)
+  achieverFaceX?: number; // Default: 25% from left (achiever photo area)
+  achieverFaceY?: number; // Default: 45% from top
+  userFaceX?: number; // Default: 75% from left (user photo area)
+  userFaceY?: number; // Default: 45% from top
 }
 
 /**
  * Banner Watermarks Component
  * 
  * Two layers:
- * 1. Brand Watermark (Preview Only) - "Re Business" vertical along left and right edges
+ * 1. Brand Watermark (Preview Only) - "Re Business" vertical over achiever & user face centers
  * 2. Mobile Watermark (Permanent) - Promotional call number on left edge
  */
 const BannerWatermarks: React.FC<BannerWatermarksProps> = ({
   showBrandWatermark = true,
   showMobileWatermark = true,
+  achieverFaceX = 25,
+  achieverFaceY = 50,
+  userFaceX = 75,
+  userFaceY = 50,
 }) => {
-  // Number of watermark repetitions along each edge
-  const repeatCount = 8;
+  // Watermark text style - 120% larger, bold, 20% opacity
+  const watermarkTextStyle: React.CSSProperties = {
+    fontSize: '17px', // 120% of 14px
+    fontWeight: 700,
+    fontFamily: 'Poppins, Arial, sans-serif',
+    color: 'rgba(255, 255, 255, 0.20)', // 20% opacity (middle of 18-22%)
+    letterSpacing: '4px',
+    textTransform: 'uppercase',
+    userSelect: 'none',
+    whiteSpace: 'nowrap',
+  };
+
+  // Background strip style - translucent grey
+  const stripStyle: React.CSSProperties = {
+    background: 'rgba(128, 128, 128, 0.08)',
+    padding: '8px 4px',
+    borderRadius: '2px',
+  };
 
   return (
     <>
-      {/* PREVIEW-ONLY: Brand Watermark - Vertical "Re Business" along left and right edges */}
+      {/* PREVIEW-ONLY: Brand Watermark - Vertical "Re Business" over face centers */}
       {showBrandWatermark && (
         <div
           id="brand-watermark-preview"
           className="absolute inset-0 pointer-events-none overflow-hidden"
           style={{ zIndex: 100 }}
         >
-          {/* Left Edge Watermarks */}
+          {/* Watermark over ACHIEVER's face center */}
           <div
-            className="absolute left-0 top-0 bottom-0 flex flex-col justify-between py-4"
-            style={{ width: '40px' }}
+            className="absolute flex items-center justify-center"
+            style={{
+              left: `${achieverFaceX}%`,
+              top: '0',
+              bottom: '0',
+              transform: 'translateX(-50%)',
+              writingMode: 'vertical-rl',
+              textOrientation: 'mixed',
+            }}
           >
-            {Array.from({ length: repeatCount }).map((_, index) => (
-              <div
-                key={`left-${index}`}
-                className="flex items-center justify-center"
-                style={{
-                  writingMode: 'vertical-rl',
-                  textOrientation: 'mixed',
-                  transform: 'rotate(180deg)',
-                }}
-              >
-                <span
-                  style={{
-                    fontSize: '14px',
-                    fontWeight: 700,
-                    fontFamily: 'Poppins, Arial, sans-serif',
-                    color: 'rgba(255, 255, 255, 0.25)',
-                    letterSpacing: '3px',
-                    textTransform: 'uppercase',
-                    userSelect: 'none',
-                    textShadow: '1px 1px 2px rgba(0, 0, 0, 0.3), -1px -1px 1px rgba(255, 255, 255, 0.1)',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  Re Business
-                </span>
-              </div>
-            ))}
+            <div style={stripStyle}>
+              <span style={watermarkTextStyle}>
+                Re Business
+              </span>
+            </div>
           </div>
 
-          {/* Right Edge Watermarks */}
+          {/* Watermark over USER's face center */}
           <div
-            className="absolute right-0 top-0 bottom-0 flex flex-col justify-between py-4"
-            style={{ width: '40px' }}
+            className="absolute flex items-center justify-center"
+            style={{
+              left: `${userFaceX}%`,
+              top: '0',
+              bottom: '0',
+              transform: 'translateX(-50%)',
+              writingMode: 'vertical-rl',
+              textOrientation: 'mixed',
+            }}
           >
-            {Array.from({ length: repeatCount }).map((_, index) => (
-              <div
-                key={`right-${index}`}
-                className="flex items-center justify-center"
-                style={{
-                  writingMode: 'vertical-rl',
-                  textOrientation: 'mixed',
-                }}
-              >
-                <span
-                  style={{
-                    fontSize: '14px',
-                    fontWeight: 700,
-                    fontFamily: 'Poppins, Arial, sans-serif',
-                    color: 'rgba(255, 255, 255, 0.25)',
-                    letterSpacing: '3px',
-                    textTransform: 'uppercase',
-                    userSelect: 'none',
-                    textShadow: '1px 1px 2px rgba(0, 0, 0, 0.3), -1px -1px 1px rgba(255, 255, 255, 0.1)',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  Re Business
-                </span>
-              </div>
-            ))}
+            <div style={stripStyle}>
+              <span style={watermarkTextStyle}>
+                Re Business
+              </span>
+            </div>
           </div>
         </div>
       )}
@@ -119,7 +115,6 @@ const BannerWatermarks: React.FC<BannerWatermarksProps> = ({
               color: 'rgba(255, 255, 255, 0.08)',
               letterSpacing: '1.5px',
               userSelect: 'none',
-              textShadow: '0 1px 2px rgba(0,0,0,0.2)',
             }}
           >
             Promotional Call +91 77349 90035
