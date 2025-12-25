@@ -313,7 +313,7 @@ export default function Dashboard() {
               onClick={() => navigate("/register")}
               className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold"
             >
-              Get Started Free →
+              Sign up to unlock all templates, get 199 free tokens
             </Button>
           </div>
         </div>
