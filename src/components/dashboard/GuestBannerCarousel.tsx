@@ -1,22 +1,52 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useBannerCarousel } from '@/hooks/useBannerCarousel';
 
 const GuestBannerCarousel = () => {
   const { data: images, isLoading } = useBannerCarousel();
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState(1); // Start at 1 because of cloned first slide
+  const [isTransitioning, setIsTransitioning] = useState(true);
   const navigate = useNavigate();
+  const trackRef = useRef<HTMLDivElement>(null);
+
+  const totalSlides = images?.length || 0;
 
   const nextSlide = useCallback(() => {
-    if (!images?.length) return;
-    setCurrentIndex((prev) => (prev + 1) % images.length);
-  }, [images?.length]);
+    if (!totalSlides) return;
+    setIsTransitioning(true);
+    setCurrentIndex((prev) => prev + 1);
+  }, [totalSlides]);
 
   const prevSlide = useCallback(() => {
-    if (!images?.length) return;
-    setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
-  }, [images?.length]);
+    if (!totalSlides) return;
+    setIsTransitioning(true);
+    setCurrentIndex((prev) => prev - 1);
+  }, [totalSlides]);
+
+  // Handle infinite loop jump
+  useEffect(() => {
+    if (!totalSlides) return;
+    
+    const handleTransitionEnd = () => {
+      // If we're at the cloned last slide (index 0), jump to real last slide
+      if (currentIndex === 0) {
+        setIsTransitioning(false);
+        setCurrentIndex(totalSlides);
+      }
+      // If we're at the cloned first slide (index totalSlides + 1), jump to real first slide
+      if (currentIndex === totalSlides + 1) {
+        setIsTransitioning(false);
+        setCurrentIndex(1);
+      }
+    };
+
+    const track = trackRef.current;
+    if (track) {
+      track.addEventListener('transitionend', handleTransitionEnd);
+      return () => track.removeEventListener('transitionend', handleTransitionEnd);
+    }
+  }, [currentIndex, totalSlides]);
 
   const handleCarouselClick = () => {
     navigate('/login');
@@ -24,10 +54,10 @@ const GuestBannerCarousel = () => {
 
   // Auto-advance every 4 seconds
   useEffect(() => {
-    if (!images?.length || images.length <= 1) return;
+    if (!totalSlides || totalSlides <= 1) return;
     const interval = setInterval(nextSlide, 4000);
     return () => clearInterval(interval);
-  }, [images?.length, nextSlide]);
+  }, [totalSlides, nextSlide]);
 
   if (isLoading) {
     return (
@@ -41,18 +71,33 @@ const GuestBannerCarousel = () => {
     return null;
   }
 
+  // Create slides array with clones for infinite loop: [lastClone, ...originals, firstClone]
+  const slides = [
+    images[images.length - 1], // Clone of last slide
+    ...images,
+    images[0], // Clone of first slide
+  ];
+
+  // Get real index for dot indicators (0-based)
+  const getRealIndex = () => {
+    if (currentIndex === 0) return totalSlides - 1;
+    if (currentIndex === totalSlides + 1) return 0;
+    return currentIndex - 1;
+  };
+
   return (
     <div 
       className="relative w-full aspect-[16/9] overflow-hidden rounded-2xl group cursor-pointer"
       onClick={handleCarouselClick}
     >
       <div 
-        className="flex h-full transition-transform duration-300 ease-out"
+        ref={trackRef}
+        className={`flex h-full ${isTransitioning ? 'transition-transform duration-300 ease-out' : ''}`}
         style={{ transform: `translateX(-${currentIndex * 100}%)` }}
       >
-        {images.map((image, index) => (
+        {slides.map((image, index) => (
           <img
-            key={image.id}
+            key={`${image.id}-${index}`}
             src={image.image_url}
             alt={`Banner ${index + 1}`}
             className="w-full h-full object-cover flex-shrink-0"
@@ -84,9 +129,13 @@ const GuestBannerCarousel = () => {
           {images.map((_, index) => (
             <button
               key={index}
-              onClick={(e) => { e.stopPropagation(); setCurrentIndex(index); }}
+              onClick={(e) => { 
+                e.stopPropagation(); 
+                setIsTransitioning(true);
+                setCurrentIndex(index + 1); 
+              }}
               className={`w-2 h-2 rounded-full transition-all ${
-                index === currentIndex
+                index === getRealIndex()
                   ? 'bg-primary w-4'
                   : 'bg-foreground/40 hover:bg-foreground/60'
               }`}
