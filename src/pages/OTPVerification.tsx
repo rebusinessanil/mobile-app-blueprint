@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useSupabaseConnection } from "@/hooks/useSupabaseConnection";
+import { getUserRoleAndRedirect } from "@/hooks/useUserRole";
 
 export default function OTPVerification() {
   const navigate = useNavigate();
@@ -122,8 +123,12 @@ export default function OTPVerification() {
         toast.success("Email verified successfully!");
         
         if (profileData?.profile_completed) {
-          // Existing user with complete profile - go to dashboard
-          navigate("/dashboard", { replace: true });
+          // Existing user with complete profile - check role and redirect
+          const { redirectPath, isAdmin } = await getUserRoleAndRedirect(data.user.id);
+          if (isAdmin) {
+            toast.success("Welcome back, Admin!");
+          }
+          navigate(redirectPath, { replace: true });
         } else {
           // New user or incomplete profile - go to profile-edit with prefilled data
           navigate("/profile-edit", { 

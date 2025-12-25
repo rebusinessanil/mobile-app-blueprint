@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { z } from "zod";
 import { useSupabaseConnection } from "@/hooks/useSupabaseConnection";
+import { getUserRoleAndRedirect } from "@/hooks/useUserRole";
 
 // Zod validation schema for login
 const loginSchema = z.object({
@@ -80,8 +81,12 @@ export default function Login() {
       try {
         localStorage.setItem("rebusiness_profile_completed", "true");
       } catch {}
-      toast.success("Login successful!");
-      navigate("/dashboard", { replace: true });
+      
+      // Check user role and redirect accordingly
+      const { redirectPath, isAdmin } = await getUserRoleAndRedirect(result.data.user.id);
+      
+      toast.success(isAdmin ? "Welcome back, Admin!" : "Login successful!");
+      navigate(redirectPath, { replace: true });
     }
 
     setLoading(false);

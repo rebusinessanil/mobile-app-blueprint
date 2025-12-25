@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/lib/logger";
+import { getUserRoleAndRedirect, isPathAllowedForRole } from "@/hooks/useUserRole";
 import type { User } from "@supabase/supabase-js";
 
 const PROFILE_GATE_BYPASS_KEY = "rebusiness_profile_completed";
@@ -16,10 +17,12 @@ export default function AuthGuard({ children }: AuthGuardProps) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [checkingProfile, setCheckingProfile] = useState(true);
+  const [roleChecked, setRoleChecked] = useState(false);
   const profileCreatedRef = useRef(false);
 
   // Check if we're on profile-edit route (no loading flash needed)
   const isProfileRoute = location.pathname === '/profile-edit' || location.pathname === '/profile-setup';
+  const isAdminRoute = location.pathname.startsWith('/admin');
 
   useEffect(() => {
     let mounted = true;
@@ -36,8 +39,21 @@ export default function AuthGuard({ children }: AuthGuardProps) {
       
       setUser(session.user);
       
+      // Check user role and redirect accordingly
+      const { isAdmin, redirectPath } = await getUserRoleAndRedirect(session.user.id);
+      
+      // Check if current path is allowed for user's role
+      if (!isPathAllowedForRole(location.pathname, isAdmin)) {
+        logger.log(`Path ${location.pathname} not allowed for ${isAdmin ? 'admin' : 'user'}, redirecting to ${redirectPath}`);
+        navigate(redirectPath, { replace: true });
+        return;
+      }
+      
+      setRoleChecked(true);
+      
       // Check profile completion status from DATABASE (not localStorage)
-      if (!isProfileRoute) {
+      // Skip for admin routes - admins don't need profile completion
+      if (!isProfileRoute && !isAdminRoute) {
         const { data: profile } = await supabase
           .from('profiles')
           .select('profile_completed, welcome_bonus_given')
@@ -90,7 +106,7 @@ export default function AuthGuard({ children }: AuthGuardProps) {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [navigate, location.pathname, isProfileRoute]);
+  }, [navigate, location.pathname, isProfileRoute, isAdminRoute]);
 
   // Check if user has a profile, create one if it doesn't exist
   useEffect(() => {
@@ -146,9 +162,11 @@ export default function AuthGuard({ children }: AuthGuardProps) {
   }
 
   // Show minimal loading only for non-profile routes
-  if (loading || checkingProfile) {
+  if (loading || checkingProfile || !roleChecked) {
     return (
-      <div className="min-h-screen bg-background" />
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
     );
   }
 
