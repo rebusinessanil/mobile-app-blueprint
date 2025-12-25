@@ -362,23 +362,13 @@
     @apply h-12 sm:h-14 text-base sm:text-lg font-semibold;
   }
   
-  /* Safe area for mobile devices - iOS Safari compatible */
+  /* Safe area for mobile devices */
   .safe-area-top {
-    padding-top: max(12px, env(safe-area-inset-top, 0px));
+    padding-top: env(safe-area-inset-top, 0);
   }
   
   .safe-area-bottom {
-    padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
-  }
-  
-  /* Fixed header height compensation */
-  .pt-header {
-    padding-top: calc(64px + env(safe-area-inset-top, 0px));
-  }
-  
-  /* Fixed bottom nav height compensation */
-  .pb-nav {
-    padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: env(safe-area-inset-bottom, 0);
   }
   
   /* Prevent text selection on interactive elements */
@@ -393,45 +383,18 @@
     -webkit-overflow-scrolling: touch;
     scroll-behavior: smooth;
   }
-  
-  /* Webkit touch scrolling for iOS */
-  .-webkit-overflow-scrolling-touch {
-    -webkit-overflow-scrolling: touch;
-  }
-  
-  /* Prevent body scroll when modal is open */
-  .overflow-hidden-mobile {
-    overflow: hidden;
-    position: fixed;
-    width: 100%;
-    height: 100%;
-  }
-}
-
-/* ========================================
-   iOS Safari Crash Prevention
-   ======================================== */
-* {
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-/* Force hardware acceleration on main container */
-#root {
-  transform: translateZ(0);
-  -webkit-transform: translateZ(0);
 }
 
 /* ========================================
    MOBILE LITE MODE - Performance Overrides
    ======================================== */
 @media (max-width: 767px) {
-  /* CRITICAL: Disable all glass/backdrop effects on mobile to prevent iOS crashes */
+  /* Disable all backdrop-filter on mobile for GPU stability */
   *,
   *::before,
   *::after {
-    -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
   }
   
   /* Replace heavy blur effects with solid backgrounds */
@@ -441,8 +404,8 @@
   .backdrop-blur-md,
   .backdrop-blur-sm,
   .backdrop-blur {
-    -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
     background-color: hsl(217 30% 10% / 0.95) !important;
   }
   
@@ -488,12 +451,6 @@
   .overflow-x-auto {
     -webkit-overflow-scrolling: touch;
     transform: translateZ(0);
-    -webkit-transform: translateZ(0);
-  }
-
-  /* Disable ping animations on mobile */
-  .animate-ping {
-    animation: none !important;
   }
 }
 
@@ -507,21 +464,5 @@
   
   img {
     image-rendering: optimizeSpeed;
-  }
-}
-
-/* Safari-specific WebKit fixes */
-@supports (-webkit-touch-callout: none) {
-  /* iOS Safari specific styles */
-  * {
-    -webkit-backdrop-filter: none !important;
-    backdrop-filter: none !important;
-  }
-  
-  /* Prevent memory spikes from complex filters */
-  img,
-  video {
-    -webkit-transform: translateZ(0);
-    transform: translateZ(0);
   }
 }
