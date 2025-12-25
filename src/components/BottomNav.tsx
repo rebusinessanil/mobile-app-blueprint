@@ -12,8 +12,8 @@ export default function BottomNav() {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-primary/30 px-6 py-3 z-50">
-      <div className="max-w-screen-lg mx-auto flex items-center justify-around">
+    <nav className="app-bottom-nav bg-card border-t border-primary/30">
+      <div className="h-full max-w-screen-lg mx-auto flex items-center justify-around px-6">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = location.pathname === item.path;
