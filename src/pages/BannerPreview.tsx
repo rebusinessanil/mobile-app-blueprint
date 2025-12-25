@@ -375,10 +375,9 @@ export default function BannerPreview() {
   // Fetch selected stickers - removed, now using slotStickers structure
   // Each slot has its own stickers independently
 
-  // Use optimized progressive asset preloader
+  // Use asset preloader - waits for 100% loading
   const {
     preloadAssets,
-    criticalLoaded,
     allLoaded,
     progress: loadingProgress,
     timedOut,
@@ -419,13 +418,12 @@ export default function BannerPreview() {
     // Primary photo (critical)
     const primaryPhotoUrl = bannerData?.photo || profile?.profile_photo || undefined;
 
-    // Other background URLs (non-critical, lazy loaded)
+    // Other background URLs (load all for slot switching)
     const otherBackgroundUrls = globalBackgroundSlots
       .filter(slot => slot.slotNumber !== selectedTemplate + 1 && slot.imageUrl)
-      .map(slot => slot.imageUrl!)
-      .slice(0, isMobile ? 4 : 15); // Limit on mobile
+      .map(slot => slot.imageUrl!);
 
-    // Other sticker URLs (non-critical, lazy loaded)
+    // Other sticker URLs (load all slots)
     const otherStickerUrls: string[] = [];
     Object.entries(stickerImages).forEach(([slotNum, stickers]) => {
       if (Number(slotNum) !== selectedTemplate + 1) {
@@ -435,7 +433,7 @@ export default function BannerPreview() {
       }
     });
 
-    // Upline avatars (non-critical)
+    // Upline avatars
     const uplineAvatarUrls = displayUplines
       .map(u => u.avatar)
       .filter(Boolean) as string[];
@@ -446,8 +444,8 @@ export default function BannerPreview() {
       downloadIconUrl: downloadIcon,
       logoUrls,
       visibleStickerUrls,
-      otherBackgroundUrls: otherBackgroundUrls.slice(0, isMobile ? 4 : 15),
-      otherStickerUrls: otherStickerUrls.slice(0, isMobile ? 8 : 20),
+      otherBackgroundUrls,
+      otherStickerUrls,
       uplineAvatarUrls,
     };
   }, [
@@ -459,20 +457,19 @@ export default function BannerPreview() {
     bannerDefaults,
     profile,
     displayUplines,
-    isMobile,
   ]);
 
-  // Trigger optimized preloading when data is ready
+  // Trigger preloading when data is ready
   useEffect(() => {
     if (preloadStarted || !assetConfig) return;
     
     setPreloadStarted(true);
-    console.log('🚀 Starting optimized progressive preload...');
+    console.log('🚀 Starting full asset preload...');
     preloadAssets(assetConfig);
   }, [assetConfig, preloadStarted, preloadAssets]);
 
-  // Allow UI to show once critical assets are loaded (or timed out)
-  const assetsLoaded = criticalLoaded || timedOut;
+  // Show banner only when ALL assets are loaded (100%)
+  const assetsLoaded = allLoaded || timedOut;
 
   // Trigger scale update immediately when assets are loaded and on resize
   // Using useLayoutEffect ensures scale is applied before browser paint - no flicker
@@ -505,7 +502,7 @@ export default function BannerPreview() {
     return null;
   }
 
-  // Show optimized loading UI until critical assets are loaded
+  // Show loading UI until ALL assets are 100% loaded
   if (!assetsLoaded || backgroundsLoading || !isDataReady) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
@@ -519,21 +516,19 @@ export default function BannerPreview() {
               {timedOut ? 'Almost Ready' : 'Preparing Your Banner'}
             </h2>
             <p className="text-sm text-muted-foreground">
-              {loadingProgress < 50 
-                ? 'Loading essential assets...'
-                : 'Optimizing for best experience...'}
+              Loading all assets for smooth preview...
             </p>
           </div>
           
           {/* Progress bar */}
-          <div className="w-full bg-muted rounded-full h-2 mb-2 overflow-hidden">
+          <div className="w-full bg-muted rounded-full h-3 mb-2 overflow-hidden">
             <div 
-              className="h-full bg-primary rounded-full transition-all duration-150 ease-out"
+              className="h-full bg-primary rounded-full transition-all duration-100 ease-out"
               style={{ width: `${Math.min(loadingProgress, 100)}%` }}
             />
           </div>
-          <p className="text-xs text-muted-foreground text-center">
-            {loadingProgress < 50 ? 'Critical assets' : 'Background loading'} • {Math.round(loadingProgress)}%
+          <p className="text-sm text-muted-foreground text-center font-medium">
+            {Math.round(loadingProgress)}% complete
           </p>
         </div>
       </div>
