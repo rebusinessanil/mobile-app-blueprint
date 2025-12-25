@@ -30,6 +30,7 @@ import { useGuestMode } from "@/hooks/useGuestMode";
 import { Button } from "@/components/ui/button";
 
 import LockedCard from "@/components/dashboard/LockedCard";
+import GuestStatusBar from "@/components/dashboard/GuestStatusBar";
 
 // Static proxy placeholder for instant card rendering
 const PROXY_PLACEHOLDER = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='105' viewBox='0 0 140 105'%3E%3Crect fill='%231a1f2e' width='140' height='105'/%3E%3Crect fill='%23ffd34e' opacity='0.1' width='140' height='105'/%3E%3C/svg%3E";
@@ -314,53 +315,8 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Private Sections - Locked for Guests */}
-      {isGuest && (
-        <div className="mx-4 mt-4 space-y-3">
-          <h3 className="text-sm font-semibold text-muted-foreground px-1">Your Personal Dashboard</h3>
-          <div className="grid grid-cols-2 gap-3">
-            {/* Locked Wallet Card */}
-            <LockedCard title="My Wallet">
-              <div className="gold-border bg-card rounded-2xl p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <Wallet className="w-5 h-5 text-primary" />
-                  <span className="text-sm font-semibold text-foreground">Wallet</span>
-                </div>
-                <p className="text-2xl font-bold text-primary">₹0</p>
-                <p className="text-xs text-muted-foreground">Available Balance</p>
-              </div>
-            </LockedCard>
-
-            {/* Locked Downloads Card */}
-            <LockedCard title="My Downloads">
-              <div className="gold-border bg-card rounded-2xl p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <Award className="w-5 h-5 text-primary" />
-                  <span className="text-sm font-semibold text-foreground">Downloads</span>
-                </div>
-                <p className="text-2xl font-bold text-primary">0</p>
-                <p className="text-xs text-muted-foreground">Banners Created</p>
-              </div>
-            </LockedCard>
-          </div>
-
-          {/* Locked Rank Card - Full Width */}
-          <LockedCard title="My Rank">
-            <div className="gold-border bg-card rounded-2xl p-4">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-2xl">
-                  🏆
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-semibold text-foreground">Current Rank</p>
-                  <p className="text-lg font-bold text-primary">Bronze</p>
-                  <p className="text-xs text-muted-foreground">Progress: 0%</p>
-                </div>
-              </div>
-            </div>
-          </LockedCard>
-        </div>
-      )}
+      {/* Compact Status Bar for Guests */}
+      {isGuest && <GuestStatusBar />}
 
       {/* Content */}
       <div className="py-6 space-y-6">
