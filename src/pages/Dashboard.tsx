@@ -241,9 +241,9 @@ export default function Dashboard() {
     children: React.ReactNode;
   }) => <>{children}</>;
   return <ContentWrapper userId={userId}>
-      <div className="min-h-screen bg-navy-dark pb-24 overflow-x-hidden overflow-y-auto">
+      <div className="fixed inset-0 flex flex-col bg-navy-dark overflow-hidden">
       {/* Fixed Header */}
-      <header className="fixed top-0 left-0 right-0 bg-navy-dark/95 backdrop-blur-sm z-50 px-4 py-3 border-b border-primary/20">
+      <header className="flex-shrink-0 bg-navy-dark/95 z-50 px-4 py-3 border-b border-primary/20 safe-area-top">
         <div className="flex items-center justify-between gap-2 max-w-full">
           <div className="flex items-center gap-2 min-w-0 flex-shrink">
             <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center flex-shrink-0">
@@ -288,8 +288,8 @@ export default function Dashboard() {
         </div>
       </header>
 
-      {/* Spacer for fixed header */}
-      <div className="h-16"></div>
+      {/* Scrollable Main Content */}
+      <main className="flex-1 overflow-y-auto overflow-x-hidden overscroll-contain -webkit-overflow-scrolling-touch">
 
       {/* Guest Banner - Show value proposition with Carousel */}
       {isGuest && <div className="mx-4 mt-4 rounded-2xl bg-gradient-to-r from-primary/20 via-primary/10 to-secondary/20 border border-primary/30 overflow-hidden">
@@ -388,9 +388,11 @@ export default function Dashboard() {
             </div>;
         })}
       </div>
+      </main>
 
-        <BottomNav />
-      </div>
+      {/* Fixed Bottom Navigation */}
+      <BottomNav />
+    </div>
       
       {/* Welcome Bonus Modal - only for authenticated users */}
       {isAuthenticated && <WelcomeBonusModal open={showWelcomeModal} bonusAmount={bonusAmount} onContinue={handleContinue} />}
