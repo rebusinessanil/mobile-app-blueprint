@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { useSupabaseConnection } from "@/hooks/useSupabaseConnection";
 import { getUserRoleAndRedirect } from "@/hooks/useUserRole";
+import LiveActivityTicker from "@/components/LiveActivityTicker";
 
 // Zod validation schema for login
 const loginSchema = z.object({
@@ -251,5 +252,8 @@ export default function Login() {
           </p>
         </div>
       </div>
+
+      {/* Live Activity Ticker */}
+      <LiveActivityTicker />
     </div>;
 }
