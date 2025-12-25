@@ -14,16 +14,15 @@ const loginSchema = z.object({
   email: z.string().trim().email("Please enter a valid email address").max(255, "Email must be less than 255 characters"),
   pin: z.string().length(4, "PIN must be exactly 4 digits").regex(/^\d{4}$/, "PIN must contain only numbers")
 });
+
 export default function Login() {
   const navigate = useNavigate();
   const [emailOrMobile, setEmailOrMobile] = useState("");
   const [pin, setPin] = useState(["", "", "", ""]);
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
-  const {
-    withConnectionCheck,
-    isChecking
-  } = useSupabaseConnection();
+  const { withConnectionCheck, isChecking } = useSupabaseConnection();
+
   const handlePinChange = (index: number, value: string) => {
     if (value.length <= 1 && /^\d*$/.test(value)) {
       const newPin = [...pin];
@@ -34,6 +33,7 @@ export default function Login() {
       }
     }
   };
+
   const handlePinKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Backspace' && !pin[index] && index > 0) {
       document.getElementById(`pin-${index - 1}`)?.focus();
@@ -42,6 +42,7 @@ export default function Login() {
 
   // PIN prefix to meet Supabase 6-character minimum password requirement
   const PIN_PREFIX = "pin_";
+
   const handleLogin = async () => {
     const pinString = pin.join("");
 
@@ -50,72 +51,48 @@ export default function Login() {
       email: emailOrMobile,
       pin: pinString
     });
+
     if (!validationResult.success) {
       const firstError = validationResult.error.errors[0];
       toast.error(firstError.message);
       return;
     }
+
     setLoading(true);
+
     const paddedPassword = PIN_PREFIX + pinString;
+
     const result = await withConnectionCheck(async () => {
-      const {
-        data,
-        error
-      } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email: emailOrMobile.trim(),
         password: paddedPassword
       });
+
       if (error) {
         throw error;
       }
+
       return data;
-    }, {
-      showToast: true,
-      retryOnFail: true
-    });
+    }, { showToast: true, retryOnFail: true });
+
     if (result.success && result.data?.user) {
       // Set bypass flag to skip profile completion checks
       try {
         localStorage.setItem("rebusiness_profile_completed", "true");
       } catch {}
       toast.success("Login successful!");
-      navigate("/dashboard", {
-        replace: true
-      });
+      navigate("/dashboard", { replace: true });
     }
+
     setLoading(false);
   };
-  return (
-    <div className="min-h-screen bg-black relative overflow-hidden flex items-center justify-center p-6">
-      {/* Ambient glow backdrop - radiates from behind the card */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-        <div 
-          className="w-[800px] h-[800px] rounded-full opacity-40"
-          style={{
-            background: 'radial-gradient(circle, rgba(212,175,55,0.35) 0%, rgba(180,140,40,0.2) 25%, rgba(100,70,20,0.1) 50%, rgba(0,0,0,0) 70%)',
-            filter: 'blur(60px)',
-          }}
-        />
-      </div>
-      
-      {/* Secondary subtle navy ambient */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(10,30,50,0.4)_0%,transparent_50%)]" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom,rgba(10,20,35,0.6)_0%,transparent_60%)]" />
-      
-      {/* Subtle grain texture */}
-      <div 
-        className="absolute inset-0 opacity-[0.03] pointer-events-none"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
-        }}
-      />
-
-      <div className="w-full max-w-md relative z-10">
-        <div className="gold-border bg-card/95 backdrop-blur-sm p-8 space-y-6 shadow-2xl shadow-primary/10">
+  return <div className="min-h-screen bg-navy-dark flex items-center justify-center p-6">
+      <div className="w-full max-w-md">
+        <div className="gold-border bg-card p-8 space-y-6">
           {/* Icon */}
           <div className="flex justify-center">
             <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center">
-              <Lock className="w-8 h-8 text-primary-foreground bg-primary" />
+              <Lock className="w-8 h-8 text-primary-foreground" />
             </div>
           </div>
 
@@ -129,7 +106,7 @@ export default function Login() {
           </div>
 
           {/* PIN Input */}
-          <div className="space-y-2 border-secondary">
+          <div className="space-y-2">
             <label className="text-sm text-foreground">4-Digit PIN</label>
             <div className="flex gap-3 justify-between">
               {pin.map((digit, index) => <input key={index} id={`pin-${index}`} type="password" maxLength={1} value={digit} onChange={e => handlePinChange(index, e.target.value)} onKeyDown={e => handlePinKeyDown(index, e)} className="pin-input" />)}
@@ -159,7 +136,7 @@ export default function Login() {
           </div>
 
           {/* Login Button */}
-          <Button onClick={handleLogin} disabled={loading} className="w-full h-12 text-primary-foreground font-bold text-base rounded-xl disabled:opacity-50 bg-secondary">
+          <Button onClick={handleLogin} disabled={loading} className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-base rounded-xl disabled:opacity-50">
             {loading ? "Logging in..." : "LOGIN"}
           </Button>
 
@@ -175,6 +152,5 @@ export default function Login() {
 
       {/* WhatsApp FAB - Always visible on login page, cannot be closed */}
       
-    </div>
-  );
+    </div>;
 }
