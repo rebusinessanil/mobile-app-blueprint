@@ -23,6 +23,7 @@ import WelcomeBonusModal from "@/components/WelcomeBonusModal";
 import { useWelcomeBonus } from "@/hooks/useWelcomeBonus";
 import DashboardSkeleton from "@/components/skeletons/DashboardSkeleton";
 import { preloadBannerPreviewSystem, preloadImages } from "@/lib/preloader";
+import { useAdminSync } from "@/hooks/useAdminSync";
 
 // Static proxy placeholder for instant card rendering
 const PROXY_PLACEHOLDER = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='105' viewBox='0 0 140 105'%3E%3Crect fill='%231a1f2e' width='140' height='105'/%3E%3Crect fill='%23ffd34e' opacity='0.1' width='140' height='105'/%3E%3C/svg%3E";
@@ -94,6 +95,9 @@ export default function Dashboard() {
   
   // Welcome bonus modal
   const { showWelcomeModal, bonusAmount, handleContinue } = useWelcomeBonus();
+  
+  // Real-time sync for admin updates - automatically invalidates queries when admin makes changes
+  useAdminSync({ enabled: true });
 
   // Check if data is loading AND no cached data exists AND first load
   const hasNoData = categories.length === 0 && allTemplates.length === 0 && ranks.length === 0;

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/lib/logger";
 import { WifiOff } from "lucide-react";
+import { getUserRoleAndRedirect } from "@/hooks/useUserRole";
 
 export default function AuthCallback() {
   const navigate = useNavigate();
@@ -44,6 +45,19 @@ export default function AuthCallback() {
           return;
         }
 
+        // Helper function to handle post-auth redirect based on role
+        const handlePostAuthRedirect = async (userId: string, profileCompleted: boolean) => {
+          if (profileCompleted) {
+            // Check role and redirect accordingly
+            const { redirectPath, isAdmin } = await getUserRoleAndRedirect(userId);
+            logger.log(`Profile complete, redirecting to ${redirectPath} (isAdmin: ${isAdmin})`);
+            if (isMounted) navigate(redirectPath, { replace: true });
+          } else {
+            logger.log("Profile not complete, redirecting to profile-edit");
+            if (isMounted) navigate("/profile-edit", { replace: true });
+          }
+        };
+
         // Handle PKCE flow (code in query params) - PRIMARY METHOD
         if (code) {
           logger.log("Exchanging code for session...");
@@ -81,13 +95,10 @@ export default function AuthCallback() {
               .eq('user_id', data.session.user.id)
               .single();
             
-            if (profileData?.profile_completed) {
-              logger.log("Profile complete, redirecting to dashboard");
-              if (isMounted) navigate("/dashboard", { replace: true });
-            } else {
-              logger.log("Session created via code exchange, redirecting to profile-edit");
-              if (isMounted) navigate("/profile-edit", { replace: true });
-            }
+            await handlePostAuthRedirect(
+              data.session.user.id, 
+              profileData?.profile_completed === true
+            );
             return;
           }
         }
@@ -132,13 +143,10 @@ export default function AuthCallback() {
               .eq('user_id', data.session.user.id)
               .single();
             
-            if (profileData?.profile_completed) {
-              logger.log("Profile complete, redirecting to dashboard");
-              if (isMounted) navigate("/dashboard", { replace: true });
-            } else {
-              logger.log("Session set from tokens, redirecting to profile-edit");
-              if (isMounted) navigate("/profile-edit", { replace: true });
-            }
+            await handlePostAuthRedirect(
+              data.session.user.id, 
+              profileData?.profile_completed === true
+            );
             return;
           }
         }
@@ -153,13 +161,10 @@ export default function AuthCallback() {
             .eq('user_id', session.user.id)
             .single();
           
-          if (profileData?.profile_completed) {
-            logger.log("Profile complete, redirecting to dashboard");
-            if (isMounted) navigate("/dashboard", { replace: true });
-          } else {
-            logger.log("Existing session found, redirecting to profile-edit");
-            if (isMounted) navigate("/profile-edit", { replace: true });
-          }
+          await handlePostAuthRedirect(
+            session.user.id, 
+            profileData?.profile_completed === true
+          );
           return;
         }
 
