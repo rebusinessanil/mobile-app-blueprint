@@ -1,11 +1,11 @@
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useState, useEffect, useCallback } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
-import { Loader2, Upload, Trash2, Eye, EyeOff, Move } from 'lucide-react';
+import { Loader2, Upload, Trash2, Eye, EyeOff, Move, RefreshCw } from 'lucide-react';
 import { 
   useUnifiedStickerSlots, 
   uploadUnifiedStickerSlot, 
@@ -16,12 +16,14 @@ import {
 import { Badge } from '@/components/ui/badge';
 
 export default function AdminStickerManagement() {
+  const queryClient = useQueryClient();
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedTemplate, setSelectedTemplate] = useState<string>('');
   const [selectedEntity, setSelectedEntity] = useState<any>(null);
   const [uploading, setUploading] = useState(false);
   const [bulkUploading, setBulkUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number } | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0); // Force refresh key
 
   // Fetch template categories
   const { data: categories, isLoading: categoriesLoading } = useQuery({
@@ -183,12 +185,28 @@ export default function AdminStickerManagement() {
   const slotOptions = getStickerSlotOptions();
   const hasValidSelection = Object.keys(slotOptions).length > 0;
 
-  // Fetch sticker slots using unified hook
+  // Fetch sticker slots using unified hook - key includes entity ID for proper refetching
   const { slots, loading: slotsLoading, refetch } = useUnifiedStickerSlots({
     ...slotOptions,
     enableRealtime: true,
     activeOnly: false, // Admin needs to see inactive stickers too
   });
+
+  // Force refetch when entity changes
+  useEffect(() => {
+    if (hasValidSelection && selectedEntity?.id) {
+      // Clear previous cache and refetch fresh data
+      queryClient.invalidateQueries({ queryKey: ['unified-sticker-slots'] });
+      refetch();
+    }
+  }, [selectedEntity?.id, hasValidSelection]);
+
+  // Manual refresh handler
+  const handleManualRefresh = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['unified-sticker-slots'] });
+    refetch();
+    toast.success('Stickers refreshed');
+  }, [queryClient, refetch]);
 
   // Get entity list based on category - same pattern as rank-promotion
   const getEntityList = () => {
@@ -252,14 +270,15 @@ export default function AdminStickerManagement() {
 
     setUploading(true);
     try {
-      const { error } = await uploadUnifiedStickerSlot(file, slotNumber, slotOptions);
+      const { error } = await uploadUnifiedStickerSlot(file, slotNumber, slotOptions, queryClient);
 
       if (error) {
         toast.error('Failed to upload sticker');
         console.error(error);
       } else {
         toast.success(`Sticker uploaded to slot ${slotNumber}`);
-        refetch();
+        // Force immediate refetch
+        await refetch();
       }
     } finally {
       setUploading(false);
@@ -297,7 +316,7 @@ export default function AdminStickerManagement() {
       setUploadProgress({ current: i + 1, total: Math.min(filesToUpload.length, availableSlots.length) });
 
       try {
-        const { error } = await uploadUnifiedStickerSlot(file, slot, slotOptions);
+        const { error } = await uploadUnifiedStickerSlot(file, slot, slotOptions, queryClient);
         if (error) {
           failCount++;
         } else {
@@ -311,7 +330,9 @@ export default function AdminStickerManagement() {
     setBulkUploading(false);
     setUploadProgress(null);
     event.target.value = '';
-    refetch();
+    // Force immediate refetch after bulk upload
+    await queryClient.invalidateQueries({ queryKey: ['unified-sticker-slots'] });
+    await refetch();
 
     if (successCount > 0 && failCount === 0) {
       toast.success(`Successfully uploaded ${successCount} stickers!`);
@@ -325,22 +346,22 @@ export default function AdminStickerManagement() {
   const handleRemove = async (stickerId: string, slotNumber: number) => {
     if (!confirm(`Remove sticker from slot ${slotNumber}?`)) return;
 
-    const { error } = await removeUnifiedStickerSlot(stickerId);
+    const { error } = await removeUnifiedStickerSlot(stickerId, queryClient);
     if (error) {
       toast.error('Failed to remove sticker');
     } else {
       toast.success('Sticker removed');
-      refetch();
+      await refetch();
     }
   };
 
   const handleToggleActive = async (stickerId: string, isActive: boolean, slotNumber: number) => {
-    const { error } = await toggleUnifiedStickerActive(stickerId, !isActive);
+    const { error } = await toggleUnifiedStickerActive(stickerId, !isActive, queryClient);
     if (error) {
       toast.error('Failed to update sticker status');
     } else {
       toast.success(`Slot ${slotNumber} ${!isActive ? 'activated' : 'deactivated'}`);
-      refetch();
+      await refetch();
     }
   };
 
@@ -453,12 +474,27 @@ export default function AdminStickerManagement() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>Sticker Slots (16 Slots)</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  Sticker Slots (16 Slots)
+                  {selectedCategorySlug === 'rank-promotion' && (
+                    <Badge variant="outline" className="ml-2 bg-primary/10">
+                      {selectedEntity?.name || 'Unknown Rank'}
+                    </Badge>
+                  )}
+                </CardTitle>
                 <CardDescription>
-                  Upload and manage sticker overlays for each slot
+                  Upload and manage sticker overlays for {getEntityTypeLabel()}: <strong>{getEntityDisplay(selectedEntity).title}</strong>
                 </CardDescription>
               </div>
               <div className="flex gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleManualRefresh}
+                  disabled={slotsLoading}
+                >
+                  <RefreshCw className={`h-4 w-4 ${slotsLoading ? 'animate-spin' : ''}`} />
+                </Button>
                 <Input
                   type="file"
                   accept="image/*"

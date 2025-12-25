@@ -118,14 +118,18 @@ export const useUnifiedStickerSlots = (options: UnifiedStickerOptions) => {
       .order('slot_number', { ascending: true });
 
     // Build filters array
+    // IMPORTANT: When an entity ID is specified, filter ONLY by that entity ID
+    // banner_category is only used as fallback when no entity ID is provided
     const filters: { column: string; value: string }[] = [];
     
     if (filter.entityColumn && filter.entityValue) {
+      // Filter by entity ID only - this is the primary key for stickers
       filters.push({ column: filter.entityColumn, value: filter.entityValue });
-    }
-    if (filter.bannerCategory) {
+    } else if (filter.bannerCategory) {
+      // No entity ID - use banner category as fallback
       filters.push({ column: 'banner_category', value: filter.bannerCategory });
     }
+    
     if (activeOnly) {
       filters.push({ column: 'is_active', value: 'true' });
     }
@@ -171,6 +175,10 @@ export const useUnifiedStickerSlots = (options: UnifiedStickerOptions) => {
     queryKey,
     queryFn: fetchSlots,
     enabled: !!hasValidFilter,
+    // Force fresh data for admin operations - no stale time
+    staleTime: 0,
+    gcTime: 1000 * 60 * 5, // 5 minutes cache
+    refetchOnMount: 'always', // Always refetch when entity changes
   });
 
   // Real-time subscription for live updates
@@ -244,11 +252,13 @@ export const useUnifiedStickerSlots = (options: UnifiedStickerOptions) => {
 
 /**
  * Upload sticker to a specific slot (unified for all categories)
+ * Returns queryClient invalidation keys for cache busting
  */
 export const uploadUnifiedStickerSlot = async (
   file: File,
   slotNumber: number,
-  options: UnifiedStickerOptions
+  options: UnifiedStickerOptions,
+  queryClient?: ReturnType<typeof useQueryClient>
 ): Promise<{ url: string | null; error: Error | null }> => {
   try {
     const fileExt = file.name.split('.').pop();
@@ -293,6 +303,11 @@ export const uploadUnifiedStickerSlot = async (
 
     if (insertError) throw insertError;
 
+    // Invalidate cache if queryClient provided
+    if (queryClient) {
+      queryClient.invalidateQueries({ queryKey: ['unified-sticker-slots'] });
+    }
+
     return { url: publicUrl, error: null };
   } catch (err) {
     logger.error('Error uploading unified sticker slot:', err);
@@ -303,7 +318,10 @@ export const uploadUnifiedStickerSlot = async (
 /**
  * Remove sticker from slot
  */
-export const removeUnifiedStickerSlot = async (stickerId: string): Promise<{ error: Error | null }> => {
+export const removeUnifiedStickerSlot = async (
+  stickerId: string,
+  queryClient?: ReturnType<typeof useQueryClient>
+): Promise<{ error: Error | null }> => {
   try {
     // Get the sticker to find its image URL
     const { data: sticker, error: fetchError } = await supabase
@@ -330,6 +348,11 @@ export const removeUnifiedStickerSlot = async (stickerId: string): Promise<{ err
 
     if (deleteError) throw deleteError;
 
+    // Invalidate cache if queryClient provided
+    if (queryClient) {
+      queryClient.invalidateQueries({ queryKey: ['unified-sticker-slots'] });
+    }
+
     return { error: null };
   } catch (err) {
     logger.error('Error removing unified sticker slot:', err);
@@ -342,7 +365,8 @@ export const removeUnifiedStickerSlot = async (stickerId: string): Promise<{ err
  */
 export const toggleUnifiedStickerActive = async (
   stickerId: string,
-  isActive: boolean
+  isActive: boolean,
+  queryClient?: ReturnType<typeof useQueryClient>
 ): Promise<{ error: Error | null }> => {
   try {
     const { error } = await supabase
@@ -351,6 +375,11 @@ export const toggleUnifiedStickerActive = async (
       .eq('id', stickerId);
 
     if (error) throw error;
+
+    // Invalidate cache if queryClient provided
+    if (queryClient) {
+      queryClient.invalidateQueries({ queryKey: ['unified-sticker-slots'] });
+    }
 
     return { error: null };
   } catch (err) {
