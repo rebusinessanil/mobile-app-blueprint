@@ -384,3 +384,80 @@
     scroll-behavior: smooth;
   }
 }
+
+/* ========================================
+   MOBILE PERFORMANCE OPTIMIZATIONS
+   Disable heavy effects on mobile to prevent crashes
+   ======================================== */
+
+@media (max-width: 767px) {
+  /* CRITICAL: Disable all blur effects on mobile - #1 cause of Safari crashes */
+  .backdrop-blur-sm,
+  .backdrop-blur,
+  .backdrop-blur-md,
+  .backdrop-blur-lg,
+  .backdrop-blur-xl,
+  .backdrop-blur-2xl,
+  .backdrop-blur-3xl,
+  [class*="backdrop-blur"] {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+  
+  /* Replace blur with solid dark backgrounds */
+  .royal-card {
+    @apply bg-card border border-primary/30 rounded-2xl;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  }
+  
+  /* Simplify gradient animations */
+  .login-shimmer-text,
+  .royal-heading {
+    animation: none !important;
+    background-size: 100% 100% !important;
+  }
+  
+  /* Reduce shadow complexity */
+  .gold-glow {
+    box-shadow: 0 0 10px hsl(45 100% 60% / 0.2) !important;
+  }
+  
+  .metallic-gold-btn::before {
+    display: none !important;
+  }
+  
+  .metallic-gold-btn:hover {
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.3) !important;
+  }
+  
+  /* Disable ping animations to save CPU */
+  .animate-ping {
+    animation: none !important;
+    opacity: 0.5 !important;
+  }
+  
+  /* Reduce transition durations */
+  * {
+    transition-duration: 0.15s !important;
+  }
+}
+
+/* Prefers reduced motion - honor user preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  
+  .animate-ping,
+  .animate-spin,
+  .animate-pulse {
+    animation: none !important;
+  }
+}

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function LiveActivityTicker() {
@@ -6,27 +6,27 @@ export default function LiveActivityTicker() {
   const [activeUsers, setActiveUsers] = useState(() => 
     Math.floor(Math.random() * (180 - 150 + 1)) + 150
   );
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const phaseTimersRef = useRef<NodeJS.Timeout[]>([]);
 
-  // Phase progression
+  // Phase progression with proper cleanup
   useEffect(() => {
-    // Phase 1 -> Phase 2 after 500ms
     const phase2Timer = setTimeout(() => setPhase(2), 500);
-    // Phase 2 -> Phase 3 after 1200ms
     const phase3Timer = setTimeout(() => setPhase(3), 1200);
+    
+    phaseTimersRef.current = [phase2Timer, phase3Timer];
 
     return () => {
-      clearTimeout(phase2Timer);
-      clearTimeout(phase3Timer);
+      phaseTimersRef.current.forEach(timer => clearTimeout(timer));
+      phaseTimersRef.current = [];
     };
   }, []);
 
-  // Simulated live updates (only start after phase 3)
+  // Simulated live updates with proper cleanup
   useEffect(() => {
     if (phase !== 3) return;
 
-    const getRandomInterval = () => Math.floor(Math.random() * 3000) + 3000;
-    
-    let timeout: NodeJS.Timeout;
+    const getRandomInterval = () => Math.floor(Math.random() * 4000) + 4000; // Slower for mobile
 
     const updateUsers = () => {
       setActiveUsers(prev => {
@@ -35,73 +35,64 @@ export default function LiveActivityTicker() {
         const newValue = prev + (change * direction);
         return Math.max(140, Math.min(200, newValue));
       });
-      timeout = setTimeout(updateUsers, getRandomInterval());
+      timeoutRef.current = setTimeout(updateUsers, getRandomInterval());
     };
 
-    timeout = setTimeout(updateUsers, getRandomInterval());
+    timeoutRef.current = setTimeout(updateUsers, getRandomInterval());
 
-    return () => clearTimeout(timeout);
+    // CRITICAL: Proper cleanup to prevent memory leaks
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+    };
   }, [phase]);
+
+  // Check if mobile to simplify animations
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 
   return (
     <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50">
       <motion.div
         initial={{ width: 120, height: 35 }}
         animate={{
-          width: phase >= 2 ? 300 : 120,
-          height: phase >= 2 ? 50 : 35,
+          width: phase >= 2 ? (isMobile ? 260 : 300) : 120,
+          height: phase >= 2 ? (isMobile ? 44 : 50) : 35,
         }}
-        transition={{
+        transition={isMobile ? { duration: 0.2 } : {
           type: "spring",
           stiffness: 300,
           damping: 25,
           mass: 1,
         }}
-        className="bg-[#0a0a0a] border border-white/10 rounded-full overflow-hidden flex items-center justify-center shadow-lg shadow-black/50"
+        className="bg-card border border-white/10 rounded-full overflow-hidden flex items-center justify-center shadow-lg shadow-black/50"
       >
         <AnimatePresence>
           {phase === 3 && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ duration: 0.4, ease: "easeOut" }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
               className="flex items-center gap-3 px-4"
             >
-              {/* Pulsing Live Dot */}
+              {/* Live Dot - ping hidden on mobile via CSS */}
               <div className="flex items-center gap-2">
                 <span className="relative flex h-2.5 w-2.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                  <span className="hidden sm:inline-flex animate-ping absolute h-full w-full rounded-full bg-emerald-400 opacity-75" />
                   <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
                 </span>
               </div>
 
-              {/* Live Text */}
+              {/* Live Text - simplified number display for mobile */}
               <div className="flex items-center gap-1.5 text-sm whitespace-nowrap">
-                <AnimatedNumber value={activeUsers} />
-                <span className="text-white/90">Leaders designing now</span>
+                <span className="font-bold text-primary tabular-nums">{activeUsers}</span>
+                <span className="text-white/90 text-xs sm:text-sm">Leaders designing now</span>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
       </motion.div>
     </div>
-  );
-}
-
-// Animated number component for smooth transitions
-function AnimatedNumber({ value }: { value: number }) {
-  return (
-    <AnimatePresence mode="wait">
-      <motion.span
-        key={value}
-        initial={{ opacity: 0, y: -8, scale: 0.9 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, y: 8, scale: 0.9 }}
-        transition={{ duration: 0.2, ease: "easeOut" }}
-        className="font-bold text-primary tabular-nums"
-      >
-        {value}
-      </motion.span>
-    </AnimatePresence>
   );
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Lock, LogIn } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -8,12 +8,11 @@ export default function GuestStatusBar() {
   const [activeUsers, setActiveUsers] = useState(() => 
     Math.floor(Math.random() * (180 - 150 + 1)) + 150
   );
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Simulated live updates
+  // Simulated live updates with proper cleanup
   useEffect(() => {
-    const getRandomInterval = () => Math.floor(Math.random() * 3000) + 3000;
-    
-    let timeout: NodeJS.Timeout;
+    const getRandomInterval = () => Math.floor(Math.random() * 4000) + 4000; // Slower updates
 
     const updateUsers = () => {
       setActiveUsers(prev => {
@@ -22,12 +21,18 @@ export default function GuestStatusBar() {
         const newValue = prev + (change * direction);
         return Math.max(140, Math.min(200, newValue));
       });
-      timeout = setTimeout(updateUsers, getRandomInterval());
+      timeoutRef.current = setTimeout(updateUsers, getRandomInterval());
     };
 
-    timeout = setTimeout(updateUsers, getRandomInterval());
+    timeoutRef.current = setTimeout(updateUsers, getRandomInterval());
 
-    return () => clearTimeout(timeout);
+    // CRITICAL: Proper cleanup to prevent memory leaks
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+    };
   }, []);
 
   return (
@@ -35,8 +40,8 @@ export default function GuestStatusBar() {
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: "easeOut" }}
-        className="relative overflow-hidden rounded-2xl bg-[#0a0a0a]/90 border border-primary/20 backdrop-blur-xl shadow-lg shadow-black/30"
+        transition={{ duration: 0.3, ease: "easeOut" }}
+        className="relative overflow-hidden rounded-2xl bg-card/95 border border-primary/20 shadow-lg shadow-black/30"
       >
         {/* Subtle gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-primary/5 pointer-events-none" />
@@ -47,16 +52,16 @@ export default function GuestStatusBar() {
         >
           {/* Left Side - Live Status */}
           <div className="flex items-center gap-2">
-            {/* Pulsing Live Dot */}
+            {/* Live Dot - simplified for mobile */}
             <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+              <span className="hidden sm:inline-flex animate-ping absolute h-full w-full rounded-full bg-emerald-400 opacity-75" />
               <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
             </span>
             
             {/* Live Text */}
             <span className="text-xs font-semibold text-emerald-400 uppercase tracking-wide">LIVE</span>
-            <AnimatedNumber value={activeUsers} />
-            <span className="text-xs text-white/70 whitespace-nowrap">Leaders designing now</span>
+            <span className="font-bold text-xs text-primary tabular-nums">{activeUsers}</span>
+            <span className="text-xs text-white/70 whitespace-nowrap hidden xs:inline">Leaders designing now</span>
           </div>
 
           {/* Separator */}
@@ -66,31 +71,13 @@ export default function GuestStatusBar() {
           <div className="flex items-center gap-2">
             <Lock className="w-3.5 h-3.5 text-primary" />
             <span className="text-xs text-white/70 whitespace-nowrap">
-              <span className="text-primary font-medium">Dashboard locked.</span>
-              {" "}Login to view
+              <span className="text-primary font-medium">Locked.</span>
+              <span className="hidden sm:inline"> Login to view</span>
             </span>
             <LogIn className="w-3.5 h-3.5 text-primary/70" />
           </div>
         </div>
       </motion.div>
     </div>
-  );
-}
-
-// Animated number component for smooth transitions
-function AnimatedNumber({ value }: { value: number }) {
-  return (
-    <AnimatePresence mode="wait">
-      <motion.span
-        key={value}
-        initial={{ opacity: 0, y: -4, scale: 0.9 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, y: 4, scale: 0.9 }}
-        transition={{ duration: 0.15, ease: "easeOut" }}
-        className="font-bold text-xs text-primary tabular-nums"
-      >
-        {value}
-      </motion.span>
-    </AnimatePresence>
   );
 }
