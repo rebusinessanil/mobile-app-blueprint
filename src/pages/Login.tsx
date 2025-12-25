@@ -3,8 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { LockOpen } from "lucide-react";
-import { motion } from "framer-motion";
+import { Lock, LockOpen } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -12,6 +12,7 @@ import { useSupabaseConnection } from "@/hooks/useSupabaseConnection";
 import { getUserRoleAndRedirect } from "@/hooks/useUserRole";
 import LiveActivityTicker from "@/components/LiveActivityTicker";
 import FloatingParticles from "@/components/FloatingParticles";
+import WhatsAppDiscovery from "@/components/WhatsAppDiscovery";
 
 // Zod validation schema for login
 const loginSchema = z.object({
@@ -186,11 +187,22 @@ export default function Login() {
     );
   }
 
+  const isUnlocked = emailOrMobile.length > 0;
+
   return (
     <div 
       className="min-h-screen relative overflow-hidden flex items-center justify-center p-6"
       style={{ background: 'radial-gradient(ellipse at center, #0a1f1a 0%, #030a08 50%, #000000 100%)' }}
     >
+      {/* Grain Texture Overlay */}
+      <div 
+        className="absolute inset-0 pointer-events-none opacity-[0.03] z-[1]"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
+          backgroundRepeat: 'repeat',
+        }}
+      />
+      
       {/* Floating Particles */}
       <FloatingParticles />
       
@@ -202,6 +214,9 @@ export default function Login() {
       {/* Dynamic Island Ticker at Top */}
       <LiveActivityTicker />
       
+      {/* WhatsApp Discovery Button */}
+      <WhatsAppDiscovery />
+      
       <div className="w-full max-w-md relative z-10">
         <motion.div 
           className="royal-card p-8 space-y-6"
@@ -209,16 +224,42 @@ export default function Login() {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: 0.5, ease: "easeOut" }}
         >
-          {/* Lock Icon */}
+          {/* Smart Lock Icon - Reacts to input */}
           <motion.div 
             className="flex justify-center"
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
           >
-            <div className="w-16 h-16 bg-gradient-to-br from-primary via-yellow-400 to-amber-600 rounded-2xl flex items-center justify-center overflow-hidden shadow-lg shadow-primary/30">
-              <LockOpen className="w-8 h-8 text-black" />
-            </div>
+            <motion.div 
+              className="w-16 h-16 bg-gradient-to-br from-primary via-yellow-400 to-amber-600 rounded-2xl flex items-center justify-center overflow-hidden shadow-lg shadow-primary/30"
+              animate={isUnlocked ? { scale: [1, 1.1, 1] } : {}}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+            >
+              <AnimatePresence mode="wait">
+                {isUnlocked ? (
+                  <motion.div
+                    key="unlocked"
+                    initial={{ scale: 0.5, opacity: 0, rotate: -10 }}
+                    animate={{ scale: 1, opacity: 1, rotate: 0 }}
+                    exit={{ scale: 0.5, opacity: 0 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 15 }}
+                  >
+                    <LockOpen className="w-8 h-8 text-black" />
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="locked"
+                    initial={{ scale: 0.5, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0.5, opacity: 0, rotate: 10 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 15 }}
+                  >
+                    <Lock className="w-8 h-8 text-black" />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
           </motion.div>
 
           {/* Serif Gold Gradient Title */}
