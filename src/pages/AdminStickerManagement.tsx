@@ -133,28 +133,10 @@ export default function AdminStickerManagement() {
     enabled: selectedCategorySlug === 'motivational',
   });
 
-  // Categories that require entity selection (same rules as rank-promotion)
-  const entityRequiredCategories = [
-    'rank-promotion',
-    'bonanza', 
-    'birthday',
-    'anniversary',
-    'motivational',
-    'festival',
-    'stories'
-  ];
-
-  const requiresEntitySelection = entityRequiredCategories.includes(selectedCategorySlug || '');
-
-  // Determine sticker slot options based on selection - applying same rules as rank-promotion
+  // Determine sticker slot options based on selection
   const getStickerSlotOptions = () => {
-    // All entity-based categories follow the same pattern as rank-promotion
-    if (!selectedEntity && requiresEntitySelection) {
-      return {}; // Must select entity first
-    }
-
     if (selectedCategorySlug === 'rank-promotion' && selectedEntity) {
-      return { rankId: selectedEntity.id, bannerCategory: 'rank-promotion' };
+      return { rankId: selectedEntity.id };
     }
     if (selectedCategorySlug === 'bonanza' && selectedEntity) {
       return { tripId: selectedEntity.id, bannerCategory: 'bonanza' };
@@ -168,8 +150,7 @@ export default function AdminStickerManagement() {
     if (selectedCategorySlug === 'motivational' && selectedEntity) {
       return { motivationalBannerId: selectedEntity.id, bannerCategory: 'motivational' };
     }
-    // For other categories without specific entity types, use banner category
-    if (selectedCategory && selectedCategorySlug && !requiresEntitySelection) {
+    if (selectedCategory && selectedCategorySlug) {
       return { bannerCategory: selectedCategorySlug };
     }
     return {};
@@ -181,41 +162,18 @@ export default function AdminStickerManagement() {
   // Fetch sticker slots
   const { slots, loading: slotsLoading, refetch } = useStickerSlots(slotOptions);
 
-  // Get entity list based on category - same pattern as rank-promotion
+  // Get entity list based on category
   const getEntityList = () => {
-    switch (selectedCategorySlug) {
-      case 'rank-promotion':
-        return ranks || [];
-      case 'bonanza':
-        return trips || [];
-      case 'birthday':
-        return birthdays || [];
-      case 'anniversary':
-        return anniversaries || [];
-      case 'motivational':
-        return motivationals || [];
-      default:
-        // For categories that need templates as entities
-        return templates || [];
-    }
+    if (selectedCategorySlug === 'rank-promotion') return ranks || [];
+    if (selectedCategorySlug === 'bonanza') return trips || [];
+    if (selectedCategorySlug === 'birthday') return birthdays || [];
+    if (selectedCategorySlug === 'anniversary') return anniversaries || [];
+    if (selectedCategorySlug === 'motivational') return motivationals || [];
+    return templates || [];
   };
 
   const entityList = getEntityList();
   const isEntityLoading = ranksLoading || tripsLoading || birthdaysLoading || anniversariesLoading || motivationalsLoading || templatesLoading;
-
-  // Get entity type label for consistent UI
-  const getEntityTypeLabel = () => {
-    switch (selectedCategorySlug) {
-      case 'rank-promotion': return 'Rank';
-      case 'bonanza': return 'Trip';
-      case 'birthday': return 'Birthday Template';
-      case 'anniversary': return 'Anniversary Template';
-      case 'motivational': return 'Motivational Banner';
-      case 'festival': return 'Festival';
-      case 'stories': return 'Story Event';
-      default: return 'Template';
-    }
-  };
 
   // Get entity display info
   const getEntityDisplay = (entity: any) => {
@@ -377,16 +335,19 @@ export default function AdminStickerManagement() {
         </CardContent>
       </Card>
 
-      {/* Entity Selection - Same workflow as rank-promotion for all categories */}
+      {/* Entity Selection */}
       {selectedCategory && (
         <Card>
           <CardHeader>
             <CardTitle>
-              Select {getEntityTypeLabel()} ({entityList.length} available)
+              Select {selectedCategorySlug === 'rank-promotion' ? 'Rank' : 
+                     selectedCategorySlug === 'bonanza' ? 'Trip' :
+                     selectedCategorySlug === 'birthday' ? 'Birthday Template' :
+                     selectedCategorySlug === 'anniversary' ? 'Anniversary Template' :
+                     selectedCategorySlug === 'motivational' ? 'Motivational Banner' : 'Template'}
+              {' '}({entityList.length} available)
             </CardTitle>
-            <CardDescription>
-              Choose an entity to manage its 16 sticker slots. Each entity has dedicated slots following the same rules.
-            </CardDescription>
+            <CardDescription>Choose an entity to manage its 16 sticker slots</CardDescription>
           </CardHeader>
           <CardContent>
             {isEntityLoading ? (
