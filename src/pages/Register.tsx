@@ -3,11 +3,15 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { UserPlus } from "lucide-react";
+import { UserPlus, UserCheck } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { z } from "zod";
 import { useSupabaseConnection } from "@/hooks/useSupabaseConnection";
+import LiveActivityTicker from "@/components/LiveActivityTicker";
+import FloatingParticles from "@/components/FloatingParticles";
+import WhatsAppDiscovery from "@/components/WhatsAppDiscovery";
 
 // Zod validation schema for registration
 const registrationSchema = z.object({
@@ -16,12 +20,11 @@ const registrationSchema = z.object({
   mobile: z.string().trim().min(10, "Mobile number must be at least 10 digits").max(16, "Mobile number is too long"),
   pin: z.string().length(4, "PIN must be exactly 4 digits").regex(/^\d{4}$/, "PIN must contain only numbers")
 });
+
 export default function Register() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
-  const {
-    withConnectionCheck
-  } = useSupabaseConnection();
+  const { withConnectionCheck } = useSupabaseConnection();
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -32,6 +35,7 @@ export default function Register() {
     agreeToTerms: false
   });
   const [pin, setPin] = useState(["", "", "", ""]);
+
   const handlePinChange = (index: number, value: string) => {
     if (value.length <= 1 && /^\d*$/.test(value)) {
       const newPin = [...pin];
@@ -42,10 +46,10 @@ export default function Register() {
       }
     }
   };
+
   const handleSendOTP = async () => {
     const pinCode = pin.join("");
 
-    // Zod validation for all inputs
     const validationResult = registrationSchema.safeParse({
       fullName: formData.fullName,
       email: formData.email,
@@ -58,7 +62,6 @@ export default function Register() {
       return;
     }
 
-    // Validate mobile number format (E.164 or plain 10-digit)
     const mobileNumber = formData.mobile.trim();
     const e164Pattern = /^\+[1-9]\d{9,14}$/;
     const plainPattern = /^\d{10}$/;
@@ -77,7 +80,6 @@ export default function Register() {
     }
     setIsLoading(true);
 
-    // Check if email is blocked (previously deleted account)
     try {
       const { data: blockData } = await supabase.functions.invoke('check-email-blocked', {
         body: { email: formData.email.trim().toLowerCase() }
@@ -90,16 +92,11 @@ export default function Register() {
       }
     } catch (blockError) {
       console.log('Email block check failed, proceeding with registration:', blockError);
-      // Continue with registration if check fails
     }
 
-    // Create password from PIN
     const password = `ReBiz${pinCode}${Date.now()}`;
     const result = await withConnectionCheck(async () => {
-      const {
-        data,
-        error
-      } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email: formData.email,
         password: password,
         phone: formattedMobile,
@@ -133,38 +130,96 @@ export default function Register() {
     }
     setIsLoading(false);
   };
-  return <div className="h-screen bg-navy-dark flex items-center justify-center p-3 overflow-hidden">
-      <div className="w-full max-w-md">
-        <div className="gold-border bg-card p-4 space-y-3 my-0 mx-[24px] px-[13px] py-[13px] border-2">
-          {/* Icon */}
-          <div className="flex justify-center">
-            <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center">
-              <UserPlus className="w-6 h-6 text-primary-foreground" />
-            </div>
-          </div>
 
-          {/* Title */}
-          <h1 className="text-2xl font-bold text-center text-foreground">REGISTRATION</h1>
+  const isUnlocked = formData.fullName.length > 0;
 
-          {/* Continue with Google */}
-          <Button type="button" onClick={async () => {
-          try {
-            const {
-              error
-            } = await supabase.auth.signInWithOAuth({
-              provider: 'google',
-              options: {
-                redirectTo: `${window.location.origin}/auth/callback`,
-                queryParams: {
-                  prompt: 'select_account'
-                }
+  return (
+    <div 
+      className="min-h-screen relative overflow-hidden flex items-center justify-center p-4"
+      style={{ background: 'radial-gradient(ellipse at center, #0a1f1a 0%, #030a08 50%, #000000 100%)' }}
+    >
+      {/* Grain Texture Overlay */}
+      <div 
+        className="absolute inset-0 pointer-events-none opacity-[0.03] z-[1]"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
+          backgroundRepeat: 'repeat',
+        }}
+      />
+      
+      <FloatingParticles />
+      
+      <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-emerald-900/30 rounded-full blur-[150px]" />
+      <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] bg-emerald-950/40 rounded-full blur-[180px]" />
+      <div className="absolute top-[40%] right-[5%] w-[30%] h-[30%] bg-primary/10 rounded-full blur-[120px]" />
+      
+      <LiveActivityTicker />
+      <WhatsAppDiscovery />
+      
+      <div className="w-full max-w-md relative z-10">
+        <motion.div 
+          className="royal-card p-6 space-y-4"
+          initial={{ opacity: 0, y: 20, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+        >
+          <motion.div 
+            className="flex justify-center"
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+          >
+            <motion.div 
+              className="w-14 h-14 bg-gradient-to-br from-primary via-yellow-400 to-amber-600 rounded-2xl flex items-center justify-center overflow-hidden shadow-lg shadow-primary/30"
+              animate={isUnlocked ? { scale: [1, 1.1, 1] } : {}}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+            >
+              <AnimatePresence mode="wait">
+                {isUnlocked ? (
+                  <motion.div
+                    key="unlocked"
+                    initial={{ scale: 0.5, opacity: 0, rotate: -10 }}
+                    animate={{ scale: 1, opacity: 1, rotate: 0 }}
+                    exit={{ scale: 0.5, opacity: 0 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 15 }}
+                  >
+                    <UserCheck className="w-7 h-7 text-black" />
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="locked"
+                    initial={{ scale: 0.5, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0.5, opacity: 0, rotate: 10 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 15 }}
+                  >
+                    <UserPlus className="w-7 h-7 text-black" />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          </motion.div>
+
+          <h1 className="text-3xl text-center royal-heading tracking-wide">REGISTRATION</h1>
+
+          <Button 
+            type="button" 
+            onClick={async () => {
+              try {
+                const { error } = await supabase.auth.signInWithOAuth({
+                  provider: 'google',
+                  options: {
+                    redirectTo: `${window.location.origin}/auth/callback`,
+                    queryParams: { prompt: 'select_account' }
+                  }
+                });
+                if (error) throw error;
+              } catch (error: any) {
+                toast.error(error.message || "Google sign-up failed");
               }
-            });
-            if (error) throw error;
-          } catch (error: any) {
-            toast.error(error.message || "Google sign-up failed");
-          }
-        }} className="w-full h-10 bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 font-medium flex items-center justify-center gap-2 text-sm">
+            }} 
+            className="w-full h-11 bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 font-medium flex items-center justify-center gap-2 text-sm rounded-xl"
+          >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
               <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
@@ -174,96 +229,109 @@ export default function Register() {
             Sign Up with Google
           </Button>
 
-          {/* Divider */}
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-muted"></div>
+              <div className="w-full border-t border-white/10"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-4 bg-card text-muted-foreground">OR</span>
+              <span className="px-4 bg-black/40 text-muted-foreground backdrop-blur-sm rounded">OR</span>
             </div>
           </div>
 
-          {/* Full Name */}
           <div className="space-y-1">
-            <label className="text-xs text-foreground">Full Name *</label>
-            <Input type="text" placeholder="Enter your full name" value={formData.fullName} onChange={e => setFormData({
-            ...formData,
-            fullName: e.target.value
-          })} className="gold-border bg-secondary text-foreground placeholder:text-muted-foreground h-10 text-sm" />
+            <label className="text-xs text-foreground/80">Full Name *</label>
+            <Input 
+              type="text" 
+              placeholder="Enter your full name" 
+              value={formData.fullName} 
+              onChange={e => setFormData({ ...formData, fullName: e.target.value })} 
+              className="royal-input" 
+            />
           </div>
 
-          {/* Email */}
           <div className="space-y-1">
-            <label className="text-xs text-foreground">Email Address *</label>
-            <Input type="email" placeholder="your.email@example.com" value={formData.email} onChange={e => setFormData({
-            ...formData,
-            email: e.target.value
-          })} className="gold-border bg-secondary text-foreground placeholder:text-muted-foreground h-10 text-sm" />
+            <label className="text-xs text-foreground/80">Email Address *</label>
+            <Input 
+              type="email" 
+              placeholder="your.email@example.com" 
+              value={formData.email} 
+              onChange={e => setFormData({ ...formData, email: e.target.value })} 
+              className="royal-input" 
+            />
           </div>
 
-          {/* Mobile Number */}
           <div className="space-y-1">
-            <label className="text-xs text-foreground">Mobile Number *</label>
-            <Input type="tel" value={formData.mobile} onChange={e => setFormData({
-            ...formData,
-            mobile: e.target.value
-          })} className="gold-border bg-secondary text-foreground placeholder:text-muted-foreground h-10 text-sm" required placeholder="10-digit number" />
+            <label className="text-xs text-foreground/80">Mobile Number *</label>
+            <Input 
+              type="tel" 
+              value={formData.mobile} 
+              onChange={e => setFormData({ ...formData, mobile: e.target.value })} 
+              className="royal-input" 
+              required 
+              placeholder="10-digit number" 
+            />
           </div>
 
-          {/* Different WhatsApp Number Checkbox */}
-          
+          {formData.differentWhatsApp && (
+            <div className="space-y-1">
+              <label className="text-xs text-foreground/80">WhatsApp Number</label>
+              <Input 
+                type="tel" 
+                placeholder="10-digit WhatsApp number" 
+                value={formData.whatsappNumber} 
+                onChange={e => setFormData({ ...formData, whatsappNumber: e.target.value })} 
+                className="royal-input" 
+              />
+            </div>
+          )}
 
-          {/* WhatsApp Number (conditional) */}
-          {formData.differentWhatsApp && <div className="space-y-1">
-              <label className="text-xs text-foreground">WhatsApp Number</label>
-              <Input type="tel" placeholder="10-digit WhatsApp number" value={formData.whatsappNumber} onChange={e => setFormData({
-            ...formData,
-            whatsappNumber: e.target.value
-          })} className="gold-border bg-secondary text-foreground placeholder:text-muted-foreground h-10 text-sm" />
-            </div>}
-
-          {/* PIN Input */}
           <div className="space-y-1">
-            <label className="text-xs text-foreground">Create 4-Digit PIN *</label>
-            <div className="flex gap-2 justify-between">
-              {pin.map((digit, index) => <input key={index} id={`reg-pin-${index}`} type="password" maxLength={1} value={digit} onChange={e => handlePinChange(index, e.target.value)} className="pin-input w-12 h-10 text-center" />)}
+            <label className="text-xs text-foreground/80">Create 4-Digit PIN *</label>
+            <div className="flex gap-3 justify-between">
+              {pin.map((digit, index) => (
+                <input 
+                  key={index} 
+                  id={`reg-pin-${index}`} 
+                  type="password" 
+                  maxLength={1} 
+                  value={digit} 
+                  onChange={e => handlePinChange(index, e.target.value)} 
+                  className="pin-input w-full" 
+                />
+              ))}
             </div>
           </div>
 
-          {/* Gender Toggle */}
-          
-
-          {/* Terms & Conditions */}
           <div className="flex items-center gap-2">
-            <Checkbox checked={formData.agreeToTerms} onCheckedChange={checked => setFormData({
-            ...formData,
-            agreeToTerms: checked as boolean
-          })} className="border-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground h-4 w-4" />
-            <label className="text-xs text-foreground">
+            <Checkbox 
+              checked={formData.agreeToTerms} 
+              onCheckedChange={checked => setFormData({ ...formData, agreeToTerms: checked as boolean })} 
+              className="border-primary/50 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground h-4 w-4" 
+            />
+            <label className="text-xs text-foreground/80">
               I agree to the{" "}
-              <Link to="/privacy-policy" className="text-primary underline">
+              <Link to="/privacy-policy" className="text-primary underline hover:text-primary/80">
                 Terms & Conditions and Privacy Policy
               </Link>
             </label>
           </div>
 
-          {/* Send OTP Button */}
-          <Button onClick={handleSendOTP} disabled={!formData.agreeToTerms || isLoading} className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground text-base font-semibold">
+          <Button 
+            onClick={handleSendOTP} 
+            disabled={!formData.agreeToTerms || isLoading} 
+            className="w-full h-12 metallic-gold-btn text-base rounded-xl disabled:opacity-50 border-0"
+          >
             {isLoading ? "SENDING..." : "SEND OTP"}
           </Button>
 
-          {/* Login Link */}
-          <p className="text-center text-xs text-muted-foreground">
+          <p className="text-center text-sm text-foreground/70">
             Already have an account?{" "}
-            <Link to="/login" className="text-primary font-semibold hover:underline">
+            <Link to="/login" className="text-primary font-semibold hover:text-primary/80 transition-colors">
               Login
             </Link>
           </p>
-        </div>
-
-        {/* WhatsApp FAB */}
-        
+        </motion.div>
       </div>
-    </div>;
+    </div>
+  );
 }
