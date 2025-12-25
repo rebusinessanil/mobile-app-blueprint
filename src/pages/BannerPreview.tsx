@@ -1,4 +1,4 @@
-import { useState, useEffect, useLayoutEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft, Settings, Sparkles } from "lucide-react";
 import BannerPreviewSkeleton from "@/components/skeletons/BannerPreviewSkeleton";
@@ -21,6 +21,7 @@ import { toPng } from "html-to-image";
 import download from "downloadjs";
 import { useWalletDeduction } from "@/hooks/useWalletDeduction";
 import InsufficientBalanceModal from "@/components/InsufficientBalanceModal";
+import { useBannerAssetPreloader } from "@/hooks/useBannerAssetPreloader";
 interface Upline {
   id: string;
   name: string;
@@ -374,40 +375,19 @@ export default function BannerPreview() {
   // Fetch selected stickers - removed, now using slotStickers structure
   // Each slot has its own stickers independently
 
-  // State for tracking if all assets are preloaded
-  const [assetsLoaded, setAssetsLoaded] = useState(false);
-  const [preloadStarted, setPreloadStarted] = useState(false);
-  const [loadingProgress, setLoadingProgress] = useState(0);
+  // Use optimized progressive asset preloader
+  const {
+    preloadAssets,
+    criticalLoaded,
+    allLoaded,
+    progress: loadingProgress,
+    timedOut,
+    isMobile,
+    reset: resetPreloader
+  } = useBannerAssetPreloader();
 
-  // Preload all images before displaying the page - with progress tracking
-  const preloadImages = useCallback(async (urls: string[]): Promise<boolean> => {
-    const validUrls = urls.filter(url => url && typeof url === 'string' && url.trim() !== '');
-    if (validUrls.length === 0) return true;
-    
-    let loaded = 0;
-    const total = validUrls.length;
-    
-    const promises = validUrls.map(url => {
-      return new Promise<void>((resolve) => {
-        const img = new Image();
-        img.onload = () => {
-          loaded++;
-          setLoadingProgress(Math.round((loaded / total) * 100));
-          resolve();
-        };
-        img.onerror = () => {
-          loaded++;
-          setLoadingProgress(Math.round((loaded / total) * 100));
-          resolve(); // Don't block on failed images
-        };
-        img.crossOrigin = 'anonymous';
-        img.src = url;
-      });
-    });
-    
-    await Promise.all(promises);
-    return true;
-  }, []);
+  // Track if preload has started
+  const [preloadStarted, setPreloadStarted] = useState(false);
 
   // Check if all required data is loaded
   const isDataReady = 
@@ -416,79 +396,83 @@ export default function BannerPreview() {
     !backgroundsLoading &&
     bannerDefaults !== undefined;
 
-  // Preload all assets when data is ready
+  // Memoize asset URLs to prevent unnecessary recalculation
+  const assetConfig = useMemo(() => {
+    if (!bannerData || !isDataReady) return null;
+
+    // Get current slot background (critical)
+    const activeSlot = globalBackgroundSlots.find(slot => slot.slotNumber === selectedTemplate + 1);
+    const activeBackgroundUrl = activeSlot?.imageUrl || undefined;
+
+    // Get visible stickers for current slot only (critical)
+    const visibleStickerUrls = (stickerImages[selectedTemplate + 1] || [])
+      .map(s => s.url)
+      .filter(Boolean);
+
+    // Logo URLs (critical)
+    const logoUrls = [
+      bannerDefaults?.logo_left,
+      bannerDefaults?.logo_right,
+      bannerDefaults?.congratulations_image,
+    ].filter(Boolean) as string[];
+
+    // Primary photo (critical)
+    const primaryPhotoUrl = bannerData?.photo || profile?.profile_photo || undefined;
+
+    // Other background URLs (non-critical, lazy loaded)
+    const otherBackgroundUrls = globalBackgroundSlots
+      .filter(slot => slot.slotNumber !== selectedTemplate + 1 && slot.imageUrl)
+      .map(slot => slot.imageUrl!)
+      .slice(0, isMobile ? 4 : 15); // Limit on mobile
+
+    // Other sticker URLs (non-critical, lazy loaded)
+    const otherStickerUrls: string[] = [];
+    Object.entries(stickerImages).forEach(([slotNum, stickers]) => {
+      if (Number(slotNum) !== selectedTemplate + 1) {
+        stickers.forEach(s => {
+          if (s.url) otherStickerUrls.push(s.url);
+        });
+      }
+    });
+
+    // Upline avatars (non-critical)
+    const uplineAvatarUrls = displayUplines
+      .map(u => u.avatar)
+      .filter(Boolean) as string[];
+
+    return {
+      activeBackgroundUrl,
+      primaryPhotoUrl,
+      downloadIconUrl: downloadIcon,
+      logoUrls,
+      visibleStickerUrls,
+      otherBackgroundUrls: otherBackgroundUrls.slice(0, isMobile ? 4 : 15),
+      otherStickerUrls: otherStickerUrls.slice(0, isMobile ? 8 : 20),
+      uplineAvatarUrls,
+    };
+  }, [
+    bannerData,
+    isDataReady,
+    globalBackgroundSlots,
+    selectedTemplate,
+    stickerImages,
+    bannerDefaults,
+    profile,
+    displayUplines,
+    isMobile,
+  ]);
+
+  // Trigger optimized preloading when data is ready
   useEffect(() => {
-    if (preloadStarted || !bannerData || !isDataReady) return;
+    if (preloadStarted || !assetConfig) return;
     
     setPreloadStarted(true);
-    setLoadingProgress(0);
-    
-    const loadAllAssets = async () => {
-      const imagesToPreload: string[] = [];
-      
-      // Add ALL background images from slots (all 16 slots)
-      globalBackgroundSlots.forEach(slot => {
-        if (slot.imageUrl) imagesToPreload.push(slot.imageUrl);
-      });
-      
-      // Add profile photos
-      if (profile?.profile_photo) imagesToPreload.push(profile.profile_photo);
-      profilePhotos.forEach(photo => {
-        if (photo.photo_url) imagesToPreload.push(photo.photo_url);
-      });
-      
-      // Add banner defaults images
-      if (bannerDefaults?.congratulations_image) imagesToPreload.push(bannerDefaults.congratulations_image);
-      if (bannerDefaults?.logo_left) imagesToPreload.push(bannerDefaults.logo_left);
-      if (bannerDefaults?.logo_right) imagesToPreload.push(bannerDefaults.logo_right);
-      
-      // Add upline avatars
-      displayUplines.forEach(upline => {
-        if (upline.avatar) imagesToPreload.push(upline.avatar);
-      });
-      
-      // Add ALL sticker images from all slots
-      Object.values(stickerImages).forEach(slotStickers => {
-        slotStickers.forEach(sticker => {
-          if (sticker.url) imagesToPreload.push(sticker.url);
-        });
-      });
-      
-      // Add bannerData photo if exists
-      if (bannerData?.photo) imagesToPreload.push(bannerData.photo);
-      
-      // Add rank icon if exists
-      if (bannerData?.rankIcon) imagesToPreload.push(bannerData.rankIcon);
-      
-      // Add download icon
-      imagesToPreload.push(downloadIcon);
-      
-      console.log(`📦 Preloading ${imagesToPreload.length} assets...`);
-      
-      await preloadImages(imagesToPreload);
-      
-      // Small delay to ensure all images are rendered
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      console.log('✅ All assets preloaded successfully');
-      setAssetsLoaded(true);
-    };
-    
-    loadAllAssets();
-  }, [
-    bannerData, 
-    userId, 
-    profile, 
-    profilePhotos, 
-    bannerDefaults, 
-    globalBackgroundSlots, 
-    backgroundsLoading, 
-    stickerImages, 
-    displayUplines, 
-    preloadImages, 
-    preloadStarted,
-    isDataReady
-  ]);
+    console.log('🚀 Starting optimized progressive preload...');
+    preloadAssets(assetConfig);
+  }, [assetConfig, preloadStarted, preloadAssets]);
+
+  // Allow UI to show once critical assets are loaded (or timed out)
+  const assetsLoaded = criticalLoaded || timedOut;
 
   // Trigger scale update immediately when assets are loaded and on resize
   // Using useLayoutEffect ensures scale is applied before browser paint - no flicker
@@ -521,7 +505,7 @@ export default function BannerPreview() {
     return null;
   }
 
-  // Show enhanced skeleton with progress until ALL data and assets are loaded
+  // Show optimized loading UI until critical assets are loaded
   if (!assetsLoaded || backgroundsLoading || !isDataReady) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
@@ -532,22 +516,24 @@ export default function BannerPreview() {
               <Sparkles className="w-8 h-8 text-primary animate-pulse" />
             </div>
             <h2 className="text-lg font-semibold text-foreground mb-2">
-              Preparing Your Banner
+              {timedOut ? 'Almost Ready' : 'Preparing Your Banner'}
             </h2>
             <p className="text-sm text-muted-foreground">
-              Loading all assets for the best experience...
+              {loadingProgress < 50 
+                ? 'Loading essential assets...'
+                : 'Optimizing for best experience...'}
             </p>
           </div>
           
           {/* Progress bar */}
           <div className="w-full bg-muted rounded-full h-2 mb-2 overflow-hidden">
             <div 
-              className="h-full bg-primary rounded-full transition-all duration-300 ease-out"
-              style={{ width: `${loadingProgress}%` }}
+              className="h-full bg-primary rounded-full transition-all duration-150 ease-out"
+              style={{ width: `${Math.min(loadingProgress, 100)}%` }}
             />
           </div>
           <p className="text-xs text-muted-foreground text-center">
-            {loadingProgress}% loaded
+            {loadingProgress < 50 ? 'Critical assets' : 'Background loading'} • {Math.round(loadingProgress)}%
           </p>
         </div>
       </div>
