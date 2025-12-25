@@ -29,19 +29,7 @@ import { useAdminSync } from "@/hooks/useAdminSync";
 import { useGuestMode } from "@/hooks/useGuestMode";
 import { Button } from "@/components/ui/button";
 
-// Demo data imports
-import {
-  DEMO_PROFILE,
-  DEMO_RANKS,
-  DEMO_TRIPS,
-  DEMO_BIRTHDAYS,
-  DEMO_ANNIVERSARIES,
-  DEMO_MOTIVATIONAL,
-  DEMO_FESTIVALS,
-  DEMO_CATEGORIES,
-  DEMO_STORIES,
-  DEMO_TEMPLATES,
-} from "@/data/demoData";
+import LockedCard from "@/components/dashboard/LockedCard";
 
 // Static proxy placeholder for instant card rendering
 const PROXY_PLACEHOLDER = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='105' viewBox='0 0 140 105'%3E%3Crect fill='%231a1f2e' width='140' height='105'/%3E%3Crect fill='%23ffd34e' opacity='0.1' width='140' height='105'/%3E%3C/svg%3E";
@@ -127,55 +115,20 @@ export default function Dashboard() {
   // Real-time sync for admin updates
   useAdminSync({ enabled: isAuthenticated });
 
-  // Use demo data for guests, real data for authenticated users
-  const categories = useMemo(() => {
-    if (isGuest || realCategories.length === 0) return DEMO_CATEGORIES;
-    return realCategories;
-  }, [isGuest, realCategories]);
-
-  const allTemplates = useMemo(() => {
-    if (isGuest || realTemplates.length === 0) return DEMO_TEMPLATES;
-    return realTemplates;
-  }, [isGuest, realTemplates]);
-
-  const ranks = useMemo(() => {
-    if (isGuest || realRanks.length === 0) return DEMO_RANKS;
-    return realRanks;
-  }, [isGuest, realRanks]);
-
-  const trips = useMemo(() => {
-    if (isGuest || realTrips.length === 0) return DEMO_TRIPS;
-    return realTrips;
-  }, [isGuest, realTrips]);
-
-  const birthdays = useMemo(() => {
-    if (isGuest || realBirthdays.length === 0) return DEMO_BIRTHDAYS;
-    return realBirthdays;
-  }, [isGuest, realBirthdays]);
-
-  const anniversaries = useMemo(() => {
-    if (isGuest || realAnniversaries.length === 0) return DEMO_ANNIVERSARIES;
-    return realAnniversaries;
-  }, [isGuest, realAnniversaries]);
-
-  const motivationalBanners = useMemo(() => {
-    if (isGuest || realMotivationalBanners.length === 0) return DEMO_MOTIVATIONAL;
-    return realMotivationalBanners;
-  }, [isGuest, realMotivationalBanners]);
-
-  const festivals = useMemo(() => {
-    if (isGuest || realFestivals.length === 0) return DEMO_FESTIVALS;
-    return realFestivals;
-  }, [isGuest, realFestivals]);
-
-  const profile = useMemo(() => {
-    if (isGuest) return DEMO_PROFILE;
-    return realProfile;
-  }, [isGuest, realProfile]);
+  // Use real public data for everyone - no demo fallback
+  const categories = realCategories;
+  const allTemplates = realTemplates;
+  const ranks = realRanks;
+  const trips = realTrips;
+  const birthdays = realBirthdays;
+  const anniversaries = realAnniversaries;
+  const motivationalBanners = realMotivationalBanners;
+  const festivals = realFestivals;
+  const profile = realProfile;
 
   // Check if data is loading AND no cached data exists AND first load
   const hasNoData = categories.length === 0 && allTemplates.length === 0 && ranks.length === 0;
-  const isInitialLoading = (categoriesLoading || templatesLoading || ranksLoading) && hasNoData && !hasLoadedRef.current && !isGuest;
+  const isInitialLoading = (categoriesLoading || templatesLoading || ranksLoading) && hasNoData && !hasLoadedRef.current;
   
   // Mark dashboard as loaded once data arrives
   useEffect(() => {
@@ -265,8 +218,12 @@ export default function Dashboard() {
     navigate(path);
   }, [isAuthenticated, navigate]);
 
-  // Show skeleton only on initial load with no cached data (not for guests)
-  if (isInitialLoading && !isGuest) {
+  // Show skeleton only on initial load with no cached data
+  if (isInitialLoading) {
+    // For guests, just show skeleton without ProfileCompletionGate
+    if (isGuest) {
+      return <DashboardSkeleton />;
+    }
     return (
       <ProfileCompletionGate userId={userId}>
         <DashboardSkeleton />
@@ -354,6 +311,54 @@ export default function Dashboard() {
           >
             Get Started Free →
           </Button>
+        </div>
+      )}
+
+      {/* Private Sections - Locked for Guests */}
+      {isGuest && (
+        <div className="mx-4 mt-4 space-y-3">
+          <h3 className="text-sm font-semibold text-muted-foreground px-1">Your Personal Dashboard</h3>
+          <div className="grid grid-cols-2 gap-3">
+            {/* Locked Wallet Card */}
+            <LockedCard title="My Wallet">
+              <div className="gold-border bg-card rounded-2xl p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Wallet className="w-5 h-5 text-primary" />
+                  <span className="text-sm font-semibold text-foreground">Wallet</span>
+                </div>
+                <p className="text-2xl font-bold text-primary">₹0</p>
+                <p className="text-xs text-muted-foreground">Available Balance</p>
+              </div>
+            </LockedCard>
+
+            {/* Locked Downloads Card */}
+            <LockedCard title="My Downloads">
+              <div className="gold-border bg-card rounded-2xl p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Award className="w-5 h-5 text-primary" />
+                  <span className="text-sm font-semibold text-foreground">Downloads</span>
+                </div>
+                <p className="text-2xl font-bold text-primary">0</p>
+                <p className="text-xs text-muted-foreground">Banners Created</p>
+              </div>
+            </LockedCard>
+          </div>
+
+          {/* Locked Rank Card - Full Width */}
+          <LockedCard title="My Rank">
+            <div className="gold-border bg-card rounded-2xl p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-2xl">
+                  🏆
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-foreground">Current Rank</p>
+                  <p className="text-lg font-bold text-primary">Bronze</p>
+                  <p className="text-xs text-muted-foreground">Progress: 0%</p>
+                </div>
+              </div>
+            </div>
+          </LockedCard>
         </div>
       )}
 
