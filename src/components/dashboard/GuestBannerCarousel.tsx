@@ -100,8 +100,6 @@ const GuestBannerCarousel = () => {
             key={`${image.id}-${index}`}
             src={image.image_url}
             alt={`Banner ${index + 1}`}
-            loading="lazy"
-            decoding="async"
             className="w-full h-full object-cover flex-shrink-0"
           />
         ))}
@@ -112,13 +110,13 @@ const GuestBannerCarousel = () => {
         <>
           <button
             onClick={(e) => { e.stopPropagation(); prevSlide(); }}
-            className="absolute left-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-card/90 border border-border/30 text-foreground/80 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-card"
+            className="absolute left-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-background/60 backdrop-blur-sm border border-border/30 text-foreground/80 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-background/80"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
           <button
             onClick={(e) => { e.stopPropagation(); nextSlide(); }}
-            className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-card/90 border border-border/30 text-foreground/80 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-card"
+            className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-background/60 backdrop-blur-sm border border-border/30 text-foreground/80 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-background/80"
           >
             <ChevronRight className="w-4 h-4" />
           </button>
