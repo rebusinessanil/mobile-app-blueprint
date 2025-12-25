@@ -241,9 +241,9 @@ export default function Dashboard() {
     children: React.ReactNode;
   }) => <>{children}</>;
   return <ContentWrapper userId={userId}>
-      <div className="app-shell bg-navy-dark">
+      <div className="dashboard-shell bg-navy-dark min-h-screen">
       {/* Fixed Header */}
-      <header className="app-header bg-navy-dark/95 backdrop-blur-sm border-b border-primary/20">
+      <header className="dashboard-header bg-navy-dark/95 backdrop-blur-sm border-b border-primary/20">
         <div className="h-full flex items-center justify-between gap-2 px-4 max-w-full">
           <div className="flex items-center gap-2 min-w-0 flex-shrink">
             <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center flex-shrink-0">
@@ -289,7 +289,7 @@ export default function Dashboard() {
       </header>
 
       {/* Scrollable Main Content */}
-      <main className="app-main">
+      <main>
         {/* Guest Banner - Show value proposition with Carousel */}
         {isGuest && <div className="mx-4 mt-4 rounded-2xl bg-gradient-to-r from-primary/20 via-primary/10 to-secondary/20 border border-primary/30 overflow-hidden">
             <GuestBannerCarousel />

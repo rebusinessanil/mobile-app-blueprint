@@ -15,37 +15,25 @@
   --bottom-nav-height: 72px;
 }
 
-/* Prevent body scroll - let main content scroll */
+/* Default body behavior - normal scrolling for all pages */
 html, body {
   height: 100%;
-  overflow: hidden;
-  overscroll-behavior: none;
   -webkit-overflow-scrolling: touch;
 }
 
 #root {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-/* App shell layout */
-.app-shell {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
   min-height: 100%;
-  max-height: 100%;
-  overflow: hidden;
-  position: fixed;
-  inset: 0;
-  padding-top: var(--safe-area-inset-top);
-  padding-bottom: var(--safe-area-inset-bottom);
 }
 
-/* Fixed header */
-.app-header {
+/* Dashboard-specific app shell - only applies when .dashboard-shell is used */
+.dashboard-shell {
+  min-height: 100vh;
+  padding-top: calc(var(--header-height) + var(--safe-area-inset-top));
+  padding-bottom: calc(var(--bottom-nav-height) + var(--safe-area-inset-bottom));
+}
+
+/* Dashboard fixed header */
+.dashboard-header {
   position: fixed;
   top: 0;
   left: 0;
@@ -53,22 +41,11 @@ html, body {
   z-index: 50;
   padding-top: var(--safe-area-inset-top);
   height: calc(var(--header-height) + var(--safe-area-inset-top));
-  flex-shrink: 0;
+  background: hsl(var(--background));
 }
 
-/* Main scrollable content */
-.app-main {
-  flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior-y: contain;
-  padding-top: calc(var(--header-height) + var(--safe-area-inset-top));
-  padding-bottom: calc(var(--bottom-nav-height) + var(--safe-area-inset-bottom));
-}
-
-/* Fixed bottom nav */
-.app-bottom-nav {
+/* Dashboard fixed bottom nav */
+.dashboard-bottom-nav {
   position: fixed;
   bottom: 0;
   left: 0;
@@ -76,7 +53,6 @@ html, body {
   z-index: 50;
   padding-bottom: var(--safe-area-inset-bottom);
   height: calc(var(--bottom-nav-height) + var(--safe-area-inset-bottom));
-  flex-shrink: 0;
 }
 
 @layer utilities {

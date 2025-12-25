@@ -12,7 +12,7 @@ export default function BottomNav() {
   ];
 
   return (
-    <nav className="app-bottom-nav bg-card border-t border-primary/30">
+    <nav className="dashboard-bottom-nav bg-card border-t border-primary/30">
       <div className="h-full max-w-screen-lg mx-auto flex items-center justify-around px-6">
         {navItems.map((item) => {
           const Icon = item.icon;

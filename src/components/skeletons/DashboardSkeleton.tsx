@@ -1,9 +1,9 @@
 import { memo } from "react";
 
 const DashboardSkeleton = memo(() => (
-  <div className="app-shell bg-navy-dark">
+  <div className="dashboard-shell bg-navy-dark min-h-screen">
     {/* Header Skeleton */}
-    <header className="app-header bg-navy-dark/95 border-b border-primary/20">
+    <header className="dashboard-header bg-navy-dark/95 border-b border-primary/20">
       <div className="h-full flex items-center justify-between px-4">
         <div className="flex items-center gap-2">
           <div className="w-10 h-10 bg-secondary/50 rounded-xl animate-pulse" />
@@ -21,7 +21,7 @@ const DashboardSkeleton = memo(() => (
     </header>
 
     {/* Scrollable Main Content */}
-    <main className="app-main">
+    <main>
       <div className="py-6 space-y-6">
         {/* Stories Section Skeleton */}
         <div className="space-y-3">
@@ -54,7 +54,7 @@ const DashboardSkeleton = memo(() => (
     </main>
 
     {/* Bottom Nav Skeleton */}
-    <div className="app-bottom-nav bg-card/95 border-t border-primary/20">
+    <div className="dashboard-bottom-nav bg-card/95 border-t border-primary/20">
       <div className="h-full flex items-center justify-around px-6">
         {[1, 2, 3, 4].map((i) => (
           <div key={i} className="flex flex-col items-center gap-1">
