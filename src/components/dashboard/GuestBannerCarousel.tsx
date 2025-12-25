@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useBannerCarousel } from '@/hooks/useBannerCarousel';
@@ -47,18 +46,19 @@ const GuestBannerCarousel = () => {
       className="relative w-full aspect-[16/9] overflow-hidden rounded-2xl group cursor-pointer"
       onClick={handleCarouselClick}
     >
-      <AnimatePresence mode="wait">
-        <motion.img
-          key={currentIndex}
-          src={images[currentIndex].image_url}
-          alt={`Banner ${currentIndex + 1}`}
-          className="w-full h-full object-cover"
-          initial={{ opacity: 0, x: 50 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -50 }}
-          transition={{ duration: 0.3 }}
-        />
-      </AnimatePresence>
+      <div 
+        className="flex h-full transition-transform duration-300 ease-out"
+        style={{ transform: `translateX(-${currentIndex * 100}%)` }}
+      >
+        {images.map((image, index) => (
+          <img
+            key={image.id}
+            src={image.image_url}
+            alt={`Banner ${index + 1}`}
+            className="w-full h-full object-cover flex-shrink-0"
+          />
+        ))}
+      </div>
 
       {/* Navigation arrows - only show if more than 1 image */}
       {images.length > 1 && (
