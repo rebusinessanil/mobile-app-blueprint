@@ -90,17 +90,8 @@ export const getNetworkQualityTier = (): 'ultra-low' | 'low' | 'medium' | 'high'
  */
 export const isIOS = (): boolean => {
   if (typeof navigator === 'undefined') return false;
-  return /iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+  return /iPhone|iPad|iPod/i.test(navigator.userAgent) || 
     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-};
-
-/**
- * Kill switch for JS-driven UI animations (tickers, carousels, timers)
- * Mobile-first for stability.
- */
-export const shouldDisableAnimations = (): boolean => {
-  if (typeof window === 'undefined') return false;
-  return isIOS() || window.innerWidth < MOBILE_BREAKPOINT;
 };
 
 /**
@@ -115,7 +106,7 @@ export const getOptimizedImageUrl = (
   width?: number
 ): string => {
   if (!url) return url;
-
+  
   // Skip optimization for non-Supabase URLs or data URLs
   if (!url.includes('supabase') || url.startsWith('data:')) {
     return url;
@@ -125,10 +116,10 @@ export const getOptimizedImageUrl = (
   const isiOSDevice = isIOS();
   const networkTier = getNetworkQualityTier();
   const slowNetwork = networkTier === 'ultra-low' || networkTier === 'low';
-
+  
   // Parse existing URL
   const urlObj = new URL(url);
-
+  
   // Ultra-low quality for 2G/slow-2g or saveData mode
   if (networkTier === 'ultra-low') {
     urlObj.searchParams.set('width', String(Math.min(width || 200, 200)));
@@ -146,13 +137,13 @@ export const getOptimizedImageUrl = (
     urlObj.searchParams.set('width', String(Math.min(width || 300, 300)));
     urlObj.searchParams.set('quality', '40');
     urlObj.searchParams.set('format', 'webp');
-  }
+  } 
   // Mobile (non-iOS): Low quality, small size
   else if (isMobile) {
     urlObj.searchParams.set('width', String(width || 400));
     urlObj.searchParams.set('quality', '50');
     urlObj.searchParams.set('format', 'webp');
-  }
+  } 
   // Desktop: Higher quality (but still respect slow networks)
   else {
     if (width) {
@@ -175,11 +166,11 @@ export const getThumbnailUrl = (url: string, size: number = 100): string => {
   }
 
   const networkTier = getNetworkQualityTier();
-
+  
   // Adjust thumbnail size based on network
   let adjustedSize = size;
   let quality = 30;
-
+  
   if (networkTier === 'ultra-low') {
     adjustedSize = Math.min(size, 50);
     quality = 15;
@@ -204,19 +195,19 @@ export const getThumbnailUrl = (url: string, size: number = 100): string => {
  */
 export const preloadCriticalImages = (urls: string[]): void => {
   if (typeof document === 'undefined') return;
-
+  
   // Skip preloading on slow connections to save bandwidth
   if (isSlowConnection()) return;
-
+  
   const head = document.head;
-
+  
   urls.forEach((url) => {
     if (!url) return;
-
+    
     // Check if already preloaded
     const existing = head.querySelector(`link[href="${url}"]`);
     if (existing) return;
-
+    
     const link = document.createElement('link');
     link.rel = 'preload';
     link.as = 'image';
@@ -240,7 +231,7 @@ let webpSupported: boolean | null = null;
 export const supportsWebP = (): boolean => {
   if (webpSupported !== null) return webpSupported;
   if (typeof document === 'undefined') return true;
-
+  
   const canvas = document.createElement('canvas');
   webpSupported = canvas.toDataURL('image/webp').startsWith('data:image/webp');
   return webpSupported;
@@ -253,4 +244,3 @@ export const supportsWebP = (): boolean => {
 export const shouldUseLiteMode = (): boolean => {
   return isIOS() || isSlowConnection();
 };
-
