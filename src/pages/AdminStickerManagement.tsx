@@ -4,10 +4,15 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { Loader2, Upload, Trash2, Eye, EyeOff, Move } from 'lucide-react';
-import { useStickerSlots, uploadStickerSlot, removeStickerSlot, toggleStickerSlotActive } from '@/hooks/useStickerSlots';
+import { 
+  useUnifiedStickerSlots, 
+  uploadUnifiedStickerSlot, 
+  removeUnifiedStickerSlot, 
+  toggleUnifiedStickerActive,
+  type UnifiedStickerOptions 
+} from '@/hooks/useUnifiedStickerSlots';
 import { Badge } from '@/components/ui/badge';
 
 export default function AdminStickerManagement() {
@@ -178,8 +183,12 @@ export default function AdminStickerManagement() {
   const slotOptions = getStickerSlotOptions();
   const hasValidSelection = Object.keys(slotOptions).length > 0;
 
-  // Fetch sticker slots
-  const { slots, loading: slotsLoading, refetch } = useStickerSlots(slotOptions);
+  // Fetch sticker slots using unified hook
+  const { slots, loading: slotsLoading, refetch } = useUnifiedStickerSlots({
+    ...slotOptions,
+    enableRealtime: true,
+    activeOnly: false, // Admin needs to see inactive stickers too
+  });
 
   // Get entity list based on category - same pattern as rank-promotion
   const getEntityList = () => {
@@ -243,7 +252,7 @@ export default function AdminStickerManagement() {
 
     setUploading(true);
     try {
-      const { error } = await uploadStickerSlot(file, slotNumber, slotOptions);
+      const { error } = await uploadUnifiedStickerSlot(file, slotNumber, slotOptions);
 
       if (error) {
         toast.error('Failed to upload sticker');
@@ -288,7 +297,7 @@ export default function AdminStickerManagement() {
       setUploadProgress({ current: i + 1, total: Math.min(filesToUpload.length, availableSlots.length) });
 
       try {
-        const { error } = await uploadStickerSlot(file, slot, slotOptions);
+        const { error } = await uploadUnifiedStickerSlot(file, slot, slotOptions);
         if (error) {
           failCount++;
         } else {
@@ -316,7 +325,7 @@ export default function AdminStickerManagement() {
   const handleRemove = async (stickerId: string, slotNumber: number) => {
     if (!confirm(`Remove sticker from slot ${slotNumber}?`)) return;
 
-    const { error } = await removeStickerSlot(stickerId);
+    const { error } = await removeUnifiedStickerSlot(stickerId);
     if (error) {
       toast.error('Failed to remove sticker');
     } else {
@@ -326,7 +335,7 @@ export default function AdminStickerManagement() {
   };
 
   const handleToggleActive = async (stickerId: string, isActive: boolean, slotNumber: number) => {
-    const { error } = await toggleStickerSlotActive(stickerId, !isActive);
+    const { error } = await toggleUnifiedStickerActive(stickerId, !isActive);
     if (error) {
       toast.error('Failed to update sticker status');
     } else {
