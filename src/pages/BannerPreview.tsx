@@ -310,13 +310,23 @@ export default function BannerPreview() {
   });
 
   // Sync unified sticker data to local state for compatibility with existing code
+  // Use ref to track previous value and prevent unnecessary updates
+  const prevUnifiedImagesRef = useRef<string>('');
   useEffect(() => {
     if (unifiedStickerImages && Object.keys(unifiedStickerImages).length > 0) {
-      setStickerImages(unifiedStickerImages);
+      const newKey = JSON.stringify(Object.keys(unifiedStickerImages));
+      if (newKey !== prevUnifiedImagesRef.current) {
+        prevUnifiedImagesRef.current = newKey;
+        setStickerImages(unifiedStickerImages);
+      }
     }
   }, [unifiedStickerImages]);
 
   // Auto-select sticker when there's only one in the current slot
+  // FIXED: Removed stickerScale from deps to prevent infinite loop
+  const stickerScaleRef = useRef(stickerScale);
+  stickerScaleRef.current = stickerScale;
+  
   useEffect(() => {
     const currentSlot = selectedTemplate + 1;
     const stickersInSlot = stickerImages[currentSlot] || [];
@@ -327,7 +337,8 @@ export default function BannerPreview() {
       setSelectedStickerId(sticker.id);
 
       // Initialize scale from database defaults (admin-defined)
-      if (!stickerScale[sticker.id]) {
+      // Use ref to check current value without causing re-render
+      if (!stickerScaleRef.current[sticker.id]) {
         setStickerScale(prev => ({
           ...prev,
           [sticker.id]: sticker.scale || 9.3
@@ -346,7 +357,7 @@ export default function BannerPreview() {
         }));
       }
     }
-  }, [stickerImages, selectedTemplate, selectedStickerId, stickerScale, isAdmin]);
+  }, [stickerImages, selectedTemplate, selectedStickerId, isAdmin]);
 
   // Map selectedTemplate (0-15) to slot_number (1-16) and get background from global slots
   const selectedSlot = selectedTemplate + 1;
