@@ -152,15 +152,25 @@ export default function BannerPreview() {
   const updateBannerScale = useCallback(() => {
     if (!bannerContainerRef.current) return;
     const parentWidth = bannerContainerRef.current.clientWidth;
-    if (parentWidth === 0) return;
     
-    // Use width-based scaling since aspect ratio is 1:1 (square)
-    const scale = parentWidth / 1350;
-    setBannerScale(scale);
+    // CRASH PREVENTION: Skip calculations on unmounted/hidden elements
+    if (parentWidth < 50) return;
+    
+    // SAFETY BUFFER: 2px margin prevents sub-pixel rounding errors causing scrollbars on mobile
+    const safeWidth = parentWidth - 2;
+    const scale = safeWidth / 1350;
+    
+    // Only update if scale actually changed (prevents ResizeObserver infinite loops)
+    setBannerScale(prevScale => {
+      if (Math.abs(prevScale - scale) < 0.0001) return prevScale;
+      return scale;
+    });
     
     // Mark layout as ready after first successful scale calculation
-    setIsLayoutReady(true);
-  }, []);
+    if (!isLayoutReady) {
+      setIsLayoutReady(true);
+    }
+  }, [isLayoutReady]);
 
   // ResizeObserver-based scaling - updates on container resize
   useLayoutEffect(() => {
@@ -1570,12 +1580,18 @@ export default function BannerPreview() {
             {/* Parent wrapper with centering for perfect fit-to-box alignment */}
             <div 
               ref={bannerContainerRef}
-              className="w-full aspect-square relative overflow-hidden flex justify-center items-start"
+              className="w-full aspect-square relative flex justify-center items-center"
+              style={{
+                overflow: 'hidden',
+                contain: 'strict', // Prevents layout thrashing from child changes
+              }}
             >
               {/* HD Rendering Container - Uses CSS optimizations for crisp downscaling */}
               <div 
-                className="banner-scale-container absolute top-0 left-0"
+                className="banner-scale-container absolute"
                 style={{
+                  top: 0,
+                  left: '1px', // Center offset for 2px safety buffer
                   transform: `scale(${bannerScale}) translateZ(0)`,
                   transformOrigin: 'top left',
                   width: '1350px',
