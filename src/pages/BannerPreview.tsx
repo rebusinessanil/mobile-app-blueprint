@@ -81,8 +81,7 @@ export default function BannerPreview() {
   }[]>>({});
   const bannerRef = useRef<HTMLDivElement>(null);
   const [isAdmin, setIsAdmin] = useState(false);
-
-  // Sticker control states
+  const [isLayoutReady, setIsLayoutReady] = useState(false);
   const [isDragMode, setIsDragMode] = useState(false);
   const [selectedStickerId, setSelectedStickerId] = useState<string | null>(null);
   const [dragStartPos, setDragStartPos] = useState<{
@@ -158,6 +157,9 @@ export default function BannerPreview() {
     // Use width-based scaling since aspect ratio is 1:1 (square)
     const scale = parentWidth / 1350;
     setBannerScale(scale);
+    
+    // Mark layout as ready after first successful scale calculation
+    setIsLayoutReady(true);
   }, []);
 
   // ResizeObserver-based scaling - updates on container resize
@@ -415,6 +417,16 @@ export default function BannerPreview() {
     profile !== undefined &&
     !backgroundsLoading &&
     bannerDefaults !== undefined;
+  
+  // *** STRICT ALL-OR-NOTHING STATE ***
+  // Single derived state: show skeleton until EVERYTHING is ready
+  const isBannerReady = useMemo(() => {
+    const assetsReady = allLoaded || timedOut;
+    const scaleReady = bannerScale > 0 && isLayoutReady;
+    const dataReady = isDataReady && !backgroundsLoading && !stickersLoading;
+    
+    return assetsReady && scaleReady && dataReady;
+  }, [allLoaded, timedOut, bannerScale, isLayoutReady, isDataReady, backgroundsLoading, stickersLoading]);
 
   // Memoize asset URLs - collect once to prevent duplicate requests
   const assetConfig = useMemo(() => {
@@ -476,21 +488,16 @@ export default function BannerPreview() {
     preloadAssets(assetConfig);
   }, [assetConfig, preloadStarted, preloadAssets]);
 
-  // Show banner only when ALL assets are loaded (100%)
-  const assetsLoaded = allLoaded || timedOut;
-
-  // Trigger scale update immediately when assets are loaded and on resize
+  // Trigger scale update immediately on mount and resize
   // Using useLayoutEffect ensures scale is applied before browser paint - no flicker
   useLayoutEffect(() => {
-    if (!assetsLoaded) return;
-    
-    // Immediate scale calculation before paint
+    // Calculate scale immediately for layout readiness
     updateBannerScale();
-  }, [assetsLoaded, updateBannerScale]);
+  }, [updateBannerScale]);
 
   // ResizeObserver for responsive updates on all devices
   useEffect(() => {
-    if (!assetsLoaded || !bannerContainerRef.current) return;
+    if (!bannerContainerRef.current) return;
     
     const resizeObserver = new ResizeObserver(() => {
       updateBannerScale();
@@ -503,17 +510,15 @@ export default function BannerPreview() {
       resizeObserver.disconnect();
       window.removeEventListener('resize', updateBannerScale);
     };
-  }, [assetsLoaded, updateBannerScale]);
+  }, [updateBannerScale]);
 
   if (!bannerData) {
     navigate("/rank-selection");
     return null;
   }
 
-  // Show loading UI while assets are loading
-  const showGlobalLoading = !assetsLoaded || backgroundsLoading || !isDataReady;
-  
-  if (showGlobalLoading) {
+  // *** STRICT ALL-OR-NOTHING: Show skeleton until isBannerReady is TRUE ***
+  if (!isBannerReady) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
         <div className="w-full max-w-md">
@@ -540,6 +545,13 @@ export default function BannerPreview() {
           <p className="text-sm text-muted-foreground text-center font-medium">
             {Math.round(loadingProgress)}% complete
           </p>
+          
+          {/* Hidden container for scale calculation - must be in DOM for ResizeObserver */}
+          <div 
+            ref={bannerContainerRef}
+            className="absolute opacity-0 pointer-events-none w-full max-w-[500px] aspect-square"
+            style={{ left: '-9999px' }}
+          />
         </div>
       </div>
     );
@@ -1530,7 +1542,9 @@ export default function BannerPreview() {
       setIsDownloading(false);
     }
   };
-  return <div className="h-screen overflow-hidden bg-background flex flex-col">
+  
+  // *** BANNER IS NOW READY - Render with fade-in animation ***
+  return <div className="h-screen overflow-hidden bg-background flex flex-col animate-in fade-in duration-300">
       {/* Header - Fixed */}
       <header className="bg-background/95 backdrop-blur-sm z-40 px-4 sm:px-6 py-3 sm:py-4 flex-shrink-0">
         <div className="flex items-center justify-between max-w-[600px] mx-auto">
