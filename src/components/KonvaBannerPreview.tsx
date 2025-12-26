@@ -80,13 +80,33 @@ const CANVAS_WIDTH = 1350;
 const CANVAS_HEIGHT = 1350;
 
 // --- Helper Functions ---
-const preloadImage = (src: string): Promise<HTMLImageElement | null> => {
+const preloadImage = (src: string | null | undefined): Promise<HTMLImageElement | null> => {
   return new Promise((resolve) => {
-    if (!src) { resolve(null); return; }
+    // Handle all falsy/invalid values
+    if (!src || src === 'undefined' || src === 'null' || src.trim() === '') {
+      resolve(null);
+      return;
+    }
+    
     const img = new window.Image();
     img.crossOrigin = 'anonymous';
-    img.onload = () => resolve(img);
-    img.onerror = () => resolve(null);
+    
+    // Timeout to prevent indefinite hanging (10 seconds max)
+    const timeout = setTimeout(() => {
+      console.warn(`Image load timeout: ${src.substring(0, 50)}...`);
+      resolve(null);
+    }, 10000);
+    
+    img.onload = () => {
+      clearTimeout(timeout);
+      resolve(img);
+    };
+    img.onerror = () => {
+      clearTimeout(timeout);
+      console.warn(`Image failed to load: ${src.substring(0, 50)}...`);
+      resolve(null);
+    };
+    
     img.src = src;
   });
 };
@@ -164,9 +184,14 @@ const KonvaBannerPreview = forwardRef<KonvaBannerPreviewHandle, KonvaBannerPrevi
   useEffect(() => {
     let isMounted = true;
 
+    // Filter helper - only valid URLs
+    const isValidUrl = (src: string | null | undefined): src is string => {
+      return !!src && src !== 'undefined' && src !== 'null' && src.trim() !== '';
+    };
+
     // Build URL key to prevent unnecessary reloads - includes all image sources
-    const uplineSources = data.uplineImgs?.map((u) => u.avatar).filter((src): src is string => !!src) || [];
-    const stickerSources = data.stickers?.map((s) => s.url).filter(Boolean) || [];
+    const uplineSources = data.uplineImgs?.map((u) => u.avatar).filter(isValidUrl) || [];
+    const stickerSources = data.stickers?.map((s) => s.url).filter(isValidUrl) || [];
     
     const urlKey = [
       data.bgImg,
@@ -177,7 +202,7 @@ const KonvaBannerPreview = forwardRef<KonvaBannerPreviewHandle, KonvaBannerPrevi
       data.congratsImage,
       ...uplineSources,
       ...stickerSources,
-    ].filter(Boolean).join('|');
+    ].filter(isValidUrl).join('|');
 
     // Skip if URLs haven't changed
     if (urlKey === loadedUrlsRef.current && loadedAssets) {
@@ -198,8 +223,9 @@ const KonvaBannerPreview = forwardRef<KonvaBannerPreviewHandle, KonvaBannerPrevi
           data.congratsImage,
           ...uplineSources,
           ...stickerSources,
-        ].filter(Boolean);
+        ].filter(isValidUrl);
 
+        // Always have at least 1 to avoid division by zero
         const totalImages = Math.max(allSources.length, 1);
         let loadedCount = 0;
 
@@ -253,141 +279,331 @@ const KonvaBannerPreview = forwardRef<KonvaBannerPreviewHandle, KonvaBannerPrevi
     return () => { isMounted = false; };
   }, [data.bgImg, data.achieverImg, data.mentorPhoto, data.logoLeft, data.logoRight, data.congratsImage, data.uplineImgs, data.stickers, loadedAssets]);
 
-  // Render category-specific content
+  // Render category-specific content - EXACT PIXEL MATCH with HTML version
   const renderCategoryContent = () => {
     const category = data.categoryType || 'rank';
     const userName = data.userName || '';
     const truncatedName = userName.length > 20 ? userName.slice(0, 20) + '...' : userName;
+    // Match HTML: fontSize based on name length
     const nameFontSize = truncatedName.length > 18 ? 36 : truncatedName.length > 14 ? 42 : truncatedName.length > 10 ? 48 : 54;
 
     switch (category) {
       case 'birthday':
+        // Match HTML BirthdayBannerCreate layout
         return (
-          <Group x={978} y={140}>
-            <Text text="🎂" fontSize={120} x={-60} />
+          <Group>
+            {/* Birthday Title - positioned like HTML */}
             <Text 
               text="HAPPY BIRTHDAY" 
               fontSize={52} 
               fill="#FFD700" 
               fontStyle="bold" 
-              y={160}
+              x={978}
+              y={236}
               align="center"
-              width={300}
-              x={-150}
+              width={648}
+              offsetX={324}
+              shadowColor="rgba(0,0,0,0.9)"
+              shadowBlur={8}
+              shadowOffsetX={2}
+              shadowOffsetY={2}
             />
+            {/* Achiever Name */}
             <Text 
               text={truncatedName.toUpperCase()} 
-              fontSize={44} 
+              fontSize={nameFontSize} 
               fill="white" 
-              fontStyle="600" 
-              y={250}
+              fontStyle="bold" 
+              x={978}
+              y={340}
               align="center"
-              width={400}
-              x={-200}
+              width={648}
+              offsetX={324}
+              shadowColor="rgba(0,0,0,0.9)"
+              shadowBlur={10}
+              shadowOffsetX={3}
+              shadowOffsetY={3}
             />
+            {/* Message */}
             {data.message && (
               <Text 
                 text={data.message} 
-                fontSize={24} 
+                fontSize={28} 
                 fill="white" 
                 fontStyle="italic" 
-                y={320}
+                x={978}
+                y={420}
                 align="center"
-                width={500}
-                x={-250}
+                width={548}
+                offsetX={274}
+                shadowColor="rgba(0,0,0,0.8)"
+                shadowBlur={6}
               />
             )}
           </Group>
         );
 
       case 'anniversary':
+        // Match HTML AnniversaryBannerCreate layout
         return (
-          <Group x={978} y={140}>
-            <Text text="💞" fontSize={120} x={-60} />
+          <Group>
+            {/* Anniversary Title */}
             <Text 
               text="HAPPY ANNIVERSARY" 
               fontSize={48} 
               fill="#FFD700" 
               fontStyle="bold" 
-              y={160}
+              x={978}
+              y={236}
               align="center"
-              width={400}
-              x={-200}
+              width={648}
+              offsetX={324}
+              shadowColor="rgba(0,0,0,0.9)"
+              shadowBlur={8}
+              shadowOffsetX={2}
+              shadowOffsetY={2}
             />
+            {/* Achiever Name */}
             <Text 
               text={truncatedName.toUpperCase()} 
-              fontSize={44} 
+              fontSize={nameFontSize} 
               fill="white" 
-              fontStyle="600" 
-              y={250}
-              align="center"
-              width={400}
-              x={-200}
-            />
-          </Group>
-        );
-
-      case 'festival':
-        return (
-          <Group x={978} y={140}>
-            <Text text="🎉" fontSize={120} x={-60} />
-            <Text 
-              text="FESTIVAL GREETINGS" 
-              fontSize={48} 
-              fill="#FFD700" 
               fontStyle="bold" 
-              y={160}
+              x={978}
+              y={340}
               align="center"
-              width={400}
-              x={-200}
+              width={648}
+              offsetX={324}
+              shadowColor="rgba(0,0,0,0.9)"
+              shadowBlur={10}
+              shadowOffsetX={3}
+              shadowOffsetY={3}
             />
-            {truncatedName && (
+            {/* Message */}
+            {data.message && (
               <Text 
-                text={truncatedName.toUpperCase()} 
-                fontSize={44} 
+                text={data.message} 
+                fontSize={28} 
                 fill="white" 
-                fontStyle="600" 
-                y={250}
+                fontStyle="italic" 
+                x={978}
+                y={420}
                 align="center"
-                width={400}
-                x={-200}
+                width={548}
+                offsetX={274}
+                shadowColor="rgba(0,0,0,0.8)"
+                shadowBlur={6}
               />
             )}
           </Group>
         );
 
-      case 'story':
-        return null;
-
-      default:
-        // Rank/Bonanza - Default layout
+      case 'festival':
+        // Match HTML FestivalBannerCreate layout - minimal content
         return (
           <Group>
-            {/* Congratulations Image */}
+            {/* Festival Greeting - optional name only if provided */}
+            {truncatedName && (
+              <Text 
+                text={truncatedName.toUpperCase()} 
+                fontSize={nameFontSize} 
+                fill="white" 
+                fontStyle="bold" 
+                x={978}
+                y={340}
+                align="center"
+                width={648}
+                offsetX={324}
+                shadowColor="rgba(0,0,0,0.9)"
+                shadowBlur={10}
+                shadowOffsetX={3}
+                shadowOffsetY={3}
+              />
+            )}
+            {/* Greeting Message */}
+            {data.message && (
+              <Text 
+                text={data.message} 
+                fontSize={28} 
+                fill="white" 
+                fontStyle="italic" 
+                x={978}
+                y={420}
+                align="center"
+                width={548}
+                offsetX={274}
+                shadowColor="rgba(0,0,0,0.8)"
+                shadowBlur={6}
+              />
+            )}
+          </Group>
+        );
+
+      case 'motivational':
+        // Motivational layout - Quote centered, name attribution
+        return (
+          <Group>
+            {/* Quote Text */}
+            {data.quote && (
+              <Text 
+                text={`"${data.quote}"`} 
+                fontSize={32} 
+                fill="white" 
+                fontStyle="italic" 
+                x={978}
+                y={360}
+                align="center"
+                width={648}
+                offsetX={324}
+                lineHeight={1.5}
+                shadowColor="rgba(0,0,0,0.9)"
+                shadowBlur={8}
+                shadowOffsetX={2}
+                shadowOffsetY={2}
+              />
+            )}
+            {/* Name Attribution */}
+            {truncatedName && (
+              <Text 
+                text={`- ${truncatedName.toUpperCase()}`} 
+                fontSize={30} 
+                fill="#FFD700" 
+                fontStyle="600" 
+                x={978}
+                y={520}
+                align="center"
+                width={648}
+                offsetX={324}
+                shadowColor="rgba(0,0,0,0.9)"
+                shadowBlur={6}
+              />
+            )}
+          </Group>
+        );
+
+      case 'bonanza':
+        // Match HTML bonanza layout exactly
+        return (
+          <Group>
+            {/* Congratulations Image - EXACT: top: 162px, left: 978px centered, 648x162 */}
             {loadedAssets?.congratsImage && (
               <KonvaImage 
                 image={loadedAssets.congratsImage} 
-                x={978 - 324} 
+                x={978 - 324} // translateX(-50%) of 648px width
                 y={162}
                 width={648}
                 height={162}
               />
             )}
 
-            {/* Achiever Name */}
-            <Group x={978} y={340}>
-              <Text 
-                text={truncatedName.toUpperCase()} 
-                fontSize={nameFontSize} 
-                fill="white" 
-                fontStyle="bold" 
-                align="center"
-                width={648}
-                x={-324}
-              />
-            </Group>
+            {/* BONANZA TRIP WINNER Title - EXACT: top: 236px */}
+            <Text 
+              text="BONANZA TRIP WINNER" 
+              fontSize={42} 
+              fill="white" 
+              fontStyle="600" 
+              x={978}
+              y={236}
+              align="center"
+              width={648}
+              offsetX={324}
+              letterSpacing={1}
+              shadowColor="rgba(0,0,0,0.9)"
+              shadowBlur={8}
+              shadowOffsetX={2}
+              shadowOffsetY={2}
+            />
+
+            {/* Trip Name - EXACT: top: 337px, color: #FFD700 */}
+            <Text 
+              text={(data.tripName || 'TRIP DESTINATION').toUpperCase()} 
+              fontSize={48} 
+              fill="#FFD700" 
+              fontStyle="bold" 
+              x={978}
+              y={337}
+              align="center"
+              width={648}
+              offsetX={324}
+              shadowColor="rgba(0,0,0,0.95)"
+              shadowBlur={10}
+              shadowOffsetX={3}
+              shadowOffsetY={3}
+            />
+
+            {/* Achiever Name - positioned below trip name */}
+            <Text 
+              text={truncatedName.toUpperCase()} 
+              fontSize={nameFontSize} 
+              fill="white" 
+              fontStyle="bold" 
+              x={978}
+              y={430}
+              align="center"
+              width={648}
+              offsetX={324}
+              shadowColor="rgba(0,0,0,0.9)"
+              shadowBlur={10}
+              shadowOffsetX={3}
+              shadowOffsetY={3}
+            />
 
             {/* Team City */}
+            {data.teamCity && (
+              <Text 
+                text={data.teamCity.toUpperCase()} 
+                fontSize={28} 
+                fill="white" 
+                x={978}
+                y={500}
+                align="center"
+                width={648}
+                offsetX={324}
+                shadowColor="rgba(0,0,0,0.9)"
+                shadowBlur={4}
+              />
+            )}
+          </Group>
+        );
+
+      case 'story':
+        // Story - No text overlays (handled by background only)
+        return null;
+
+      default:
+        // 'rank' category - EXACT MATCH with HTML BannerPreview.tsx default case
+        return (
+          <Group>
+            {/* Congratulations Image - EXACT: top: 162px, left: 978px centered, 648x162 */}
+            {loadedAssets?.congratsImage && (
+              <KonvaImage 
+                image={loadedAssets.congratsImage} 
+                x={978 - 324} // translateX(-50%) of 648px width = 654
+                y={162}
+                width={648}
+                height={162}
+              />
+            )}
+
+            {/* Achiever Name - EXACT: top: 340px, centered at x:978 */}
+            <Text 
+              text={truncatedName.toUpperCase()} 
+              fontSize={nameFontSize} 
+              fill="white" 
+              fontStyle="bold" 
+              x={978}
+              y={340}
+              align="center"
+              width={648}
+              offsetX={324}
+              letterSpacing={1}
+              shadowColor="rgba(0,0,0,0.9)"
+              shadowBlur={10}
+              shadowOffsetX={3}
+              shadowOffsetY={3}
+            />
+
+            {/* Team City - EXACT: top: 423px + 13px margin = 436px */}
             {data.teamCity && (
               <Text 
                 text={data.teamCity.toUpperCase()} 
@@ -398,10 +614,14 @@ const KonvaBannerPreview = forwardRef<KonvaBannerPreviewHandle, KonvaBannerPrevi
                 align="center"
                 width={648}
                 offsetX={324}
+                shadowColor="rgba(0,0,0,0.9)"
+                shadowBlur={4}
+                shadowOffsetX={2}
+                shadowOffsetY={2}
               />
             )}
 
-            {/* Income Section */}
+            {/* Income Section - EXACT: bottom: 202px from 1350 = y: 1148, left: 67px */}
             {data.chequeAmount && (
               <Group x={67} y={CANVAS_HEIGHT - 330}>
                 <Text 
@@ -409,6 +629,11 @@ const KonvaBannerPreview = forwardRef<KonvaBannerPreviewHandle, KonvaBannerPrevi
                   fontSize={36} 
                   fill="white" 
                   fontStyle="500"
+                  letterSpacing={1}
+                  shadowColor="rgba(0,0,0,0.9)"
+                  shadowBlur={4}
+                  shadowOffsetX={2}
+                  shadowOffsetY={2}
                 />
                 <Text 
                   text={Number(data.chequeAmount).toLocaleString('en-IN')} 
@@ -416,6 +641,11 @@ const KonvaBannerPreview = forwardRef<KonvaBannerPreviewHandle, KonvaBannerPrevi
                   fill="#FFD600" 
                   fontStyle="bold" 
                   y={50}
+                  letterSpacing={2}
+                  shadowColor="rgba(0,0,0,0.95)"
+                  shadowBlur={12}
+                  shadowOffsetX={4}
+                  shadowOffsetY={4}
                 />
               </Group>
             )}
@@ -493,13 +723,24 @@ const KonvaBannerPreview = forwardRef<KonvaBannerPreviewHandle, KonvaBannerPrevi
                 />
               )}
 
-              {/* 5. Uplines - Top center */}
-              <Group x={675 - (5 * 132 / 2)} y={10}> 
+              {/* 5. Uplines - Top center - EXACT: left: 675px translateX(-50%), gap: 12px, 120x120 each */}
+              {/* HTML: 5 avatars × 120px + 4 gaps × 12px = 648px total, centered at x=675 */}
+              <Group x={675 - 324} y={10}> 
                 {[0, 1, 2, 3, 4].map((i) => {
                   const img = loadedAssets.uplines[i];
+                  const xPos = i * 132; // 120px width + 12px gap
                   return (
-                    <Group key={i} x={i * 132}>
-                      <Circle radius={60} fill="#ffffff" x={60} y={60} shadowBlur={6} />
+                    <Group key={i} x={xPos}>
+                      {/* White circle background with shadow */}
+                      <Circle 
+                        radius={60} 
+                        fill="#ffffff" 
+                        x={60} 
+                        y={60} 
+                        shadowBlur={12}
+                        shadowColor="rgba(0,0,0,0.5)"
+                        shadowOffsetY={6}
+                      />
                       {img ? (
                         <Group clipFunc={(ctx) => ctx.arc(60, 60, 57, 0, Math.PI * 2, false)}>
                           <KonvaImage image={img} width={120} height={120} />
