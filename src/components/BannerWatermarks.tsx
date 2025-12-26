@@ -105,7 +105,7 @@ const BannerWatermarks: React.FC<BannerWatermarksProps> = ({
           id="mobile-watermark-permanent"
           className="absolute pointer-events-none"
           style={{
-            left: '2px',
+            left: '6px',
             top: '50%',
             transform: 'translateY(-50%) rotate(-90deg)',
             transformOrigin: 'center center',
