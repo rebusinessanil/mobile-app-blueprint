@@ -151,19 +151,18 @@ export default function BannerPreview() {
   // Compute scale factor for display - ensures full banner fits perfectly on all devices
   const updateBannerScale = useCallback(() => {
     if (!bannerContainerRef.current) return;
-    const parentWidth = bannerContainerRef.current.clientWidth;
+    const containerWidth = bannerContainerRef.current.clientWidth;
     
     // CRASH PREVENTION: Skip calculations on unmounted/hidden elements
-    if (parentWidth < 50) return;
+    if (containerWidth < 50) return;
     
-    // SAFETY BUFFER: 2px margin prevents sub-pixel rounding errors causing scrollbars on mobile
-    const safeWidth = parentWidth - 2;
-    const scale = safeWidth / 1350;
+    // SAFETY BUFFER: 4px total margin (2px each side) prevents edge-touching on mobile
+    const safeScale = (containerWidth - 4) / 1350;
     
     // Only update if scale actually changed (prevents ResizeObserver infinite loops)
     setBannerScale(prevScale => {
-      if (Math.abs(prevScale - scale) < 0.0001) return prevScale;
-      return scale;
+      if (Math.abs(prevScale - safeScale) < 0.0001) return prevScale;
+      return safeScale;
     });
     
     // Mark layout as ready after first successful scale calculation
@@ -1577,29 +1576,31 @@ export default function BannerPreview() {
         <div className="relative w-full max-w-[500px] mx-auto overflow-hidden">
           <div className="border-4 border-primary rounded-2xl shadow-2xl overflow-hidden">
             {/* CSS Transform Scaled HTML Preview - Mimics Canvas behavior */}
-            {/* Parent wrapper with centering for perfect fit-to-box alignment */}
+            {/* Parent wrapper with center-based alignment for perfect mobile fit */}
             <div 
               ref={bannerContainerRef}
-              className="w-full aspect-square relative flex justify-center items-center"
+              className="relative w-full aspect-square flex items-center justify-center"
               style={{
                 overflow: 'hidden',
+                padding: '2px', // Safety margin to prevent edge touching
                 contain: 'strict', // Prevents layout thrashing from child changes
               }}
             >
-              {/* HD Rendering Container - Uses CSS optimizations for crisp downscaling */}
+              {/* HD Rendering Container - Center-based scaling for perfect mobile alignment */}
               <div 
                 className="banner-scale-container absolute"
                 style={{
-                  top: 0,
-                  left: '1px', // Center offset for 2px safety buffer
-                  transform: `scale(${bannerScale}) translateZ(0)`,
-                  transformOrigin: 'top left',
                   width: '1350px',
                   height: '1350px',
+                  left: '50%',
+                  top: '50%',
+                  transform: `translate(-50%, -50%) scale(${bannerScale}) translateZ(0)`,
+                  transformOrigin: 'center center', // Scale from center for even distribution
                   imageRendering: '-webkit-optimize-contrast' as React.CSSProperties['imageRendering'],
                   WebkitFontSmoothing: 'antialiased',
                   backfaceVisibility: 'hidden',
                   willChange: 'transform',
+                  boxShadow: '0 0 20px rgba(0,0,0,0.3)', // Visual separation
                 }}
               >
                 <div 
