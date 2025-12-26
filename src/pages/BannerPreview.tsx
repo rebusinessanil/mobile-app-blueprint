@@ -23,6 +23,7 @@ import { useWalletDeduction } from "@/hooks/useWalletDeduction";
 import InsufficientBalanceModal from "@/components/InsufficientBalanceModal";
 import { useBannerAssetPreloader } from "@/hooks/useBannerAssetPreloader";
 import BannerWatermarks from "@/components/BannerWatermarks";
+import KonvaBannerPreview, { KonvaBannerPreviewHandle, KonvaBannerData } from "@/components/KonvaBannerPreview";
 interface Upline {
   id: string;
   name: string;
@@ -79,7 +80,9 @@ export default function BannerPreview() {
     rotation?: number;
   }[]>>({});
   const bannerRef = useRef<HTMLDivElement>(null);
+  const konvaBannerRef = useRef<KonvaBannerPreviewHandle>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [useKonvaPreview, setUseKonvaPreview] = useState(false); // Toggle for Konva vs HTML preview - disabled by default for now
 
   // Sticker control states
   const [isDragMode, setIsDragMode] = useState(false);
@@ -448,6 +451,63 @@ export default function BannerPreview() {
       uplineAvatarUrls,
     };
   }, [bannerData, isDataReady, globalBackgroundSlots, selectedTemplate, stickerImages, bannerDefaults, profile, displayUplines]);
+
+  // Konva banner data mapping
+  const konvaData: KonvaBannerData = useMemo(() => {
+    const activeSlot = globalBackgroundSlots.find(slot => slot.slotNumber === selectedTemplate + 1);
+    const currentSlotStickers = stickerImages[selectedTemplate + 1] || [];
+    
+    return {
+      // Main content
+      achieverImg: primaryPhoto,
+      bgImg: activeSlot?.imageUrl || undefined,
+      bgColor: activeSlot?.defaultColor || '#111827',
+      
+      // User info
+      userName: truncatedMainName,
+      teamCity: bannerData?.teamCity || '',
+      chequeAmount: bannerData?.chequeAmount,
+      userMobile: displayContact,
+      profileName: truncatedProfileName,
+      profileRank: displayRank,
+      
+      // Category-specific
+      categoryType: bannerData?.categoryType,
+      rankLabel: bannerData?.rankName,
+      tripName: bannerData?.tripName,
+      message: bannerData?.message,
+      quote: bannerData?.quote,
+      eventTitle: bannerData?.eventTitle,
+      eventDate: bannerData?.eventDate,
+      eventVenue: bannerData?.eventVenue,
+      
+      // Uplines
+      uplineImgs: displayUplines,
+      
+      // Stickers
+      stickers: currentSlotStickers.map(s => ({
+        id: s.id,
+        url: s.url,
+        position_x: s.position_x,
+        position_y: s.position_y,
+        scale: stickerScale[s.id] ?? s.scale,
+        rotation: s.rotation,
+      })),
+      
+      // Logos
+      logoLeft: bannerSettings?.logo_left,
+      logoRight: bannerSettings?.logo_right,
+      congratsImage: bannerDefaults?.congratulations_image,
+      
+      // Profile photos
+      mentorPhoto,
+    };
+  }, [
+    globalBackgroundSlots, selectedTemplate, stickerImages, primaryPhoto, 
+    truncatedMainName, bannerData, displayContact, truncatedProfileName, 
+    displayRank, displayUplines, stickerScale, bannerSettings, bannerDefaults, 
+    mentorPhoto
+  ]);
 
   // Trigger preload once when config is ready
   useEffect(() => {
@@ -1525,28 +1585,45 @@ export default function BannerPreview() {
         {/* Display wrapper - fixed max width for consistent laptop-like rendering */}
         <div className="relative w-full max-w-[500px] mx-auto">
           <div className="border-4 border-primary rounded-2xl shadow-2xl overflow-hidden">
-            {/* Scale wrapper - maintains 1350×1350 internal canvas with perfect fit */}
-            <div 
-              ref={bannerContainerRef}
-              style={{
-                width: '100%',
-                aspectRatio: '1 / 1',
-                position: 'relative',
-                overflow: 'hidden'
-              }}
-            >
-              <div 
-                className="banner-scale-container"
-                style={{
-                  transform: `scale(${bannerScale})`,
-                  transformOrigin: 'top left',
-                  width: '1350px',
-                  height: '1350px',
-                  position: 'absolute',
-                  top: 0,
-                  left: 0
-                }}
-              >
+            
+            {/* KONVA PREVIEW - Canvas-based rendering (no flicker) */}
+            {useKonvaPreview && (
+              <KonvaBannerPreview
+                ref={konvaBannerRef}
+                data={konvaData}
+                width="100%"
+                isPhotoFlipped={isPhotoFlipped}
+                isMentorPhotoFlipped={isMentorPhotoFlipped}
+                onReady={() => console.log('Konva banner ready')}
+                onError={(err) => console.error('Konva banner error:', err)}
+              />
+            )}
+
+            {/* HTML PREVIEW - Original DOM-based rendering (fallback) */}
+            {!useKonvaPreview && (
+              <>
+                {/* Scale wrapper - maintains 1350×1350 internal canvas with perfect fit */}
+                <div 
+                  ref={bannerContainerRef}
+                  style={{
+                    width: '100%',
+                    aspectRatio: '1 / 1',
+                    position: 'relative',
+                    overflow: 'hidden'
+                  }}
+                >
+                  <div 
+                    className="banner-scale-container"
+                    style={{
+                      transform: `scale(${bannerScale})`,
+                      transformOrigin: 'top left',
+                      width: '1350px',
+                      height: '1350px',
+                      position: 'absolute',
+                      top: 0,
+                      left: 0
+                    }}
+                  >
                 <div 
                   ref={bannerRef} 
                   id="banner-canvas" 
@@ -2145,6 +2222,8 @@ export default function BannerPreview() {
                 </div>
               </div>
             </div>
+            </>
+            )}
           </div>
         </div>
 
