@@ -9,43 +9,30 @@ interface BannerWatermarksProps {
  * Banner Watermarks Component
  * 
  * Two layers:
- * 1. Brand Watermark (Preview Only) - "Re Business" repeating vertical on left & right edges
+ * 1. Brand Watermark (Preview Only) - "Re Business" repeating vertical pattern on left & right edges
  * 2. Mobile Watermark (Permanent) - Promotional call number on left edge
  */
 const BannerWatermarks: React.FC<BannerWatermarksProps> = ({
   showBrandWatermark = true,
   showMobileWatermark = true,
 }) => {
-  // 5 repeating watermarks per edge
-  const watermarkCount = 5;
+  // Generate repeating watermark instances for full coverage
+  const watermarkCount = 12; // Number of repetitions for full coverage
   const watermarks = Array.from({ length: watermarkCount }, (_, i) => i);
-
-  const watermarkStyle: React.CSSProperties = {
-    fontSize: '14px',
-    fontWeight: 700,
-    fontFamily: 'Poppins, Arial, sans-serif',
-    color: 'rgba(255, 255, 255, 0.22)',
-    letterSpacing: '3px',
-    textTransform: 'uppercase',
-    userSelect: 'none',
-    whiteSpace: 'nowrap',
-    textShadow: '1px 1px 2px rgba(0, 0, 0, 0.25)',
-    padding: '12px 0',
-  };
 
   return (
     <>
-      {/* PREVIEW-ONLY: Brand Watermark - Edge-based vertical "Re Business" */}
+      {/* PREVIEW-ONLY: Brand Watermark - Repeating vertical "Re Business" on edges */}
       {showBrandWatermark && (
         <div
           id="brand-watermark-preview"
           className="absolute inset-0 pointer-events-none overflow-hidden"
           style={{ zIndex: 100 }}
         >
-          {/* LEFT EDGE - 5 repeating vertical watermarks */}
+          {/* LEFT EDGE - Repeating vertical watermarks */}
           <div
-            className="absolute left-0 top-0 bottom-0 flex flex-col items-center justify-around"
-            style={{ width: '36px' }}
+            className="absolute left-0 top-0 bottom-0 flex flex-col items-center justify-between"
+            style={{ width: '40px' }}
           >
             {watermarks.map((i) => (
               <div
@@ -57,15 +44,30 @@ const BannerWatermarks: React.FC<BannerWatermarksProps> = ({
                   transform: 'rotate(180deg)',
                 }}
               >
-                <span style={watermarkStyle}>Re Business</span>
+                <span
+                  style={{
+                    fontSize: '14px',
+                    fontWeight: 700,
+                    fontFamily: 'Poppins, Arial, sans-serif',
+                    color: 'rgba(255, 255, 255, 0.25)',
+                    letterSpacing: '3px',
+                    textTransform: 'uppercase',
+                    userSelect: 'none',
+                    whiteSpace: 'nowrap',
+                    textShadow: '1px 1px 2px rgba(0, 0, 0, 0.3), -1px -1px 1px rgba(255, 255, 255, 0.1)',
+                    padding: '8px 0',
+                  }}
+                >
+                  Re Business
+                </span>
               </div>
             ))}
           </div>
 
-          {/* RIGHT EDGE - 5 repeating vertical watermarks */}
+          {/* RIGHT EDGE - Repeating vertical watermarks */}
           <div
-            className="absolute right-0 top-0 bottom-0 flex flex-col items-center justify-around"
-            style={{ width: '36px' }}
+            className="absolute right-0 top-0 bottom-0 flex flex-col items-center justify-between"
+            style={{ width: '40px' }}
           >
             {watermarks.map((i) => (
               <div
@@ -76,9 +78,55 @@ const BannerWatermarks: React.FC<BannerWatermarksProps> = ({
                   textOrientation: 'mixed',
                 }}
               >
-                <span style={watermarkStyle}>Re Business</span>
+                <span
+                  style={{
+                    fontSize: '14px',
+                    fontWeight: 700,
+                    fontFamily: 'Poppins, Arial, sans-serif',
+                    color: 'rgba(255, 255, 255, 0.25)',
+                    letterSpacing: '3px',
+                    textTransform: 'uppercase',
+                    userSelect: 'none',
+                    whiteSpace: 'nowrap',
+                    textShadow: '1px 1px 2px rgba(0, 0, 0, 0.3), -1px -1px 1px rgba(255, 255, 255, 0.1)',
+                    padding: '8px 0',
+                  }}
+                >
+                  Re Business
+                </span>
               </div>
             ))}
+          </div>
+
+          {/* CENTER COVERAGE - Additional diagonal watermarks for full protection */}
+          <div
+            className="absolute inset-0 flex items-center justify-center"
+            style={{
+              background: 'repeating-linear-gradient(45deg, transparent, transparent 80px, rgba(255,255,255,0.03) 80px, rgba(255,255,255,0.03) 82px)',
+            }}
+          >
+            <div
+              style={{
+                transform: 'rotate(-30deg)',
+                opacity: 0.12,
+              }}
+            >
+              <span
+                style={{
+                  fontSize: '48px',
+                  fontWeight: 700,
+                  fontFamily: 'Poppins, Arial, sans-serif',
+                  color: 'white',
+                  letterSpacing: '8px',
+                  textTransform: 'uppercase',
+                  userSelect: 'none',
+                  whiteSpace: 'nowrap',
+                  textShadow: '2px 2px 4px rgba(0, 0, 0, 0.2)',
+                }}
+              >
+                Re Business
+              </span>
+            </div>
           </div>
         </div>
       )}
