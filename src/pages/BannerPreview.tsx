@@ -184,7 +184,7 @@ export default function BannerPreview() {
       return;
     }
 
-    const appLink = "https://rebusiness.lovable.app";
+    const appLink = "https://rebusiness.in/";
     const shareText = `🎉 Check out my achievement banner created with ReBusiness!\n\n📲 Create your own stunning banners: ${appLink}`;
 
     // Convert base64 to blob for sharing
@@ -1539,13 +1539,14 @@ export default function BannerPreview() {
         quality: 1,
         backgroundColor: null,
         filter: node => {
-          // Exclude UI elements and PREVIEW-ONLY brand watermark from export
+          // Exclude UI elements and ALL watermarks from final export (clean banner)
           if (
             node.classList?.contains("slot-selector") || 
             node.classList?.contains("control-buttons") || 
             node.classList?.contains("whatsapp-float") || 
             node.id === "ignore-download" ||
-            node.id === "brand-watermark-preview"
+            node.id === "brand-watermark-preview" ||
+            node.id === "mobile-watermark-permanent"
           ) {
             return false;
           }
