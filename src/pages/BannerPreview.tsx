@@ -1615,30 +1615,18 @@ export default function BannerPreview() {
 
             {/* HTML PREVIEW - Original DOM-based rendering (fallback) */}
             {!useKonvaPreview && (
-              <>
-                {/* Scale wrapper - maintains 1350×1350 internal canvas with perfect fit */}
+              <div 
+                ref={bannerContainerRef}
+                className="w-full aspect-square relative overflow-hidden"
+              >
                 <div 
-                  ref={bannerContainerRef}
+                  className="banner-scale-container absolute top-0 left-0 origin-top-left"
                   style={{
-                    width: '100%',
-                    aspectRatio: '1 / 1',
-                    position: 'relative',
-                    overflow: 'hidden'
+                    transform: `scale(${bannerScale})`,
+                    width: '1350px',
+                    height: '1350px',
                   }}
                 >
-                  <div 
-                    className="banner-scale-container"
-                    style={{
-                      transform: `scale(${bannerScale})`,
-                      transformOrigin: 'top left',
-                      width: '1350px',
-                      height: '1350px',
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      overflow: 'hidden'
-                    }}
-                  >
                 <div 
                   ref={bannerRef} 
                   id="banner-canvas" 
@@ -2234,11 +2222,10 @@ export default function BannerPreview() {
                 />
 
               </div>
-                </div>
-              </div>
             </div>
-            </>
-            )}
+          </div>
+        </div>
+      )}
           </div>
         </div>
 
