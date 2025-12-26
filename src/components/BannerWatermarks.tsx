@@ -20,13 +20,13 @@ const BannerWatermarks: React.FC<BannerWatermarksProps> = ({
   const watermarkCount = 5;
   const watermarks = Array.from({ length: watermarkCount }, (_, i) => i);
 
-  // Watermark text style - white color, 20% larger
+  // Watermark text style - white color, 30% larger
   const watermarkTextStyle: React.CSSProperties = {
-    fontSize: '16px', // 20% larger than 13px
+    fontSize: '21px', // 30% larger
     fontWeight: 700,
     fontFamily: 'Poppins, Arial, sans-serif',
     color: 'rgba(255, 255, 255, 0.85)',
-    letterSpacing: '2px',
+    letterSpacing: '3px',
     textTransform: 'uppercase',
     userSelect: 'none',
     whiteSpace: 'nowrap',
