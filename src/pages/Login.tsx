@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,7 @@ import { getUserRoleAndRedirect } from "@/hooks/useUserRole";
 import LiveActivityTicker from "@/components/LiveActivityTicker";
 import FloatingParticles from "@/components/FloatingParticles";
 import WhatsAppDiscovery from "@/components/WhatsAppDiscovery";
+import { useGlobalLoader } from "@/contexts/LoadingContext";
 
 // Zod validation schema for login
 const loginSchema = z.object({
@@ -22,6 +23,7 @@ const loginSchema = z.object({
 
 export default function Login() {
   const navigate = useNavigate();
+  const { showLoader, hideLoader } = useGlobalLoader();
   const [emailOrMobile, setEmailOrMobile] = useState("");
   const [pin, setPin] = useState(["", "", "", ""]);
   const [rememberMe, setRememberMe] = useState(false);
@@ -64,6 +66,7 @@ export default function Login() {
     }
 
     setLoading(true);
+    showLoader("Unlocking Your Account…");
 
     const paddedPassword = PIN_PREFIX + pinString;
 
@@ -90,102 +93,14 @@ export default function Login() {
       const { redirectPath, isAdmin } = await getUserRoleAndRedirect(result.data.user.id);
       
       toast.success(isAdmin ? "Welcome back, Admin!" : "Login successful!");
+      hideLoader();
       navigate(redirectPath, { replace: true });
+    } else {
+      hideLoader();
     }
 
     setLoading(false);
   };
-
-  // Show full-screen gold coin animation during login
-  if (loading) {
-    return (
-      <div className="min-h-screen relative overflow-hidden flex items-center justify-center" style={{ background: 'radial-gradient(ellipse at center, #0a1f1a 0%, #030a08 50%, #000000 100%)' }}>
-        {/* Floating Particles */}
-        <FloatingParticles />
-        
-        {/* Gold Coin Spinning Animation */}
-        <div className="flex flex-col items-center gap-6">
-          <motion.div
-            className="relative"
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.3 }}
-          >
-            {/* Outer Glow Ring */}
-            <motion.div
-              className="absolute inset-[-20px] rounded-full bg-gradient-to-r from-primary/40 via-yellow-400/40 to-primary/40 blur-xl"
-              animate={{ 
-                scale: [1, 1.2, 1],
-                opacity: [0.4, 0.7, 0.4]
-              }}
-              transition={{ 
-                duration: 2,
-                repeat: Infinity,
-                ease: "easeInOut"
-              }}
-            />
-            
-            {/* Spinning Coin Container */}
-            <motion.div
-              className="w-24 h-24 relative"
-              style={{ perspective: "1000px" }}
-            >
-              <motion.div
-                className="w-full h-full relative"
-                style={{ transformStyle: "preserve-3d" }}
-                animate={{ rotateY: 360 }}
-                transition={{
-                  duration: 1.5,
-                  repeat: Infinity,
-                  ease: "linear"
-                }}
-              >
-                {/* Coin Front */}
-                <div 
-                  className="absolute inset-0 rounded-full bg-gradient-to-br from-yellow-300 via-primary to-amber-600 flex items-center justify-center shadow-2xl border-4 border-yellow-400/50"
-                  style={{ backfaceVisibility: "hidden" }}
-                >
-                  <div className="text-4xl">💰</div>
-                  {/* Inner ring detail */}
-                  <div className="absolute inset-2 rounded-full border-2 border-yellow-200/30" />
-                </div>
-                
-                {/* Coin Back */}
-                <div 
-                  className="absolute inset-0 rounded-full bg-gradient-to-br from-amber-600 via-primary to-yellow-300 flex items-center justify-center shadow-2xl border-4 border-yellow-400/50"
-                  style={{ 
-                    backfaceVisibility: "hidden",
-                    transform: "rotateY(180deg)"
-                  }}
-                >
-                  <div className="text-4xl">⭐</div>
-                  {/* Inner ring detail */}
-                  <div className="absolute inset-2 rounded-full border-2 border-yellow-200/30" />
-                </div>
-              </motion.div>
-            </motion.div>
-          </motion.div>
-          
-          {/* Loading Text */}
-          <motion.div
-            className="text-center"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            <motion.p 
-              className="text-lg font-bold login-shimmer-text"
-              animate={{ opacity: [0.7, 1, 0.7] }}
-              transition={{ duration: 1.5, repeat: Infinity }}
-            >
-              Unlocking Your Account...
-            </motion.p>
-            <p className="text-sm text-muted-foreground mt-1">Please wait</p>
-          </motion.div>
-        </div>
-      </div>
-    );
-  }
 
   const isUnlocked = emailOrMobile.length > 0;
 
