@@ -100,7 +100,7 @@ const BannerWatermarks: React.FC<BannerWatermarksProps> = ({
       )}
 
       {/* PERMANENT: Mobile Number Watermark - Left Edge Vertical */}
-      {showMobileWatermark && (
+{showMobileWatermark && (
         <div
           id="mobile-watermark-permanent"
           className="absolute pointer-events-none"
@@ -108,7 +108,7 @@ const BannerWatermarks: React.FC<BannerWatermarksProps> = ({
             left: '0px',
             top: '50%',
             transform: 'translateY(-50%) rotate(-90deg)',
-            transformOrigin: '0 50%',
+            transformOrigin: 'center center',
             zIndex: 99,
             whiteSpace: 'nowrap',
           }}
