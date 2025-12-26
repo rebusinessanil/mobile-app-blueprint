@@ -1473,7 +1473,7 @@ export default function BannerPreview() {
         height: FIXED_SIZE,
         canvasWidth: FIXED_SIZE,
         canvasHeight: FIXED_SIZE,
-        pixelRatio: 1,
+        pixelRatio: 2, // HD export quality - 2x resolution for crisp output
         quality: 1,
         backgroundColor: null,
         filter: node => {
@@ -1567,16 +1567,23 @@ export default function BannerPreview() {
         <div className="relative w-full max-w-[500px] mx-auto overflow-hidden">
           <div className="border-4 border-primary rounded-2xl shadow-2xl overflow-hidden">
             {/* CSS Transform Scaled HTML Preview - Mimics Canvas behavior */}
+            {/* Parent wrapper with centering for perfect fit-to-box alignment */}
             <div 
               ref={bannerContainerRef}
-              className="w-full aspect-square relative overflow-hidden"
+              className="w-full aspect-square relative overflow-hidden flex justify-center items-start"
             >
+              {/* HD Rendering Container - Uses CSS optimizations for crisp downscaling */}
               <div 
-                className="banner-scale-container absolute top-0 left-0 origin-top-left"
+                className="banner-scale-container absolute top-0 left-0"
                 style={{
-                  transform: `scale(${bannerScale})`,
+                  transform: `scale(${bannerScale}) translateZ(0)`,
+                  transformOrigin: 'top left',
                   width: '1350px',
                   height: '1350px',
+                  imageRendering: '-webkit-optimize-contrast' as React.CSSProperties['imageRendering'],
+                  WebkitFontSmoothing: 'antialiased',
+                  backfaceVisibility: 'hidden',
+                  willChange: 'transform',
                 }}
               >
                 <div 
