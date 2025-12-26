@@ -52,17 +52,6 @@ const BannerWatermarks: React.FC<BannerWatermarksProps> = ({
 
   return (
     <>
-      {/* Black border around the banner */}
-      {showBrandWatermark && (
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            zIndex: 101,
-            border: '3px solid #000000',
-          }}
-        />
-      )}
-
       {/* PREVIEW-ONLY: Brand Watermark - Single strip on each edge */}
       {showBrandWatermark && (
         <div
