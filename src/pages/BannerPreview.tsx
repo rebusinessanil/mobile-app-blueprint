@@ -550,8 +550,11 @@ export default function BannerPreview() {
     return null;
   }
 
-  // Show loading UI until ALL assets are 100% loaded
-  if (!assetsLoaded || backgroundsLoading || !isDataReady) {
+  // Show loading UI for HTML mode only - Konva handles its own loading internally
+  // This bypasses the global asset preloader when using Konva canvas mode
+  const showGlobalLoading = !useKonvaPreview && (!assetsLoaded || backgroundsLoading || !isDataReady);
+  
+  if (showGlobalLoading) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
         <div className="w-full max-w-md">
@@ -1590,22 +1593,24 @@ export default function BannerPreview() {
       </header>
 
       {/* Banner Preview Container - Fixed at top, consistent across all devices */}
-      <div className="px-2 sm:px-4 py-2 sm:py-3 flex-shrink-0 bg-background">
+      <div className="px-2 sm:px-4 py-2 sm:py-3 flex-shrink-0 bg-background overflow-hidden">
         {/* Display wrapper - fixed max width for consistent laptop-like rendering */}
-        <div className="relative w-full max-w-[500px] mx-auto">
+        <div className="relative w-full max-w-[500px] mx-auto overflow-hidden">
           <div className="border-4 border-primary rounded-2xl shadow-2xl overflow-hidden">
             
             {/* KONVA PREVIEW - Canvas-based rendering (no flicker) */}
             {useKonvaPreview && (
-              <KonvaBannerPreview
-                ref={konvaBannerRef}
-                data={konvaData}
-                width="100%"
-                isPhotoFlipped={isPhotoFlipped}
-                isMentorPhotoFlipped={isMentorPhotoFlipped}
-                onReady={() => console.log('Konva banner ready')}
-                onError={(err) => console.error('Konva banner error:', err)}
-              />
+              <div style={{ aspectRatio: '1 / 1', width: '100%', overflow: 'hidden' }}>
+                <KonvaBannerPreview
+                  ref={konvaBannerRef}
+                  data={konvaData}
+                  width="100%"
+                  isPhotoFlipped={isPhotoFlipped}
+                  isMentorPhotoFlipped={isMentorPhotoFlipped}
+                  onReady={() => console.log('Konva banner ready')}
+                  onError={(err) => console.error('Konva banner error:', err)}
+                />
+              </div>
             )}
 
             {/* HTML PREVIEW - Original DOM-based rendering (fallback) */}
@@ -1630,7 +1635,8 @@ export default function BannerPreview() {
                       height: '1350px',
                       position: 'absolute',
                       top: 0,
-                      left: 0
+                      left: 0,
+                      overflow: 'hidden'
                     }}
                   >
                 <div 
