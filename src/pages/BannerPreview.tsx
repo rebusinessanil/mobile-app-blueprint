@@ -82,7 +82,7 @@ export default function BannerPreview() {
   const bannerRef = useRef<HTMLDivElement>(null);
   const konvaBannerRef = useRef<KonvaBannerPreviewHandle>(null);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [useKonvaPreview, setUseKonvaPreview] = useState(false); // Toggle for Konva vs HTML preview - disabled by default for now
+  const [useKonvaPreview, setUseKonvaPreview] = useState(true); // Toggle for Konva vs HTML preview - enabled by default
 
   // Sticker control states
   const [isDragMode, setIsDragMode] = useState(false);

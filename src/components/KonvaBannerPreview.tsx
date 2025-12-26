@@ -160,18 +160,35 @@ const KonvaBannerPreview = forwardRef<KonvaBannerPreviewHandle, KonvaBannerPrevi
     };
   }, []);
 
-  // --- Asset Loading Logic ---
+  // --- Asset Loading Logic with stable URL tracking ---
   useEffect(() => {
     let isMounted = true;
+
+    // Build URL key to prevent unnecessary reloads - includes all image sources
+    const uplineSources = data.uplineImgs?.map((u) => u.avatar).filter((src): src is string => !!src) || [];
+    const stickerSources = data.stickers?.map((s) => s.url).filter(Boolean) || [];
+    
+    const urlKey = [
+      data.bgImg,
+      data.achieverImg,
+      data.mentorPhoto,
+      data.logoLeft,
+      data.logoRight,
+      data.congratsImage,
+      ...uplineSources,
+      ...stickerSources,
+    ].filter(Boolean).join('|');
+
+    // Skip if URLs haven't changed
+    if (urlKey === loadedUrlsRef.current && loadedAssets) {
+      return;
+    }
 
     const loadAllAssets = async () => {
       try {
         setIsAssetsLoaded(false);
         setLoadingProgress(0);
 
-        const uplineSources = data.uplineImgs?.map((u) => u.avatar).filter((src): src is string => !!src) || [];
-        const stickerSources = data.stickers?.map((s) => s.url).filter(Boolean) || [];
-        
         const allSources = [
           data.bgImg,
           data.achieverImg,
@@ -183,7 +200,7 @@ const KonvaBannerPreview = forwardRef<KonvaBannerPreviewHandle, KonvaBannerPrevi
           ...stickerSources,
         ].filter(Boolean);
 
-        const totalImages = allSources.length;
+        const totalImages = Math.max(allSources.length, 1);
         let loadedCount = 0;
 
         const loadWithProgress = async (src: string | null | undefined) => {
@@ -191,7 +208,7 @@ const KonvaBannerPreview = forwardRef<KonvaBannerPreviewHandle, KonvaBannerPrevi
           const result = await preloadImage(src);
           if (isMounted) {
             loadedCount++;
-            setLoadingProgress(Math.round((loadedCount / Math.max(totalImages, 1)) * 100));
+            setLoadingProgress(Math.round((loadedCount / totalImages) * 100));
           }
           return result;
         };
@@ -209,6 +226,7 @@ const KonvaBannerPreview = forwardRef<KonvaBannerPreviewHandle, KonvaBannerPrevi
         const stickers = await Promise.all(stickerSources.map(loadWithProgress));
 
         if (isMounted) {
+          loadedUrlsRef.current = urlKey;
           setLoadedAssets({ 
             background, 
             achiever, 
@@ -224,19 +242,16 @@ const KonvaBannerPreview = forwardRef<KonvaBannerPreviewHandle, KonvaBannerPrevi
         }
       } catch (error) {
         console.error('Failed to load assets:', error);
-        onErrorRef.current?.(error as Error);
+        if (isMounted) {
+          onErrorRef.current?.(error as Error);
+        }
       }
     };
 
-    // Build URL key to prevent unnecessary reloads
-    const urlKey = [data.bgImg, data.achieverImg, data.mentorPhoto, data.logoLeft, data.logoRight].filter(Boolean).join('|');
-    if (urlKey !== loadedUrlsRef.current) {
-      loadedUrlsRef.current = urlKey;
-      loadAllAssets();
-    }
+    loadAllAssets();
 
     return () => { isMounted = false; };
-  }, [data.bgImg, data.achieverImg, data.mentorPhoto, data.logoLeft, data.logoRight]);
+  }, [data.bgImg, data.achieverImg, data.mentorPhoto, data.logoLeft, data.logoRight, data.congratsImage, data.uplineImgs, data.stickers, loadedAssets]);
 
   // Render category-specific content
   const renderCategoryContent = () => {
