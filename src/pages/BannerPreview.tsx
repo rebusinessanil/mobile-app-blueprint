@@ -1571,7 +1571,16 @@ export default function BannerPreview() {
             <ArrowLeft className="w-5 h-5 sm:w-6 sm:h-6 text-foreground" />
           </button>
           
-          <h1 className="text-base sm:text-xl md:text-2xl font-bold text-foreground tracking-widest">BANNER PREVIEW</h1>
+          <div className="flex flex-col items-center gap-1">
+            <h1 className="text-base sm:text-xl md:text-2xl font-bold text-foreground tracking-widest">BANNER PREVIEW</h1>
+            {/* Preview Mode Toggle */}
+            <button 
+              onClick={() => setUseKonvaPreview(prev => !prev)}
+              className="text-xs px-2 py-0.5 rounded-full border border-primary/50 text-primary hover:bg-primary/10 transition-colors"
+            >
+              {useKonvaPreview ? '🎨 Canvas' : '📄 HTML'}
+            </button>
+          </div>
           
           {isAdmin && <button onClick={() => setIsStickersOpen(true)} className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl border-2 border-primary bg-primary/10 flex items-center justify-center hover:bg-primary/20 transition-colors touch-target">
               <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
