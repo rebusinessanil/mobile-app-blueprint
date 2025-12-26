@@ -1615,7 +1615,11 @@ export default function BannerPreview() {
       {/* Header - Fixed */}
       <header className="bg-background/95 backdrop-blur-sm z-40 px-4 sm:px-6 py-3 sm:py-4 flex-shrink-0">
         <div className="flex items-center justify-between max-w-[600px] mx-auto">
-          <button onClick={() => navigate(-1)} className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl border-2 border-foreground flex items-center justify-center hover:bg-foreground/10 transition-colors touch-target">
+          {/* Back button: After download, behave like Home (instant redirect, not browser history) */}
+          <button 
+            onClick={downloadComplete ? handleGoHome : () => navigate(-1)} 
+            className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl border-2 border-foreground flex items-center justify-center hover:bg-foreground/10 transition-colors touch-target active:scale-95"
+          >
             <ArrowLeft className="w-5 h-5 sm:w-6 sm:h-6 text-foreground" />
           </button>
           
@@ -2280,13 +2284,14 @@ export default function BannerPreview() {
         )}
 
         {/* Post-Download Action Buttons - Shown only after successful download */}
+        {/* Instant response: No debounce, no waiting state - buttons respond immediately */}
         {downloadComplete && (
           <div className="flex items-center justify-center gap-4 px-4 mt-4">
             <Button
               onClick={handleGoHome}
               variant="outline"
               size="lg"
-              className="flex-1 max-w-[160px] h-14 gap-2 border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground font-semibold text-base rounded-xl"
+              className="flex-1 max-w-[160px] h-14 gap-2 border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground font-semibold text-base rounded-xl active:scale-95 transition-transform"
             >
               <Home className="w-5 h-5" />
               Home
@@ -2294,7 +2299,7 @@ export default function BannerPreview() {
             <Button
               onClick={handleShare}
               size="lg"
-              className="flex-1 max-w-[160px] h-14 gap-2 bg-[#25D366] hover:bg-[#128C7E] text-white font-semibold text-base rounded-xl shadow-lg"
+              className="flex-1 max-w-[160px] h-14 gap-2 bg-[#25D366] hover:bg-[#128C7E] text-white font-semibold text-base rounded-xl shadow-lg active:scale-95 transition-transform"
             >
               <Share2 className="w-5 h-5" />
               Share
