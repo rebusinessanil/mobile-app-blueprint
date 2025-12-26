@@ -169,12 +169,18 @@ export default function BannerPreview() {
 
   // Handle Home button - Full refresh and cache clear
   const handleGoHome = useCallback(() => {
-    // Clear banner preview state
+    // Clear all banner preview state immediately
     setDownloadComplete(false);
     setDownloadedBannerUrl(null);
+    setIsDownloading(false);
+    setStickers([]);
+    setSlotStickers({});
+    setStickerImages({});
     
-    // Navigate to dashboard with full page refresh to clear all cached state
-    window.location.href = '/dashboard';
+    // Replace current history entry to prevent back navigation to banner preview
+    // Then navigate to dashboard with full page refresh to clear all cached state
+    window.history.replaceState(null, '', '/dashboard');
+    window.location.replace('/dashboard');
   }, []);
 
   // Handle Share button - Share banner with WhatsApp priority
