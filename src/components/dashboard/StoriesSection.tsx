@@ -1,4 +1,4 @@
-import { Suspense, lazy, memo } from "react";
+import { memo } from "react";
 import StoryCard from "./StoryCard";
 
 interface StoriesSectionProps {
@@ -11,8 +11,10 @@ function StoriesSectionContent({ festivals, storiesEvents, generatedStories }: S
   const birthdayEvents = storiesEvents.filter(e => e.event_type === 'birthday');
   const anniversaryEvents = storiesEvents.filter(e => e.event_type === 'anniversary');
   const otherEvents = storiesEvents.filter(e => e.event_type !== 'birthday' && e.event_type !== 'anniversary');
-  const activeStories = generatedStories.filter(s => s.status === 'active');
-  const previewStories = generatedStories.filter(s => s.status === 'preview_only');
+  
+  // Filter by story_status: true = Active, false = Upcoming
+  const activeStories = generatedStories.filter(s => s.story_status === true);
+  const upcomingStories = generatedStories.filter(s => s.story_status === false);
 
   const hasContent = festivals.length > 0 || storiesEvents.length > 0 || generatedStories.length > 0;
 
@@ -42,7 +44,7 @@ function StoriesSectionContent({ festivals, storiesEvents, generatedStories }: S
                   id={festival.id}
                   title={festival.festival_name}
                   imageUrl={festival.poster_url}
-                  isActive={festival.is_active}
+                  storyStatus={festival.story_status}
                   linkTo={`/festival-preview/${festival.id}`}
                 />
               ))}
@@ -61,7 +63,7 @@ function StoriesSectionContent({ festivals, storiesEvents, generatedStories }: S
                   id={event.id}
                   title={event.title || event.person_name}
                   imageUrl={event.poster_url}
-                  isActive={event.is_active}
+                  storyStatus={event.story_status}
                   linkTo={`/story-preview/${event.id}`}
                 />
               ))}
@@ -80,7 +82,7 @@ function StoriesSectionContent({ festivals, storiesEvents, generatedStories }: S
                   id={event.id}
                   title={event.title || event.person_name}
                   imageUrl={event.poster_url}
-                  isActive={event.is_active}
+                  storyStatus={event.story_status}
                   linkTo={`/story-preview/${event.id}`}
                 />
               ))}
@@ -88,10 +90,10 @@ function StoriesSectionContent({ festivals, storiesEvents, generatedStories }: S
           </div>
         )}
 
-        {/* Auto Generated Stories */}
+        {/* Active Stories (story_status = true) */}
         {activeStories.length > 0 && (
           <div className="flex-shrink-0 space-y-1.5" style={{ scrollSnapAlign: 'start' }}>
-            <h3 className="text-xs font-semibold text-primary">Auto Generated</h3>
+            <h3 className="text-xs font-semibold text-primary">Active Now</h3>
             <div className="flex gap-2">
               {activeStories.slice(0, 8).map((story) => (
                 <StoryCard
@@ -99,7 +101,7 @@ function StoriesSectionContent({ festivals, storiesEvents, generatedStories }: S
                   id={story.id}
                   title={story.title}
                   imageUrl={story.poster_url}
-                  isActive={true}
+                  storyStatus={true}
                   linkTo={`/story/${story.id}`}
                 />
               ))}
@@ -107,18 +109,18 @@ function StoriesSectionContent({ festivals, storiesEvents, generatedStories }: S
           </div>
         )}
 
-        {/* Preview Stories */}
-        {previewStories.length > 0 && (
+        {/* Upcoming Stories (story_status = false) */}
+        {upcomingStories.length > 0 && (
           <div className="flex-shrink-0 space-y-1.5" style={{ scrollSnapAlign: 'start' }}>
             <h3 className="text-xs font-semibold text-primary">Coming Soon</h3>
             <div className="flex gap-2">
-              {previewStories.slice(0, 8).map((story) => (
+              {upcomingStories.slice(0, 8).map((story) => (
                 <StoryCard
                   key={story.id}
                   id={story.id}
                   title={story.title}
                   imageUrl={story.poster_url}
-                  isPreview={true}
+                  storyStatus={false}
                   previewLabel="Tomorrow"
                   linkTo=""
                 />
@@ -138,7 +140,7 @@ function StoriesSectionContent({ festivals, storiesEvents, generatedStories }: S
                   id={event.id}
                   title={event.title || event.person_name}
                   imageUrl={event.poster_url}
-                  isActive={event.is_active}
+                  storyStatus={event.story_status}
                   linkTo={`/story-preview/${event.id}`}
                 />
               ))}

@@ -5,14 +5,14 @@ export interface UnifiedStory {
   id: string;
   title: string;
   cover_image_url: string;
-  status: "active" | "preview_only" | "inactive" | "expired";
+  story_status: boolean | null; // false = Upcoming, true = Active, null = Hidden
   story_type: "generated";
   source_type?: "event" | "festival";
   event_date?: string;
   expires_at?: string;
   is_active?: boolean;
   created_at: string;
-  background_url?: string; // First active background from story_background_slots
+  background_url?: string;
 }
 
 export const useUnifiedStories = () => {
@@ -24,12 +24,11 @@ export const useUnifiedStories = () => {
     try {
       setLoading(true);
 
-      // Fetch auto-generated stories
+      // Fetch stories where story_status is NOT null (only visible stories)
       const { data: generatedStories, error: generatedError } = await supabase
         .from("stories_generated")
         .select("*")
-        .in("status", ["preview_only", "active"])
-        .gte("expires_at", new Date().toISOString())
+        .not("story_status", "is", null) // Only fetch non-null story_status
         .order("event_date", { ascending: true });
 
       if (generatedError) throw generatedError;
@@ -49,13 +48,13 @@ export const useUnifiedStories = () => {
             id: story.id,
             title: story.title,
             cover_image_url: story.poster_url,
-            status: story.status as "active" | "preview_only" | "expired",
+            story_status: story.story_status as boolean | null,
             story_type: "generated" as const,
             source_type: story.source_type as "event" | "festival",
             event_date: story.event_date,
             expires_at: story.expires_at,
             created_at: story.created_at,
-            background_url: slots?.[0]?.image_url || story.poster_url, // Use first slot or fallback to poster
+            background_url: slots?.[0]?.image_url || story.poster_url,
           };
         })
       );

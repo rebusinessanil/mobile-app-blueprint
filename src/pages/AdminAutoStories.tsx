@@ -30,7 +30,7 @@ export default function AdminAutoStories() {
   const [editingFestival, setEditingFestival] = useState<any>(null);
 
   const [eventFormData, setEventFormData] = useState({
-    event_type: "birthday" as "birthday" | "anniversary",
+    event_type: "birthday" as string,
     event_date: "",
     person_name: "",
     poster_url: "",
