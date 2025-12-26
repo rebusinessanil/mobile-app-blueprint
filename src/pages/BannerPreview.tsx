@@ -1628,7 +1628,8 @@ export default function BannerPreview() {
       </header>
 
       {/* Banner Preview Container - Fixed at top, consistent across all devices */}
-      <div className="px-2 sm:px-4 py-2 sm:py-3 flex-shrink-0 bg-background overflow-hidden">
+      {/* When download is complete, freeze the preview (pointer-events: none) */}
+      <div className={`px-2 sm:px-4 py-2 sm:py-3 flex-shrink-0 bg-background overflow-hidden ${downloadComplete ? 'pointer-events-none' : ''}`}>
         {/* Display wrapper - fixed max width for consistent laptop-like rendering */}
         <div className="relative w-full max-w-[500px] mx-auto overflow-hidden">
           <div className="border-4 border-primary rounded-2xl shadow-2xl overflow-hidden">
@@ -2254,29 +2255,28 @@ export default function BannerPreview() {
         </div>
       </div>
 
-        {/* Profile Avatars (Left) + Download Button (Right) */}
-        <div className="flex items-center justify-between px-2 sm:px-4 mt-3 sm:mt-4 gap-2">
-          {/* Left: Profile Images Row - Clickable to change main photo */}
-          <div className="flex gap-2 sm:gap-3 overflow-x-auto scrollbar-hide">
-            {profilePhotos.slice(0, 6).map((photo, idx) => <button key={photo.id} onClick={() => {
-            setSelectedMentorPhotoIndex(idx);
-            setIsMentorPhotoFlipped(!isMentorPhotoFlipped);
-          }} className={`h-8 w-8 sm:h-10 sm:w-10 rounded-full border-2 object-cover flex-shrink-0 shadow-lg ${selectedMentorPhotoIndex === idx ? 'border-[#FFD700] ring-2 ring-[#FFD700] ring-offset-2 ring-offset-[#0B0E15]' : 'border-gray-500'}`}>
-                <img src={photo.photo_url} alt="Profile" className="w-full h-full rounded-full object-cover" />
-              </button>)}
-            {profilePhotos.length > 6 && <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full border-2 border-[#FFD700] bg-[#111827] flex items-center justify-center text-[#FFD700] text-[10px] sm:text-xs font-bold flex-shrink-0">
-                +{profilePhotos.length - 6}
-              </div>}
-          </div>
+        {/* Profile Avatars (Left) + Download Button (Right) - Hidden after download */}
+        {!downloadComplete && (
+          <div className="flex items-center justify-between px-2 sm:px-4 mt-3 sm:mt-4 gap-2">
+            {/* Left: Profile Images Row - Clickable to change main photo */}
+            <div className="flex gap-2 sm:gap-3 overflow-x-auto scrollbar-hide">
+              {profilePhotos.slice(0, 6).map((photo, idx) => <button key={photo.id} onClick={() => {
+              setSelectedMentorPhotoIndex(idx);
+              setIsMentorPhotoFlipped(!isMentorPhotoFlipped);
+            }} className={`h-8 w-8 sm:h-10 sm:w-10 rounded-full border-2 object-cover flex-shrink-0 shadow-lg ${selectedMentorPhotoIndex === idx ? 'border-[#FFD700] ring-2 ring-[#FFD700] ring-offset-2 ring-offset-[#0B0E15]' : 'border-gray-500'}`}>
+                  <img src={photo.photo_url} alt="Profile" className="w-full h-full rounded-full object-cover" />
+                </button>)}
+              {profilePhotos.length > 6 && <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full border-2 border-[#FFD700] bg-[#111827] flex items-center justify-center text-[#FFD700] text-[10px] sm:text-xs font-bold flex-shrink-0">
+                  +{profilePhotos.length - 6}
+                </div>}
+            </div>
 
-          {/* Right: Download Button */}
-          {/* Right: Download Button - Hidden after download complete */}
-          {!downloadComplete && (
+            {/* Right: Download Button */}
             <button onClick={handleDownload} disabled={isDownloading} className="cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0">
               <img src={downloadIcon} alt="Download" className="h-12 w-auto sm:h-16" />
             </button>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Post-Download Action Buttons - Shown only after successful download */}
         {downloadComplete && (
@@ -2302,8 +2302,8 @@ export default function BannerPreview() {
         )}
       </div>
 
-      {/* Scrollable Slot Selector Box - All 16 slots with FULL banner preview (proxy mode) */}
-      {globalBackgroundSlots.length > 0 && <div className="flex-1 min-h-0 px-3 sm:px-4 pb-3 sm:pb-4">
+      {/* Scrollable Slot Selector Box - Hidden after download (preview is frozen) */}
+      {!downloadComplete && globalBackgroundSlots.length > 0 && <div className="flex-1 min-h-0 px-3 sm:px-4 pb-3 sm:pb-4">
           <div className="h-full overflow-y-auto rounded-2xl sm:rounded-3xl bg-[#111827]/50 border-2 border-[#FFD700]/20 p-3 sm:p-4 shadow-[0_0_30px_rgba(255,215,0,0.1)] scrollbar-thin scrollbar-thumb-[#FFD700]/30 scrollbar-track-transparent">
             <div className="grid grid-cols-4 gap-2 sm:gap-3">
               {globalBackgroundSlots.map(slot => {
