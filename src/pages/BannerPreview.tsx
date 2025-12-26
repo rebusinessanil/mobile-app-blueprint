@@ -167,6 +167,63 @@ export default function BannerPreview() {
     setIsLayoutReady(true);
   }, []);
 
+  // Handle Home button - Full refresh and cache clear
+  const handleGoHome = useCallback(() => {
+    // Clear banner preview state
+    setDownloadComplete(false);
+    setDownloadedBannerUrl(null);
+    
+    // Navigate to dashboard with full page refresh to clear all cached state
+    window.location.href = '/dashboard';
+  }, []);
+
+  // Handle Share button - Share banner with WhatsApp priority
+  const handleShare = useCallback(async () => {
+    if (!downloadedBannerUrl) {
+      toast.error("No banner to share. Please download first.");
+      return;
+    }
+
+    const appLink = "https://rebusiness.lovable.app";
+    const shareText = `🎉 Check out my achievement banner created with ReBusiness!\n\n📲 Create your own stunning banners: ${appLink}`;
+
+    // Convert base64 to blob for sharing
+    const base64Response = await fetch(downloadedBannerUrl);
+    const blob = await base64Response.blob();
+    const file = new File([blob], 'ReBusiness-Banner.png', { type: 'image/png' });
+
+    // Check if native sharing is supported (mobile browsers)
+    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({
+          title: 'My ReBusiness Banner',
+          text: shareText,
+          files: [file]
+        });
+        toast.success("Shared successfully!");
+      } catch (error) {
+        // User cancelled or share failed
+        if ((error as Error).name !== 'AbortError') {
+          console.error("Share failed:", error);
+          // Fallback to WhatsApp
+          openWhatsAppShare(shareText);
+        }
+      }
+    } else {
+      // Fallback: Open WhatsApp with text (image sharing not supported in web)
+      openWhatsAppShare(shareText);
+    }
+  }, [downloadedBannerUrl]);
+
+  // WhatsApp share fallback
+  const openWhatsAppShare = (text: string) => {
+    const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+    window.open(whatsappUrl, '_blank');
+    toast.info("Opening WhatsApp... Share your downloaded banner along with the message!", {
+      duration: 5000
+    });
+  };
+
   // ResizeObserver-based scaling - updates on container resize
   useLayoutEffect(() => {
     if (!bannerContainerRef.current) return;
@@ -1550,63 +1607,6 @@ export default function BannerPreview() {
     } finally {
       setIsDownloading(false);
     }
-  };
-
-  // Handle Home button - Full refresh and cache clear
-  const handleGoHome = useCallback(() => {
-    // Clear banner preview state
-    setDownloadComplete(false);
-    setDownloadedBannerUrl(null);
-    
-    // Navigate to dashboard with full page refresh to clear all cached state
-    window.location.href = '/dashboard';
-  }, []);
-
-  // Handle Share button - Share banner with WhatsApp priority
-  const handleShare = useCallback(async () => {
-    if (!downloadedBannerUrl) {
-      toast.error("No banner to share. Please download first.");
-      return;
-    }
-
-    const appLink = "https://rebusiness.lovable.app";
-    const shareText = `🎉 Check out my achievement banner created with ReBusiness!\n\n📲 Create your own stunning banners: ${appLink}`;
-
-    // Convert base64 to blob for sharing
-    const base64Response = await fetch(downloadedBannerUrl);
-    const blob = await base64Response.blob();
-    const file = new File([blob], 'ReBusiness-Banner.png', { type: 'image/png' });
-
-    // Check if native sharing is supported (mobile browsers)
-    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-      try {
-        await navigator.share({
-          title: 'My ReBusiness Banner',
-          text: shareText,
-          files: [file]
-        });
-        toast.success("Shared successfully!");
-      } catch (error) {
-        // User cancelled or share failed
-        if ((error as Error).name !== 'AbortError') {
-          console.error("Share failed:", error);
-          // Fallback to WhatsApp
-          openWhatsAppShare(shareText);
-        }
-      }
-    } else {
-      // Fallback: Open WhatsApp with text (image sharing not supported in web)
-      openWhatsAppShare(shareText);
-    }
-  }, [downloadedBannerUrl]);
-
-  // WhatsApp share fallback
-  const openWhatsAppShare = (text: string) => {
-    const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
-    window.open(whatsappUrl, '_blank');
-    toast.info("Opening WhatsApp... Share your downloaded banner along with the message!", {
-      duration: 5000
-    });
   };
 
   // *** BANNER IS NOW READY - Render instantly without animations ***
