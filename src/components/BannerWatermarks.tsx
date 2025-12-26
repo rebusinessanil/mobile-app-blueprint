@@ -115,12 +115,13 @@ const BannerWatermarks: React.FC<BannerWatermarksProps> = ({
         >
           <span
             style={{
-              fontSize: '10px',
-              fontWeight: 500,
+              fontSize: '11.5px',
+              fontWeight: 800,
               fontFamily: 'Inter, sans-serif',
-              color: 'rgba(255, 255, 255, 0.08)',
+              color: 'rgba(255, 255, 255, 0.20)',
               letterSpacing: '1px',
               userSelect: 'none',
+              WebkitTextStroke: '0.3px rgba(255, 255, 255, 0.20)',
             }}
           >
             Promotional Call +91 77349 90035
