@@ -93,11 +93,15 @@ export default function AuthGuard({ children }: AuthGuardProps) {
         setUser(session?.user ?? null);
         
         if (event === 'SIGNED_OUT') {
-          // Clear localStorage bypass on sign out
+          // Clear ALL localStorage and sessionStorage on sign out
           try {
-            localStorage.removeItem(PROFILE_GATE_BYPASS_KEY);
+            localStorage.clear();
+            sessionStorage.clear();
           } catch {}
-          navigate("/login", { replace: true });
+          
+          // Replace history to prevent back navigation to authenticated pages
+          window.history.replaceState(null, '', '/dashboard');
+          window.location.replace('/dashboard');
         }
       }
     );

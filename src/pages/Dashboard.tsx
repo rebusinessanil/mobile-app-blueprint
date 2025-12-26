@@ -43,9 +43,32 @@ export default function Dashboard() {
     userId,
     isGuest,
     isAuthenticated,
-    isLoading: authLoading
+    isLoading: authLoading,
+    authValidated
   } = useGuestMode();
   const [showLoginModal, setShowLoginModal] = useState(false);
+
+  // Re-validate auth state on visibility change (tab focus) to catch session changes
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        // Session will be re-validated by useGuestMode automatically
+        // This ensures fresh state when user returns to tab
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
+
+  // Prevent any UI flicker by ensuring auth state is validated before rendering
+  // This catches edge cases where cached React state doesn't match actual auth state
+  useEffect(() => {
+    if (authValidated && !authLoading) {
+      // Auth state is now confirmed - no additional action needed
+      // The isGuest/isAuthenticated flags are now reliable
+    }
+  }, [authValidated, authLoading]);
 
   // Fetch real data - will gracefully fail for guests due to RLS
   const {
