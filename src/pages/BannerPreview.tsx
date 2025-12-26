@@ -2217,28 +2217,29 @@ export default function BannerPreview() {
             <div className="grid grid-cols-4 gap-2 sm:gap-3">
               {globalBackgroundSlots.map(slot => {
             const isSelected = selectedTemplate === slot.slotNumber - 1;
-            // Only pass real data to selected slot; non-selected slots use proxy-only (no achiever data)
+            // ALL 16 slots show static dummy/proxy content - no user data in mini previews
+            // Only the main banner preview shows real achiever data
             return <SlotPreviewMini
                 key={slot.slotNumber}
                 slot={slot}
                 isSelected={isSelected}
                 onClick={() => setSelectedTemplate(slot.slotNumber - 1)}
                 categoryType={bannerData?.categoryType}
-                // Only selected slot shows real data - others remain proxy-only
-                rankName={isSelected ? bannerData?.rankName : ''}
-                name={isSelected ? bannerData?.name : ''}
-                teamCity={isSelected ? bannerData?.teamCity : ''}
-                chequeAmount={isSelected ? bannerData?.chequeAmount : ''}
-                tripName={isSelected ? bannerData?.tripName : ''}
-                message={isSelected ? bannerData?.message : ''}
-                quote={isSelected ? bannerData?.quote : ''}
-                congratulationsImage={isSelected ? bannerDefaults?.congratulations_image : undefined}
-                logoLeft={isSelected ? bannerSettings?.logo_left : undefined}
-                logoRight={isSelected ? bannerSettings?.logo_right : undefined}
-                uplines={isSelected ? displayUplines : []}
+                // No user/achiever data passed - all slots remain proxy-only
+                rankName=""
+                name=""
+                teamCity=""
+                chequeAmount=""
+                tripName=""
+                message=""
+                quote=""
+                congratulationsImage={undefined}
+                logoLeft={undefined}
+                logoRight={undefined}
+                uplines={[]}
                 stickers={stickerImages[slot.slotNumber] || []}
-                profileName={isSelected ? profileName : ''}
-                profileRank={isSelected ? displayRank : ''}
+                profileName=""
+                profileRank=""
               />;
           })}
             </div>
