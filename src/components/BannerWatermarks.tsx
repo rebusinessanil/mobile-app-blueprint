@@ -16,16 +16,16 @@ const BannerWatermarks: React.FC<BannerWatermarksProps> = ({
   showBrandWatermark = true,
   showMobileWatermark = true,
 }) => {
-  // Generate repeating watermark instances for full vertical coverage
-  const watermarkCount = 10;
+  // 5 repeating watermarks
+  const watermarkCount = 5;
   const watermarks = Array.from({ length: watermarkCount }, (_, i) => i);
 
-  // Watermark text style
+  // Watermark text style - white color, 20% larger
   const watermarkTextStyle: React.CSSProperties = {
-    fontSize: '13px',
+    fontSize: '16px', // 20% larger than 13px
     fontWeight: 700,
     fontFamily: 'Poppins, Arial, sans-serif',
-    color: 'rgba(80, 80, 80, 0.85)',
+    color: 'rgba(255, 255, 255, 0.85)',
     letterSpacing: '2px',
     textTransform: 'uppercase',
     userSelect: 'none',
@@ -39,47 +39,42 @@ const BannerWatermarks: React.FC<BannerWatermarksProps> = ({
     position: 'absolute',
     top: 0,
     bottom: 0,
-    width: '28px',
-    backgroundColor: 'rgba(180, 180, 180, 0.70)',
-    borderLeft: '1px solid rgba(120, 120, 120, 0.4)',
-    borderRight: '1px solid rgba(120, 120, 120, 0.4)',
+    width: '32px',
+    backgroundColor: 'rgba(100, 100, 100, 0.65)',
+    borderLeft: '1px solid rgba(80, 80, 80, 0.5)',
+    borderRight: '1px solid rgba(80, 80, 80, 0.5)',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'space-around',
-    padding: '8px 0',
+    padding: '12px 0',
   };
 
   return (
     <>
-      {/* PREVIEW-ONLY: Brand Watermark - Repeating vertical "© Re Business" on edges */}
+      {/* Black border around the banner */}
+      {showBrandWatermark && (
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            zIndex: 101,
+            border: '3px solid #000000',
+          }}
+        />
+      )}
+
+      {/* PREVIEW-ONLY: Brand Watermark - Single strip on each edge */}
       {showBrandWatermark && (
         <div
           id="brand-watermark-preview"
           className="absolute inset-0 pointer-events-none overflow-hidden"
           style={{ zIndex: 100 }}
         >
-          {/* LEFT EDGE - Two vertical watermark strips */}
-          {/* First left strip - at 8% */}
-          <div style={{ ...stripStyle, left: '8%' }}>
+          {/* LEFT EDGE - Single vertical watermark strip */}
+          <div style={{ ...stripStyle, left: '12%' }}>
             {watermarks.map((i) => (
               <span
-                key={`left1-${i}`}
-                style={{
-                  ...watermarkTextStyle,
-                  transform: 'rotate(180deg)',
-                }}
-              >
-                © Re Business
-              </span>
-            ))}
-          </div>
-          
-          {/* Second left strip - at 15% */}
-          <div style={{ ...stripStyle, left: '15%' }}>
-            {watermarks.map((i) => (
-              <span
-                key={`left2-${i}`}
+                key={`left-${i}`}
                 style={{
                   ...watermarkTextStyle,
                   transform: 'rotate(180deg)',
@@ -90,24 +85,11 @@ const BannerWatermarks: React.FC<BannerWatermarksProps> = ({
             ))}
           </div>
 
-          {/* RIGHT EDGE - Two vertical watermark strips */}
-          {/* First right strip - at 85% */}
-          <div style={{ ...stripStyle, right: '15%', left: 'auto' }}>
+          {/* RIGHT EDGE - Single vertical watermark strip */}
+          <div style={{ ...stripStyle, right: '12%', left: 'auto' }}>
             {watermarks.map((i) => (
               <span
-                key={`right1-${i}`}
-                style={watermarkTextStyle}
-              >
-                © Re Business
-              </span>
-            ))}
-          </div>
-          
-          {/* Second right strip - at 92% */}
-          <div style={{ ...stripStyle, right: '8%', left: 'auto' }}>
-            {watermarks.map((i) => (
-              <span
-                key={`right2-${i}`}
+                key={`right-${i}`}
                 style={watermarkTextStyle}
               >
                 © Re Business
