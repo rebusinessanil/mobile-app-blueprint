@@ -100,12 +100,12 @@ const BannerWatermarks: React.FC<BannerWatermarksProps> = ({
       )}
 
       {/* PERMANENT: Mobile Number Watermark - Left Edge Vertical */}
-      {showMobileWatermark && (
+{showMobileWatermark && (
         <div
           id="mobile-watermark-permanent"
           className="absolute pointer-events-none"
           style={{
-            left: '30%',
+            left: '0px',
             top: '50%',
             transform: 'translateY(-50%) rotate(-90deg)',
             transformOrigin: 'center center',
@@ -115,16 +115,16 @@ const BannerWatermarks: React.FC<BannerWatermarksProps> = ({
         >
           <span
             style={{
-              fontSize: '23.4px',
-              fontWeight: 900,
+              fontSize: '19.5px',
+              fontWeight: 800,
               fontFamily: 'Inter, sans-serif',
-              color: 'rgba(245, 245, 245, 0.22)',
-              letterSpacing: '2px',
+              color: 'rgba(255, 255, 255, 0.20)',
+              letterSpacing: '1.5px',
               userSelect: 'none',
-              WebkitTextStroke: '0.8px rgba(245, 245, 245, 0.22)',
+              WebkitTextStroke: '0.5px rgba(255, 255, 255, 0.20)',
             }}
           >
-            Design By - +91 77349 90035
+            Promotional Call +91 77349 90035
           </span>
         </div>
       )}
