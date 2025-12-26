@@ -63,6 +63,13 @@ export default function BannerPreview() {
   const [selectedTemplate, setSelectedTemplate] = useState(0);
   const [stickers, setStickers] = useState<Sticker[]>([]);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [showResolutionPicker, setShowResolutionPicker] = useState(false);
+  type Resolution = 'hd' | 'fullhd' | '4k';
+  const resolutionOptions: Record<Resolution, { label: string; size: number; cost: number }> = {
+    hd: { label: 'HD (1080px)', size: 1080, cost: 5 },
+    fullhd: { label: 'Full HD (1350px)', size: 1350, cost: 10 },
+    '4k': { label: '4K Ultra (2700px)', size: 2700, cost: 20 },
+  };
   const [userId, setUserId] = useState<string | null>(null);
   const [isPhotoFlipped, setIsPhotoFlipped] = useState(false);
   const [isMentorPhotoFlipped, setIsMentorPhotoFlipped] = useState(false);
@@ -1417,7 +1424,7 @@ export default function BannerPreview() {
       toast.error("Failed to save profile defaults");
     }
   };
-  const handleDownload = async () => {
+  const handleDownload = async (resolution: Resolution = 'fullhd') => {
     if (!bannerRef.current) {
       toast.error("Banner not ready for download");
       return;
@@ -1426,23 +1433,28 @@ export default function BannerPreview() {
       toast.error("Please login to download banners");
       return;
     }
+    
+    const { size: targetSize, cost, label } = resolutionOptions[resolution];
     const categoryName = bannerData?.categoryType ? bannerData.categoryType.charAt(0).toUpperCase() + bannerData.categoryType.slice(1) : bannerData?.rankName || "Banner";
 
     // Step 1: Quick balance check first (before generation)
     const {
       data: credits
     } = await supabase.from("user_credits").select("balance").eq("user_id", userId).single();
-    if ((credits?.balance || 0) < 10) {
+    if ((credits?.balance || 0) < cost) {
       setShowInsufficientBalanceModal(true);
+      setShowResolutionPicker(false);
       return;
     }
 
     // Step 2: Generate banner
     setIsDownloading(true);
-    const loadingToast = toast.loading("Generating ultra HD banner...");
+    setShowResolutionPicker(false);
+    const loadingToast = toast.loading(`Generating ${label} banner...`);
     try {
-      // STRICT FIXED CANVAS: Force exactly 1350×1350px - no devicePixelRatio influence
-      const FIXED_SIZE = 1350;
+      // Base canvas size is 1350px, scale up/down for target resolution
+      const BASE_SIZE = 1350;
+      const scaleFactor = targetSize / BASE_SIZE;
       
       // Temporarily remove the scale transform for full-resolution capture
       const bannerElement = bannerRef.current;
@@ -1450,18 +1462,18 @@ export default function BannerPreview() {
       const originalWidth = bannerElement.style.width;
       const originalHeight = bannerElement.style.height;
       
-      // Reset to full size for export
+      // Reset to base size for export (the pixelRatio will handle upscaling)
       bannerElement.style.transform = 'scale(1)';
-      bannerElement.style.width = `${FIXED_SIZE}px`;
-      bannerElement.style.height = `${FIXED_SIZE}px`;
+      bannerElement.style.width = `${BASE_SIZE}px`;
+      bannerElement.style.height = `${BASE_SIZE}px`;
       
       const dataUrl = await toPng(bannerElement, {
         cacheBust: true,
-        width: FIXED_SIZE,
-        height: FIXED_SIZE,
-        canvasWidth: FIXED_SIZE,
-        canvasHeight: FIXED_SIZE,
-        pixelRatio: 1,
+        width: BASE_SIZE,
+        height: BASE_SIZE,
+        canvasWidth: targetSize,
+        canvasHeight: targetSize,
+        pixelRatio: scaleFactor,
         quality: 1,
         backgroundColor: null,
         filter: node => {
@@ -1490,7 +1502,7 @@ export default function BannerPreview() {
       const {
         success,
         insufficientBalance
-      } = await checkAndDeductBalance(userId, categoryName, dataUrl, templateId);
+      } = await checkAndDeductBalance(userId, categoryName, dataUrl, templateId, cost);
 
       // Step 4: If insufficient balance (race condition), show modal
       if (insufficientBalance) {
@@ -1505,7 +1517,8 @@ export default function BannerPreview() {
 
       // Step 6: Download the banner after successful deduction
       const timestamp = new Date().getTime();
-      download(dataUrl, `ReBusiness-Banner-${categoryName}-${timestamp}.png`);
+      const resLabel = resolution.toUpperCase();
+      download(dataUrl, `ReBusiness-Banner-${categoryName}-${resLabel}-${timestamp}.png`);
 
       // Calculate approximate size (base64 size estimation)
       const sizeMB = (dataUrl.length * 0.75 / (1024 * 1024)).toFixed(2);
@@ -1515,15 +1528,15 @@ export default function BannerPreview() {
         data: updatedCredits
       } = await supabase.from("user_credits").select("balance").eq("user_id", userId).single();
       const remainingBalance = updatedCredits?.balance || 0;
-      toast.success(`Banner saved to your device! (${sizeMB} MB) • ₹10 deducted`, {
-        description: `Remaining balance: ₹${remainingBalance}. Check your Downloads or Gallery app to access your banner.`,
+      toast.success(`${label} banner saved! (${sizeMB} MB) • ₹${cost} deducted`, {
+        description: `Remaining balance: ₹${remainingBalance}. Check your Downloads or Gallery app.`,
         duration: 6000
       });
     } catch (error) {
       console.error("Banner download failed:", error);
       toast.dismiss(loadingToast);
       toast.error("Download failed. Please try again later.", {
-        description: "Check your internet connection and ensure storage access is allowed. If the issue persists, contact support.",
+        description: "Check your internet connection and ensure storage access is allowed.",
         duration: 7000
       });
     } finally {
@@ -2181,10 +2194,39 @@ export default function BannerPreview() {
               </div>}
           </div>
 
-          {/* Right: Download Button */}
-          <button onClick={handleDownload} disabled={isDownloading} className="cursor-pointer transition-transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0">
-            <img src={downloadIcon} alt="Download" className="h-12 w-auto sm:h-16" />
-          </button>
+          {/* Right: Download Button - opens resolution picker */}
+          <div className="relative flex-shrink-0">
+            <button 
+              onClick={() => setShowResolutionPicker(!showResolutionPicker)} 
+              disabled={isDownloading} 
+              className="cursor-pointer transition-transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <img src={downloadIcon} alt="Download" className="h-12 w-auto sm:h-16" />
+            </button>
+            
+            {/* Resolution Picker Dropdown */}
+            {showResolutionPicker && (
+              <div className="absolute bottom-full right-0 mb-2 bg-[#111827] border-2 border-primary rounded-xl shadow-2xl overflow-hidden z-50 min-w-[180px]">
+                <div className="p-2 border-b border-primary/30">
+                  <span className="text-xs text-muted-foreground">Select Resolution</span>
+                </div>
+                {(Object.keys(resolutionOptions) as Resolution[]).map((key) => {
+                  const opt = resolutionOptions[key];
+                  return (
+                    <button
+                      key={key}
+                      onClick={() => handleDownload(key)}
+                      disabled={isDownloading}
+                      className="w-full px-4 py-3 flex items-center justify-between hover:bg-primary/20 transition-colors text-left"
+                    >
+                      <span className="text-sm text-foreground font-medium">{opt.label}</span>
+                      <span className="text-xs text-primary font-bold">₹{opt.cost}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

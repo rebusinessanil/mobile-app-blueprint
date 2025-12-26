@@ -17,8 +17,10 @@ export function useWalletDeduction() {
     userId: string,
     categoryName: string,
     bannerUrl?: string,
-    templateId?: string
+    templateId?: string,
+    customCost?: number
   ): Promise<DeductionResult> => {
+    const cost = customCost ?? BANNER_DOWNLOAD_COST;
     try {
       setIsProcessing(true);
 
@@ -26,7 +28,7 @@ export function useWalletDeduction() {
       // This prevents client-side manipulation of credits
       const { data, error } = await supabase.rpc('deduct_user_credits', {
         p_user_id: userId,
-        p_amount: BANNER_DOWNLOAD_COST,
+        p_amount: cost,
         p_description: `Banner download - ${categoryName}`,
         p_category_name: categoryName,
         p_banner_url: bannerUrl || null,
