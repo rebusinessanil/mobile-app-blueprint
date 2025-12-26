@@ -151,25 +151,17 @@ export default function BannerPreview() {
   // Compute scale factor for display - ensures full banner fits perfectly on all devices
   const updateBannerScale = useCallback(() => {
     if (!bannerContainerRef.current) return;
-    const containerWidth = bannerContainerRef.current.clientWidth;
+    const parentWidth = bannerContainerRef.current.clientWidth;
     
-    // CRASH PREVENTION: Skip calculations on unmounted/hidden elements
-    if (containerWidth < 50) return;
+    // Skip if container not ready
+    if (parentWidth === 0) return;
     
-    // SAFETY BUFFER: 4px total margin (2px each side) prevents edge-touching on mobile
-    const safeScale = (containerWidth - 4) / 1350;
+    // EXACT FIT: Scale to fill the container width precisely
+    const scale = parentWidth / 1350;
     
-    // Only update if scale actually changed (prevents ResizeObserver infinite loops)
-    setBannerScale(prevScale => {
-      if (Math.abs(prevScale - safeScale) < 0.0001) return prevScale;
-      return safeScale;
-    });
-    
-    // Mark layout as ready after first successful scale calculation
-    if (!isLayoutReady) {
-      setIsLayoutReady(true);
-    }
-  }, [isLayoutReady]);
+    setBannerScale(scale);
+    setIsLayoutReady(true);
+  }, []);
 
   // ResizeObserver-based scaling - updates on container resize
   useLayoutEffect(() => {
@@ -1576,31 +1568,24 @@ export default function BannerPreview() {
         <div className="relative w-full max-w-[500px] mx-auto overflow-hidden">
           <div className="border-4 border-primary rounded-2xl shadow-2xl overflow-hidden">
             {/* CSS Transform Scaled HTML Preview - Mimics Canvas behavior */}
-            {/* Parent wrapper with center-based alignment for perfect mobile fit */}
+            {/* Parent wrapper - exact fit container */}
             <div 
               ref={bannerContainerRef}
-              className="relative w-full aspect-square flex items-center justify-center"
-              style={{
-                overflow: 'hidden',
-                padding: '2px', // Safety margin to prevent edge touching
-                contain: 'strict', // Prevents layout thrashing from child changes
-              }}
+              className="w-full aspect-square relative overflow-hidden flex items-center justify-center"
             >
-              {/* HD Rendering Container - Center-based scaling for perfect mobile alignment */}
+              {/* HD Rendering Container - Center-pivot scaling for perfect fit */}
               <div 
-                className="banner-scale-container absolute"
+                className="banner-scale-container"
                 style={{
-                  width: '1350px',
-                  height: '1350px',
+                  position: 'absolute',
                   left: '50%',
                   top: '50%',
-                  transform: `translate(-50%, -50%) scale(${bannerScale}) translateZ(0)`,
-                  transformOrigin: 'center center', // Scale from center for even distribution
+                  width: '1350px',
+                  height: '1350px',
+                  transform: `translate(-50%, -50%) scale(${bannerScale})`,
+                  transformOrigin: 'center center',
                   imageRendering: '-webkit-optimize-contrast' as React.CSSProperties['imageRendering'],
-                  WebkitFontSmoothing: 'antialiased',
-                  backfaceVisibility: 'hidden',
                   willChange: 'transform',
-                  boxShadow: '0 0 20px rgba(0,0,0,0.3)', // Visual separation
                 }}
               >
                 <div 
