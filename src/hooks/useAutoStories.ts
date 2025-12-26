@@ -1,12 +1,12 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { logger } from "@/lib/logger";
 
 export interface GeneratedStory {
   id: string;
-  source_type: "event" | "festival";
+  source_type: string;
   source_id: string;
-  status: "preview_only" | "active" | "expired";
+  status: string;
+  story_status: boolean | null; // false = Upcoming, true = Active, null = Hidden
   poster_url: string;
   title: string;
   event_date: string;
@@ -16,13 +16,13 @@ export interface GeneratedStory {
 
 export interface StoriesEvent {
   id: string;
-  event_type: "birthday" | "anniversary";
+  event_type: string;
   event_date: string;
   person_name: string;
   poster_url: string;
-  description: string | null;
-  title: string | null;
-  is_active: boolean | null;
+  description?: string;
+  is_active?: boolean;
+  story_status: boolean | null;
 }
 
 export interface StoriesFestival {
@@ -30,37 +30,38 @@ export interface StoriesFestival {
   festival_name: string;
   festival_date: string;
   poster_url: string;
-  description: string | null;
-  is_active: boolean;
+  description?: string;
+  is_active?: boolean;
+  story_status: boolean | null;
 }
 
+// Hook for fetching generated stories (only non-null story_status)
 export const useGeneratedStories = () => {
   const [stories, setStories] = useState<GeneratedStory[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchStories = async () => {
+  const fetchStories = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from("stories_generated")
         .select("*")
-        .in("status", ["preview_only", "active"])
-        .gte("expires_at", new Date().toISOString())
+        .not("story_status", "is", null) // Only fetch visible stories
         .order("event_date", { ascending: true });
 
       if (error) throw error;
       setStories((data as GeneratedStory[]) || []);
     } catch (error) {
-      logger.error("Error fetching generated stories:", error);
+      console.error("Error fetching generated stories:", error);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchStories();
 
     const channel = supabase
-      .channel("stories_generated_changes")
+      .channel("stories-generated-realtime")
       .on(
         "postgres_changes",
         {
@@ -69,6 +70,7 @@ export const useGeneratedStories = () => {
           table: "stories_generated",
         },
         () => {
+          console.log("📡 Stories generated update received");
           fetchStories();
         }
       )
@@ -77,36 +79,38 @@ export const useGeneratedStories = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [fetchStories]);
 
   return { stories, loading, refetch: fetchStories };
 };
 
+// Hook for fetching stories events (only non-null story_status)
 export const useStoriesEvents = () => {
   const [events, setEvents] = useState<StoriesEvent[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchEvents = async () => {
+  const fetchEvents = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from("stories_events")
         .select("*")
+        .not("story_status", "is", null) // Only fetch visible events
         .order("event_date", { ascending: true });
 
       if (error) throw error;
       setEvents((data as StoriesEvent[]) || []);
     } catch (error) {
-      logger.error("Error fetching stories events:", error);
+      console.error("Error fetching stories events:", error);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchEvents();
 
     const channel = supabase
-      .channel("stories_events_changes")
+      .channel("stories-events-realtime")
       .on(
         "postgres_changes",
         {
@@ -115,6 +119,7 @@ export const useStoriesEvents = () => {
           table: "stories_events",
         },
         () => {
+          console.log("📡 Stories events update received");
           fetchEvents();
         }
       )
@@ -123,37 +128,38 @@ export const useStoriesEvents = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [fetchEvents]);
 
   return { events, loading, refetch: fetchEvents };
 };
 
+// Hook for fetching stories festivals (only non-null story_status)
 export const useStoriesFestivals = () => {
   const [festivals, setFestivals] = useState<StoriesFestival[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchFestivals = async () => {
+  const fetchFestivals = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from("stories_festivals")
         .select("*")
-        .eq("is_active", true)
+        .not("story_status", "is", null) // Only fetch visible festivals
         .order("festival_date", { ascending: true });
 
       if (error) throw error;
       setFestivals((data as StoriesFestival[]) || []);
     } catch (error) {
-      logger.error("Error fetching stories festivals:", error);
+      console.error("Error fetching stories festivals:", error);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchFestivals();
 
     const channel = supabase
-      .channel("stories_festivals_changes")
+      .channel("stories-festivals-realtime")
       .on(
         "postgres_changes",
         {
@@ -162,6 +168,7 @@ export const useStoriesFestivals = () => {
           table: "stories_festivals",
         },
         () => {
+          console.log("📡 Stories festivals update received");
           fetchFestivals();
         }
       )
@@ -170,7 +177,7 @@ export const useStoriesFestivals = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [fetchFestivals]);
 
   return { festivals, loading, refetch: fetchFestivals };
 };

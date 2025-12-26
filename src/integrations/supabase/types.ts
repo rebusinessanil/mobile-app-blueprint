@@ -829,6 +829,7 @@ export type Database = {
           poster_url: string
           priority: number | null
           start_date: string | null
+          story_status: boolean | null
           story_type: string | null
           title: string | null
           updated_at: string | null
@@ -849,6 +850,7 @@ export type Database = {
           poster_url: string
           priority?: number | null
           start_date?: string | null
+          story_status?: boolean | null
           story_type?: string | null
           title?: string | null
           updated_at?: string | null
@@ -869,6 +871,7 @@ export type Database = {
           poster_url?: string
           priority?: number | null
           start_date?: string | null
+          story_status?: boolean | null
           story_type?: string | null
           title?: string | null
           updated_at?: string | null
@@ -899,6 +902,7 @@ export type Database = {
           id: string
           is_active: boolean | null
           poster_url: string
+          story_status: boolean | null
           updated_at: string | null
         }
         Insert: {
@@ -909,6 +913,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           poster_url: string
+          story_status?: boolean | null
           updated_at?: string | null
         }
         Update: {
@@ -919,6 +924,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           poster_url?: string
+          story_status?: boolean | null
           updated_at?: string | null
         }
         Relationships: []
@@ -933,6 +939,7 @@ export type Database = {
           source_id: string
           source_type: string
           status: string
+          story_status: boolean | null
           title: string
           updated_at: string | null
         }
@@ -945,6 +952,7 @@ export type Database = {
           source_id: string
           source_type: string
           status?: string
+          story_status?: boolean | null
           title: string
           updated_at?: string | null
         }
@@ -957,6 +965,7 @@ export type Database = {
           source_id?: string
           source_type?: string
           status?: string
+          story_status?: boolean | null
           title?: string
           updated_at?: string | null
         }

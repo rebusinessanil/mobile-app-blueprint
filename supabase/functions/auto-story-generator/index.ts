@@ -51,7 +51,7 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    console.log('Starting auto-story generation...');
+    console.log('Starting auto-story generation with story_status logic...');
 
     // Get settings
     const { data: settings } = await supabase
@@ -67,7 +67,6 @@ Deno.serve(async (req) => {
       settingsMap[s.setting_key as keyof StoriesSettings] = s.setting_value;
     });
 
-    const previewHours = settingsMap.preview_hours_before.hours;
     const durationHours = settingsMap.story_duration_hours.hours;
 
     // Calculate dates in IST (UTC+5:30)
@@ -79,20 +78,21 @@ Deno.serve(async (req) => {
 
     console.log(`Processing for today: ${today}, tomorrow: ${tomorrow}`);
 
-    // Process events for tomorrow (create preview stories)
+    // Process events for tomorrow (create preview stories with story_status = false)
     const { data: tomorrowEvents } = await supabase
       .from('stories_events')
       .select('*')
-      .eq('event_date', tomorrow);
+      .eq('event_date', tomorrow)
+      .not('story_status', 'is', null); // Only process non-deactivated events
 
     for (const event of tomorrowEvents || []) {
-      // Check if preview story already exists
+      // Check if story already exists
       const { data: existing } = await supabase
         .from('stories_generated')
         .select('id')
         .eq('source_type', 'event')
         .eq('source_id', event.id)
-        .eq('status', 'preview_only')
+        .not('story_status', 'is', null)
         .single();
 
       if (!existing) {
@@ -102,22 +102,23 @@ Deno.serve(async (req) => {
           source_type: 'event',
           source_id: event.id,
           status: 'preview_only',
+          story_status: false, // Upcoming
           poster_url: event.poster_url,
           title: `${event.event_type === 'birthday' ? '🎂' : '💞'} ${event.person_name}`,
           event_date: event.event_date,
           expires_at: expiresAt.toISOString(),
         });
 
-        console.log(`Created preview story for event: ${event.person_name}`);
+        console.log(`Created preview story for event: ${event.person_name} (story_status: false)`);
       }
     }
 
-    // Process festivals for tomorrow (create preview stories)
+    // Process festivals for tomorrow (create preview stories with story_status = false)
     const { data: tomorrowFestivals } = await supabase
       .from('stories_festivals')
       .select('*')
       .eq('festival_date', tomorrow)
-      .eq('is_active', true);
+      .not('story_status', 'is', null); // Only process non-deactivated festivals
 
     for (const festival of tomorrowFestivals || []) {
       const { data: existing } = await supabase
@@ -125,7 +126,7 @@ Deno.serve(async (req) => {
         .select('id')
         .eq('source_type', 'festival')
         .eq('source_id', festival.id)
-        .eq('status', 'preview_only')
+        .not('story_status', 'is', null)
         .single();
 
       if (!existing) {
@@ -135,52 +136,86 @@ Deno.serve(async (req) => {
           source_type: 'festival',
           source_id: festival.id,
           status: 'preview_only',
+          story_status: false, // Upcoming
           poster_url: festival.poster_url,
           title: `🎉 ${festival.festival_name}`,
           event_date: festival.festival_date,
           expires_at: expiresAt.toISOString(),
         });
 
-        console.log(`Created preview story for festival: ${festival.festival_name}`);
+        console.log(`Created preview story for festival: ${festival.festival_name} (story_status: false)`);
       }
     }
 
-    // Activate stories for today's events
+    // Activate stories for today (story_status: false -> true)
     const { data: todayStories } = await supabase
       .from('stories_generated')
       .select('*')
       .eq('event_date', today)
-      .eq('status', 'preview_only');
+      .eq('story_status', false);
 
     for (const story of todayStories || []) {
       await supabase
         .from('stories_generated')
-        .update({ status: 'active' })
+        .update({ 
+          status: 'active',
+          story_status: true // Active
+        })
         .eq('id', story.id);
 
-      console.log(`Activated story: ${story.title}`);
+      console.log(`Activated story: ${story.title} (story_status: true)`);
     }
 
-    // Mark expired stories
+    // Mark expired stories (story_status -> null)
     const { data: expiredStories } = await supabase
       .from('stories_generated')
       .select('id')
       .lte('expires_at', istNow.toISOString())
-      .in('status', ['preview_only', 'active']);
+      .not('story_status', 'is', null);
 
     for (const story of expiredStories || []) {
       await supabase
         .from('stories_generated')
-        .update({ status: 'expired' })
+        .update({ 
+          status: 'expired',
+          story_status: null // Deactivated/Expired
+        })
         .eq('id', story.id);
 
-      console.log(`Marked story as expired: ${story.id}`);
+      console.log(`Marked story as expired: ${story.id} (story_status: null)`);
     }
+
+    // Also update source tables story_status based on date
+    // Update stories_events
+    await supabase
+      .from('stories_events')
+      .update({ story_status: true })
+      .eq('event_date', today)
+      .eq('story_status', false);
+
+    await supabase
+      .from('stories_events')
+      .update({ story_status: null })
+      .lt('event_date', today)
+      .not('story_status', 'is', null);
+
+    // Update stories_festivals
+    await supabase
+      .from('stories_festivals')
+      .update({ story_status: true })
+      .eq('festival_date', today)
+      .eq('story_status', false);
+
+    await supabase
+      .from('stories_festivals')
+      .update({ story_status: null })
+      .lt('festival_date', today)
+      .not('story_status', 'is', null);
 
     return new Response(
       JSON.stringify({
         success: true,
-        message: 'Auto-story generation completed',
+        message: 'Auto-story generation completed with story_status logic',
         stats: {
           tomorrowEvents: tomorrowEvents?.length || 0,
           tomorrowFestivals: tomorrowFestivals?.length || 0,

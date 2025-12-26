@@ -6,24 +6,32 @@ interface StoryCardProps {
   id: string;
   title: string;
   imageUrl: string;
-  isActive?: boolean;
+  storyStatus?: boolean | null; // false = Upcoming (yellow), true = Active (green), null = hidden
   linkTo: string;
   isPreview?: boolean;
   previewLabel?: string;
+  // Legacy props for backward compatibility
+  isActive?: boolean;
 }
 
 function StoryCardComponent({
   id,
   title,
   imageUrl,
-  isActive = true,
+  storyStatus,
   linkTo,
   isPreview = false,
-  previewLabel = "Coming Soon"
+  previewLabel = "Coming Soon",
+  isActive, // Legacy prop
 }: StoryCardProps) {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [isInView, setIsInView] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
+
+  // Determine status: use storyStatus if provided, fall back to legacy isActive
+  const resolvedStatus = storyStatus !== undefined ? storyStatus : (isActive ? true : false);
+  const isUpcoming = resolvedStatus === false;
+  const isActiveStatus = resolvedStatus === true;
 
   // Lazy load with Intersection Observer
   useEffect(() => {
@@ -45,6 +53,9 @@ function StoryCardComponent({
   }, []);
 
   const thumbnailUrl = getThumbnailUrl(imageUrl, 20);
+
+  // Status dot color: green for active, yellow for upcoming
+  const statusDotColor = isActiveStatus ? 'bg-green-500' : 'bg-yellow-500';
 
   const content = (
     <div ref={cardRef} className="gold-border bg-card rounded-2xl overflow-hidden">
@@ -77,17 +88,21 @@ function StoryCardComponent({
             decoding="async"
           />
         )}
-        {isPreview ? (
+        {isPreview || isUpcoming ? (
           <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
             <span className="text-[9px] bg-secondary px-1.5 py-0.5 rounded text-muted-foreground font-medium">
-              {previewLabel}
+              {previewLabel || (isUpcoming ? "Coming Soon" : "Preview")}
             </span>
           </div>
         ) : (
           <div 
-            className={`absolute top-1.5 right-1.5 w-2.5 h-2.5 ${
-              isActive ? 'bg-green-500' : 'bg-yellow-500'
-            } rounded-full border-2 border-white shadow-lg`} 
+            className={`absolute top-1.5 right-1.5 w-2.5 h-2.5 ${statusDotColor} rounded-full border-2 border-white shadow-lg`} 
+          />
+        )}
+        {/* Always show status dot in corner for non-preview cards */}
+        {!isPreview && !isUpcoming && (
+          <div 
+            className={`absolute top-1.5 right-1.5 w-2.5 h-2.5 ${statusDotColor} rounded-full border-2 border-white shadow-lg`} 
           />
         )}
       </div>
@@ -99,9 +114,10 @@ function StoryCardComponent({
     </div>
   );
 
-  if (isPreview) {
+  // Upcoming stories (story_status = false) are not clickable
+  if (isPreview || isUpcoming) {
     return (
-      <div className="flex-shrink-0 transition-all opacity-75 transform-gpu">
+      <div className="flex-shrink-0 transition-all opacity-75 transform-gpu cursor-not-allowed">
         {content}
       </div>
     );
