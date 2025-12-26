@@ -1443,41 +1443,46 @@ export default function BannerPreview() {
     try {
       // STRICT FIXED CANVAS: Force exactly 1350×1350px - no devicePixelRatio influence
       const FIXED_SIZE = 1350;
-      const dataUrl = await toPng(bannerRef.current, {
+      
+      // Temporarily remove the scale transform for full-resolution capture
+      const bannerElement = bannerRef.current;
+      const originalTransform = bannerElement.style.transform;
+      const originalWidth = bannerElement.style.width;
+      const originalHeight = bannerElement.style.height;
+      
+      // Reset to full size for export
+      bannerElement.style.transform = 'scale(1)';
+      bannerElement.style.width = `${FIXED_SIZE}px`;
+      bannerElement.style.height = `${FIXED_SIZE}px`;
+      
+      const dataUrl = await toPng(bannerElement, {
         cacheBust: true,
         width: FIXED_SIZE,
-        // Force exact width
         height: FIXED_SIZE,
-        // Force exact height
         canvasWidth: FIXED_SIZE,
-        // Lock canvas width
         canvasHeight: FIXED_SIZE,
-        // Lock canvas height
         pixelRatio: 1,
-        // No pixel ratio scaling
         quality: 1,
         backgroundColor: null,
-        style: {
-          transform: "scale(1)",
-          transformOrigin: "top left",
-          width: `${FIXED_SIZE}px`,
-          height: `${FIXED_SIZE}px`
-        },
         filter: node => {
           // Exclude UI elements and PREVIEW-ONLY brand watermark from export
-          // Keep mobile-watermark-permanent in final download
           if (
             node.classList?.contains("slot-selector") || 
             node.classList?.contains("control-buttons") || 
             node.classList?.contains("whatsapp-float") || 
             node.id === "ignore-download" ||
-            node.id === "brand-watermark-preview" // Exclude preview-only watermark
+            node.id === "brand-watermark-preview"
           ) {
             return false;
           }
           return true;
         }
       });
+      
+      // Restore the original scale transform after capture
+      bannerElement.style.transform = originalTransform;
+      bannerElement.style.width = originalWidth;
+      bannerElement.style.height = originalHeight;
       toast.dismiss(loadingToast);
 
       // Step 3: Deduct wallet balance and save download record with banner URL
