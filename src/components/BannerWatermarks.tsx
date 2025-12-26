@@ -3,89 +3,127 @@ import React from 'react';
 interface BannerWatermarksProps {
   showBrandWatermark?: boolean; // Preview only watermark
   showMobileWatermark?: boolean; // Permanent watermark
-  // Face center positions as percentages (0-100)
-  achieverFaceX?: number; // Default: 25% from left (achiever photo area)
-  achieverFaceY?: number; // Default: 45% from top
-  userFaceX?: number; // Default: 75% from left (user photo area)
-  userFaceY?: number; // Default: 45% from top
 }
 
 /**
  * Banner Watermarks Component
  * 
  * Two layers:
- * 1. Brand Watermark (Preview Only) - "Re Business" vertical over achiever & user face centers
+ * 1. Brand Watermark (Preview Only) - "Re Business" repeating vertical pattern on left & right edges
  * 2. Mobile Watermark (Permanent) - Promotional call number on left edge
  */
 const BannerWatermarks: React.FC<BannerWatermarksProps> = ({
   showBrandWatermark = true,
   showMobileWatermark = true,
-  achieverFaceX = 25,
-  achieverFaceY = 50,
-  userFaceX = 75,
-  userFaceY = 50,
 }) => {
-  // Watermark text style - 120% larger, bold, 20% opacity
-  const watermarkTextStyle: React.CSSProperties = {
-    fontSize: '17px', // 120% of 14px
-    fontWeight: 700,
-    fontFamily: 'Poppins, Arial, sans-serif',
-    color: 'rgba(255, 255, 255, 0.20)', // 20% opacity (middle of 18-22%)
-    letterSpacing: '4px',
-    textTransform: 'uppercase',
-    userSelect: 'none',
-    whiteSpace: 'nowrap',
-  };
-
-  // Background strip style - translucent grey
-  const stripStyle: React.CSSProperties = {
-    background: 'rgba(128, 128, 128, 0.08)',
-    padding: '8px 4px',
-    borderRadius: '2px',
-  };
+  // Generate repeating watermark instances for full coverage
+  const watermarkCount = 12; // Number of repetitions for full coverage
+  const watermarks = Array.from({ length: watermarkCount }, (_, i) => i);
 
   return (
     <>
-      {/* PREVIEW-ONLY: Brand Watermark - Vertical "Re Business" over face centers */}
+      {/* PREVIEW-ONLY: Brand Watermark - Repeating vertical "Re Business" on edges */}
       {showBrandWatermark && (
         <div
           id="brand-watermark-preview"
           className="absolute inset-0 pointer-events-none overflow-hidden"
           style={{ zIndex: 100 }}
         >
-          {/* Watermark over ACHIEVER's face center */}
+          {/* LEFT EDGE - Repeating vertical watermarks */}
           <div
-            className="absolute flex items-center justify-center"
-            style={{
-              left: `${achieverFaceX}%`,
-              top: '0',
-              bottom: '0',
-              transform: 'translateX(-50%)',
-              writingMode: 'vertical-rl',
-              textOrientation: 'mixed',
-            }}
+            className="absolute left-0 top-0 bottom-0 flex flex-col items-center justify-between"
+            style={{ width: '40px' }}
           >
-            <div style={stripStyle}>
-              <span style={watermarkTextStyle}>
-                Re Business
-              </span>
-            </div>
+            {watermarks.map((i) => (
+              <div
+                key={`left-${i}`}
+                className="flex items-center justify-center"
+                style={{
+                  writingMode: 'vertical-rl',
+                  textOrientation: 'mixed',
+                  transform: 'rotate(180deg)',
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: '14px',
+                    fontWeight: 700,
+                    fontFamily: 'Poppins, Arial, sans-serif',
+                    color: 'rgba(255, 255, 255, 0.25)',
+                    letterSpacing: '3px',
+                    textTransform: 'uppercase',
+                    userSelect: 'none',
+                    whiteSpace: 'nowrap',
+                    textShadow: '1px 1px 2px rgba(0, 0, 0, 0.3), -1px -1px 1px rgba(255, 255, 255, 0.1)',
+                    padding: '8px 0',
+                  }}
+                >
+                  Re Business
+                </span>
+              </div>
+            ))}
           </div>
 
-          {/* Watermark over USER's face center */}
+          {/* RIGHT EDGE - Repeating vertical watermarks */}
           <div
-            className="absolute flex items-center justify-center"
+            className="absolute right-0 top-0 bottom-0 flex flex-col items-center justify-between"
+            style={{ width: '40px' }}
+          >
+            {watermarks.map((i) => (
+              <div
+                key={`right-${i}`}
+                className="flex items-center justify-center"
+                style={{
+                  writingMode: 'vertical-rl',
+                  textOrientation: 'mixed',
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: '14px',
+                    fontWeight: 700,
+                    fontFamily: 'Poppins, Arial, sans-serif',
+                    color: 'rgba(255, 255, 255, 0.25)',
+                    letterSpacing: '3px',
+                    textTransform: 'uppercase',
+                    userSelect: 'none',
+                    whiteSpace: 'nowrap',
+                    textShadow: '1px 1px 2px rgba(0, 0, 0, 0.3), -1px -1px 1px rgba(255, 255, 255, 0.1)',
+                    padding: '8px 0',
+                  }}
+                >
+                  Re Business
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {/* CENTER COVERAGE - Additional diagonal watermarks for full protection */}
+          <div
+            className="absolute inset-0 flex items-center justify-center"
             style={{
-              left: `${userFaceX}%`,
-              top: '0',
-              bottom: '0',
-              transform: 'translateX(-50%)',
-              writingMode: 'vertical-rl',
-              textOrientation: 'mixed',
+              background: 'repeating-linear-gradient(45deg, transparent, transparent 80px, rgba(255,255,255,0.03) 80px, rgba(255,255,255,0.03) 82px)',
             }}
           >
-            <div style={stripStyle}>
-              <span style={watermarkTextStyle}>
+            <div
+              style={{
+                transform: 'rotate(-30deg)',
+                opacity: 0.12,
+              }}
+            >
+              <span
+                style={{
+                  fontSize: '48px',
+                  fontWeight: 700,
+                  fontFamily: 'Poppins, Arial, sans-serif',
+                  color: 'white',
+                  letterSpacing: '8px',
+                  textTransform: 'uppercase',
+                  userSelect: 'none',
+                  whiteSpace: 'nowrap',
+                  textShadow: '2px 2px 4px rgba(0, 0, 0, 0.2)',
+                }}
+              >
                 Re Business
               </span>
             </div>
