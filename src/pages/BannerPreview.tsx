@@ -23,7 +23,7 @@ import { useWalletDeduction } from "@/hooks/useWalletDeduction";
 import InsufficientBalanceModal from "@/components/InsufficientBalanceModal";
 import { useBannerAssetPreloader } from "@/hooks/useBannerAssetPreloader";
 import BannerWatermarks from "@/components/BannerWatermarks";
-import KonvaBannerPreview, { KonvaBannerPreviewHandle, KonvaBannerData } from "@/components/KonvaBannerPreview";
+
 interface Upline {
   id: string;
   name: string;
@@ -80,9 +80,7 @@ export default function BannerPreview() {
     rotation?: number;
   }[]>>({});
   const bannerRef = useRef<HTMLDivElement>(null);
-  const konvaBannerRef = useRef<KonvaBannerPreviewHandle>(null);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [useKonvaPreview, setUseKonvaPreview] = useState(true); // Toggle for Konva vs HTML preview - enabled by default
 
   // Sticker control states
   const [isDragMode, setIsDragMode] = useState(false);
@@ -147,7 +145,7 @@ export default function BannerPreview() {
     };
   }, [isDraggingProfile, profileDragStart, profilePicScale]);
 
-  // Banner scale state for CSS-based scaling (more reliable on all devices)
+  // Banner scale state for CSS-based scaling (Canvas-like behavior)
   const [bannerScale, setBannerScale] = useState(1);
   const bannerContainerRef = useRef<HTMLDivElement>(null);
 
@@ -161,6 +159,25 @@ export default function BannerPreview() {
     const scale = parentWidth / 1350;
     setBannerScale(scale);
   }, []);
+
+  // ResizeObserver-based scaling - updates on container resize
+  useLayoutEffect(() => {
+    if (!bannerContainerRef.current) return;
+    
+    // Initial scale calculation
+    updateBannerScale();
+    
+    // Watch for container size changes
+    const resizeObserver = new ResizeObserver(() => {
+      updateBannerScale();
+    });
+    
+    resizeObserver.observe(bannerContainerRef.current);
+    
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [updateBannerScale]);
 
   // Get authenticated user and check admin status
   useEffect(() => {
@@ -452,63 +469,6 @@ export default function BannerPreview() {
     };
   }, [bannerData, isDataReady, globalBackgroundSlots, selectedTemplate, stickerImages, bannerDefaults, profile, displayUplines]);
 
-  // Konva banner data mapping
-  const konvaData: KonvaBannerData = useMemo(() => {
-    const activeSlot = globalBackgroundSlots.find(slot => slot.slotNumber === selectedTemplate + 1);
-    const currentSlotStickers = stickerImages[selectedTemplate + 1] || [];
-    
-    return {
-      // Main content
-      achieverImg: primaryPhoto,
-      bgImg: activeSlot?.imageUrl || undefined,
-      bgColor: activeSlot?.defaultColor || '#111827',
-      
-      // User info
-      userName: truncatedMainName,
-      teamCity: bannerData?.teamCity || '',
-      chequeAmount: bannerData?.chequeAmount,
-      userMobile: displayContact,
-      profileName: truncatedProfileName,
-      profileRank: displayRank,
-      
-      // Category-specific
-      categoryType: bannerData?.categoryType,
-      rankLabel: bannerData?.rankName,
-      tripName: bannerData?.tripName,
-      message: bannerData?.message,
-      quote: bannerData?.quote,
-      eventTitle: bannerData?.eventTitle,
-      eventDate: bannerData?.eventDate,
-      eventVenue: bannerData?.eventVenue,
-      
-      // Uplines
-      uplineImgs: displayUplines,
-      
-      // Stickers
-      stickers: currentSlotStickers.map(s => ({
-        id: s.id,
-        url: s.url,
-        position_x: s.position_x,
-        position_y: s.position_y,
-        scale: stickerScale[s.id] ?? s.scale,
-        rotation: s.rotation,
-      })),
-      
-      // Logos
-      logoLeft: bannerSettings?.logo_left,
-      logoRight: bannerSettings?.logo_right,
-      congratsImage: bannerDefaults?.congratulations_image,
-      
-      // Profile photos
-      mentorPhoto,
-    };
-  }, [
-    globalBackgroundSlots, selectedTemplate, stickerImages, primaryPhoto, 
-    truncatedMainName, bannerData, displayContact, truncatedProfileName, 
-    displayRank, displayUplines, stickerScale, bannerSettings, bannerDefaults, 
-    mentorPhoto
-  ]);
-
   // Trigger preload once when config is ready
   useEffect(() => {
     if (preloadStarted || !assetConfig) return;
@@ -550,9 +510,8 @@ export default function BannerPreview() {
     return null;
   }
 
-  // Show loading UI for HTML mode only - Konva handles its own loading internally
-  // This bypasses the global asset preloader when using Konva canvas mode
-  const showGlobalLoading = !useKonvaPreview && (!assetsLoaded || backgroundsLoading || !isDataReady);
+  // Show loading UI while assets are loading
+  const showGlobalLoading = !assetsLoaded || backgroundsLoading || !isDataReady;
   
   if (showGlobalLoading) {
     return (
@@ -1574,16 +1533,7 @@ export default function BannerPreview() {
             <ArrowLeft className="w-5 h-5 sm:w-6 sm:h-6 text-foreground" />
           </button>
           
-          <div className="flex flex-col items-center gap-1">
-            <h1 className="text-base sm:text-xl md:text-2xl font-bold text-foreground tracking-widest">BANNER PREVIEW</h1>
-            {/* Preview Mode Toggle */}
-            <button 
-              onClick={() => setUseKonvaPreview(prev => !prev)}
-              className="text-xs px-2 py-0.5 rounded-full border border-primary/50 text-primary hover:bg-primary/10 transition-colors"
-            >
-              {useKonvaPreview ? '🎨 Canvas' : '📄 HTML'}
-            </button>
-          </div>
+          <h1 className="text-base sm:text-xl md:text-2xl font-bold text-foreground tracking-widest">BANNER PREVIEW</h1>
           
           {isAdmin && <button onClick={() => setIsStickersOpen(true)} className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl border-2 border-primary bg-primary/10 flex items-center justify-center hover:bg-primary/20 transition-colors touch-target">
               <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
@@ -1597,36 +1547,19 @@ export default function BannerPreview() {
         {/* Display wrapper - fixed max width for consistent laptop-like rendering */}
         <div className="relative w-full max-w-[500px] mx-auto overflow-hidden">
           <div className="border-4 border-primary rounded-2xl shadow-2xl overflow-hidden">
-            
-            {/* KONVA PREVIEW - Canvas-based rendering (no flicker) */}
-            {useKonvaPreview && (
-              <div style={{ aspectRatio: '1 / 1', width: '100%', overflow: 'hidden' }}>
-                <KonvaBannerPreview
-                  ref={konvaBannerRef}
-                  data={konvaData}
-                  width="100%"
-                  isPhotoFlipped={isPhotoFlipped}
-                  isMentorPhotoFlipped={isMentorPhotoFlipped}
-                  onReady={() => console.log('Konva banner ready')}
-                  onError={(err) => console.error('Konva banner error:', err)}
-                />
-              </div>
-            )}
-
-            {/* HTML PREVIEW - Original DOM-based rendering (fallback) */}
-            {!useKonvaPreview && (
+            {/* CSS Transform Scaled HTML Preview - Mimics Canvas behavior */}
+            <div 
+              ref={bannerContainerRef}
+              className="w-full aspect-square relative overflow-hidden"
+            >
               <div 
-                ref={bannerContainerRef}
-                className="w-full aspect-square relative overflow-hidden"
+                className="banner-scale-container absolute top-0 left-0 origin-top-left"
+                style={{
+                  transform: `scale(${bannerScale})`,
+                  width: '1350px',
+                  height: '1350px',
+                }}
               >
-                <div 
-                  className="banner-scale-container absolute top-0 left-0 origin-top-left"
-                  style={{
-                    transform: `scale(${bannerScale})`,
-                    width: '1350px',
-                    height: '1350px',
-                  }}
-                >
                 <div 
                   ref={bannerRef} 
                   id="banner-canvas" 
@@ -2222,12 +2155,11 @@ export default function BannerPreview() {
                 />
 
               </div>
+              </div>
             </div>
           </div>
         </div>
-      )}
-          </div>
-        </div>
+      </div>
 
         {/* Profile Avatars (Left) + Download Button (Right) */}
         <div className="flex items-center justify-between px-2 sm:px-4 mt-3 sm:mt-4 gap-2">
