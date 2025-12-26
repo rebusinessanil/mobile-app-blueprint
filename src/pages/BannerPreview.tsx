@@ -1544,8 +1544,8 @@ export default function BannerPreview() {
     }
   };
   
-  // *** BANNER IS NOW READY - Render with fade-in animation ***
-  return <div className="h-screen overflow-hidden bg-background flex flex-col animate-in fade-in duration-300">
+  // *** BANNER IS NOW READY - Render instantly without animations ***
+  return <div className="h-screen overflow-hidden bg-background flex flex-col">
       {/* Header - Fixed */}
       <header className="bg-background/95 backdrop-blur-sm z-40 px-4 sm:px-6 py-3 sm:py-4 flex-shrink-0">
         <div className="flex items-center justify-between max-w-[600px] mx-auto">
@@ -2196,7 +2196,7 @@ export default function BannerPreview() {
             {profilePhotos.slice(0, 6).map((photo, idx) => <button key={photo.id} onClick={() => {
             setSelectedMentorPhotoIndex(idx);
             setIsMentorPhotoFlipped(!isMentorPhotoFlipped);
-          }} className={`h-8 w-8 sm:h-10 sm:w-10 rounded-full border-2 object-cover flex-shrink-0 shadow-lg transition-all hover:scale-105 active:scale-95 ${selectedMentorPhotoIndex === idx ? 'border-[#FFD700] ring-2 ring-[#FFD700] ring-offset-2 ring-offset-[#0B0E15]' : 'border-gray-500 hover:border-[#FFD700]'}`}>
+          }} className={`h-8 w-8 sm:h-10 sm:w-10 rounded-full border-2 object-cover flex-shrink-0 shadow-lg ${selectedMentorPhotoIndex === idx ? 'border-[#FFD700] ring-2 ring-[#FFD700] ring-offset-2 ring-offset-[#0B0E15]' : 'border-gray-500'}`}>
                 <img src={photo.photo_url} alt="Profile" className="w-full h-full rounded-full object-cover" />
               </button>)}
             {profilePhotos.length > 6 && <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full border-2 border-[#FFD700] bg-[#111827] flex items-center justify-center text-[#FFD700] text-[10px] sm:text-xs font-bold flex-shrink-0">
@@ -2205,7 +2205,7 @@ export default function BannerPreview() {
           </div>
 
           {/* Right: Download Button */}
-          <button onClick={handleDownload} disabled={isDownloading} className="cursor-pointer transition-transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0">
+          <button onClick={handleDownload} disabled={isDownloading} className="cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0">
             <img src={downloadIcon} alt="Download" className="h-12 w-auto sm:h-16" />
           </button>
         </div>

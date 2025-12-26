@@ -466,10 +466,10 @@ export default function SlotPreviewMini({
   return (
     <button
       onClick={onClick}
-      className={`aspect-square rounded-lg overflow-hidden transition-all ${
+      className={`aspect-square rounded-lg overflow-hidden ${
         isSelected 
           ? 'border-4 border-[#FFD700] scale-105 shadow-[0_0_20px_rgba(255,215,0,0.5)]' 
-          : 'border-2 border-gray-600 hover:border-[#FFD700] hover:scale-105'
+          : 'border-2 border-gray-600'
       }`}
     >
       <div 
