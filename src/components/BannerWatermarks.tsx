@@ -70,8 +70,8 @@ const BannerWatermarks: React.FC<BannerWatermarksProps> = ({
           className="absolute inset-0 pointer-events-none overflow-hidden"
           style={{ zIndex: 100 }}
         >
-          {/* LEFT EDGE - Single vertical watermark strip */}
-          <div style={{ ...stripStyle, left: '12%' }}>
+          {/* LEFT EDGE - Single vertical watermark strip (moved 25% inward) */}
+          <div style={{ ...stripStyle, left: '20%' }}>
             {watermarks.map((i) => (
               <span
                 key={`left-${i}`}
@@ -85,8 +85,8 @@ const BannerWatermarks: React.FC<BannerWatermarksProps> = ({
             ))}
           </div>
 
-          {/* RIGHT EDGE - Single vertical watermark strip */}
-          <div style={{ ...stripStyle, right: '12%', left: 'auto' }}>
+          {/* RIGHT EDGE - Single vertical watermark strip (moved 25% inward) */}
+          <div style={{ ...stripStyle, right: '20%', left: 'auto' }}>
             {watermarks.map((i) => (
               <span
                 key={`right-${i}`}
