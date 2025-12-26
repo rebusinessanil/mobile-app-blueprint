@@ -1,6 +1,6 @@
 import { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { ArrowLeft, Settings, Sparkles } from "lucide-react";
+import { ArrowLeft, Settings, Sparkles, Home, Share2 } from "lucide-react";
 import BannerPreviewSkeleton from "@/components/skeletons/BannerPreviewSkeleton";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -109,6 +109,10 @@ export default function BannerPreview() {
   } | null>(null);
   const [isProfileControlMinimized, setIsProfileControlMinimized] = useState(false);
   const [showInsufficientBalanceModal, setShowInsufficientBalanceModal] = useState(false);
+  
+  // Post-download action states
+  const [downloadComplete, setDownloadComplete] = useState(false);
+  const [downloadedBannerUrl, setDownloadedBannerUrl] = useState<string | null>(null);
 
   // Wallet deduction hook
   const {
@@ -1520,6 +1524,10 @@ export default function BannerPreview() {
       const timestamp = new Date().getTime();
       download(dataUrl, `ReBusiness-Banner-${categoryName}-${timestamp}.png`);
 
+      // Store the downloaded banner URL for sharing
+      setDownloadedBannerUrl(dataUrl);
+      setDownloadComplete(true);
+
       // Calculate approximate size (base64 size estimation)
       const sizeMB = (dataUrl.length * 0.75 / (1024 * 1024)).toFixed(2);
 
@@ -1543,7 +1551,64 @@ export default function BannerPreview() {
       setIsDownloading(false);
     }
   };
-  
+
+  // Handle Home button - Full refresh and cache clear
+  const handleGoHome = useCallback(() => {
+    // Clear banner preview state
+    setDownloadComplete(false);
+    setDownloadedBannerUrl(null);
+    
+    // Navigate to dashboard with full page refresh to clear all cached state
+    window.location.href = '/dashboard';
+  }, []);
+
+  // Handle Share button - Share banner with WhatsApp priority
+  const handleShare = useCallback(async () => {
+    if (!downloadedBannerUrl) {
+      toast.error("No banner to share. Please download first.");
+      return;
+    }
+
+    const appLink = "https://rebusiness.lovable.app";
+    const shareText = `🎉 Check out my achievement banner created with ReBusiness!\n\n📲 Create your own stunning banners: ${appLink}`;
+
+    // Convert base64 to blob for sharing
+    const base64Response = await fetch(downloadedBannerUrl);
+    const blob = await base64Response.blob();
+    const file = new File([blob], 'ReBusiness-Banner.png', { type: 'image/png' });
+
+    // Check if native sharing is supported (mobile browsers)
+    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({
+          title: 'My ReBusiness Banner',
+          text: shareText,
+          files: [file]
+        });
+        toast.success("Shared successfully!");
+      } catch (error) {
+        // User cancelled or share failed
+        if ((error as Error).name !== 'AbortError') {
+          console.error("Share failed:", error);
+          // Fallback to WhatsApp
+          openWhatsAppShare(shareText);
+        }
+      }
+    } else {
+      // Fallback: Open WhatsApp with text (image sharing not supported in web)
+      openWhatsAppShare(shareText);
+    }
+  }, [downloadedBannerUrl]);
+
+  // WhatsApp share fallback
+  const openWhatsAppShare = (text: string) => {
+    const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+    window.open(whatsappUrl, '_blank');
+    toast.info("Opening WhatsApp... Share your downloaded banner along with the message!", {
+      duration: 5000
+    });
+  };
+
   // *** BANNER IS NOW READY - Render instantly without animations ***
   return <div className="h-screen overflow-hidden bg-background flex flex-col">
       {/* Header - Fixed */}
@@ -2205,10 +2270,36 @@ export default function BannerPreview() {
           </div>
 
           {/* Right: Download Button */}
-          <button onClick={handleDownload} disabled={isDownloading} className="cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0">
-            <img src={downloadIcon} alt="Download" className="h-12 w-auto sm:h-16" />
-          </button>
+          {/* Right: Download Button - Hidden after download complete */}
+          {!downloadComplete && (
+            <button onClick={handleDownload} disabled={isDownloading} className="cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0">
+              <img src={downloadIcon} alt="Download" className="h-12 w-auto sm:h-16" />
+            </button>
+          )}
         </div>
+
+        {/* Post-Download Action Buttons - Shown only after successful download */}
+        {downloadComplete && (
+          <div className="flex items-center justify-center gap-4 px-4 mt-4">
+            <Button
+              onClick={handleGoHome}
+              variant="outline"
+              size="lg"
+              className="flex-1 max-w-[160px] h-14 gap-2 border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground font-semibold text-base rounded-xl"
+            >
+              <Home className="w-5 h-5" />
+              Home
+            </Button>
+            <Button
+              onClick={handleShare}
+              size="lg"
+              className="flex-1 max-w-[160px] h-14 gap-2 bg-[#25D366] hover:bg-[#128C7E] text-white font-semibold text-base rounded-xl shadow-lg"
+            >
+              <Share2 className="w-5 h-5" />
+              Share
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Scrollable Slot Selector Box - All 16 slots with FULL banner preview (proxy mode) */}
