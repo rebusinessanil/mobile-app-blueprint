@@ -1,11 +1,12 @@
 import { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft, Settings, Sparkles } from "lucide-react";
+import BannerPreviewSkeleton from "@/components/skeletons/BannerPreviewSkeleton";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import RanksStickersPanel from "@/components/RanksStickersPanel";
 import StickerControl from "@/components/StickerControl";
-import StaticSlotThumbnail from "@/components/StaticSlotThumbnail";
+import SlotPreviewMini from "@/components/SlotPreviewMini";
 import downloadIcon from "@/assets/download-icon.png";
 import { useProfile } from "@/hooks/useProfile";
 import { useProfilePhotos } from "@/hooks/useProfilePhotos";
@@ -20,6 +21,7 @@ import { toPng } from "html-to-image";
 import download from "downloadjs";
 import { useWalletDeduction } from "@/hooks/useWalletDeduction";
 import InsufficientBalanceModal from "@/components/InsufficientBalanceModal";
+import { useBannerAssetPreloader } from "@/hooks/useBannerAssetPreloader";
 import BannerWatermarks from "@/components/BannerWatermarks";
 
 interface Upline {
@@ -397,9 +399,18 @@ export default function BannerPreview() {
   // Fetch selected stickers - removed, now using slotStickers structure
   // Each slot has its own stickers independently
 
-  // Simplified loading state - no external preloader needed
-  // Assets load eagerly in parallel, skeleton shows only for data loading
-  const [assetsPreloaded, setAssetsPreloaded] = useState(false);
+  // Use asset preloader - waits for 100% loading
+  const {
+    preloadAssets,
+    allLoaded,
+    progress: loadingProgress,
+    timedOut,
+    isMobile,
+    reset: resetPreloader
+  } = useBannerAssetPreloader();
+
+  // Track if preload has started
+  const [preloadStarted, setPreloadStarted] = useState(false);
 
   // Check if all required data is loaded
   const isDataReady = 
@@ -408,42 +419,75 @@ export default function BannerPreview() {
     !backgroundsLoading &&
     bannerDefaults !== undefined;
   
-  // *** SIMPLIFIED READY STATE ***
-  // Ready when data is loaded and scale is calculated
+  // *** STRICT ALL-OR-NOTHING STATE ***
+  // Single derived state: show skeleton until EVERYTHING is ready
   const isBannerReady = useMemo(() => {
+    const assetsReady = allLoaded || timedOut;
     const scaleReady = bannerScale > 0 && isLayoutReady;
     const dataReady = isDataReady && !backgroundsLoading && !stickersLoading;
     
-    return scaleReady && dataReady;
-  }, [bannerScale, isLayoutReady, isDataReady, backgroundsLoading, stickersLoading]);
+    return assetsReady && scaleReady && dataReady;
+  }, [allLoaded, timedOut, bannerScale, isLayoutReady, isDataReady, backgroundsLoading, stickersLoading]);
 
-  // Preload critical assets immediately in parallel (no blocking)
-  useEffect(() => {
-    if (assetsPreloaded || !isDataReady) return;
-    
-    const preloadImage = (url: string | undefined | null) => {
-      if (!url) return;
-      const img = new Image();
-      img.decoding = 'async';
-      img.src = url;
+  // Memoize asset URLs - collect once to prevent duplicate requests
+  const assetConfig = useMemo(() => {
+    if (!bannerData || !isDataReady) return null;
+
+    // Current slot background
+    const activeSlot = globalBackgroundSlots.find(slot => slot.slotNumber === selectedTemplate + 1);
+    const activeBackgroundUrl = activeSlot?.imageUrl || undefined;
+
+    // Visible stickers for current slot
+    const visibleStickerUrls = (stickerImages[selectedTemplate + 1] || [])
+      .map(s => s.url)
+      .filter(Boolean);
+
+    // Logo URLs
+    const logoUrls = [
+      bannerDefaults?.logo_left,
+      bannerDefaults?.logo_right,
+      bannerDefaults?.congratulations_image,
+    ].filter(Boolean) as string[];
+
+    // Primary photo
+    const primaryPhotoUrl = bannerData?.photo || profile?.profile_photo || undefined;
+
+    // Other backgrounds for slot switching
+    const otherBackgroundUrls = globalBackgroundSlots
+      .filter(slot => slot.slotNumber !== selectedTemplate + 1 && slot.imageUrl)
+      .map(slot => slot.imageUrl!);
+
+    // Other stickers
+    const otherStickerUrls: string[] = [];
+    Object.entries(stickerImages).forEach(([slotNum, stickers]) => {
+      if (Number(slotNum) !== selectedTemplate + 1) {
+        stickers.forEach(s => s.url && otherStickerUrls.push(s.url));
+      }
+    });
+
+    // Upline avatars
+    const uplineAvatarUrls = displayUplines
+      .map(u => u.avatar)
+      .filter(Boolean) as string[];
+
+    return {
+      activeBackgroundUrl,
+      primaryPhotoUrl,
+      downloadIconUrl: downloadIcon,
+      logoUrls,
+      visibleStickerUrls,
+      otherBackgroundUrls,
+      otherStickerUrls,
+      uplineAvatarUrls,
     };
-    
-    // Preload all critical assets in parallel (non-blocking)
-    preloadImage(bannerDefaults?.logo_left);
-    preloadImage(bannerDefaults?.logo_right);
-    preloadImage(bannerDefaults?.congratulations_image);
-    preloadImage(primaryPhoto);
-    preloadImage(mentorPhoto);
-    
-    // Preload current slot background
-    const currentBg = globalBackgroundSlots.find(s => s.slotNumber === selectedTemplate + 1);
-    preloadImage(currentBg?.imageUrl);
-    
-    // Preload current slot stickers
-    stickerImages[selectedTemplate + 1]?.forEach(s => preloadImage(s.url));
-    
-    setAssetsPreloaded(true);
-  }, [isDataReady, assetsPreloaded, bannerDefaults, primaryPhoto, mentorPhoto, globalBackgroundSlots, selectedTemplate, stickerImages]);
+  }, [bannerData, isDataReady, globalBackgroundSlots, selectedTemplate, stickerImages, bannerDefaults, profile, displayUplines]);
+
+  // Trigger preload once when config is ready
+  useEffect(() => {
+    if (preloadStarted || !assetConfig) return;
+    setPreloadStarted(true);
+    preloadAssets(assetConfig);
+  }, [assetConfig, preloadStarted, preloadAssets]);
 
   // Trigger scale update immediately on mount and resize
   // Using useLayoutEffect ensures scale is applied before browser paint - no flicker
@@ -474,23 +518,34 @@ export default function BannerPreview() {
     return null;
   }
 
-  // *** FAST LOADING: Show minimal spinner while data loads ***
+  // *** STRICT ALL-OR-NOTHING: Show skeleton until isBannerReady is TRUE ***
   if (!isBannerReady) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
         <div className="w-full max-w-md">
           {/* Loading indicator */}
-          <div className="text-center">
+          <div className="text-center mb-6">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
               <Sparkles className="w-8 h-8 text-primary animate-pulse" />
             </div>
             <h2 className="text-lg font-semibold text-foreground mb-2">
-              Preparing Your Banner
+              {timedOut ? 'Almost Ready' : 'Preparing Your Banner'}
             </h2>
             <p className="text-sm text-muted-foreground">
-              Loading preview...
+              Loading all assets for smooth preview...
             </p>
           </div>
+          
+          {/* Progress bar */}
+          <div className="w-full bg-muted rounded-full h-3 mb-2 overflow-hidden">
+            <div 
+              className="h-full bg-primary rounded-full transition-all duration-100 ease-out"
+              style={{ width: `${Math.min(loadingProgress, 100)}%` }}
+            />
+          </div>
+          <p className="text-sm text-muted-foreground text-center font-medium">
+            {Math.round(loadingProgress)}% complete
+          </p>
           
           {/* Hidden container for scale calculation - must be in DOM for ResizeObserver */}
           <div 
@@ -2156,18 +2211,36 @@ export default function BannerPreview() {
         </div>
       </div>
 
-      {/* Scrollable Slot Selector Box - STATIC THUMBNAILS (no loading, no re-render) */}
+      {/* Scrollable Slot Selector Box - All 16 slots with FULL banner preview (proxy mode) */}
       {globalBackgroundSlots.length > 0 && <div className="flex-1 min-h-0 px-3 sm:px-4 pb-3 sm:pb-4">
-          <div className="h-full overflow-y-auto rounded-2xl sm:rounded-3xl bg-secondary/30 border-2 border-primary/20 p-3 sm:p-4 shadow-[0_0_30px_rgba(255,215,0,0.1)] scrollbar-thin scrollbar-thumb-primary/30 scrollbar-track-transparent">
+          <div className="h-full overflow-y-auto rounded-2xl sm:rounded-3xl bg-[#111827]/50 border-2 border-[#FFD700]/20 p-3 sm:p-4 shadow-[0_0_30px_rgba(255,215,0,0.1)] scrollbar-thin scrollbar-thumb-[#FFD700]/30 scrollbar-track-transparent">
             <div className="grid grid-cols-4 gap-2 sm:gap-3">
-              {globalBackgroundSlots.map(slot => (
-                <StaticSlotThumbnail
-                  key={slot.slotNumber}
-                  slot={slot}
-                  isSelected={selectedTemplate === slot.slotNumber - 1}
-                  onClick={() => setSelectedTemplate(slot.slotNumber - 1)}
-                />
-              ))}
+              {globalBackgroundSlots.map(slot => {
+            const isSelected = selectedTemplate === slot.slotNumber - 1;
+            // Only pass real data to selected slot; non-selected slots use proxy-only (no achiever data)
+            return <SlotPreviewMini
+                key={slot.slotNumber}
+                slot={slot}
+                isSelected={isSelected}
+                onClick={() => setSelectedTemplate(slot.slotNumber - 1)}
+                categoryType={bannerData?.categoryType}
+                // Only selected slot shows real data - others remain proxy-only
+                rankName={isSelected ? bannerData?.rankName : ''}
+                name={isSelected ? bannerData?.name : ''}
+                teamCity={isSelected ? bannerData?.teamCity : ''}
+                chequeAmount={isSelected ? bannerData?.chequeAmount : ''}
+                tripName={isSelected ? bannerData?.tripName : ''}
+                message={isSelected ? bannerData?.message : ''}
+                quote={isSelected ? bannerData?.quote : ''}
+                congratulationsImage={isSelected ? bannerDefaults?.congratulations_image : undefined}
+                logoLeft={isSelected ? bannerSettings?.logo_left : undefined}
+                logoRight={isSelected ? bannerSettings?.logo_right : undefined}
+                uplines={isSelected ? displayUplines : []}
+                stickers={stickerImages[slot.slotNumber] || []}
+                profileName={isSelected ? profileName : ''}
+                profileRank={isSelected ? displayRank : ''}
+              />;
+          })}
             </div>
           </div>
         </div>}
