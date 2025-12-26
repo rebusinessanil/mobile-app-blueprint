@@ -29,13 +29,25 @@ export default function Profile() {
 
   const handleLogout = async () => {
     try {
+      // Clear all local storage and session storage FIRST
+      localStorage.clear();
+      sessionStorage.clear();
+      
+      // Sign out from Supabase
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
+      
       toast.success("Logged out successfully");
-      navigate("/login");
+      
+      // Replace history to prevent back navigation to authenticated pages
+      // Then do a full page reload to clear all React state and memory
+      window.history.replaceState(null, '', '/dashboard');
+      window.location.replace('/dashboard');
     } catch (error) {
       console.error("Logout error:", error);
       toast.error("Failed to logout. Please try again.");
+      // Even on error, try to redirect to dashboard
+      window.location.replace('/dashboard');
     }
   };
 
