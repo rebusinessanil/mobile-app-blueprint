@@ -152,13 +152,14 @@ export default function BannerPreview() {
   const updateBannerScale = useCallback(() => {
     if (!bannerContainerRef.current) return;
     const parentWidth = bannerContainerRef.current.clientWidth;
+    
+    // Skip if container not ready
     if (parentWidth === 0) return;
     
-    // Use width-based scaling since aspect ratio is 1:1 (square)
+    // EXACT FIT: Scale to fill the container width precisely
     const scale = parentWidth / 1350;
-    setBannerScale(scale);
     
-    // Mark layout as ready after first successful scale calculation
+    setBannerScale(scale);
     setIsLayoutReady(true);
   }, []);
 
@@ -1473,7 +1474,7 @@ export default function BannerPreview() {
         height: FIXED_SIZE,
         canvasWidth: FIXED_SIZE,
         canvasHeight: FIXED_SIZE,
-        pixelRatio: 1,
+        pixelRatio: 2, // HD export quality - 2x resolution for crisp output
         quality: 1,
         backgroundColor: null,
         filter: node => {
@@ -1567,16 +1568,24 @@ export default function BannerPreview() {
         <div className="relative w-full max-w-[500px] mx-auto overflow-hidden">
           <div className="border-4 border-primary rounded-2xl shadow-2xl overflow-hidden">
             {/* CSS Transform Scaled HTML Preview - Mimics Canvas behavior */}
+            {/* Parent wrapper - exact fit container */}
             <div 
               ref={bannerContainerRef}
-              className="w-full aspect-square relative overflow-hidden"
+              className="w-full aspect-square relative overflow-hidden flex items-center justify-center"
             >
+              {/* HD Rendering Container - Center-pivot scaling for perfect fit */}
               <div 
-                className="banner-scale-container absolute top-0 left-0 origin-top-left"
+                className="banner-scale-container"
                 style={{
-                  transform: `scale(${bannerScale})`,
+                  position: 'absolute',
+                  left: '50%',
+                  top: '50%',
                   width: '1350px',
                   height: '1350px',
+                  transform: `translate(-50%, -50%) scale(${bannerScale})`,
+                  transformOrigin: 'center center',
+                  imageRendering: '-webkit-optimize-contrast' as React.CSSProperties['imageRendering'],
+                  willChange: 'transform',
                 }}
               >
                 <div 
