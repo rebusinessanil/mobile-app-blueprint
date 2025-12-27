@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { ranks } from "@/data/ranks";
+import BottomNav from "@/components/BottomNav";
 
 export default function RankSelection() {
   const navigate = useNavigate();
@@ -10,9 +11,9 @@ export default function RankSelection() {
   };
 
   return (
-    <div className="min-h-screen bg-navy-dark pb-6">
+    <div className="min-h-screen bg-background pb-24">
       {/* Header */}
-      <header className="sticky top-0 bg-navy-dark/95 backdrop-blur-sm z-40 px-6 py-4 border-b border-primary/20">
+      <header className="sticky top-0 bg-background/95 backdrop-blur-sm z-40 px-6 py-4 border-b border-primary/20">
         <div className="flex items-center gap-4">
           <button
             onClick={() => navigate("/dashboard")}
@@ -34,18 +35,20 @@ export default function RankSelection() {
             <button
               key={rank.id}
               onClick={() => handleRankSelect(rank.id)}
-              className="gold-border bg-card rounded-2xl p-5 flex flex-col items-center justify-center gap-3 hover:gold-glow transition-all"
+              className="rank-card border-2 border-primary/60 bg-card rounded-2xl p-4 flex flex-col items-center justify-center gap-3 transition-all duration-200 hover:border-primary hover:shadow-[0_0_20px_hsl(45_100%_60%/0.3)] active:scale-95"
             >
-              <div className={`w-16 h-16 ${rank.gradient} rounded-2xl flex items-center justify-center text-3xl shadow-lg`}>
+              <div className={`w-14 h-14 ${rank.gradient} rounded-2xl flex items-center justify-center text-2xl shadow-lg`}>
                 {rank.icon}
               </div>
-              <span className="text-sm font-semibold text-center text-foreground leading-tight">
+              <span className="text-xs font-semibold text-center text-foreground leading-tight line-clamp-2">
                 {rank.name}
               </span>
             </button>
           ))}
         </div>
       </div>
+
+      <BottomNav />
     </div>
   );
 }

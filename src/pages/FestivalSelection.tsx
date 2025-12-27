@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { useFestivals } from "@/hooks/useFestivals";
+import SelectionCard from "@/components/dashboard/SelectionCard";
 import BottomNav from "@/components/BottomNav";
 import ListPageSkeleton from "@/components/skeletons/ListPageSkeleton";
 
@@ -21,8 +22,8 @@ export default function FestivalSelection() {
   };
 
   return (
-    <div className="min-h-screen bg-navy-dark pb-24">
-      <header className="sticky top-0 bg-navy-dark/95 backdrop-blur-sm z-40 px-6 py-4 border-b border-primary/20">
+    <div className="min-h-screen bg-background pb-24">
+      <header className="sticky top-0 bg-background/95 backdrop-blur-sm z-40 px-6 py-4 border-b border-primary/20">
         <div className="flex items-center justify-between">
           <button
             onClick={() => navigate("/dashboard")}
@@ -43,46 +44,28 @@ export default function FestivalSelection() {
           </p>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          {festivals.map((festival) => (
-            <button
-              key={festival.id}
-              onClick={() => handleFestivalClick(festival.id)}
-              className="gold-border bg-card rounded-2xl overflow-hidden hover:gold-glow transition-all text-left"
-            >
-              <div className="h-32 relative">
-                {festival.poster_url ? (
-                  <img
-                    src={festival.poster_url}
-                    alt={festival.festival_name}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center text-4xl">
-                    🎉
-                  </div>
-                )}
-              </div>
-              <div className="p-4 text-center">
-                <h3 className="text-sm font-semibold text-foreground leading-tight">
-                  {festival.festival_name}
-                </h3>
-                {festival.description && (
-                  <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                    {festival.description}
-                  </p>
-                )}
-              </div>
-            </button>
-          ))}
-        </div>
-
-        {festivals.length === 0 && !loading && (
+        {festivals.length === 0 && !loading ? (
           <div className="text-center py-12">
             <div className="w-20 h-20 bg-secondary rounded-full flex items-center justify-center mx-auto mb-4">
               <span className="text-4xl">🎉</span>
             </div>
             <p className="text-muted-foreground">No festivals available yet</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-4">
+            {festivals.map((festival) => (
+              <SelectionCard
+                key={festival.id}
+                id={festival.id}
+                title={festival.festival_name}
+                subtitle={festival.description || undefined}
+                imageUrl={festival.poster_url}
+                fallbackIcon="🎉"
+                fallbackGradient="bg-gradient-to-br from-purple-600 to-pink-600"
+                onClick={() => handleFestivalClick(festival.id)}
+                aspectRatio="4/3"
+              />
+            ))}
           </div>
         )}
       </div>

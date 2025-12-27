@@ -89,10 +89,10 @@ function GuestBannerCardComponent({
         role="button"
         tabIndex={0}
         onKeyDown={(e) => e.key === 'Enter' && handleClick(e as any)}
-        className="w-[calc(33.333%-8px)] min-w-[110px] max-w-[140px] gold-border bg-card rounded-2xl overflow-hidden flex-shrink-0 hover:gold-glow transition-all active:scale-95 transform-gpu will-change-transform cursor-pointer"
+        className="template-card"
       >
         {/* Fixed aspect ratio container */}
-        <div className="aspect-[4/3] relative bg-secondary/30 overflow-hidden">
+        <div className="template-card-image">
           {imageUrl ? (
             <>
               {!imageLoaded && (
@@ -100,7 +100,7 @@ function GuestBannerCardComponent({
                   src={thumbnailUrl || PROXY_PLACEHOLDER}
                   alt=""
                   aria-hidden="true"
-                  className="absolute inset-0 w-full h-full object-cover blur-sm scale-105 transform-gpu"
+                  className="template-card-image-blur"
                   loading="eager"
                 />
               )}
@@ -118,17 +118,17 @@ function GuestBannerCardComponent({
               )}
             </>
           ) : (
-            <div className={`w-full h-full ${fallbackGradient} flex items-center justify-center text-3xl`}>
+            <div className={`template-card-fallback ${fallbackGradient}`}>
               {fallbackIcon}
             </div>
           )}
         </div>
-        <div className="p-2 text-center">
-          <p className="text-xs font-semibold text-foreground leading-tight line-clamp-1">
+        <div className="template-card-content">
+          <p className="template-card-title">
             {title}
           </p>
           {subtitle && (
-            <p className="text-[10px] text-muted-foreground mt-0.5 line-clamp-1">
+            <p className="template-card-subtitle">
               {subtitle}
             </p>
           )}

@@ -1,6 +1,7 @@
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { useBonanzaTrips } from "@/hooks/useBonanzaTrips";
+import SelectionCard from "@/components/dashboard/SelectionCard";
 import BottomNav from "@/components/BottomNav";
 import ListPageSkeleton from "@/components/skeletons/ListPageSkeleton";
 
@@ -14,8 +15,8 @@ export default function BonanzaTripsSelection() {
   }
 
   return (
-    <div className="min-h-screen bg-navy-dark pb-24">
-      <header className="sticky top-0 bg-navy-dark/95 backdrop-blur-sm z-40 px-6 py-4 border-b border-primary/20">
+    <div className="min-h-screen bg-background pb-24">
+      <header className="sticky top-0 bg-background/95 backdrop-blur-sm z-40 px-6 py-4 border-b border-primary/20">
         <div className="flex items-center justify-between">
           <button
             onClick={() => navigate("/dashboard")}
@@ -36,46 +37,28 @@ export default function BonanzaTripsSelection() {
           </p>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          {trips.map((trip) => (
-            <Link
-              key={trip.id}
-              to={`/banner-create/bonanza?tripId=${trip.id}`}
-              className="gold-border bg-card rounded-2xl overflow-hidden hover:gold-glow transition-all"
-            >
-              <div className="h-32 relative">
-                {trip.trip_image_url ? (
-                  <img
-                    src={trip.trip_image_url}
-                    alt={trip.title}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-red-600 to-orange-600 flex items-center justify-center text-4xl">
-                    🎁
-                  </div>
-                )}
-              </div>
-              <div className="p-4 text-center">
-                <h3 className="text-sm font-semibold text-foreground leading-tight">
-                  {trip.title}
-                </h3>
-                {trip.description && (
-                  <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                    {trip.description}
-                  </p>
-                )}
-              </div>
-            </Link>
-          ))}
-        </div>
-
-        {trips.length === 0 && !loading && (
+        {trips.length === 0 && !loading ? (
           <div className="text-center py-12">
             <div className="w-20 h-20 bg-secondary rounded-full flex items-center justify-center mx-auto mb-4">
               <span className="text-4xl">🎁</span>
             </div>
             <p className="text-muted-foreground">No trips available yet</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-4">
+            {trips.map((trip) => (
+              <SelectionCard
+                key={trip.id}
+                id={trip.id}
+                title={trip.title}
+                subtitle={trip.description || undefined}
+                imageUrl={trip.trip_image_url}
+                fallbackIcon="🎁"
+                fallbackGradient="bg-gradient-to-br from-red-600 to-orange-600"
+                onClick={() => navigate(`/banner-create/bonanza?tripId=${trip.id}`)}
+                aspectRatio="4/3"
+              />
+            ))}
           </div>
         )}
       </div>
