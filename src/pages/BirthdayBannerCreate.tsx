@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, ImagePlus } from "lucide-react";
+import GoldCoinLoader from "@/components/GoldCoinLoader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import UplineCarousel from "@/components/UplineCarousel";
@@ -178,10 +179,7 @@ export default function BirthdayBannerCreate() {
   if (birthdayLoading || templatesLoading) {
     return (
       <div className="min-h-screen bg-navy-dark flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading birthday details...</p>
-        </div>
+        <GoldCoinLoader size="xl" message="Loading birthday details..." />
       </div>
     );
   }

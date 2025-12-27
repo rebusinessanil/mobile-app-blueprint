@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/lib/logger";
 import { WifiOff } from "lucide-react";
 import { getUserRoleAndRedirect } from "@/hooks/useUserRole";
+import GoldCoinLoader from "@/components/GoldCoinLoader";
 
 export default function AuthCallback() {
   const navigate = useNavigate();
@@ -219,9 +220,8 @@ export default function AuthCallback() {
         </div>
       )}
       <div className="text-center">
-        <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-        <p className="text-foreground text-lg">Processing Sign-Up...</p>
-        <p className="text-muted-foreground text-sm mt-2">Please wait while we complete your registration</p>
+        <GoldCoinLoader size="xl" message="Processing Sign-Up..." />
+        <p className="text-muted-foreground text-sm mt-4">Please wait while we complete your registration</p>
       </div>
     </div>
   );

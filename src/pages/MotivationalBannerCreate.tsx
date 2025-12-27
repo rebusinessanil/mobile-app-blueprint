@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft, ImagePlus, Loader2 } from "lucide-react";
+import { ArrowLeft, ImagePlus } from "lucide-react";
+import GoldCoinLoader from "@/components/GoldCoinLoader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -85,7 +86,7 @@ export default function MotivationalBannerCreate() {
   if (motivationalBannerLoading || templatesLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-navy-dark">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <GoldCoinLoader size="lg" message="Loading..." />
       </div>
     );
   }

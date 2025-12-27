@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, ImagePlus } from "lucide-react";
+import GoldCoinLoader from "@/components/GoldCoinLoader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import UplineCarousel from "@/components/UplineCarousel";
@@ -177,10 +178,7 @@ export default function BonanzaBannerCreate() {
   if (tripLoading || templatesLoading) {
     return (
       <div className="min-h-screen bg-navy-dark flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading trip details...</p>
-        </div>
+        <GoldCoinLoader size="xl" message="Loading trip details..." />
       </div>
     );
   }

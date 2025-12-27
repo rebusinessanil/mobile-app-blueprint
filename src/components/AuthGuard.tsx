@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/lib/logger";
 import { getUserRoleAndRedirect, isPathAllowedForRole } from "@/hooks/useUserRole";
 import type { User } from "@supabase/supabase-js";
+import GoldCoinLoader from "@/components/GoldCoinLoader";
 
 const PROFILE_GATE_BYPASS_KEY = "rebusiness_profile_completed";
 
@@ -169,7 +170,7 @@ export default function AuthGuard({ children }: AuthGuardProps) {
   if (loading || checkingProfile || !roleChecked) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+        <GoldCoinLoader size="lg" message="Verifying..." />
       </div>
     );
   }
