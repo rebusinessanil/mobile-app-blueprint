@@ -127,6 +127,7 @@ export async function getUserRoleAndRedirect(userId: string): Promise<{
  * Check if current path matches user role (for route protection)
  */
 export function isPathAllowedForRole(path: string, isAdmin: boolean): boolean {
+  // Cleaned up admin paths - removed deprecated routes
   const adminPaths = [
     "/admin",
     "/admin/users",
@@ -134,12 +135,10 @@ export function isPathAllowedForRole(path: string, isAdmin: boolean): boolean {
     "/admin/stories",
     "/admin/ranks",
     "/admin/stickers",
-    "/admin/rank-stickers",
-    "/admin/banner-defaults",
-    "/admin/banner-preview-defaults",
-    "/admin/template-backgrounds",
-    "/admin/sticker-library",
     "/admin/sticker-management",
+    "/admin/template-backgrounds",
+    "/admin/banner-defaults",
+    "/admin/banner-carousel",
     "/admin/auto-stories",
   ];
 
