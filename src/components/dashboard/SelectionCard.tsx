@@ -1,48 +1,39 @@
-import { useNavigate } from "react-router-dom";
-import { useState, memo, useRef, useEffect, useCallback, useMemo } from "react";
+import { memo, useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { getThumbnailUrl } from "@/lib/imageOptimizer";
 
-// Static proxy placeholder SVG - instant display, no network
-const PROXY_PLACEHOLDER = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='105' viewBox='0 0 140 105'%3E%3Crect fill='%231a1f2e' width='140' height='105'/%3E%3Crect fill='%23ffd34e' opacity='0.08' width='140' height='105'/%3E%3C/svg%3E";
+// Static proxy placeholder SVG
+const PROXY_PLACEHOLDER = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='150' viewBox='0 0 200 150'%3E%3Crect fill='%231a1f2e' width='200' height='150'/%3E%3Crect fill='%23ffd34e' opacity='0.08' width='200' height='150'/%3E%3C/svg%3E";
 
 // Image cache for instant re-renders
 const imageCache = new Set<string>();
 
-interface BannerCardProps {
+interface SelectionCardProps {
   id: string;
   title: string;
   subtitle?: string;
   imageUrl?: string;
   fallbackIcon?: string;
   fallbackGradient?: string;
-  linkTo: string;
-  instantNav?: boolean;
+  onClick: () => void;
+  aspectRatio?: "4/3" | "3/4" | "square";
 }
 
-function BannerCardComponent({
+function SelectionCardComponent({
   id,
   title,
   subtitle,
   imageUrl,
   fallbackIcon = "🏆",
   fallbackGradient = "bg-gradient-to-br from-secondary to-card",
-  linkTo,
-  instantNav = false
-}: BannerCardProps) {
-  const navigate = useNavigate();
-  // Check if image is already cached - instant display
+  onClick,
+  aspectRatio = "4/3"
+}: SelectionCardProps) {
   const isCached = useMemo(() => imageUrl ? imageCache.has(imageUrl) : false, [imageUrl]);
   const [imageLoaded, setImageLoaded] = useState(isCached);
-  const [isInView, setIsInView] = useState(isCached); // Skip observer if cached
+  const [isInView, setIsInView] = useState(isCached);
   const cardRef = useRef<HTMLDivElement>(null);
 
-  // Instant navigation handler - zero delay
-  const handleClick = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    navigate(linkTo);
-  }, [navigate, linkTo]);
-
-  // Lazy load with Intersection Observer - skip if already cached
+  // Lazy load with Intersection Observer
   useEffect(() => {
     if (isCached || isInView) return;
     
@@ -56,48 +47,53 @@ function BannerCardComponent({
           observer.disconnect();
         }
       },
-      { rootMargin: '200px', threshold: 0.01 } // Larger margin for earlier loading
+      { rootMargin: '100px', threshold: 0.01 }
     );
 
     observer.observe(element);
     return () => observer.disconnect();
   }, [isCached, isInView]);
 
-  // Handle image load and cache
   const handleImageLoad = useCallback(() => {
     setImageLoaded(true);
     if (imageUrl) imageCache.add(imageUrl);
   }, [imageUrl]);
 
   const thumbnailUrl = useMemo(() => 
-    imageUrl ? getThumbnailUrl(imageUrl, 40) : '', 
+    imageUrl ? getThumbnailUrl(imageUrl, 60) : '', 
     [imageUrl]
   );
+
+  const aspectClass = {
+    "4/3": "aspect-[4/3]",
+    "3/4": "aspect-[3/4]",
+    "square": "aspect-square"
+  }[aspectRatio];
 
   return (
     <div
       ref={cardRef}
-      onClick={handleClick}
+      onClick={onClick}
       role="button"
       tabIndex={0}
-      onKeyDown={(e) => e.key === 'Enter' && handleClick(e as any)}
-      className="template-card"
+      onKeyDown={(e) => e.key === 'Enter' && onClick()}
+      className="selection-card cursor-pointer rounded-2xl overflow-hidden border-2 border-primary/60 bg-card transition-all duration-200 transform-gpu hover:border-primary hover:shadow-[0_0_20px_hsl(45_100%_60%/0.3)] active:scale-95"
     >
-      {/* Fixed aspect ratio container - GPU accelerated */}
-      <div className="template-card-image">
+      {/* Image Container with Aspect Ratio */}
+      <div className={`${aspectClass} relative overflow-hidden bg-secondary/30`}>
         {imageUrl ? (
           <>
-            {/* Instant proxy placeholder - always visible first */}
+            {/* Placeholder/blur */}
             {!imageLoaded && (
               <img
                 src={thumbnailUrl || PROXY_PLACEHOLDER}
                 alt=""
                 aria-hidden="true"
-                className="template-card-image-blur"
+                className="absolute inset-0 w-full h-full object-cover blur-sm scale-105 transform-gpu"
                 loading="eager"
               />
             )}
-            {/* Main image - load when in view or cached */}
+            {/* Main image */}
             {(isInView || isCached) && (
               <img
                 src={imageUrl}
@@ -112,17 +108,19 @@ function BannerCardComponent({
             )}
           </>
         ) : (
-          <div className={`template-card-fallback ${fallbackGradient}`}>
+          <div className={`w-full h-full ${fallbackGradient} flex items-center justify-center text-4xl`}>
             {fallbackIcon}
           </div>
         )}
       </div>
-      <div className="template-card-content">
-        <p className="template-card-title">
+      
+      {/* Content Area */}
+      <div className="p-3 text-center bg-card">
+        <h3 className="text-sm font-semibold text-foreground leading-tight line-clamp-2">
           {title}
-        </p>
+        </h3>
         {subtitle && (
-          <p className="template-card-subtitle">
+          <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
             {subtitle}
           </p>
         )}
@@ -131,5 +129,4 @@ function BannerCardComponent({
   );
 }
 
-// Memoize to prevent unnecessary re-renders
-export default memo(BannerCardComponent);
+export default memo(SelectionCardComponent);

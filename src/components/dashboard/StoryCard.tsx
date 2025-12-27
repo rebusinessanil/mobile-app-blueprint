@@ -58,9 +58,9 @@ function StoryCardComponent({
   const statusDotColor = isActiveStatus ? 'bg-green-500' : 'bg-yellow-500';
 
   const content = (
-    <div ref={cardRef} className="gold-border bg-card rounded-2xl overflow-hidden">
+    <div ref={cardRef} className="story-card">
       {/* Fixed aspect ratio container - GPU accelerated */}
-      <div className="w-[72px] h-[72px] relative bg-secondary/30 overflow-hidden">
+      <div className="story-card-image">
         {/* Blur placeholder */}
         {thumbnailUrl && !imageLoaded && (
           <img
@@ -99,15 +99,9 @@ function StoryCardComponent({
             className={`absolute top-1.5 right-1.5 w-2.5 h-2.5 ${statusDotColor} rounded-full border-2 border-white shadow-lg`} 
           />
         )}
-        {/* Always show status dot in corner for non-preview cards */}
-        {!isPreview && !isUpcoming && (
-          <div 
-            className={`absolute top-1.5 right-1.5 w-2.5 h-2.5 ${statusDotColor} rounded-full border-2 border-white shadow-lg`} 
-          />
-        )}
       </div>
-      <div className="p-1.5 text-center">
-        <p className="text-[10px] font-semibold text-foreground leading-tight line-clamp-2">
+      <div className="story-card-content">
+        <p className="story-card-title">
           {title}
         </p>
       </div>
@@ -126,7 +120,7 @@ function StoryCardComponent({
   return (
     <Link
       to={linkTo}
-      className="flex-shrink-0 transition-all hover:scale-105 active:scale-95 transform-gpu will-change-transform"
+      className="flex-shrink-0 transition-all transform-gpu will-change-transform"
     >
       {content}
     </Link>
