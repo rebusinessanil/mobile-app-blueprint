@@ -88,7 +88,7 @@ const NotFound = lazyWithRetry(() => import("./pages/NotFound"));
 const MeetingBannerCreate = lazyWithRetry(() => import("./pages/MeetingBannerCreate"));
 const PrivacyPolicy = lazyWithRetry(() => import("./pages/PrivacyPolicy"));
 
-// Admin pages
+// Admin pages - cleaned up (removed deprecated pages)
 const AdminDashboard = lazyWithRetry(() => import("./pages/AdminDashboard"));
 const AdminUsers = lazyWithRetry(() => import("./pages/AdminUsers"));
 const AdminTemplates = lazyWithRetry(() => import("./pages/AdminTemplates"));
@@ -96,11 +96,8 @@ const AdminStories = lazyWithRetry(() => import("./pages/AdminStories"));
 const AdminAutoStories = lazyWithRetry(() => import("./pages/AdminAutoStories"));
 const AdminRanks = lazyWithRetry(() => import("./pages/AdminRanks"));
 const AdminStickers = lazyWithRetry(() => import("./pages/AdminStickers"));
-const AdminRankStickers = lazyWithRetry(() => import("./pages/AdminRankStickers"));
 const AdminBannerDefaults = lazyWithRetry(() => import("./pages/AdminBannerDefaults"));
-const AdminBannerPreviewDefaults = lazyWithRetry(() => import("./pages/AdminBannerPreviewDefaults"));
 const AdminTemplateBackgrounds = lazyWithRetry(() => import("./pages/AdminTemplateBackgrounds"));
-const AdminStickerLibrary = lazyWithRetry(() => import("./pages/AdminStickerLibrary"));
 const AdminStickerManagement = lazyWithRetry(() => import("./pages/AdminStickerManagement"));
 const AdminBannerCarousel = lazyWithRetry(() => import("./pages/AdminBannerCarousel"));
 
@@ -211,21 +208,18 @@ const App = () => (
               <Route path="/story/:storyId" element={<AuthGuard><StoryBannerCreate /></AuthGuard>} />
               <Route path="/story-preview/:eventId" element={<AuthGuard><StoryPreview /></AuthGuard>} />
               
-              {/* Admin routes - auth required */}
+              {/* Admin routes - auth required (cleaned up - removed deprecated pages) */}
               <Route path="/admin" element={<AuthGuard><AdminDashboard /></AuthGuard>} />
               <Route path="/admin/users" element={<AuthGuard><AdminUsers /></AuthGuard>} />
               <Route path="/admin/templates" element={<AuthGuard><AdminTemplates /></AuthGuard>} />
               <Route path="/admin/stories" element={<AuthGuard><AdminStories /></AuthGuard>} />
               <Route path="/admin/ranks" element={<AuthGuard><AdminRanks /></AuthGuard>} />
               <Route path="/admin/stickers" element={<AuthGuard><AdminStickers /></AuthGuard>} />
-              <Route path="/admin/rank-stickers" element={<AuthGuard><AdminRankStickers /></AuthGuard>} />
-              <Route path="/admin/banner-defaults" element={<AuthGuard><AdminBannerDefaults /></AuthGuard>} />
-              <Route path="/admin/banner-preview-defaults" element={<AuthGuard><AdminBannerPreviewDefaults /></AuthGuard>} />
-              <Route path="/admin/template-backgrounds" element={<AuthGuard><AdminTemplateBackgrounds /></AuthGuard>} />
-              <Route path="/admin/sticker-library" element={<AuthGuard><AdminStickerLibrary /></AuthGuard>} />
               <Route path="/admin/sticker-management" element={<AuthGuard><AdminStickerManagement /></AuthGuard>} />
-              <Route path="/admin/auto-stories" element={<AuthGuard><AdminAutoStories /></AuthGuard>} />
+              <Route path="/admin/template-backgrounds" element={<AuthGuard><AdminTemplateBackgrounds /></AuthGuard>} />
+              <Route path="/admin/banner-defaults" element={<AuthGuard><AdminBannerDefaults /></AuthGuard>} />
               <Route path="/admin/banner-carousel" element={<AuthGuard><AdminBannerCarousel /></AuthGuard>} />
+              <Route path="/admin/auto-stories" element={<AuthGuard><AdminAutoStories /></AuthGuard>} />
               
               {/* Catch-all for undefined routes */}
               <Route path="*" element={<AuthGuard><ComingSoon /></AuthGuard>} />

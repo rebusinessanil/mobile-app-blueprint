@@ -1,371 +1,172 @@
-import { useState, useEffect } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Search, UserPlus, Trash2, Edit, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Search, User, Plus, Minus, Crown, Eye, EyeOff } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import AdminLayout from "@/components/admin/AdminLayout";
-import { AdminGuard } from "@/components/AdminGuard";
+import AdminHeader from "@/components/admin/AdminHeader";
+import AdminUserCard from "@/components/admin/AdminUserCard";
+import AdminStatsCard from "@/components/admin/AdminStatsCard";
+import GoldCoinLoader from "@/components/GoldCoinLoader";
+import { useAdminUsersSync } from "@/hooks/useAdminRealtimeSync";
 
-interface User {
-  id: string;
-  user_id: string;
-  name: string;
-  mobile: string; // Required field as per database schema
-  whatsapp: string | null;
-  rank: string | null;
-  role: string | null;
+interface AuthUser {
+  uid: string;
+  email: string;
+  phone: string;
+  display_name: string;
+  providers: string[];
+  provider_type: string;
   created_at: string;
-}
-
-interface UserCredits {
-  user_id: string;
+  last_sign_in_at: string | null;
+  rank: string | null;
+  profile_photo: string | null;
   balance: number;
   total_earned: number;
   total_spent: number;
+  is_admin: boolean;
+  roles: string[];
 }
 
 export default function AdminUsers() {
-  const [users, setUsers] = useState<User[]>([]);
-  const [credits, setCredits] = useState<Record<string, UserCredits>>({});
+  const [users, setUsers] = useState<AuthUser[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [editForm, setEditForm] = useState({
-    name: "",
-    mobile: "",
-    whatsapp: "",
-    rank: "",
-    role: "",
-  });
-  const [creditAmount, setCreditAmount] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedUser, setSelectedUser] = useState<AuthUser | null>(null);
+  const [creditAmount, setCreditAmount] = useState("10");
+  const [isCreditsDialogOpen, setIsCreditsDialogOpen] = useState(false);
+  const [isPinDialogOpen, setIsPinDialogOpen] = useState(false);
+  const [showPin, setShowPin] = useState(false);
+  const [newPin, setNewPin] = useState("");
+  const [pinLoading, setPinLoading] = useState(false);
+  const [pinStatus, setPinStatus] = useState<{ has_pin: boolean; plain_pin: string | null } | null>(null);
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async (showRefresh = false) => {
     try {
-      setLoading(true);
-      const { data: usersData, error: usersError } = await supabase
-        .from("profiles")
-        .select("*")
-        .order("created_at", { ascending: false });
+      if (showRefresh) setRefreshing(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
 
-      if (usersError) throw usersError;
+      const { data, error } = await supabase.functions.invoke('admin-users', {
+        body: { action: 'list', page: 1, perPage: 1000 },
+        headers: { Authorization: `Bearer ${session.access_token}` }
+      });
 
-      const { data: creditsData, error: creditsError } = await supabase
-        .from("user_credits")
-        .select("*");
-
-      if (creditsError) throw creditsError;
-
-      const creditsMap = creditsData.reduce((acc, credit) => {
-        acc[credit.user_id] = credit;
-        return acc;
-      }, {} as Record<string, UserCredits>);
-
-      setUsers(usersData || []);
-      setCredits(creditsMap);
-    } catch (error: any) {
-      toast.error("Failed to fetch users: " + error.message);
+      if (error) throw error;
+      setUsers(data.users || []);
+    } catch (error) {
+      toast.error("Failed to load users");
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
-  };
+  }, []);
 
-  const handleEditUser = (user: User) => {
-    setSelectedUser(user);
-    setEditForm({
-      name: user.name,
-      mobile: user.mobile,
-      whatsapp: user.whatsapp || "",
-      rank: user.rank || "",
-      role: user.role || "",
-    });
-    setIsEditDialogOpen(true);
-  };
+  useEffect(() => { fetchUsers(); }, [fetchUsers]);
+  useAdminUsersSync(() => fetchUsers(), 15000);
 
-  const handleSaveUser = async () => {
+  const handleAdjustCredits = async (action: 'add' | 'deduct') => {
     if (!selectedUser) return;
+    const amount = parseInt(creditAmount);
+    if (isNaN(amount) || amount <= 0) { toast.error("Enter valid amount"); return; }
 
     try {
-      const { error } = await supabase
-        .from("profiles")
-        .update(editForm)
-        .eq("id", selectedUser.id);
+      const { data: currentCredit } = await supabase.from('user_credits').select('balance, total_earned, total_spent').eq('user_id', selectedUser.uid).maybeSingle();
 
-      if (error) throw error;
-
-      toast.success("User updated successfully");
-      setIsEditDialogOpen(false);
-      fetchUsers();
-    } catch (error: any) {
-      toast.error("Failed to update user: " + error.message);
-    }
-  };
-
-  const handleAddCredits = async () => {
-    if (!selectedUser || !creditAmount) return;
-
-    try {
-      const amount = parseInt(creditAmount);
-      if (isNaN(amount) || amount <= 0) {
-        toast.error("Please enter a valid amount");
-        return;
+      if (!currentCredit) {
+        await supabase.from('user_credits').insert({ user_id: selectedUser.uid, balance: action === 'add' ? amount : 0, total_earned: action === 'add' ? amount : 0, total_spent: 0 });
+      } else {
+        const newBalance = action === 'add' ? currentCredit.balance + amount : currentCredit.balance - amount;
+        if (newBalance < 0) { toast.error("Insufficient balance"); return; }
+        await supabase.from('user_credits').update({ balance: newBalance, total_earned: action === 'add' ? currentCredit.total_earned + amount : currentCredit.total_earned, total_spent: action === 'deduct' ? currentCredit.total_spent + amount : currentCredit.total_spent }).eq('user_id', selectedUser.uid);
       }
 
-      // Create credit transaction
-      const { error: transactionError } = await supabase
-        .from("credit_transactions")
-        .insert({
-          user_id: selectedUser.user_id,
-          amount: amount,
-          transaction_type: "admin_credit",
-          description: "Credits added by admin",
-        });
-
-      if (transactionError) throw transactionError;
-
-      // Update user credits
-      const currentCredits = credits[selectedUser.user_id];
-      const { error: updateError } = await supabase
-        .from("user_credits")
-        .update({
-          balance: (currentCredits?.balance || 0) + amount,
-          total_earned: (currentCredits?.total_earned || 0) + amount,
-        })
-        .eq("user_id", selectedUser.user_id);
-
-      if (updateError) throw updateError;
-
-      toast.success(`Added ${amount} credits successfully`);
-      setCreditAmount("");
+      await supabase.from('credit_transactions').insert({ user_id: selectedUser.uid, amount: action === 'add' ? amount : -amount, transaction_type: action === 'add' ? 'admin_credit' : 'spent', description: `Admin ${action}ed ₹${amount}` });
+      toast.success(`Credits ${action}ed`);
+      setIsCreditsDialogOpen(false);
       fetchUsers();
-    } catch (error: any) {
-      toast.error("Failed to add credits: " + error.message);
-    }
+    } catch (error: any) { toast.error(error.message || "Failed"); }
   };
 
-  const handleDeleteUser = async (userId: string) => {
-    if (!confirm("Are you sure you want to delete this user?")) return;
-
+  const handleOpenPinDialog = async (user: AuthUser) => {
+    setSelectedUser(user); setNewPin(""); setShowPin(false); setPinStatus(null); setIsPinDialogOpen(true); setPinLoading(true);
     try {
-      const { error } = await supabase
-        .from("profiles")
-        .delete()
-        .eq("id", userId);
-
-      if (error) throw error;
-
-      toast.success("User deleted successfully");
-      fetchUsers();
-    } catch (error: any) {
-      toast.error("Failed to delete user: " + error.message);
-    }
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const { data } = await supabase.functions.invoke('admin-pin-management', { body: { action: 'check_pin_status', target_user_id: user.uid }, headers: { Authorization: `Bearer ${session.access_token}` } });
+      setPinStatus(data);
+    } catch { toast.error("Failed to check PIN"); } finally { setPinLoading(false); }
   };
 
-  const filteredUsers = users.filter((user) =>
-    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.mobile?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.whatsapp?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const handleResetPin = async () => {
+    if (!selectedUser || newPin.length !== 4) return;
+    setPinLoading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const { data } = await supabase.functions.invoke('admin-pin-management', { body: { action: 'reset_pin', target_user_id: selectedUser.uid, new_pin: newPin }, headers: { Authorization: `Bearer ${session.access_token}` } });
+      setPinStatus({ has_pin: true, plain_pin: data.plain_pin || newPin });
+      toast.success("PIN reset"); setNewPin(""); setShowPin(true);
+    } catch { toast.error("Failed to reset PIN"); } finally { setPinLoading(false); }
+  };
+
+  const handleDeleteUser = async (user: AuthUser) => {
+    if (!confirm(`Delete ${user.display_name || user.email}?`)) return;
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      await supabase.functions.invoke('admin-users', { body: { action: 'delete', userId: user.uid }, headers: { Authorization: `Bearer ${session.access_token}` } });
+      toast.success("User deleted"); fetchUsers();
+    } catch { toast.error("Failed to delete"); }
+  };
+
+  const filteredUsers = users.filter(u => u.display_name?.toLowerCase().includes(searchQuery.toLowerCase()) || u.email?.toLowerCase().includes(searchQuery.toLowerCase()));
+  const totalCredits = users.reduce((sum, u) => sum + u.balance, 0);
+  const adminCount = users.filter(u => u.is_admin).length;
+  const newToday = users.filter(u => new Date(u.created_at).toDateString() === new Date().toDateString()).length;
+
+  if (loading) return <AdminLayout><div className="flex items-center justify-center min-h-[60vh]"><GoldCoinLoader size="lg" message="Loading..." /></div></AdminLayout>;
 
   return (
-    <AdminGuard>
-      <AdminLayout>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">User Management</h1>
-            <p className="text-muted-foreground mt-1">
-              Manage users, credits, and permissions
-            </p>
-          </div>
-          <Button onClick={fetchUsers} variant="outline" size="icon">
-            <RefreshCw className="w-4 h-4" />
-          </Button>
+    <AdminLayout>
+      <AdminHeader title="User Management" subtitle={`${users.length} users`} onRefresh={() => fetchUsers(true)} isRefreshing={refreshing} />
+      <div className="p-4 space-y-4">
+        <div className="grid grid-cols-2 gap-3">
+          <AdminStatsCard icon={<User className="w-5 h-5" />} value={users.length} label="Total Users" />
+          <AdminStatsCard icon={<Plus className="w-5 h-5" />} value={totalCredits} label="Total Credits" iconColor="text-green-500" />
+          <AdminStatsCard icon={<Crown className="w-5 h-5" />} value={adminCount} label="Admins" />
+          <AdminStatsCard icon={<User className="w-5 h-5" />} value={newToday} label="New Today" iconColor="text-blue-500" />
         </div>
-
-        {/* Search */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-          <Input
-            placeholder="Search by name, mobile, or WhatsApp..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input placeholder="Search users..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10 bg-card border-primary/20" />
         </div>
-
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="gold-border bg-card rounded-xl p-6">
-            <p className="text-sm text-muted-foreground">Total Users</p>
-            <p className="text-3xl font-bold text-primary mt-2">{users.length}</p>
-          </div>
-          <div className="gold-border bg-card rounded-xl p-6">
-            <p className="text-sm text-muted-foreground">Total Credits</p>
-            <p className="text-3xl font-bold text-primary mt-2">
-              {Object.values(credits).reduce((sum, c) => sum + c.balance, 0)}
-            </p>
-          </div>
-          <div className="gold-border bg-card rounded-xl p-6">
-            <p className="text-sm text-muted-foreground">Active Today</p>
-            <p className="text-3xl font-bold text-primary mt-2">
-              {users.filter(u => {
-                const today = new Date().toDateString();
-                return new Date(u.created_at).toDateString() === today;
-              }).length}
-            </p>
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          {filteredUsers.map((user) => <AdminUserCard key={user.uid} user={user} onAdjustCredits={(u) => { setSelectedUser(u); setIsCreditsDialogOpen(true); }} onManagePin={handleOpenPinDialog} onDelete={handleDeleteUser} />)}
         </div>
-
-        {/* Table */}
-        <div className="gold-border bg-card rounded-xl overflow-hidden">
-          {loading ? (
-            <div className="p-12 text-center text-muted-foreground">Loading...</div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Mobile</TableHead>
-                  <TableHead>WhatsApp</TableHead>
-                  <TableHead>Rank</TableHead>
-                  <TableHead>Credits</TableHead>
-                  <TableHead>Joined</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredUsers.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell className="font-medium">{user.name}</TableCell>
-                    <TableCell>{user.mobile}</TableCell>
-                    <TableCell>{user.whatsapp || "-"}</TableCell>
-                    <TableCell>
-                      {user.rank ? (
-                        <Badge variant="outline">{user.rank}</Badge>
-                      ) : (
-                        "-"
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <span className="font-semibold text-primary">
-                        {credits[user.user_id]?.balance || 0}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      {new Date(user.created_at).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleEditUser(user)}
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDeleteUser(user.id)}
-                          className="text-destructive hover:text-destructive"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </div>
-
-        {/* Edit Dialog */}
-        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Edit User</DialogTitle>
-              <DialogDescription>
-                Update user information and manage credits
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label>Name</Label>
-                <Input
-                  value={editForm.name}
-                  onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label>Mobile</Label>
-                <Input
-                  value={editForm.mobile}
-                  onChange={(e) => setEditForm({ ...editForm, mobile: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label>WhatsApp</Label>
-                <Input
-                  value={editForm.whatsapp}
-                  onChange={(e) => setEditForm({ ...editForm, whatsapp: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label>Rank</Label>
-                <Input
-                  value={editForm.rank}
-                  onChange={(e) => setEditForm({ ...editForm, rank: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label>Add Credits</Label>
-                <div className="flex gap-2">
-                  <Input
-                    type="number"
-                    placeholder="Amount"
-                    value={creditAmount}
-                    onChange={(e) => setCreditAmount(e.target.value)}
-                  />
-                  <Button onClick={handleAddCredits}>Add</Button>
-                </div>
-              </div>
-              <div className="flex gap-2 justify-end">
-                <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={handleSaveUser}>Save Changes</Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
       </div>
+
+      <Dialog open={isCreditsDialogOpen} onOpenChange={setIsCreditsDialogOpen}>
+        <DialogContent className="bg-card border-primary/20 max-w-sm"><DialogHeader><DialogTitle>Adjust Credits</DialogTitle><DialogDescription>{selectedUser?.display_name}</DialogDescription></DialogHeader>
+          <div className="text-center py-2"><div className="text-3xl font-bold text-primary">{selectedUser?.balance || 0}</div></div>
+          <Input type="number" value={creditAmount} onChange={(e) => setCreditAmount(e.target.value)} className="text-center text-lg h-12" />
+          <DialogFooter className="flex gap-2"><Button variant="outline" onClick={() => handleAdjustCredits('deduct')} className="flex-1 text-destructive"><Minus className="w-4 h-4 mr-1" />Deduct</Button><Button onClick={() => handleAdjustCredits('add')} className="flex-1"><Plus className="w-4 h-4 mr-1" />Add</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isPinDialogOpen} onOpenChange={setIsPinDialogOpen}>
+        <DialogContent className="bg-card border-primary/20 max-w-sm"><DialogHeader><DialogTitle>PIN Management</DialogTitle></DialogHeader>
+          {pinLoading ? <GoldCoinLoader size="sm" /> : <div className="space-y-4">
+            <div className="p-3 bg-secondary/50 rounded-xl flex items-center gap-2">{pinStatus?.has_pin ? <><Badge className="bg-green-500/20 text-green-500">PIN Set</Badge>{showPin && pinStatus.plain_pin && <span className="font-mono">{pinStatus.plain_pin}</span>}<Button variant="ghost" size="icon" onClick={() => setShowPin(!showPin)}>{showPin ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button></> : <Badge variant="outline">No PIN</Badge>}</div>
+            <Input maxLength={4} value={newPin} onChange={(e) => setNewPin(e.target.value.replace(/\D/g, ''))} placeholder="New 4-digit PIN" className="text-center text-xl tracking-widest" />
+          </div>}
+          <DialogFooter><Button onClick={handleResetPin} disabled={pinLoading || newPin.length !== 4} className="w-full">Reset PIN</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AdminLayout>
-    </AdminGuard>
   );
 }
