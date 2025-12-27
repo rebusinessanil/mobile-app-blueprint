@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Plus, Trash2, Edit, Calendar, Sparkles, Eye, EyeOff, Upload, Image, Loader2, Search, RefreshCw } from "lucide-react";
+import { Plus, Trash2, Calendar, Sparkles, Eye, EyeOff, Upload, Image, Loader2, Search } from "lucide-react";
 import AdminLayout from "@/components/admin/AdminLayout";
 import AdminHeader from "@/components/admin/AdminHeader";
 import AdminStatsCard from "@/components/admin/AdminStatsCard";
@@ -13,28 +13,29 @@ import { useGeneratedStories, useStoriesEvents, useStoriesFestivals } from "@/ho
 import { useStoryBackgroundSlots, uploadStoryBackgroundSlot, removeStoryBackgroundSlot, toggleStoryBackgroundSlotActive } from "@/hooks/useStoryBackgroundSlots";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import GoldCoinLoader from "@/components/GoldCoinLoader";
+import StoryCard, { StoryCardData, getStatusFromDates } from "@/components/admin/StoryCard";
 
 type StoryType = "event" | "festival";
 type TabType = "events" | "festivals" | "generated" | "backgrounds";
+type StatusFilter = "all" | "active" | "preview_only" | "sources";
 
 export default function AdminStories() {
   const {
     stories: generatedStories,
     loading: generatedLoading,
     refetch: refetchGenerated
-  } = useGeneratedStories(true); // Admin mode: show ALL stories
+  } = useGeneratedStories(true);
   const {
     events,
     loading: eventsLoading,
     refetch: refetchEvents
-  } = useStoriesEvents(true); // Admin mode: show ALL events
+  } = useStoriesEvents(true);
   const {
     festivals,
     loading: festivalsLoading,
     refetch: refetchFestivals
-  } = useStoriesFestivals(true); // Admin mode: show ALL festivals
+  } = useStoriesFestivals(true);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -43,6 +44,7 @@ export default function AdminStories() {
   const [activeTab, setActiveTab] = useState<TabType>("events");
   const [searchQuery, setSearchQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   
   // Background management state
   const [selectedStory, setSelectedStory] = useState<any>(null);
@@ -302,15 +304,66 @@ export default function AdminStories() {
 
   const activeGenerated = generatedStories.filter(s => s.status === "active").length;
   const previewGenerated = generatedStories.filter(s => s.status === "preview_only").length;
-  const totalStories = events.length + festivals.length + generatedStories.length;
+  const totalSources = events.length + festivals.length;
+  const totalStories = totalSources + generatedStories.length;
 
-  // Filter stories based on search
-  const filteredEvents = events.filter(e => 
-    e.person_name?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-  const filteredFestivals = festivals.filter(f => 
-    f.festival_name?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Filter stories based on search and status filter
+  const filteredEvents = useMemo(() => {
+    let filtered = events.filter(e => 
+      e.person_name?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    
+    if (statusFilter === "active") {
+      filtered = filtered.filter(e => {
+        const status = getStatusFromDates(e.start_date, e.end_date, e.story_status);
+        return status.label === "Live";
+      });
+    } else if (statusFilter === "preview_only") {
+      filtered = filtered.filter(e => {
+        const status = getStatusFromDates(e.start_date, e.end_date, e.story_status);
+        return status.label === "Upcoming";
+      });
+    }
+    
+    return filtered;
+  }, [events, searchQuery, statusFilter]);
+
+  const filteredFestivals = useMemo(() => {
+    let filtered = festivals.filter(f => 
+      f.festival_name?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    
+    if (statusFilter === "active") {
+      filtered = filtered.filter(f => {
+        const status = getStatusFromDates(f.start_date, f.end_date, f.story_status);
+        return status.label === "Live";
+      });
+    } else if (statusFilter === "preview_only") {
+      filtered = filtered.filter(f => {
+        const status = getStatusFromDates(f.start_date, f.end_date, f.story_status);
+        return status.label === "Upcoming";
+      });
+    }
+    
+    return filtered;
+  }, [festivals, searchQuery, statusFilter]);
+
+  const filteredGenerated = useMemo(() => {
+    let filtered = generatedStories;
+    
+    if (statusFilter === "active") {
+      filtered = filtered.filter(s => s.status === "active");
+    } else if (statusFilter === "preview_only") {
+      filtered = filtered.filter(s => s.status === "preview_only");
+    }
+    
+    return filtered;
+  }, [generatedStories, statusFilter]);
+
+  // Handle stats card click for filtering
+  const handleStatsClick = (filter: StatusFilter) => {
+    setStatusFilter(prev => prev === filter ? "all" : filter);
+  };
 
   if (loading) {
     return (
@@ -332,13 +385,45 @@ export default function AdminStories() {
       />
 
       <div className="p-4 space-y-4">
-        {/* Stats Cards - 4 Column Grid */}
+        {/* Stats Cards - Clickable Filters */}
         <div className="grid grid-cols-2 gap-3">
-          <AdminStatsCard icon={<Calendar className="w-5 h-5" />} value={totalStories} label="Total Stories" />
-          <AdminStatsCard icon={<Eye className="w-5 h-5" />} value={activeGenerated} label="Active" iconColor="text-green-500" />
-          <AdminStatsCard icon={<EyeOff className="w-5 h-5" />} value={previewGenerated} label="Preview Only" iconColor="text-yellow-500" />
-          <AdminStatsCard icon={<Sparkles className="w-5 h-5" />} value={events.length + festivals.length} label="Source Events" iconColor="text-blue-500" />
+          <div 
+            onClick={() => handleStatsClick("all")} 
+            className={`cursor-pointer transition-all ${statusFilter === "all" ? "ring-2 ring-primary" : ""}`}
+          >
+            <AdminStatsCard icon={<Calendar className="w-5 h-5" />} value={totalStories} label="Total Stories" />
+          </div>
+          <div 
+            onClick={() => handleStatsClick("active")} 
+            className={`cursor-pointer transition-all ${statusFilter === "active" ? "ring-2 ring-green-500" : ""}`}
+          >
+            <AdminStatsCard icon={<Eye className="w-5 h-5" />} value={activeGenerated} label="Active (Live)" iconColor="text-green-500" />
+          </div>
+          <div 
+            onClick={() => handleStatsClick("preview_only")} 
+            className={`cursor-pointer transition-all ${statusFilter === "preview_only" ? "ring-2 ring-yellow-500" : ""}`}
+          >
+            <AdminStatsCard icon={<EyeOff className="w-5 h-5" />} value={previewGenerated} label="Upcoming" iconColor="text-yellow-500" />
+          </div>
+          <div 
+            onClick={() => handleStatsClick("sources")} 
+            className={`cursor-pointer transition-all ${statusFilter === "sources" ? "ring-2 ring-blue-500" : ""}`}
+          >
+            <AdminStatsCard icon={<Sparkles className="w-5 h-5" />} value={totalSources} label="Source Events" iconColor="text-blue-500" />
+          </div>
         </div>
+        
+        {/* Active Filter Badge */}
+        {statusFilter !== "all" && (
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="border-primary/40">
+              Filter: {statusFilter === "active" ? "Live" : statusFilter === "preview_only" ? "Upcoming" : "Sources"}
+            </Badge>
+            <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={() => setStatusFilter("all")}>
+              Clear
+            </Button>
+          </div>
+        )}
 
         {/* Search and Actions */}
         <div className="flex gap-2">
@@ -422,51 +507,26 @@ export default function AdminStories() {
             ) : (
               <div className="space-y-2">
                 {filteredEvents.map(event => {
-                  // Story status: false = Upcoming, true = Active/Live, null = Expired
-                  const getStatusBadge = () => {
-                    if (event.story_status === true) return { label: 'Live', class: 'bg-green-500/20 text-green-500' };
-                    if (event.story_status === false) return { label: 'Upcoming', class: 'bg-blue-500/20 text-blue-500' };
-                    return { label: 'Expired', class: 'bg-muted text-muted-foreground' };
+                  const storyCardData: StoryCardData = {
+                    id: event.id,
+                    title: event.person_name,
+                    subtitle: event.event_type,
+                    poster_url: event.poster_url,
+                    is_active: event.is_active,
+                    start_date: event.start_date,
+                    end_date: event.end_date,
+                    story_status: event.story_status,
+                    event_date: event.event_date
                   };
-                  const statusBadge = getStatusBadge();
                   
                   return (
-                    <div key={event.id} className="bg-card border border-primary/20 rounded-2xl p-3 hover:border-primary/40 transition-all">
-                      <div className="flex items-center gap-3">
-                        <div className="w-16 h-16 rounded-xl overflow-hidden bg-muted flex-shrink-0">
-                          <img src={event.poster_url} alt={event.person_name} className="w-full h-full object-cover" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1 flex-wrap">
-                            <h3 className="font-semibold text-foreground text-sm truncate">{event.person_name}</h3>
-                            <Badge className={`text-[10px] px-1.5 py-0 ${event.is_active ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'}`}>
-                              {event.is_active ? 'Active' : 'Inactive'}
-                            </Badge>
-                            <Badge className={`text-[10px] px-1.5 py-0 ${statusBadge.class}`}>
-                              {statusBadge.label}
-                            </Badge>
-                          </div>
-                          <p className="text-xs text-muted-foreground capitalize">{event.event_type}</p>
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
-                            <span>📅 {new Date(event.event_date).toLocaleDateString('en-IN')}</span>
-                            {event.start_date && (
-                              <span className="text-primary/70">→ {new Date(event.start_date).toLocaleDateString('en-IN')}</span>
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleToggleActive(event.id, event.is_active ?? true, "event")}>
-                            {event.is_active ? <Eye className="w-4 h-4 text-green-500" /> : <EyeOff className="w-4 h-4 text-muted-foreground" />}
-                          </Button>
-                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenDialog(event, "event")}>
-                            <Edit className="w-4 h-4 text-primary" />
-                          </Button>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(event.id, "event")}>
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
+                    <StoryCard
+                      key={event.id}
+                      story={storyCardData}
+                      onToggleActive={(id, current) => handleToggleActive(id, current, "event")}
+                      onEdit={() => handleOpenDialog(event, "event")}
+                      onDelete={(id) => handleDelete(id, "event")}
+                    />
                   );
                 })}
               </div>
@@ -490,57 +550,24 @@ export default function AdminStories() {
             ) : (
               <div className="space-y-2">
                 {filteredFestivals.map(festival => {
-                  // Story status: false = Upcoming, true = Active/Live, null = Expired
-                  const getStatusBadge = () => {
-                    if (festival.story_status === true) return { label: 'Live', class: 'bg-green-500/20 text-green-500' };
-                    if (festival.story_status === false) return { label: 'Upcoming', class: 'bg-blue-500/20 text-blue-500' };
-                    return { label: 'Expired', class: 'bg-muted text-muted-foreground' };
+                  const storyCardData: StoryCardData = {
+                    id: festival.id,
+                    title: festival.festival_name,
+                    poster_url: festival.poster_url,
+                    is_active: festival.is_active,
+                    start_date: festival.start_date,
+                    end_date: festival.end_date,
+                    story_status: festival.story_status
                   };
-                  const statusBadge = getStatusBadge();
                   
                   return (
-                    <div key={festival.id} className="bg-card border border-primary/20 rounded-2xl p-3 hover:border-primary/40 transition-all">
-                      <div className="flex items-center gap-3">
-                        <div className="w-16 h-16 rounded-xl overflow-hidden bg-muted flex-shrink-0">
-                          <img src={festival.poster_url} alt={festival.festival_name} className="w-full h-full object-cover" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1 flex-wrap">
-                            <h3 className="font-semibold text-foreground text-sm truncate">{festival.festival_name}</h3>
-                            <Badge className={`text-[10px] px-1.5 py-0 ${festival.is_active ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'}`}>
-                              {festival.is_active ? 'Active' : 'Inactive'}
-                            </Badge>
-                            <Badge className={`text-[10px] px-1.5 py-0 ${statusBadge.class}`}>
-                              {statusBadge.label}
-                            </Badge>
-                          </div>
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <span>📅 {new Date(festival.festival_date).toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
-                          </div>
-                          {(festival.start_date || festival.end_date) && (
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
-                              {festival.start_date && (
-                                <span className="text-primary/70">Start: {new Date(festival.start_date).toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
-                              )}
-                              {festival.end_date && (
-                                <span className="text-primary/70">End: {new Date(festival.end_date).toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleToggleActive(festival.id, festival.is_active ?? true, "festival")}>
-                            {festival.is_active ? <Eye className="w-4 h-4 text-green-500" /> : <EyeOff className="w-4 h-4 text-muted-foreground" />}
-                          </Button>
-                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenDialog(festival, "festival")}>
-                            <Edit className="w-4 h-4 text-primary" />
-                          </Button>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(festival.id, "festival")}>
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
+                    <StoryCard
+                      key={festival.id}
+                      story={storyCardData}
+                      onToggleActive={(id, current) => handleToggleActive(id, current, "festival")}
+                      onEdit={() => handleOpenDialog(festival, "festival")}
+                      onDelete={(id) => handleDelete(id, "festival")}
+                    />
                   );
                 })}
               </div>
@@ -550,31 +577,32 @@ export default function AdminStories() {
 
         {activeTab === "generated" && (
           <div className="space-y-2">
-            {generatedStories.length === 0 ? (
+            {filteredGenerated.length === 0 ? (
               <div className="text-center py-12 bg-card border border-primary/20 rounded-2xl">
                 <Sparkles className="w-12 h-12 text-muted-foreground mx-auto mb-3 opacity-50" />
                 <p className="text-sm text-muted-foreground">No auto-generated stories yet</p>
               </div>
             ) : (
-              generatedStories.map(story => (
-                <div key={story.id} className="bg-card border border-primary/20 rounded-2xl p-3 hover:border-primary/40 transition-all">
-                  <div className="flex items-center gap-3">
-                    <div className="w-16 h-16 rounded-xl overflow-hidden bg-muted flex-shrink-0">
-                      <img src={story.poster_url} alt={story.title} className="w-full h-full object-cover" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-foreground text-sm truncate mb-1">{story.title}</h3>
-                      <div className="flex items-center gap-2">
-                        <Badge className={`text-[10px] px-1.5 py-0 ${story.status === 'active' ? 'bg-green-500/20 text-green-500' : 'bg-yellow-500/20 text-yellow-500'}`}>
-                          {story.status}
-                        </Badge>
-                        <span className="text-xs text-muted-foreground">{story.source_type}</span>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-1">{new Date(story.event_date).toLocaleDateString()}</p>
-                    </div>
-                  </div>
-                </div>
-              ))
+              filteredGenerated.map(story => {
+                const storyCardData: StoryCardData = {
+                  id: story.id,
+                  title: story.title,
+                  subtitle: story.source_type,
+                  poster_url: story.poster_url,
+                  is_active: story.status === "active",
+                  start_date: story.event_date,
+                  end_date: story.expires_at,
+                  story_status: story.story_status
+                };
+                
+                return (
+                  <StoryCard
+                    key={story.id}
+                    story={storyCardData}
+                    showActions={false}
+                  />
+                );
+              })
             )}
           </div>
         )}
