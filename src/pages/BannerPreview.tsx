@@ -818,9 +818,9 @@ export default function BannerPreview() {
               </p>
             </div>
 
-            {/* Name & Team Group - Positioned 30% lower */}
+            {/* Name & Team Group - Positioned lower */}
             <div className="absolute" style={{
-            top: '490px',
+            top: '539px',
             left: '978px',
             transform: 'translateX(-50%)',
             width: '648px',
