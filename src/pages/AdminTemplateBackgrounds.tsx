@@ -1,19 +1,18 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { Upload, Trash2, Eye, EyeOff, Calendar, Edit, MoreVertical, Loader2 } from 'lucide-react';
+import { Upload, Trash2, Eye, EyeOff, Loader2, Search, Image, Layers } from 'lucide-react';
 import GoldCoinLoader from '@/components/GoldCoinLoader';
 import { useTemplateBackgrounds, uploadTemplateBackground, removeTemplateBackground, toggleBackgroundActive } from '@/hooks/useTemplateBackgrounds';
-import { AdminGuard } from "@/components/AdminGuard";
+import AdminLayout from "@/components/admin/AdminLayout";
+import AdminHeader from "@/components/admin/AdminHeader";
+import AdminStatsCard from "@/components/admin/AdminStatsCard";
 import { useStoriesEvents, useStoriesFestivals } from '@/hooks/useAutoStories';
 import { useStoryBackgroundSlots, uploadStoryBackgroundSlot, removeStoryBackgroundSlot, toggleStoryBackgroundSlotActive } from '@/hooks/useStoryBackgroundSlots';
 import { Badge } from '@/components/ui/badge';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 export default function AdminTemplateBackgrounds() {
   const [selectedCategory, setSelectedCategory] = useState<string>('');
@@ -23,14 +22,15 @@ export default function AdminTemplateBackgrounds() {
   const [bulkUploading, setBulkUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number } | null>(null);
   const [storySlotUploadProgress, setStorySlotUploadProgress] = useState<Record<number, number>>({});
+  const [refreshing, setRefreshing] = useState(false);
 
   // Fetch stories for "Stories" category
-  const { events, loading: eventsLoading } = useStoriesEvents();
-  const { festivals, loading: festivalsLoading } = useStoriesFestivals();
+  const { events, loading: eventsLoading, refetch: refetchEvents } = useStoriesEvents();
+  const { festivals, loading: festivalsLoading, refetch: refetchFestivals } = useStoriesFestivals();
   const allStories = [...events.map(e => ({ ...e, type: 'event' })), ...festivals.map(f => ({ ...f, type: 'festival' }))];
 
   // Fetch categories
-  const { data: categories, isLoading: categoriesLoading } = useQuery({
+  const { data: categories, isLoading: categoriesLoading, refetch: refetchCategories } = useQuery({
     queryKey: ['template-categories'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -38,7 +38,6 @@ export default function AdminTemplateBackgrounds() {
         .select('*')
         .eq('is_active', true)
         .order('display_order', { ascending: true });
-      
       if (error) throw error;
       return data;
     },
@@ -46,8 +45,8 @@ export default function AdminTemplateBackgrounds() {
 
   const isStoriesCategory = categories?.find(c => c.id === selectedCategory)?.slug === 'stories';
 
-  // Fetch templates for selected category with optional rank info
-  const { data: templates, isLoading: templatesLoading } = useQuery({
+  // Fetch templates for selected category
+  const { data: templates, isLoading: templatesLoading, refetch: refetchTemplates } = useQuery({
     queryKey: ['templates', selectedCategory],
     queryFn: async () => {
       if (!selectedCategory) return [];
@@ -57,7 +56,6 @@ export default function AdminTemplateBackgrounds() {
         .eq('category_id', selectedCategory)
         .eq('is_active', true)
         .order('display_order', { ascending: true });
-      
       if (error) throw error;
       return data;
     },
@@ -67,10 +65,16 @@ export default function AdminTemplateBackgrounds() {
   // Fetch backgrounds for selected template
   const { backgrounds, loading: backgroundsLoading } = useTemplateBackgrounds(selectedTemplate);
   
-  // Fetch story background slots when story is selected
+  // Fetch story background slots
   const { slots: storySlots, loading: storySlotsLoading } = useStoryBackgroundSlots(
     isStoriesCategory && selectedStory ? selectedStory.id : undefined
   );
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await Promise.all([refetchCategories(), refetchTemplates(), refetchEvents(), refetchFestivals()]);
+    setRefreshing(false);
+  };
 
   const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -81,23 +85,16 @@ export default function AdminTemplateBackgrounds() {
       return;
     }
 
-    // Find next available slot (1-16)
     const usedSlots = backgrounds.map(bg => bg.slot_number);
     const nextSlot = Array.from({ length: 16 }, (_, i) => i + 1).find(i => !usedSlots.includes(i)) ?? (backgrounds.length + 1);
 
     setUploading(true);
     try {
-      const { url, error } = await uploadTemplateBackground(
-        selectedTemplate,
-        file,
-        nextSlot
-      );
-
+      const { url, error } = await uploadTemplateBackground(selectedTemplate, file, nextSlot);
       if (error) {
         toast.error('Failed to upload background');
-        console.error(error);
       } else {
-        toast.success(`Background uploaded to slot ${nextSlot} - Updates will sync instantly`);
+        toast.success(`Background uploaded to slot ${nextSlot}`);
       }
     } finally {
       setUploading(false);
@@ -109,97 +106,57 @@ export default function AdminTemplateBackgrounds() {
     const files = event.target.files;
     if (!files || files.length === 0 || !selectedTemplate) return;
 
-    const filesToUpload = Array.from(files).slice(0, 16); // Limit to 16 files
+    const filesToUpload = Array.from(files).slice(0, 16);
     const usedSlots = backgrounds.map(bg => bg.slot_number);
     const availableSlots = Array.from({ length: 16 }, (_, i) => i + 1).filter(i => !usedSlots.includes(i));
 
     if (availableSlots.length === 0) {
-      toast.error('All 16 slots are filled. Delete some backgrounds first.');
+      toast.error('All 16 slots are filled');
       return;
-    }
-
-    if (filesToUpload.length > availableSlots.length) {
-      toast.warning(`Only ${availableSlots.length} slots available. Uploading first ${availableSlots.length} images.`);
     }
 
     setBulkUploading(true);
     setUploadProgress({ current: 0, total: Math.min(filesToUpload.length, availableSlots.length) });
 
     let successCount = 0;
-    let failCount = 0;
-
     for (let i = 0; i < Math.min(filesToUpload.length, availableSlots.length); i++) {
       const file = filesToUpload[i];
       const slot = availableSlots[i];
-
       setUploadProgress({ current: i + 1, total: Math.min(filesToUpload.length, availableSlots.length) });
-
       try {
         const { error } = await uploadTemplateBackground(selectedTemplate, file, slot);
-        if (error) {
-          failCount++;
-          console.error(`Failed to upload to slot ${slot}:`, error);
-        } else {
-          successCount++;
-        }
-      } catch (err) {
-        failCount++;
-        console.error(`Error uploading to slot ${slot}:`, err);
-      }
+        if (!error) successCount++;
+      } catch (err) {}
     }
 
     setBulkUploading(false);
     setUploadProgress(null);
     event.target.value = '';
-
-    if (successCount > 0 && failCount === 0) {
-      toast.success(`Successfully uploaded ${successCount} backgrounds! Updates synced instantly.`);
-    } else if (successCount > 0 && failCount > 0) {
-      toast.warning(`Uploaded ${successCount} backgrounds. ${failCount} failed.`);
-    } else {
-      toast.error('Failed to upload backgrounds');
-    }
+    toast.success(`Uploaded ${successCount} backgrounds`);
   };
 
   const handleRemove = async (backgroundId: string) => {
-    if (!confirm('Are you sure you want to remove this background?')) return;
-
+    if (!confirm('Remove this background?')) return;
     const { error } = await removeTemplateBackground(backgroundId);
-    if (error) {
-      toast.error('Failed to remove background');
-    } else {
-      toast.success('Background removed');
-    }
+    if (error) toast.error('Failed to remove');
+    else toast.success('Removed');
   };
 
   const handleToggleActive = async (backgroundId: string, isActive: boolean) => {
     const { error } = await toggleBackgroundActive(backgroundId, !isActive);
-    if (error) {
-      toast.error('Failed to update background status');
-    } else {
-      toast.success(`Background ${!isActive ? 'activated' : 'deactivated'}`);
-    }
+    if (error) toast.error('Failed to update');
+    else toast.success(`${!isActive ? 'Activated' : 'Deactivated'}`);
   };
 
   const handleStorySlotUpload = async (file: File, slotNumber: number) => {
-    if (!selectedStory) {
-      toast.error("Please select a story first");
-      return;
-    }
-
-    setStorySlotUploadProgress((prev) => ({ ...prev, [slotNumber]: 0 }));
-
+    if (!selectedStory) return;
+    setStorySlotUploadProgress(prev => ({ ...prev, [slotNumber]: 0 }));
     const result = await uploadStoryBackgroundSlot(selectedStory.id, slotNumber, file);
-
-    if (result.error) {
-      toast.error(`Failed to upload story background for slot ${slotNumber}`);
-    } else {
-      toast.success(`Story background uploaded to slot ${slotNumber}`);
-    }
-
-    setStorySlotUploadProgress((prev) => ({ ...prev, [slotNumber]: 100 }));
+    if (result.error) toast.error(`Failed to upload slot ${slotNumber}`);
+    else toast.success(`Slot ${slotNumber} uploaded`);
+    setStorySlotUploadProgress(prev => ({ ...prev, [slotNumber]: 100 }));
     setTimeout(() => {
-      setStorySlotUploadProgress((prev) => {
+      setStorySlotUploadProgress(prev => {
         const updated = { ...prev };
         delete updated[slotNumber];
         return updated;
@@ -208,439 +165,240 @@ export default function AdminTemplateBackgrounds() {
   };
 
   const handleStorySlotBulkUpload = async (files: FileList) => {
-    if (!selectedStory) {
-      toast.error("Please select a story first");
-      return;
-    }
-
+    if (!selectedStory) return;
     const filesArray = Array.from(files);
     const availableSlots = Array.from({ length: 16 }, (_, i) => i + 1).filter(
-      (slot) => !storySlots.some((s) => s.slot_number === slot)
+      slot => !storySlots.some(s => s.slot_number === slot)
     );
-
     if (filesArray.length > availableSlots.length) {
-      toast.error(`Can only upload ${availableSlots.length} more backgrounds (16 slot limit)`);
+      toast.error(`Only ${availableSlots.length} slots available`);
       return;
     }
-
     for (let i = 0; i < filesArray.length; i++) {
-      const file = filesArray[i];
-      const slotNumber = availableSlots[i];
-      await handleStorySlotUpload(file, slotNumber);
+      await handleStorySlotUpload(filesArray[i], availableSlots[i]);
     }
   };
 
+  const totalBackgrounds = backgrounds.length;
+  const activeBackgrounds = backgrounds.filter(b => b.is_active).length;
+
   if (categoriesLoading) {
     return (
-      <div className="flex items-center justify-center h-96">
-        <GoldCoinLoader size="lg" message="Loading..." />
-      </div>
+      <AdminLayout>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <GoldCoinLoader size="lg" message="Loading..." />
+        </div>
+      </AdminLayout>
     );
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-foreground mb-2">Template Backgrounds</h1>
-        <p className="text-muted-foreground">Manage background images for banner templates</p>
-      </div>
+    <AdminLayout>
+      <AdminHeader 
+        title="Template Backgrounds" 
+        subtitle="Manage background images" 
+        onRefresh={handleRefresh} 
+        isRefreshing={refreshing} 
+      />
 
-      {/* Category Selection */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Select Category</CardTitle>
-          <CardDescription>Choose a banner category to manage templates</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      <div className="p-4 space-y-4">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-2 gap-3">
+          <AdminStatsCard icon={<Layers className="w-5 h-5" />} value={categories?.length || 0} label="Categories" />
+          <AdminStatsCard icon={<Image className="w-5 h-5" />} value={templates?.length || 0} label="Templates" iconColor="text-blue-500" />
+          <AdminStatsCard icon={<Upload className="w-5 h-5" />} value={totalBackgrounds} label="Backgrounds" iconColor="text-green-500" />
+          <AdminStatsCard icon={<Eye className="w-5 h-5" />} value={activeBackgrounds} label="Active" iconColor="text-primary" />
+        </div>
+
+        {/* Category Selection */}
+        <div className="bg-card border border-primary/20 rounded-2xl p-4">
+          <h3 className="font-semibold text-foreground mb-3">Select Category</h3>
+          <div className="grid grid-cols-3 gap-2">
             {categories?.map((category) => (
-              <Button
+              <button
                 key={category.id}
-                variant={selectedCategory === category.id ? 'default' : 'outline'}
-                onClick={() => {
-                  setSelectedCategory(category.id);
-                  setSelectedTemplate('');
-                }}
-                className="h-auto py-4 flex flex-col items-center gap-2"
+                onClick={() => { setSelectedCategory(category.id); setSelectedTemplate(''); setSelectedStory(null); }}
+                className={`p-3 rounded-xl border text-center transition-all ${
+                  selectedCategory === category.id 
+                    ? 'bg-[#E5B80B] text-black border-[#E5B80B]' 
+                    : 'bg-card border-primary/20 text-foreground hover:border-primary/40'
+                }`}
               >
-                <span className="text-2xl">{category.icon}</span>
-                <span className="text-sm font-medium">{category.name}</span>
-              </Button>
+                <span className="text-lg block mb-1">{category.icon}</span>
+                <span className="text-xs font-medium">{category.name}</span>
+              </button>
             ))}
           </div>
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* Story Selection for Stories Category */}
-      {isStoriesCategory && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Select Story ({allStories.length} available)</CardTitle>
-            <CardDescription>Choose a story to manage its background slots</CardDescription>
-          </CardHeader>
-          <CardContent>
+        {/* Story Selection for Stories Category */}
+        {isStoriesCategory && (
+          <div className="bg-card border border-primary/20 rounded-2xl p-4">
+            <h3 className="font-semibold text-foreground mb-3">Select Story ({allStories.length})</h3>
             {eventsLoading || festivalsLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin text-gold" />
-              </div>
+              <div className="flex justify-center py-4"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
             ) : allStories.length === 0 ? (
-              <p className="text-muted-foreground text-sm py-4 text-center">No stories found</p>
+              <p className="text-muted-foreground text-sm text-center py-4">No stories found</p>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="grid grid-cols-3 gap-2 max-h-48 overflow-y-auto">
                 {allStories.map((story: any) => {
                   const isEvent = story.type === 'event';
-                  const storyId = story.id;
                   const storyTitle = isEvent ? story.person_name : story.festival_name;
-                  const storyDate = isEvent ? story.event_date : story.festival_date;
-                  const isActive = story.is_active ?? true;
-                  
                   return (
                     <button
-                      key={storyId}
+                      key={story.id}
                       onClick={() => setSelectedStory(story)}
-                      className={`text-left bg-card border rounded-2xl overflow-hidden transition-all ${
-                        selectedStory?.id === storyId ? 'border-primary shadow-lg' : 'border-primary/20 hover:border-primary/40'
+                      className={`rounded-xl overflow-hidden border transition-all ${
+                        selectedStory?.id === story.id ? 'border-primary shadow-lg' : 'border-primary/20 hover:border-primary/40'
                       }`}
                     >
-                      {/* Image */}
-                      <div className="relative aspect-square bg-muted">
+                      <div className="aspect-square bg-muted">
                         <img src={story.poster_url} alt={storyTitle} className="w-full h-full object-cover" />
-                        {/* Category Pill */}
-                        <Badge className={`absolute top-2 left-2 text-[9px] px-1.5 py-0.5 border-0 ${
-                          isEvent ? 'bg-blue-500/90' : 'bg-purple-500/90'
-                        } text-white`}>
-                          {isEvent ? story.event_type : 'Festival'}
-                        </Badge>
-                        {/* Status Dot */}
-                        <div className="absolute top-2 right-2">
-                          <div className={`w-2.5 h-2.5 rounded-full border-2 border-white shadow-lg ${
-                            isActive ? 'bg-green-500' : 'bg-gray-500'
-                          }`} />
-                        </div>
                       </div>
-                      
-                      {/* Content */}
-                      <div className="p-2.5">
-                        <h3 className="font-semibold text-foreground text-xs leading-tight line-clamp-1 mb-1">
-                          {storyTitle}
-                        </h3>
-                        <p className="text-[10px] text-muted-foreground">
-                          {new Date(storyDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                        </p>
+                      <div className="p-1.5 bg-card">
+                        <p className="text-[10px] font-medium truncate">{storyTitle}</p>
                       </div>
                     </button>
                   );
                 })}
               </div>
             )}
-          </CardContent>
-        </Card>
-      )}
+          </div>
+        )}
 
-      {/* Template Selection with Rank Display */}
-      {selectedCategory && !isStoriesCategory && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Select Template ({templates?.length || 0} available)</CardTitle>
-            <CardDescription>Choose a template to manage its 16 backgrounds</CardDescription>
-          </CardHeader>
-          <CardContent>
+        {/* Template Selection */}
+        {selectedCategory && !isStoriesCategory && (
+          <div className="bg-card border border-primary/20 rounded-2xl p-4">
+            <h3 className="font-semibold text-foreground mb-3">Select Template ({templates?.length || 0})</h3>
             {templatesLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin text-gold" />
-              </div>
+              <div className="flex justify-center py-4"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
             ) : !templates || templates.length === 0 ? (
-              <p className="text-muted-foreground text-sm py-4 text-center">No templates found for this category</p>
+              <p className="text-muted-foreground text-sm text-center py-4">No templates found</p>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-3 gap-2">
                 {templates.map((template: any) => (
-                  <Button
+                  <button
                     key={template.id}
-                    variant={selectedTemplate === template.id ? 'default' : 'outline'}
                     onClick={() => setSelectedTemplate(template.id)}
-                    className={`h-auto p-4 flex flex-col items-center gap-2 ${
-                      selectedTemplate === template.id 
-                        ? 'bg-primary text-primary-foreground border-primary' 
-                        : 'bg-card hover:bg-card/80 border-primary/30'
+                    className={`rounded-xl overflow-hidden border transition-all ${
+                      selectedTemplate === template.id ? 'border-primary shadow-lg' : 'border-primary/20 hover:border-primary/40'
                     }`}
                   >
-                    <div className="w-full aspect-square bg-secondary rounded-lg overflow-hidden">
-                      <img
-                        src={template.cover_thumbnail_url}
-                        alt={template.name}
-                        className="w-full h-full object-cover"
-                      />
+                    <div className="aspect-square bg-muted">
+                      <img src={template.cover_thumbnail_url} alt={template.name} className="w-full h-full object-cover" />
                     </div>
-                    <div className="w-full space-y-1">
-                      <span className="text-sm font-medium truncate block">{template.name}</span>
+                    <div className="p-1.5 bg-card">
+                      <p className="text-[10px] font-medium truncate">{template.name}</p>
                       {template.ranks && (
-                        <div className="flex items-center gap-1.5 justify-center">
-                          <span className="text-lg">{template.ranks.icon}</span>
-                          <span className="text-xs opacity-75 truncate">{template.ranks.name}</span>
-                        </div>
-                      )}
-                      {!template.ranks && template.description && (
-                        <span className="text-xs opacity-75 truncate block text-center">{template.description}</span>
+                        <p className="text-[9px] text-muted-foreground truncate">{template.ranks.icon} {template.ranks.name}</p>
                       )}
                     </div>
-                  </Button>
+                  </button>
                 ))}
               </div>
             )}
-          </CardContent>
-        </Card>
-      )}
+          </div>
+        )}
 
-      {/* Stories Background Slots Management */}
-      {isStoriesCategory && selectedStory && (
-        <Card>
-          <CardHeader>
+        {/* Background Slots for Template */}
+        {selectedTemplate && !isStoriesCategory && (
+          <div className="bg-card border border-primary/20 rounded-2xl p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold text-foreground">Backgrounds ({backgrounds.length}/16)</h3>
+              <div className="flex gap-2">
+                <label className="cursor-pointer">
+                  <Input type="file" accept="image/*" onChange={handleUpload} className="hidden" disabled={uploading} />
+                  <Button variant="outline" size="sm" className="border-primary/30" asChild disabled={uploading}>
+                    <span>{uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}</span>
+                  </Button>
+                </label>
+                <label className="cursor-pointer">
+                  <Input type="file" accept="image/*" multiple onChange={handleBulkUpload} className="hidden" disabled={bulkUploading} />
+                  <Button variant="outline" size="sm" className="border-primary/30" asChild disabled={bulkUploading}>
+                    <span>Bulk</span>
+                  </Button>
+                </label>
+              </div>
+            </div>
+            {uploadProgress && (
+              <div className="text-xs text-muted-foreground text-center">
+                Uploading {uploadProgress.current}/{uploadProgress.total}...
+              </div>
+            )}
+            <div className="grid grid-cols-4 gap-2">
+              {Array.from({ length: 16 }, (_, i) => i + 1).map(slotNum => {
+                const bg = backgrounds.find(b => b.slot_number === slotNum);
+                return (
+                  <div key={slotNum} className={`aspect-square rounded-lg border-2 border-dashed ${bg ? 'border-primary/40' : 'border-primary/20'} overflow-hidden relative`}>
+                    {bg ? (
+                      <>
+                        <img src={bg.background_image_url} alt={`Slot ${slotNum}`} className={`w-full h-full object-cover ${!bg.is_active ? 'opacity-50' : ''}`} />
+                        <div className="absolute inset-0 bg-black/50 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
+                          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleToggleActive(bg.id, bg.is_active ?? true)}>
+                            {bg.is_active ? <Eye className="w-3 h-3 text-white" /> : <EyeOff className="w-3 h-3 text-white" />}
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleRemove(bg.id)}>
+                            <Trash2 className="w-3 h-3 text-destructive" />
+                          </Button>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <span className="text-xs text-muted-foreground">{slotNum}</span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Story Background Slots */}
+        {isStoriesCategory && selectedStory && (
+          <div className="bg-card border border-primary/20 rounded-2xl p-4 space-y-3">
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>Story Background Slots (16 Slots)</CardTitle>
-                <CardDescription>
-                  Upload and manage background images for each slot (selected story only)
-                </CardDescription>
+                <h3 className="font-semibold text-foreground">Story Backgrounds ({storySlots.length}/16)</h3>
+                <p className="text-xs text-muted-foreground">{selectedStory.type === 'event' ? selectedStory.person_name : selectedStory.festival_name}</p>
               </div>
-              <div className="flex gap-2">
-                <Input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={(e) => e.target.files && handleStorySlotBulkUpload(e.target.files)}
-                  className="hidden"
-                  id="story-bulk-upload"
-                />
-                <Button variant="outline" size="sm" onClick={() => document.getElementById("story-bulk-upload")?.click()}>
-                  <Upload className="h-4 w-4 mr-2" />
-                  Bulk Upload
+              <label className="cursor-pointer">
+                <Input type="file" accept="image/*" multiple onChange={(e) => e.target.files && handleStorySlotBulkUpload(e.target.files)} className="hidden" />
+                <Button variant="outline" size="sm" className="border-primary/30" asChild>
+                  <span><Upload className="w-4 h-4 mr-1" />Bulk</span>
                 </Button>
-              </div>
+              </label>
             </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="p-4 bg-muted/50 rounded-lg border border-primary/20">
-              <h3 className="font-semibold text-sm mb-2">Selected Story</h3>
-              <p className="text-sm text-muted-foreground">
-                {selectedStory.type === 'event' ? selectedStory.person_name : selectedStory.festival_name}
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">
-                {new Date(selectedStory.type === 'event' ? selectedStory.event_date : selectedStory.festival_date).toLocaleDateString()}
-              </p>
-            </div>
-
-            {storySlotsLoading ? (
-              <div className="text-center py-8">
-                <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {Array.from({ length: 16 }, (_, i) => i + 1).map((slotNumber) => {
-                  const slot = storySlots.find((s) => s.slot_number === slotNumber);
-                  const progress = storySlotUploadProgress[slotNumber];
-
-                  return (
-                    <div key={slotNumber} className="relative border rounded-lg p-4 bg-card hover:border-primary/50 transition-colors">
-                      <div className="aspect-square bg-muted rounded-lg overflow-hidden mb-2">
-                        {slot ? (
-                          <img src={slot.image_url} alt={`Story Slot ${slotNumber}`} className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                            <Upload className="h-8 w-8" />
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium">Slot {slotNumber}</span>
-                        {slot && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={async () => {
-                              if (confirm(`Hide slot ${slotNumber}?`)) {
-                                await toggleStoryBackgroundSlotActive(slot.id, false);
-                                toast.success("Slot hidden");
-                              }
-                            }}
-                          >
-                            <EyeOff className="h-4 w-4" />
+            <div className="grid grid-cols-4 gap-2">
+              {Array.from({ length: 16 }, (_, i) => i + 1).map(slotNum => {
+                const slot = storySlots.find(s => s.slot_number === slotNum);
+                return (
+                  <div key={slotNum} className={`aspect-square rounded-lg border-2 border-dashed ${slot ? 'border-primary/40' : 'border-primary/20'} overflow-hidden relative`}>
+                    {slot ? (
+                      <>
+                        <img src={slot.image_url} alt={`Slot ${slotNum}`} className={`w-full h-full object-cover ${!slot.is_active ? 'opacity-50' : ''}`} />
+                        <div className="absolute inset-0 bg-black/50 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
+                          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => toggleStoryBackgroundSlotActive(slot.id, !(slot.is_active ?? true))}>
+                            {slot.is_active ? <Eye className="w-3 h-3 text-white" /> : <EyeOff className="w-3 h-3 text-white" />}
                           </Button>
-                        )}
-                      </div>
-
-                      {progress !== undefined && progress < 100 && (
-                        <div className="absolute inset-0 bg-background/80 flex items-center justify-center rounded-lg">
-                          <div className="text-center">
-                            <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-2" />
-                            <p className="text-sm">{progress}%</p>
-                          </div>
+                          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => removeStoryBackgroundSlot(slot.id)}>
+                            <Trash2 className="w-3 h-3 text-destructive" />
+                          </Button>
                         </div>
-                      )}
-
-                      <Input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) handleStorySlotUpload(file, slotNumber);
-                        }}
-                        className="hidden"
-                        id={`story-slot-${slotNumber}`}
-                      />
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="w-full"
-                        onClick={() => document.getElementById(`story-slot-${slotNumber}`)?.click()}
-                      >
-                        <Upload className="h-4 w-4 mr-2" />
-                        {slot ? "Replace" : "Upload"}
-                      </Button>
-
-                      {slot && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="w-full mt-2 text-destructive hover:text-destructive"
-                          onClick={async () => {
-                            if (confirm(`Remove slot ${slotNumber}?`)) {
-                              await removeStoryBackgroundSlot(slot.id);
-                              toast.success("Slot removed");
-                            }
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Remove
-                        </Button>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Background Management */}
-      {selectedTemplate && !isStoriesCategory && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Template Backgrounds (16 Slots)</CardTitle>
-            <CardDescription>
-              Each template supports up to 16 background images. Users will only see backgrounds for the template they select.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Upload Section */}
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="background-upload">Upload Single Background</Label>
-                <div className="flex items-center gap-4">
-                  <Input
-                    id="background-upload"
-                    type="file"
-                    accept="image/png,image/jpeg,image/jpg"
-                    onChange={handleUpload}
-                    disabled={uploading || bulkUploading || backgrounds.length >= 16}
-                    className="flex-1"
-                  />
-                  {uploading && <Loader2 className="h-5 w-5 animate-spin text-gold" />}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="bulk-background-upload">Bulk Upload Backgrounds (Up to 16)</Label>
-                <div className="flex items-center gap-4">
-                  <Input
-                    id="bulk-background-upload"
-                    type="file"
-                    accept="image/png,image/jpeg,image/jpg"
-                    multiple
-                    onChange={handleBulkUpload}
-                    disabled={uploading || bulkUploading || backgrounds.length >= 16}
-                    className="flex-1"
-                  />
-                  {bulkUploading && (
-                    <div className="flex items-center gap-2">
-                      <Loader2 className="h-5 w-5 animate-spin text-gold" />
-                      {uploadProgress && (
-                        <span className="text-sm text-muted-foreground">
-                          {uploadProgress.current} / {uploadProgress.total}
-                        </span>
-                      )}
-                    </div>
-                  )}
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Select multiple images to upload. They will be assigned to available slots automatically.
-                </p>
-              </div>
-
-              <p className="text-sm text-muted-foreground font-medium">
-                {backgrounds.length} of 16 slots filled
-                {backgrounds.length >= 16 && " (Maximum reached)"}
-              </p>
+                      </>
+                    ) : (
+                      <label className="w-full h-full flex items-center justify-center cursor-pointer hover:bg-muted/50 transition-colors">
+                        <Input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleStorySlotUpload(e.target.files[0], slotNum)} />
+                        <span className="text-xs text-muted-foreground">{slotNum}</span>
+                      </label>
+                    )}
+                  </div>
+                );
+              })}
             </div>
-
-            {/* 16-Slot Grid */}
-            {backgroundsLoading ? (
-              <Loader2 className="h-6 w-6 animate-spin text-gold" />
-            ) : (
-              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4">
-                {Array.from({ length: 16 }, (_, index) => {
-                  const slotNumber = index + 1; // Slots are 1-16
-                  const bg = backgrounds.find(b => b.slot_number === slotNumber);
-                  return (
-                    <Card key={slotNumber} className={bg ? (bg.is_active ? '' : 'opacity-50') : 'border-dashed'}>
-                      <CardContent className="p-4 space-y-2">
-                        <div className="text-xs font-medium text-muted-foreground mb-1">
-                          Slot {slotNumber}
-                        </div>
-                        {bg ? (
-                          <>
-                            <img
-                              src={bg.background_image_url}
-                              alt={`Background ${slotNumber}`}
-                              className="w-full h-32 object-cover rounded"
-                            />
-                            <div className="flex gap-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleToggleActive(bg.id, bg.is_active)}
-                                className="flex-1"
-                              >
-                                {bg.is_active ? (
-                                  <><EyeOff className="h-4 w-4 mr-1" /> Hide</>
-                                ) : (
-                                  <><Eye className="h-4 w-4 mr-1" /> Show</>
-                                )}
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="destructive"
-                                onClick={() => handleRemove(bg.id)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </>
-                        ) : (
-                          <div className="w-full h-32 flex items-center justify-center border-2 border-dashed rounded bg-muted/10">
-                            <Upload className="h-8 w-8 text-muted-foreground/50" />
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
-    </div>
+          </div>
+        )}
+      </div>
+    </AdminLayout>
   );
 }
