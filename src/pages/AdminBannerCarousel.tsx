@@ -1,21 +1,22 @@
 import { useState, useRef } from 'react';
 import { motion, Reorder } from 'framer-motion';
-import { ArrowLeft, Upload, Trash2, GripVertical, Eye, EyeOff, Image as ImageIcon, Loader2 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Upload, Trash2, GripVertical, Eye, EyeOff, Image as ImageIcon, Loader2, Save, LayoutGrid } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { useBannerCarouselAdmin, CarouselImage } from '@/hooks/useBannerCarousel';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { AdminGuard } from '@/components/AdminGuard';
+import AdminLayout from '@/components/admin/AdminLayout';
+import AdminHeader from '@/components/admin/AdminHeader';
+import AdminStatsCard from '@/components/admin/AdminStatsCard';
+import GoldCoinLoader from '@/components/GoldCoinLoader';
 
 const AdminBannerCarousel = () => {
-  const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { images, isLoading, addImage, deleteImage, reorderImages, toggleActive } = useBannerCarouselAdmin();
   const [uploading, setUploading] = useState(false);
   const [orderedImages, setOrderedImages] = useState<CarouselImage[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
 
   // Sync orderedImages with fetched images
   useState(() => {
@@ -28,6 +29,11 @@ const AdminBannerCarousel = () => {
   if (images.length !== orderedImages.length || images.some((img, i) => img.id !== orderedImages[i]?.id)) {
     setOrderedImages(images);
   }
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    window.location.reload();
+  };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -60,6 +66,7 @@ const AdminBannerCarousel = () => {
         .getPublicUrl(filePath);
 
       await addImage.mutateAsync(publicUrl);
+      toast.success('Image uploaded');
     } catch (error: any) {
       toast.error('Upload failed: ' + error.message);
     } finally {
@@ -78,170 +85,177 @@ const AdminBannerCarousel = () => {
       display_order: index,
     }));
     reorderImages.mutate(updates);
+    toast.success('Order saved');
   };
 
   const handleDelete = (id: string) => {
-    if (window.confirm('Are you sure you want to delete this image?')) {
+    if (window.confirm('Delete this image?')) {
       deleteImage.mutate(id);
     }
   };
 
   const activeCount = orderedImages.filter(img => img.is_active).length;
+  const totalCount = orderedImages.length;
+
+  if (isLoading) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <GoldCoinLoader size="lg" message="Loading carousel..." />
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
-    <AdminGuard>
-      <div className="min-h-screen bg-background">
-        {/* Header */}
-        <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-xl border-b border-border/30">
-          <div className="flex items-center justify-between p-4">
-            <div className="flex items-center gap-3">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => navigate('/admin')}
-                className="text-foreground/70"
-              >
-                <ArrowLeft className="w-5 h-5" />
-              </Button>
-              <div>
-                <h1 className="text-lg font-semibold text-foreground">Banner Carousel</h1>
-                <p className="text-xs text-muted-foreground">
-                  {activeCount}/5 active images shown
-                </p>
-              </div>
-            </div>
-            <Button
-              onClick={saveOrder}
-              disabled={reorderImages.isPending}
-              className="bg-primary text-primary-foreground"
-            >
-              {reorderImages.isPending ? (
-                <Loader2 className="w-4 h-4 animate-spin mr-2" />
-              ) : null}
-              Save Order
-            </Button>
-          </div>
+    <AdminLayout>
+      <AdminHeader 
+        title="Banner Carousel" 
+        subtitle={`${activeCount}/5 active shown`} 
+        onRefresh={handleRefresh} 
+        isRefreshing={refreshing} 
+      />
+
+      <div className="p-4 space-y-4">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-2 gap-3">
+          <AdminStatsCard icon={<ImageIcon className="w-5 h-5" />} value={totalCount} label="Total Images" />
+          <AdminStatsCard icon={<Eye className="w-5 h-5" />} value={activeCount} label="Active" iconColor="text-green-500" />
+          <AdminStatsCard icon={<EyeOff className="w-5 h-5" />} value={totalCount - activeCount} label="Inactive" iconColor="text-muted-foreground" />
+          <AdminStatsCard icon={<LayoutGrid className="w-5 h-5" />} value={5} label="Max Shown" iconColor="text-primary" />
         </div>
 
-        <div className="p-4 space-y-4">
-          {/* Upload Card */}
-          <Card className="p-4 border-dashed border-2 border-border/50 bg-card/50">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleFileUpload}
-              className="hidden"
-            />
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploading}
-              className="w-full flex flex-col items-center gap-2 py-6 text-muted-foreground hover:text-primary transition-colors"
-            >
-              {uploading ? (
-                <Loader2 className="w-8 h-8 animate-spin text-primary" />
-              ) : (
-                <Upload className="w-8 h-8" />
-              )}
-              <span className="text-sm">
-                {uploading ? 'Uploading...' : 'Click to upload image'}
-              </span>
-              <span className="text-xs text-muted-foreground/60">
-                Max 5MB, JPG/PNG/WebP
-              </span>
-            </button>
-          </Card>
-
-          {/* Info */}
-          <div className="bg-primary/10 border border-primary/20 rounded-lg p-3 text-sm text-primary">
-            <p>Only the first <strong>5 active</strong> images (by order) will be displayed in the carousel.</p>
-          </div>
-
-          {/* Images List */}
-          {isLoading ? (
-            <div className="flex justify-center py-8">
+        {/* Upload Card */}
+        <div className="bg-card border-2 border-dashed border-primary/30 rounded-2xl p-6">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleFileUpload}
+            className="hidden"
+          />
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+            className="w-full flex flex-col items-center gap-2 text-muted-foreground hover:text-primary transition-colors"
+          >
+            {uploading ? (
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
-            </div>
-          ) : orderedImages.length === 0 ? (
-            <Card className="p-8 text-center bg-card/50">
-              <ImageIcon className="w-12 h-12 mx-auto text-muted-foreground/40 mb-3" />
-              <p className="text-muted-foreground">No carousel images yet</p>
-              <p className="text-sm text-muted-foreground/60">Upload images to get started</p>
-            </Card>
-          ) : (
-            <Reorder.Group
-              axis="y"
-              values={orderedImages}
-              onReorder={handleReorder}
-              className="space-y-3"
-            >
-              {orderedImages.map((image, index) => (
-                <Reorder.Item
-                  key={image.id}
-                  value={image}
-                  className="cursor-grab active:cursor-grabbing"
+            ) : (
+              <Upload className="w-8 h-8" />
+            )}
+            <span className="text-sm font-medium">
+              {uploading ? 'Uploading...' : 'Click to upload image'}
+            </span>
+            <span className="text-xs text-muted-foreground/60">
+              Max 5MB, JPG/PNG/WebP
+            </span>
+          </button>
+        </div>
+
+        {/* Info Banner */}
+        <div className="bg-primary/10 border border-primary/20 rounded-xl p-3">
+          <p className="text-sm text-primary">
+            Only the first <strong>5 active</strong> images (by order) will be displayed in the carousel.
+          </p>
+        </div>
+
+        {/* Save Order Button */}
+        {orderedImages.length > 0 && (
+          <Button
+            onClick={saveOrder}
+            disabled={reorderImages.isPending}
+            className="w-full bg-[#E5B80B] hover:bg-[#E5B80B]/90 text-black font-semibold"
+          >
+            {reorderImages.isPending ? (
+              <Loader2 className="w-4 h-4 animate-spin mr-2" />
+            ) : (
+              <Save className="w-4 h-4 mr-2" />
+            )}
+            Save Order
+          </Button>
+        )}
+
+        {/* Images List */}
+        {orderedImages.length === 0 ? (
+          <div className="bg-card border border-primary/20 rounded-2xl p-8 text-center">
+            <ImageIcon className="w-12 h-12 mx-auto text-muted-foreground/40 mb-3" />
+            <p className="text-muted-foreground">No carousel images yet</p>
+            <p className="text-sm text-muted-foreground/60">Upload images to get started</p>
+          </div>
+        ) : (
+          <Reorder.Group
+            axis="y"
+            values={orderedImages}
+            onReorder={handleReorder}
+            className="space-y-2"
+          >
+            {orderedImages.map((image, index) => (
+              <Reorder.Item
+                key={image.id}
+                value={image}
+                className="cursor-grab active:cursor-grabbing"
+              >
+                <motion.div
+                  layout
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
                 >
-                  <motion.div
-                    layout
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                  >
-                    <Card className={`p-3 bg-card/80 border-border/30 ${!image.is_active ? 'opacity-50' : ''}`}>
-                      <div className="flex items-center gap-3">
-                        <GripVertical className="w-5 h-5 text-muted-foreground/50 flex-shrink-0" />
-                        
-                        <div className="w-20 h-14 rounded-lg overflow-hidden bg-background/50 flex-shrink-0">
-                          <img
-                            src={image.image_url}
-                            alt={`Carousel ${index + 1}`}
-                            className="w-full h-full object-cover"
+                  <div className={`bg-card border border-primary/20 rounded-2xl p-3 hover:border-primary/40 transition-all ${!image.is_active ? 'opacity-60' : ''}`}>
+                    <div className="flex items-center gap-3">
+                      <GripVertical className="w-5 h-5 text-muted-foreground/50 flex-shrink-0" />
+                      
+                      <div className="w-16 h-12 rounded-xl overflow-hidden bg-muted flex-shrink-0">
+                        <img
+                          src={image.image_url}
+                          alt={`Carousel ${index + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground">
+                          Image {index + 1}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Position: {image.display_order}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1.5">
+                          {image.is_active ? (
+                            <Eye className="w-4 h-4 text-green-500" />
+                          ) : (
+                            <EyeOff className="w-4 h-4 text-muted-foreground" />
+                          )}
+                          <Switch
+                            checked={image.is_active}
+                            onCheckedChange={(checked) => 
+                              toggleActive.mutate({ id: image.id, is_active: checked })
+                            }
                           />
                         </div>
 
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-foreground truncate">
-                            Image {index + 1}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            Order: {image.display_order}
-                          </p>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                          <div className="flex items-center gap-1.5">
-                            {image.is_active ? (
-                              <Eye className="w-4 h-4 text-green-500" />
-                            ) : (
-                              <EyeOff className="w-4 h-4 text-muted-foreground" />
-                            )}
-                            <Switch
-                              checked={image.is_active}
-                              onCheckedChange={(checked) => 
-                                toggleActive.mutate({ id: image.id, is_active: checked })
-                              }
-                            />
-                          </div>
-
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleDelete(image.id)}
-                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => handleDelete(image.id)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
                       </div>
-                    </Card>
-                  </motion.div>
-                </Reorder.Item>
-              ))}
-            </Reorder.Group>
-          )}
-        </div>
+                    </div>
+                  </div>
+                </motion.div>
+              </Reorder.Item>
+            ))}
+          </Reorder.Group>
+        )}
       </div>
-    </AdminGuard>
+    </AdminLayout>
   );
 };
 
