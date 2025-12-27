@@ -906,33 +906,39 @@ export type Database = {
         Row: {
           created_at: string | null
           description: string | null
+          end_date: string | null
           festival_date: string
           festival_name: string
           id: string
           is_active: boolean | null
           poster_url: string
+          start_date: string | null
           story_status: boolean | null
           updated_at: string | null
         }
         Insert: {
           created_at?: string | null
           description?: string | null
+          end_date?: string | null
           festival_date: string
           festival_name: string
           id?: string
           is_active?: boolean | null
           poster_url: string
+          start_date?: string | null
           story_status?: boolean | null
           updated_at?: string | null
         }
         Update: {
           created_at?: string | null
           description?: string | null
+          end_date?: string | null
           festival_date?: string
           festival_name?: string
           id?: string
           is_active?: boolean | null
           poster_url?: string
+          start_date?: string | null
           story_status?: boolean | null
           updated_at?: string | null
         }

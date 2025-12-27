@@ -37,6 +37,8 @@ export interface StoriesFestival {
   description?: string;
   is_active?: boolean;
   story_status: boolean | null;
+  start_date: string | null;
+  end_date: string | null;
   created_at?: string;
 }
 

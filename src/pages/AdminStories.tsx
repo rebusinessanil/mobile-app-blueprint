@@ -514,7 +514,19 @@ export default function AdminStories() {
                               {statusBadge.label}
                             </Badge>
                           </div>
-                          <p className="text-xs text-muted-foreground">📅 {new Date(festival.festival_date).toLocaleDateString('en-IN')}</p>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <span>📅 {new Date(festival.festival_date).toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
+                          </div>
+                          {(festival.start_date || festival.end_date) && (
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
+                              {festival.start_date && (
+                                <span className="text-primary/70">Start: {new Date(festival.start_date).toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
+                              )}
+                              {festival.end_date && (
+                                <span className="text-primary/70">End: {new Date(festival.end_date).toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
+                              )}
+                            </div>
+                          )}
                         </div>
                         <div className="flex items-center gap-1">
                           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleToggleActive(festival.id, festival.is_active ?? true, "festival")}>
