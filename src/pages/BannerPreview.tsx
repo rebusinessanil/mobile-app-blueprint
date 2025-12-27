@@ -818,33 +818,75 @@ export default function BannerPreview() {
               </p>
             </div>
 
-            {/* Name & Team Group - Positioned lower */}
-            <div className="absolute" style={{
-            top: '539px',
-            left: '978px',
-            transform: 'translateX(-50%)',
-            width: '648px',
-            padding: '0 27px'
-          }}>
-              <h2 style={{
-              color: '#ffffff',
-              textAlign: 'center',
-              fontSize: '44px',
-              fontWeight: '600',
-              textShadow: '2px 2px 8px rgba(0,0,0,0.9)',
-              margin: 0
+            {/* Royal Nameplate - Perfectly Centered */}
+            <div className="absolute z-30" style={{
+              top: '50%',
+              left: '978px',
+              transform: 'translate(-50%, -50%)',
+              width: '580px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
             }}>
-                {truncatedMainName.toUpperCase()}
-              </h2>
-              {bannerData.teamCity && <p style={{
-              marginTop: '13px',
-              color: '#ffffff',
-              textAlign: 'center',
-              fontSize: '28px',
-              textShadow: '2px 2px 4px rgba(0,0,0,0.9)'
-            }}>
-                  {bannerData.teamCity.toUpperCase()}
-                </p>}
+              {/* Ornate Frame Background */}
+              <img 
+                src="/assets/nameplate-border.png" 
+                alt="Royal Frame"
+                style={{
+                  width: '100%',
+                  height: 'auto',
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  pointerEvents: 'none'
+                }}
+              />
+              
+              {/* Text Content Inside Frame */}
+              <div style={{
+                position: 'relative',
+                zIndex: 10,
+                textAlign: 'center',
+                padding: '60px 40px',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px'
+              }}>
+                {/* Fixed "Mr. & Mrs." Line */}
+                <p style={{
+                  fontSize: '28px',
+                  fontWeight: '500',
+                  color: '#FFD700',
+                  textShadow: '2px 2px 6px rgba(0,0,0,0.8)',
+                  letterSpacing: '4px',
+                  margin: 0,
+                  fontFamily: "'Playfair Display', 'Georgia', serif"
+                }}>
+                  Mr. & Mrs.
+                </p>
+                
+                {/* Dynamic Couple Name - Max 20 chars, auto-scaling */}
+                <h2 style={{
+                  color: '#ffffff',
+                  fontSize: truncatedMainName.length > 15 ? '32px' : truncatedMainName.length > 10 ? '38px' : '44px',
+                  fontWeight: '700',
+                  textShadow: '3px 3px 10px rgba(0,0,0,0.9)',
+                  margin: 0,
+                  letterSpacing: '2px',
+                  fontFamily: "'Playfair Display', 'Georgia', serif",
+                  maxWidth: '480px',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap'
+                }}>
+                  {truncatedMainName.length > 20 
+                    ? truncatedMainName.substring(0, 20).toUpperCase() 
+                    : truncatedMainName.toUpperCase()}
+                </h2>
+              </div>
             </div>
 
             {/* Anniversary Message */}
