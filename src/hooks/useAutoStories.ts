@@ -18,11 +18,15 @@ export interface StoriesEvent {
   id: string;
   event_type: string;
   event_date: string;
+  start_date: string | null;
+  end_date: string | null;
   person_name: string;
   poster_url: string;
   description?: string;
   is_active?: boolean;
   story_status: boolean | null;
+  title?: string;
+  created_at?: string;
 }
 
 export interface StoriesFestival {
@@ -33,20 +37,27 @@ export interface StoriesFestival {
   description?: string;
   is_active?: boolean;
   story_status: boolean | null;
+  created_at?: string;
 }
 
-// Hook for fetching generated stories (only non-null story_status)
-export const useGeneratedStories = () => {
+// Hook for fetching generated stories (Admin sees ALL, regular users see only visible)
+export const useGeneratedStories = (adminMode: boolean = true) => {
   const [stories, setStories] = useState<GeneratedStory[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchStories = useCallback(async () => {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from("stories_generated")
         .select("*")
-        .not("story_status", "is", null) // Only fetch visible stories
         .order("event_date", { ascending: true });
+
+      // Only filter for non-admin users
+      if (!adminMode) {
+        query = query.not("story_status", "is", null);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       setStories((data as GeneratedStory[]) || []);
@@ -55,7 +66,7 @@ export const useGeneratedStories = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [adminMode]);
 
   useEffect(() => {
     fetchStories();
@@ -84,18 +95,24 @@ export const useGeneratedStories = () => {
   return { stories, loading, refetch: fetchStories };
 };
 
-// Hook for fetching stories events (only non-null story_status)
-export const useStoriesEvents = () => {
+// Hook for fetching stories events (Admin sees ALL, regular users see only visible)
+export const useStoriesEvents = (adminMode: boolean = true) => {
   const [events, setEvents] = useState<StoriesEvent[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchEvents = useCallback(async () => {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from("stories_events")
         .select("*")
-        .not("story_status", "is", null) // Only fetch visible events
         .order("event_date", { ascending: true });
+
+      // Only filter for non-admin users
+      if (!adminMode) {
+        query = query.not("story_status", "is", null);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       setEvents((data as StoriesEvent[]) || []);
@@ -104,7 +121,7 @@ export const useStoriesEvents = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [adminMode]);
 
   useEffect(() => {
     fetchEvents();
@@ -133,18 +150,24 @@ export const useStoriesEvents = () => {
   return { events, loading, refetch: fetchEvents };
 };
 
-// Hook for fetching stories festivals (only non-null story_status)
-export const useStoriesFestivals = () => {
+// Hook for fetching stories festivals (Admin sees ALL, regular users see only visible)
+export const useStoriesFestivals = (adminMode: boolean = true) => {
   const [festivals, setFestivals] = useState<StoriesFestival[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchFestivals = useCallback(async () => {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from("stories_festivals")
         .select("*")
-        .not("story_status", "is", null) // Only fetch visible festivals
         .order("festival_date", { ascending: true });
+
+      // Only filter for non-admin users
+      if (!adminMode) {
+        query = query.not("story_status", "is", null);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       setFestivals((data as StoriesFestival[]) || []);
@@ -153,7 +176,7 @@ export const useStoriesFestivals = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [adminMode]);
 
   useEffect(() => {
     fetchFestivals();

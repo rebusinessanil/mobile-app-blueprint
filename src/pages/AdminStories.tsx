@@ -24,17 +24,17 @@ export default function AdminStories() {
     stories: generatedStories,
     loading: generatedLoading,
     refetch: refetchGenerated
-  } = useGeneratedStories();
+  } = useGeneratedStories(true); // Admin mode: show ALL stories
   const {
     events,
     loading: eventsLoading,
     refetch: refetchEvents
-  } = useStoriesEvents();
+  } = useStoriesEvents(true); // Admin mode: show ALL events
   const {
     festivals,
     loading: festivalsLoading,
     refetch: refetchFestivals
-  } = useStoriesFestivals();
+  } = useStoriesFestivals(true); // Admin mode: show ALL festivals
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -421,36 +421,54 @@ export default function AdminStories() {
               </div>
             ) : (
               <div className="space-y-2">
-                {filteredEvents.map(event => (
-                  <div key={event.id} className="bg-card border border-primary/20 rounded-2xl p-3 hover:border-primary/40 transition-all">
-                    <div className="flex items-center gap-3">
-                      <div className="w-16 h-16 rounded-xl overflow-hidden bg-muted flex-shrink-0">
-                        <img src={event.poster_url} alt={event.person_name} className="w-full h-full object-cover" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-semibold text-foreground text-sm truncate">{event.person_name}</h3>
-                          <Badge className={`text-[10px] px-1.5 py-0 ${event.is_active ? 'bg-green-500/20 text-green-500' : 'bg-muted text-muted-foreground'}`}>
-                            {event.is_active ? 'Active' : 'Inactive'}
-                          </Badge>
+                {filteredEvents.map(event => {
+                  // Story status: false = Upcoming, true = Active/Live, null = Expired
+                  const getStatusBadge = () => {
+                    if (event.story_status === true) return { label: 'Live', class: 'bg-green-500/20 text-green-500' };
+                    if (event.story_status === false) return { label: 'Upcoming', class: 'bg-blue-500/20 text-blue-500' };
+                    return { label: 'Expired', class: 'bg-muted text-muted-foreground' };
+                  };
+                  const statusBadge = getStatusBadge();
+                  
+                  return (
+                    <div key={event.id} className="bg-card border border-primary/20 rounded-2xl p-3 hover:border-primary/40 transition-all">
+                      <div className="flex items-center gap-3">
+                        <div className="w-16 h-16 rounded-xl overflow-hidden bg-muted flex-shrink-0">
+                          <img src={event.poster_url} alt={event.person_name} className="w-full h-full object-cover" />
                         </div>
-                        <p className="text-xs text-muted-foreground capitalize">{event.event_type}</p>
-                        <p className="text-xs text-muted-foreground">{new Date(event.event_date).toLocaleDateString()}</p>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleToggleActive(event.id, event.is_active ?? true, "event")}>
-                          {event.is_active ? <Eye className="w-4 h-4 text-green-500" /> : <EyeOff className="w-4 h-4 text-muted-foreground" />}
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenDialog(event, "event")}>
-                          <Edit className="w-4 h-4 text-primary" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(event.id, "event")}>
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
+                            <h3 className="font-semibold text-foreground text-sm truncate">{event.person_name}</h3>
+                            <Badge className={`text-[10px] px-1.5 py-0 ${event.is_active ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'}`}>
+                              {event.is_active ? 'Active' : 'Inactive'}
+                            </Badge>
+                            <Badge className={`text-[10px] px-1.5 py-0 ${statusBadge.class}`}>
+                              {statusBadge.label}
+                            </Badge>
+                          </div>
+                          <p className="text-xs text-muted-foreground capitalize">{event.event_type}</p>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
+                            <span>📅 {new Date(event.event_date).toLocaleDateString('en-IN')}</span>
+                            {event.start_date && (
+                              <span className="text-primary/70">→ {new Date(event.start_date).toLocaleDateString('en-IN')}</span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleToggleActive(event.id, event.is_active ?? true, "event")}>
+                            {event.is_active ? <Eye className="w-4 h-4 text-green-500" /> : <EyeOff className="w-4 h-4 text-muted-foreground" />}
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenDialog(event, "event")}>
+                            <Edit className="w-4 h-4 text-primary" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(event.id, "event")}>
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -471,35 +489,48 @@ export default function AdminStories() {
               </div>
             ) : (
               <div className="space-y-2">
-                {filteredFestivals.map(festival => (
-                  <div key={festival.id} className="bg-card border border-primary/20 rounded-2xl p-3 hover:border-primary/40 transition-all">
-                    <div className="flex items-center gap-3">
-                      <div className="w-16 h-16 rounded-xl overflow-hidden bg-muted flex-shrink-0">
-                        <img src={festival.poster_url} alt={festival.festival_name} className="w-full h-full object-cover" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-semibold text-foreground text-sm truncate">{festival.festival_name}</h3>
-                          <Badge className={`text-[10px] px-1.5 py-0 ${festival.is_active ? 'bg-green-500/20 text-green-500' : 'bg-muted text-muted-foreground'}`}>
-                            {festival.is_active ? 'Active' : 'Inactive'}
-                          </Badge>
+                {filteredFestivals.map(festival => {
+                  // Story status: false = Upcoming, true = Active/Live, null = Expired
+                  const getStatusBadge = () => {
+                    if (festival.story_status === true) return { label: 'Live', class: 'bg-green-500/20 text-green-500' };
+                    if (festival.story_status === false) return { label: 'Upcoming', class: 'bg-blue-500/20 text-blue-500' };
+                    return { label: 'Expired', class: 'bg-muted text-muted-foreground' };
+                  };
+                  const statusBadge = getStatusBadge();
+                  
+                  return (
+                    <div key={festival.id} className="bg-card border border-primary/20 rounded-2xl p-3 hover:border-primary/40 transition-all">
+                      <div className="flex items-center gap-3">
+                        <div className="w-16 h-16 rounded-xl overflow-hidden bg-muted flex-shrink-0">
+                          <img src={festival.poster_url} alt={festival.festival_name} className="w-full h-full object-cover" />
                         </div>
-                        <p className="text-xs text-muted-foreground">{new Date(festival.festival_date).toLocaleDateString()}</p>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleToggleActive(festival.id, festival.is_active ?? true, "festival")}>
-                          {festival.is_active ? <Eye className="w-4 h-4 text-green-500" /> : <EyeOff className="w-4 h-4 text-muted-foreground" />}
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenDialog(festival, "festival")}>
-                          <Edit className="w-4 h-4 text-primary" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(festival.id, "festival")}>
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
+                            <h3 className="font-semibold text-foreground text-sm truncate">{festival.festival_name}</h3>
+                            <Badge className={`text-[10px] px-1.5 py-0 ${festival.is_active ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'}`}>
+                              {festival.is_active ? 'Active' : 'Inactive'}
+                            </Badge>
+                            <Badge className={`text-[10px] px-1.5 py-0 ${statusBadge.class}`}>
+                              {statusBadge.label}
+                            </Badge>
+                          </div>
+                          <p className="text-xs text-muted-foreground">📅 {new Date(festival.festival_date).toLocaleDateString('en-IN')}</p>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleToggleActive(festival.id, festival.is_active ?? true, "festival")}>
+                            {festival.is_active ? <Eye className="w-4 h-4 text-green-500" /> : <EyeOff className="w-4 h-4 text-muted-foreground" />}
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenDialog(festival, "festival")}>
+                            <Edit className="w-4 h-4 text-primary" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(festival.id, "festival")}>
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
