@@ -820,31 +820,63 @@ export default function BannerPreview() {
 
             {/* Name & Team Group - Positioned lower */}
             <div className="absolute" style={{
-            top: '539px',
-            left: '978px',
-            transform: 'translateX(-50%)',
-            width: '648px',
-            padding: '0 27px'
-          }}>
-              <h2 style={{
-              color: '#ffffff',
-              textAlign: 'center',
-              fontSize: '44px',
-              fontWeight: '600',
-              textShadow: '2px 2px 8px rgba(0,0,0,0.9)',
-              margin: 0
+              top: '539px',
+              left: '978px',
+              transform: 'translateX(-50%)',
+              width: '648px',
+              padding: '0 27px'
             }}>
-                {truncatedMainName.toUpperCase()}
-              </h2>
+              {/* Royal Nameplate with Achiever Name */}
+              <div style={{
+                position: 'relative',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                width: '520px',
+                height: '130px',
+                margin: '0 auto'
+              }}>
+                {/* Nameplate Background - Fixed Size */}
+                <img 
+                  src="/assets/nameplate-border.png" 
+                  alt="" 
+                  style={{
+                    position: 'absolute',
+                    width: '520px',
+                    height: '130px',
+                    objectFit: 'contain',
+                    zIndex: 0
+                  }}
+                />
+                {/* Achiever Name - Auto-scaling font */}
+                <h2 style={{
+                  position: 'relative',
+                  zIndex: 1,
+                  color: '#FFD700',
+                  textAlign: 'center',
+                  fontSize: `${Math.min(44, Math.max(24, 520 / Math.max(truncatedMainName.length, 1) * 1.2))}px`,
+                  fontWeight: '700',
+                  textShadow: '2px 2px 8px rgba(0,0,0,0.9), 0 0 20px rgba(255,215,0,0.5)',
+                  margin: 0,
+                  padding: '0 40px',
+                  letterSpacing: '2px',
+                  maxWidth: '480px',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap'
+                }}>
+                  {truncatedMainName.length > 20 ? truncatedMainName.substring(0, 20).toUpperCase() : truncatedMainName.toUpperCase()}
+                </h2>
+              </div>
               {bannerData.teamCity && <p style={{
-              marginTop: '13px',
-              color: '#ffffff',
-              textAlign: 'center',
-              fontSize: '28px',
-              textShadow: '2px 2px 4px rgba(0,0,0,0.9)'
-            }}>
-                  {bannerData.teamCity.toUpperCase()}
-                </p>}
+                marginTop: '13px',
+                color: '#ffffff',
+                textAlign: 'center',
+                fontSize: '28px',
+                textShadow: '2px 2px 4px rgba(0,0,0,0.9)'
+              }}>
+                {bannerData.teamCity.toUpperCase()}
+              </p>}
             </div>
 
             {/* Anniversary Message */}
