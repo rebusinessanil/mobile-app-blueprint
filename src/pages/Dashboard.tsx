@@ -1,21 +1,19 @@
-import { useState, useEffect, useMemo, useCallback, memo, useRef } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import BottomNav from "@/components/BottomNav";
 import { Menu, Bell, Star, Calendar, Zap, Award, Wallet, LogIn } from "lucide-react";
 import { useTemplateCategories, useTemplates } from "@/hooks/useTemplates";
 import { useProfile } from "@/hooks/useProfile";
-import { supabase } from "@/integrations/supabase/client";
+
 import { useRanks } from "@/hooks/useTemplates";
 import { useBonanzaTrips } from "@/hooks/useBonanzaTrips";
 import { useBirthdays } from "@/hooks/useBirthdays";
 import { useAnniversaries } from "@/hooks/useAnniversaries";
 import { useMotivationalBanners } from "@/hooks/useMotivationalBanners";
 import { useFestivals } from "@/hooks/useFestivals";
-import { useGeneratedStories } from "@/hooks/useAutoStories";
+
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import Profile from "./Profile";
-import { Badge } from "@/components/ui/badge";
-import { useQuery } from "@tanstack/react-query";
 import ProfileCompletionGate from "@/components/ProfileCompletionGate";
 import StoriesSection from "@/components/dashboard/StoriesSection";
 import BannerCard from "@/components/dashboard/BannerCard";
@@ -103,38 +101,6 @@ export default function Dashboard() {
     festivals: realFestivals,
     loading: festivalsLoading
   } = useFestivals();
-  const {
-    stories: generatedStories,
-    loading: storiesLoading
-  } = useGeneratedStories();
-
-  // Fetch stories_events with aggressive caching
-  const {
-    data: storiesEvents = [],
-    isLoading: storiesEventsLoading
-  } = useQuery({
-    queryKey: ["stories-events"],
-    queryFn: async () => {
-      try {
-        const {
-          data,
-          error
-        } = await supabase.from("stories_events").select("*").order("event_date", {
-          ascending: true
-        });
-        if (error) throw error;
-        return data || [];
-      } catch (error) {
-        // Silently fall back for guests
-        console.warn('Stories events fetch failed (likely RLS):', error);
-        return [];
-      }
-    },
-    staleTime: 30 * 60 * 1000,
-    gcTime: 60 * 60 * 1000,
-    refetchOnMount: false,
-    refetchOnWindowFocus: false
-  });
   const {
     profile: realProfile
   } = useProfile(userId ?? undefined);
@@ -331,7 +297,7 @@ export default function Dashboard() {
       {/* Content */}
       <div className="py-6 space-y-6">
         {/* Unified Stories Section */}
-        <StoriesSection festivals={festivals as any} storiesEvents={storiesEvents} generatedStories={generatedStories as any} />
+        <StoriesSection />
 
         {/* Category Sections */}
         {categories.map((category: any) => {
