@@ -818,46 +818,49 @@ export default function BannerPreview() {
               </p>
             </div>
 
-            {/* Royal Nameplate - Perfectly Centered */}
+            {/* Royal Nameplate Container - Fixed Size, Perfectly Centered */}
             <div className="absolute z-30" style={{
               top: '50%',
               left: '978px',
               transform: 'translate(-50%, -50%)',
               width: '580px',
+              height: '280px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
             }}>
-              {/* Ornate Frame Background */}
+              {/* Layer 1: Ornate Frame Background (Fixed Size) */}
               <img 
                 src="/assets/nameplate-border.png" 
                 alt="Royal Frame"
                 style={{
-                  width: '100%',
-                  height: 'auto',
+                  width: '580px',
+                  height: '280px',
                   position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  transform: 'translate(-50%, -50%)',
-                  pointerEvents: 'none'
+                  top: 0,
+                  left: 0,
+                  objectFit: 'contain',
+                  pointerEvents: 'none',
+                  zIndex: 1
                 }}
               />
               
-              {/* Text Content Inside Frame */}
+              {/* Layer 2: Grouped Text Content (Mr. & Mrs. + Name + Team) */}
               <div style={{
                 position: 'relative',
                 zIndex: 10,
                 textAlign: 'center',
-                padding: '60px 40px',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '8px'
+                gap: '4px',
+                width: '100%',
+                padding: '20px 40px'
               }}>
                 {/* Fixed "Mr. & Mrs." Line */}
                 <p style={{
-                  fontSize: '28px',
+                  fontSize: '26px',
                   fontWeight: '500',
                   color: '#FFD700',
                   textShadow: '2px 2px 6px rgba(0,0,0,0.8)',
@@ -868,10 +871,10 @@ export default function BannerPreview() {
                   Mr. & Mrs.
                 </p>
                 
-                {/* Dynamic Couple Name - Max 20 chars, auto-scaling */}
+                {/* Achiever Name - Centered, Auto-scaling (Max 20 chars) */}
                 <h2 style={{
                   color: '#ffffff',
-                  fontSize: truncatedMainName.length > 15 ? '32px' : truncatedMainName.length > 10 ? '38px' : '44px',
+                  fontSize: truncatedMainName.length > 15 ? '30px' : truncatedMainName.length > 10 ? '36px' : '42px',
                   fontWeight: '700',
                   textShadow: '3px 3px 10px rgba(0,0,0,0.9)',
                   margin: 0,
@@ -880,12 +883,33 @@ export default function BannerPreview() {
                   maxWidth: '480px',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap'
+                  whiteSpace: 'nowrap',
+                  textAlign: 'center'
                 }}>
                   {truncatedMainName.length > 20 
                     ? truncatedMainName.substring(0, 20).toUpperCase() 
                     : truncatedMainName.toUpperCase()}
                 </h2>
+
+                {/* Team Name / Tagline - Always Visible */}
+                {bannerData.teamCity && (
+                  <p style={{
+                    fontSize: '18px',
+                    fontWeight: '400',
+                    color: '#FFD700',
+                    textShadow: '1px 1px 4px rgba(0,0,0,0.8)',
+                    letterSpacing: '2px',
+                    margin: 0,
+                    marginTop: '4px',
+                    fontFamily: "'Playfair Display', 'Georgia', serif",
+                    maxWidth: '400px',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap'
+                  }}>
+                    {bannerData.teamCity}
+                  </p>
+                )}
               </div>
             </div>
 
