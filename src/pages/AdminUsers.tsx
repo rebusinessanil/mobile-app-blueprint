@@ -22,6 +22,7 @@ interface AuthUser {
   provider_type: string;
   created_at: string;
   last_sign_in_at: string | null;
+  email_confirmed_at: string | null;
   rank: string | null;
   profile_photo: string | null;
   balance: number;
