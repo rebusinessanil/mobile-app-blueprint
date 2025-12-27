@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { Loader2, Upload, Trash2, Eye, EyeOff, Calendar, Edit, MoreVertical } from 'lucide-react';
+import { Upload, Trash2, Eye, EyeOff, Calendar, Edit, MoreVertical, Loader2 } from 'lucide-react';
+import GoldCoinLoader from '@/components/GoldCoinLoader';
 import { useTemplateBackgrounds, uploadTemplateBackground, removeTemplateBackground, toggleBackgroundActive } from '@/hooks/useTemplateBackgrounds';
 import { AdminGuard } from "@/components/AdminGuard";
 import { useStoriesEvents, useStoriesFestivals } from '@/hooks/useAutoStories';
@@ -232,7 +233,7 @@ export default function AdminTemplateBackgrounds() {
   if (categoriesLoading) {
     return (
       <div className="flex items-center justify-center h-96">
-        <Loader2 className="h-8 w-8 animate-spin text-gold" />
+        <GoldCoinLoader size="lg" message="Loading..." />
       </div>
     );
   }

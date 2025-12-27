@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
 import { useBannerSettings } from "@/hooks/useBannerSettings";
 import { useTemplates } from "@/hooks/useTemplates";
+import GoldCoinLoader from "@/components/GoldCoinLoader";
 
 interface Upline {
   id: string;
@@ -83,10 +84,7 @@ export default function FestivalPreview() {
   // Loading state
   return (
     <div className="min-h-screen bg-navy-dark flex items-center justify-center">
-      <div className="text-center">
-        <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-        <p className="text-muted-foreground">Loading festival banner...</p>
-      </div>
+      <GoldCoinLoader size="xl" message="Loading festival banner..." />
     </div>
   );
 }

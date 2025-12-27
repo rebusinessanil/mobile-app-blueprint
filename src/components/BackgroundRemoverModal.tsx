@@ -1,6 +1,7 @@
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
+import GoldCoinLoader from "@/components/GoldCoinLoader";
 
 interface BackgroundRemoverModalProps {
   open: boolean;
@@ -35,49 +36,20 @@ export default function BackgroundRemoverModal({
         
         <div className="text-center space-y-6 pt-4">
           {isProcessing ? (
-            // Processing UI
+            // Processing UI with Gold Coin Loader
             <div className="py-8">
-              {/* Circular Loading Animation */}
-              <div className="relative w-24 h-24 mx-auto mb-6">
-                {/* Outer spinning ring */}
-                <div className="absolute inset-0 rounded-full border-4 border-primary/20"></div>
-                <div 
-                  className="absolute inset-0 rounded-full border-4 border-transparent border-t-primary animate-spin"
-                  style={{ animationDuration: '1s' }}
-                ></div>
+              {/* Premium Gold Coin with Progress Overlay */}
+              <div className="relative">
+                <GoldCoinLoader size="xl" showMessage={false} />
                 
-                {/* Inner progress circle */}
-                <svg className="absolute inset-0 w-full h-full -rotate-90">
-                  <circle
-                    cx="48"
-                    cy="48"
-                    r="40"
-                    fill="none"
-                    stroke="hsl(var(--primary) / 0.2)"
-                    strokeWidth="6"
-                  />
-                  <circle
-                    cx="48"
-                    cy="48"
-                    r="40"
-                    fill="none"
-                    stroke="hsl(var(--primary))"
-                    strokeWidth="6"
-                    strokeLinecap="round"
-                    strokeDasharray={251.2}
-                    strokeDashoffset={251.2 - (251.2 * progress) / 100}
-                    className="transition-all duration-300"
-                  />
-                </svg>
-                
-                {/* Percentage text */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-lg font-bold text-primary">{progress}%</span>
+                {/* Progress percentage overlay */}
+                <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-background/90 px-3 py-1 rounded-full border border-primary/50">
+                  <span className="text-sm font-bold text-primary">{progress}%</span>
                 </div>
               </div>
               
-              <h2 className="text-xl font-bold text-primary mb-2">Removing Background</h2>
-              <p className="text-white/80 text-sm">{progressText || 'Please wait...'}</p>
+              <h2 className="text-xl font-bold text-primary mb-2 mt-6">Removing Background</h2>
+              <p className="text-white/80 text-sm shimmer-loading-text">{progressText || 'Please wait...'}</p>
               
               {/* Progress stages indicator */}
               <div className="flex justify-center gap-2 mt-4">
@@ -86,7 +58,7 @@ export default function BackgroundRemoverModal({
                     key={stage}
                     className={`w-2 h-2 rounded-full transition-all duration-300 ${
                       progress >= stage * 25 
-                        ? 'bg-primary scale-110' 
+                        ? 'bg-primary scale-110 shadow-[0_0_8px_hsl(45_100%_60%/0.6)]' 
                         : 'bg-white/20'
                     }`}
                   />

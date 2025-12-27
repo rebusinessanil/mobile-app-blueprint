@@ -23,6 +23,7 @@ import { useWalletDeduction } from "@/hooks/useWalletDeduction";
 import InsufficientBalanceModal from "@/components/InsufficientBalanceModal";
 import { useBannerAssetPreloader } from "@/hooks/useBannerAssetPreloader";
 import BannerWatermarks from "@/components/BannerWatermarks";
+import GoldCoinLoader from "@/components/GoldCoinLoader";
 
 interface Upline {
   id: string;
@@ -2439,8 +2440,8 @@ export default function BannerPreview() {
                   Just a moment!
                 </div>
               </div>
-              {/* Spinner */}
-              <div className="w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin flex-shrink-0"></div>
+              {/* Premium Gold Coin Loader */}
+              <GoldCoinLoader size="sm" showMessage={false} />
             </div>
             <p className="text-muted-foreground text-xs text-center mt-3 pt-3 border-t border-border">
               Preparing your banner — this may take a few seconds.

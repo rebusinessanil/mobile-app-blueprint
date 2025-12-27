@@ -5,7 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
-import { Loader2, Upload, Trash2, Eye, EyeOff, Move, RefreshCw } from 'lucide-react';
+import { Upload, Trash2, Eye, EyeOff, Move, RefreshCw, Loader2 } from 'lucide-react';
+import GoldCoinLoader from '@/components/GoldCoinLoader';
 import { 
   useUnifiedStickerSlots, 
   uploadUnifiedStickerSlot, 
@@ -368,7 +369,7 @@ export default function AdminStickerManagement() {
   if (categoriesLoading) {
     return (
       <div className="flex items-center justify-center h-96">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <GoldCoinLoader size="lg" message="Loading..." />
       </div>
     );
   }
