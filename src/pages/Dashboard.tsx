@@ -299,8 +299,91 @@ export default function Dashboard() {
         {/* Unified Stories Section */}
         <StoriesSection />
 
+        {/* Events Section - Groups Birthday, Anniversary, Thank You */}
+        {(getBirthdayTemplates.length > 0 || getAnniversaryTemplates.length > 0) && (
+          <div className="space-y-3">
+            {/* Section Header */}
+            <div className="flex items-center justify-between pl-4 pr-4">
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">🎉</span>
+                <h2 className="text-lg font-bold text-foreground">Events</h2>
+              </div>
+              {isAuthenticated ? (
+                <Link to="/categories/events" className="text-primary text-sm font-semibold hover:underline">
+                  See All →
+                </Link>
+              ) : (
+                <button onClick={() => setShowLoginModal(true)} className="text-primary text-sm font-semibold hover:underline">
+                  See All →
+                </button>
+              )}
+            </div>
+
+            {/* Combined Events Carousel */}
+            <div className="flex gap-3 overflow-x-auto pb-2 pl-4 pr-4 scrollbar-hide scroll-smooth transform-gpu">
+              {/* Birthday Templates */}
+              {getBirthdayTemplates.map((template: any) => {
+                const birthday = birthdays.find((b: any) => b.id === template.birthday_id);
+                return (
+                  <GuestBannerCard
+                    key={`birthday-${template.id}`}
+                    id={template.id}
+                    title={template.name}
+                    imageUrl={template.cover_thumbnail_url}
+                    fallbackIcon={(birthday as any)?.short_title || '🎂'}
+                    fallbackGradient="bg-gradient-to-br from-pink-600 to-purple-600"
+                    linkTo={`/banner-create/birthday?birthdayId=${template.birthday_id}`}
+                    isAuthenticated={isAuthenticated}
+                    onAuthenticatedClick={() => navigate(`/banner-create/birthday?birthdayId=${template.birthday_id}`)}
+                  />
+                );
+              })}
+              {/* Anniversary Templates */}
+              {getAnniversaryTemplates.map((template: any) => {
+                const anniversary = anniversaries.find((a: any) => a.id === template.anniversary_id);
+                return (
+                  <GuestBannerCard
+                    key={`anniversary-${template.id}`}
+                    id={template.id}
+                    title={template.name}
+                    imageUrl={template.cover_thumbnail_url}
+                    fallbackIcon={(anniversary as any)?.short_title || '💞'}
+                    fallbackGradient="bg-gradient-to-br from-rose-600 to-pink-600"
+                    linkTo={`/banner-create/anniversary?anniversaryId=${template.anniversary_id}`}
+                    isAuthenticated={isAuthenticated}
+                    onAuthenticatedClick={() => navigate(`/banner-create/anniversary?anniversaryId=${template.anniversary_id}`)}
+                  />
+                );
+              })}
+              {/* Thank You Templates (from generic categories) */}
+              {categories
+                .filter((c: any) => c.slug === 'thank-you' || c.slug === 'thank-you-message')
+                .flatMap((c: any) => getCategoryTemplates(c.id))
+                .map((template: any) => (
+                  <GuestBannerCard
+                    key={`thankyou-${template.id}`}
+                    id={template.id}
+                    title={template.name}
+                    imageUrl={template.cover_thumbnail_url}
+                    fallbackIcon="🙏"
+                    fallbackGradient="bg-gradient-to-br from-green-600 to-teal-600"
+                    linkTo={`/template/${template.id}`}
+                    isAuthenticated={isAuthenticated}
+                    onAuthenticatedClick={() => navigate(`/template/${template.id}`)}
+                  />
+                ))}
+            </div>
+          </div>
+        )}
+
         {/* Category Sections */}
-        {categories.map((category: any) => {
+        {categories
+          .filter((category: any) => {
+            // Skip Birthday, Anniversary, Thank You as they're grouped in Events
+            const skipSlugs = ['birthday', 'anniversary', 'thank-you', 'thank-you-message'];
+            return !skipSlugs.includes(category.slug);
+          })
+          .map((category: any) => {
           const categoryTemplates = getCategoryTemplates(category.id);
           const isRankPromotion = category.slug === 'rank-promotion';
           const isBonanzaPromotion = category.slug === 'bonanza-promotion';
