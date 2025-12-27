@@ -772,8 +772,11 @@ export type Database = {
           cover_image_url: string
           created_at: string | null
           display_order: number | null
+          end_date: string | null
+          event_date: string | null
           id: string
           is_active: boolean | null
+          start_date: string | null
           title: string
           type: string | null
           updated_at: string | null
@@ -784,8 +787,11 @@ export type Database = {
           cover_image_url: string
           created_at?: string | null
           display_order?: number | null
+          end_date?: string | null
+          event_date?: string | null
           id?: string
           is_active?: boolean | null
+          start_date?: string | null
           title: string
           type?: string | null
           updated_at?: string | null
@@ -796,8 +802,11 @@ export type Database = {
           cover_image_url?: string
           created_at?: string | null
           display_order?: number | null
+          end_date?: string | null
+          event_date?: string | null
           id?: string
           is_active?: boolean | null
+          start_date?: string | null
           title?: string
           type?: string | null
           updated_at?: string | null
