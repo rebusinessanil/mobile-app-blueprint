@@ -882,25 +882,7 @@ export default function BannerPreview() {
                     : truncatedMainName.toUpperCase()}
                 </h2>
 
-                {/* Team Name / Tagline - Always Visible */}
-                {bannerData.teamCity && (
-                  <p style={{
-                    fontSize: '18px',
-                    fontWeight: '400',
-                    color: '#FFD700',
-                    textShadow: '1px 1px 4px rgba(0,0,0,0.8)',
-                    letterSpacing: '2px',
-                    margin: 0,
-                    marginTop: '4px',
-                    fontFamily: "'Playfair Display', 'Georgia', serif",
-                    maxWidth: '400px',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap'
-                  }}>
-                    {bannerData.teamCity}
-                  </p>
-                )}
+                {/* Team Name / Tagline - Hidden for anniversary */}
               </div>
             </div>
 
