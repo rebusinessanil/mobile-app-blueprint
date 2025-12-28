@@ -389,12 +389,10 @@ html, body {
      Consistent styling across all categories
      ======================================== */
   
-  /* Base Template Card Container */
+  /* Base Template Card Container - Text Outside Image */
   .template-card {
     @apply flex-shrink-0 cursor-pointer;
-    @apply rounded-2xl overflow-hidden;
-    @apply border-2 border-primary/60;
-    @apply bg-card;
+    @apply flex flex-col;
     @apply transition-all duration-200;
     @apply transform-gpu;
     width: calc(33.333% - 8px);
@@ -403,8 +401,6 @@ html, body {
   }
 
   .template-card:hover {
-    @apply border-primary;
-    box-shadow: 0 0 20px hsl(45 100% 60% / 0.3);
     transform: translateY(-2px);
   }
 
@@ -416,10 +412,17 @@ html, body {
   .template-card-image {
     @apply relative w-full overflow-hidden;
     @apply bg-secondary/30;
+    @apply rounded-2xl;
+    @apply border-2 border-primary/60;
     aspect-ratio: 4 / 3;
   }
 
-  /* Template Card Image - Proper Fit Without Cropping */
+  .template-card-image:hover {
+    @apply border-primary;
+    box-shadow: 0 0 20px hsl(45 100% 60% / 0.3);
+  }
+
+  /* Template Card Image - Full Bleed Cover */
   .template-card-image img {
     @apply absolute inset-0 w-full h-full;
     object-fit: cover;
@@ -431,6 +434,7 @@ html, body {
     @apply absolute inset-0 w-full h-full;
     @apply bg-secondary/50;
     @apply animate-pulse;
+    @apply rounded-2xl;
   }
 
   /* Image Blur Placeholder */
@@ -438,20 +442,20 @@ html, body {
     @apply absolute inset-0 w-full h-full;
     @apply blur-sm scale-105;
     @apply transform-gpu;
+    @apply rounded-2xl;
     object-fit: cover;
   }
 
-  /* Template Card Content Area */
+  /* Template Card Content Area - Below Image */
   .template-card-content {
-    @apply p-2 text-center;
-    @apply bg-card;
+    @apply pt-2 text-center;
   }
 
   /* Template Card Title */
   .template-card-title {
     @apply text-xs font-semibold text-foreground;
     @apply leading-tight;
-    @apply line-clamp-1;
+    @apply line-clamp-2;
   }
 
   /* Template Card Subtitle */
@@ -461,18 +465,16 @@ html, body {
     @apply line-clamp-1;
   }
 
-  /* Story Card - Smaller variant */
+  /* Story Card - Text Outside Image */
   .story-card {
     @apply flex-shrink-0 cursor-pointer;
-    @apply rounded-2xl overflow-hidden;
-    @apply border-2 border-primary/60;
-    @apply bg-card;
+    @apply flex flex-col;
     @apply transition-all duration-200;
     @apply transform-gpu;
+    width: 80px;
   }
 
   .story-card:hover {
-    @apply border-primary;
     transform: scale(1.05);
   }
 
@@ -483,8 +485,15 @@ html, body {
   .story-card-image {
     @apply relative overflow-hidden;
     @apply bg-secondary/30;
-    width: 72px;
-    height: 72px;
+    @apply rounded-2xl;
+    @apply border-2 border-primary/60;
+    width: 80px;
+    height: 80px;
+  }
+
+  .story-card-image:hover {
+    @apply border-primary;
+    box-shadow: 0 0 15px hsl(45 100% 60% / 0.3);
   }
 
   .story-card-image img {
@@ -494,7 +503,7 @@ html, body {
   }
 
   .story-card-content {
-    @apply p-1.5 text-center;
+    @apply pt-2 text-center;
   }
 
   .story-card-title {
