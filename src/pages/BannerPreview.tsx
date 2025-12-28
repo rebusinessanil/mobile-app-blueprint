@@ -8,7 +8,7 @@ import RanksStickersPanel from "@/components/RanksStickersPanel";
 import StickerControl from "@/components/StickerControl";
 import SlotPreviewMini from "@/components/SlotPreviewMini";
 import downloadIcon from "@/assets/download-icon.png";
-import royalNameplateFrame from "@/assets/royal-nameplate-frame.png";
+import anniversaryNameplateFrame from "@/assets/anniversary-nameplate-frame.png";
 import { useProfile } from "@/hooks/useProfile";
 import { useProfilePhotos } from "@/hooks/useProfilePhotos";
 import { useBannerSettings } from "@/hooks/useBannerSettings";
@@ -25,6 +25,7 @@ import InsufficientBalanceModal from "@/components/InsufficientBalanceModal";
 import { useBannerAssetPreloader } from "@/hooks/useBannerAssetPreloader";
 import BannerWatermarks from "@/components/BannerWatermarks";
 import GoldCoinLoader from "@/components/GoldCoinLoader";
+
 interface Upline {
   id: string;
   name: string;
@@ -110,7 +111,7 @@ export default function BannerPreview() {
   } | null>(null);
   const [isProfileControlMinimized, setIsProfileControlMinimized] = useState(false);
   const [showInsufficientBalanceModal, setShowInsufficientBalanceModal] = useState(false);
-
+  
   // Post-download action states
   const [downloadComplete, setDownloadComplete] = useState(false);
   const [downloadedBannerUrl, setDownloadedBannerUrl] = useState<string | null>(null);
@@ -157,12 +158,13 @@ export default function BannerPreview() {
   const updateBannerScale = useCallback(() => {
     if (!bannerContainerRef.current) return;
     const parentWidth = bannerContainerRef.current.clientWidth;
-
+    
     // Skip if container not ready
     if (parentWidth === 0) return;
-
+    
     // EXACT FIT: Scale to fill the container width precisely
     const scale = parentWidth / 1350;
+    
     setBannerScale(scale);
     setIsLayoutReady(true);
   }, []);
@@ -176,7 +178,7 @@ export default function BannerPreview() {
     setStickers([]);
     setSlotStickers({});
     setStickerImages({});
-
+    
     // Replace current history entry to prevent back navigation to banner preview
     // Then navigate to dashboard with full page refresh to clear all cached state
     window.history.replaceState(null, '', '/dashboard');
@@ -189,20 +191,17 @@ export default function BannerPreview() {
       toast.error("No banner to share. Please download first.");
       return;
     }
+
     const appLink = "https://rebusiness.in/";
     const shareText = `🎉 Check out my achievement banner created with ReBusiness!\n\n📲 Create your own stunning banners: ${appLink}`;
 
     // Convert base64 to blob for sharing
     const base64Response = await fetch(downloadedBannerUrl);
     const blob = await base64Response.blob();
-    const file = new File([blob], 'ReBusiness-Banner.png', {
-      type: 'image/png'
-    });
+    const file = new File([blob], 'ReBusiness-Banner.png', { type: 'image/png' });
 
     // Check if native sharing is supported (mobile browsers)
-    if (navigator.share && navigator.canShare && navigator.canShare({
-      files: [file]
-    })) {
+    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
       try {
         await navigator.share({
           title: 'My ReBusiness Banner',
@@ -236,15 +235,17 @@ export default function BannerPreview() {
   // ResizeObserver-based scaling - updates on container resize
   useLayoutEffect(() => {
     if (!bannerContainerRef.current) return;
-
+    
     // Initial scale calculation
     updateBannerScale();
-
+    
     // Watch for container size changes
     const resizeObserver = new ResizeObserver(() => {
       updateBannerScale();
     });
+    
     resizeObserver.observe(bannerContainerRef.current);
+    
     return () => {
       resizeObserver.disconnect();
     };
@@ -369,15 +370,13 @@ export default function BannerPreview() {
     motivationalBannerId: bannerData.motivationalBannerId,
     festivalId: bannerData.festivalId,
     storyId: bannerData.storyId,
-    eventId: bannerData.eventId
+    eventId: bannerData.eventId,
   }) : {};
-  const {
-    slotsByNumber: unifiedStickerImages,
-    loading: stickersLoading
-  } = useUnifiedStickerSlots({
+
+  const { slotsByNumber: unifiedStickerImages, loading: stickersLoading } = useUnifiedStickerSlots({
     ...stickerOptions,
     enableRealtime: true,
-    activeOnly: true
+    activeOnly: true,
   });
 
   // Sync unified sticker data to local state for compatibility with existing code
@@ -483,14 +482,19 @@ export default function BannerPreview() {
   const [preloadStarted, setPreloadStarted] = useState(false);
 
   // Check if all required data is loaded
-  const isDataReady = userId !== null && profile !== undefined && !backgroundsLoading && bannerDefaults !== undefined;
-
+  const isDataReady = 
+    userId !== null &&
+    profile !== undefined &&
+    !backgroundsLoading &&
+    bannerDefaults !== undefined;
+  
   // *** STRICT ALL-OR-NOTHING STATE ***
   // Single derived state: show skeleton until EVERYTHING is ready
   const isBannerReady = useMemo(() => {
     const assetsReady = allLoaded || timedOut;
     const scaleReady = bannerScale > 0 && isLayoutReady;
     const dataReady = isDataReady && !backgroundsLoading && !stickersLoading;
+    
     return assetsReady && scaleReady && dataReady;
   }, [allLoaded, timedOut, bannerScale, isLayoutReady, isDataReady, backgroundsLoading, stickersLoading]);
 
@@ -503,16 +507,24 @@ export default function BannerPreview() {
     const activeBackgroundUrl = activeSlot?.imageUrl || undefined;
 
     // Visible stickers for current slot
-    const visibleStickerUrls = (stickerImages[selectedTemplate + 1] || []).map(s => s.url).filter(Boolean);
+    const visibleStickerUrls = (stickerImages[selectedTemplate + 1] || [])
+      .map(s => s.url)
+      .filter(Boolean);
 
     // Logo URLs
-    const logoUrls = [bannerDefaults?.logo_left, bannerDefaults?.logo_right, bannerDefaults?.congratulations_image].filter(Boolean) as string[];
+    const logoUrls = [
+      bannerDefaults?.logo_left,
+      bannerDefaults?.logo_right,
+      bannerDefaults?.congratulations_image,
+    ].filter(Boolean) as string[];
 
     // Primary photo
     const primaryPhotoUrl = bannerData?.photo || profile?.profile_photo || undefined;
 
     // Other backgrounds for slot switching
-    const otherBackgroundUrls = globalBackgroundSlots.filter(slot => slot.slotNumber !== selectedTemplate + 1 && slot.imageUrl).map(slot => slot.imageUrl!);
+    const otherBackgroundUrls = globalBackgroundSlots
+      .filter(slot => slot.slotNumber !== selectedTemplate + 1 && slot.imageUrl)
+      .map(slot => slot.imageUrl!);
 
     // Other stickers
     const otherStickerUrls: string[] = [];
@@ -523,7 +535,10 @@ export default function BannerPreview() {
     });
 
     // Upline avatars
-    const uplineAvatarUrls = displayUplines.map(u => u.avatar).filter(Boolean) as string[];
+    const uplineAvatarUrls = displayUplines
+      .map(u => u.avatar)
+      .filter(Boolean) as string[];
+
     return {
       activeBackgroundUrl,
       primaryPhotoUrl,
@@ -532,7 +547,7 @@ export default function BannerPreview() {
       visibleStickerUrls,
       otherBackgroundUrls,
       otherStickerUrls,
-      uplineAvatarUrls
+      uplineAvatarUrls,
     };
   }, [bannerData, isDataReady, globalBackgroundSlots, selectedTemplate, stickerImages, bannerDefaults, profile, displayUplines]);
 
@@ -553,16 +568,20 @@ export default function BannerPreview() {
   // ResizeObserver for responsive updates on all devices
   useEffect(() => {
     if (!bannerContainerRef.current) return;
+    
     const resizeObserver = new ResizeObserver(() => {
       updateBannerScale();
     });
+    
     resizeObserver.observe(bannerContainerRef.current);
     window.addEventListener('resize', updateBannerScale);
+    
     return () => {
       resizeObserver.disconnect();
       window.removeEventListener('resize', updateBannerScale);
     };
   }, [updateBannerScale]);
+
   if (!bannerData) {
     navigate("/rank-selection");
     return null;
@@ -570,7 +589,8 @@ export default function BannerPreview() {
 
   // *** STRICT ALL-OR-NOTHING: Show skeleton until isBannerReady is TRUE ***
   if (!isBannerReady) {
-    return <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
         <div className="w-full max-w-md">
           {/* Loading indicator */}
           <div className="text-center mb-6">
@@ -587,20 +607,24 @@ export default function BannerPreview() {
           
           {/* Progress bar */}
           <div className="w-full bg-muted rounded-full h-3 mb-2 overflow-hidden">
-            <div className="h-full bg-primary rounded-full transition-all duration-100 ease-out" style={{
-            width: `${Math.min(loadingProgress, 100)}%`
-          }} />
+            <div 
+              className="h-full bg-primary rounded-full transition-all duration-100 ease-out"
+              style={{ width: `${Math.min(loadingProgress, 100)}%` }}
+            />
           </div>
           <p className="text-sm text-muted-foreground text-center font-medium">
             {Math.round(loadingProgress)}% complete
           </p>
           
           {/* Hidden container for scale calculation - must be in DOM for ResizeObserver */}
-          <div ref={bannerContainerRef} className="absolute opacity-0 pointer-events-none w-full max-w-[500px] aspect-square" style={{
-          left: '-9999px'
-        }} />
+          <div 
+            ref={bannerContainerRef}
+            className="absolute opacity-0 pointer-events-none w-full max-w-[500px] aspect-square"
+            style={{ left: '-9999px' }}
+          />
         </div>
-      </div>;
+      </div>
+    );
   }
 
   // Category-specific content render function
@@ -797,78 +821,96 @@ export default function BannerPreview() {
 
             {/* Royal Nameplate Container - Fixed Size, Perfectly Centered */}
             <div className="absolute z-30" style={{
-            top: '50%',
-            left: '978px',
-            transform: 'translate(-50%, -50%)',
-            width: '580px',
-            height: '280px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}>
-              {/* Layer 1: Ornate Frame Background (Fixed Size) */}
-              <img src={royalNameplateFrame} alt="Royal Frame" style={{
+              top: '50%',
+              left: '978px',
+              transform: 'translate(-50%, -50%)',
               width: '580px',
               height: '280px',
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              objectFit: 'contain',
-              pointerEvents: 'none',
-              zIndex: 1
-            }} />
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              {/* Layer 1: Ornate Frame Background (Fixed Size) */}
+              <img 
+                src={anniversaryNameplateFrame} 
+                alt="Royal Frame"
+                style={{
+                  width: '580px',
+                  height: '280px',
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  objectFit: 'contain',
+                  pointerEvents: 'none',
+                  zIndex: 1
+                }}
+              />
               
               {/* Layer 2: Grouped Text Content (Mr. & Mrs. + Name + Team) */}
               <div style={{
-              position: 'relative',
-              zIndex: 10,
-              textAlign: 'center',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '4px',
-              width: '100%',
-              padding: '20px 40px'
-            }}>
+                position: 'relative',
+                zIndex: 10,
+                textAlign: 'center',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '4px',
+                width: '100%',
+                padding: '20px 40px'
+              }}>
                 {/* Fixed "Mr. & Mrs." Line */}
-                
+                <p style={{
+                  fontSize: '26px',
+                  fontWeight: '500',
+                  color: '#FFD700',
+                  textShadow: '2px 2px 6px rgba(0,0,0,0.8)',
+                  letterSpacing: '4px',
+                  margin: 0,
+                  fontFamily: "'Playfair Display', 'Georgia', serif"
+                }}>
+                  Mr. & Mrs.
+                </p>
                 
                 {/* Achiever Name - Centered, Auto-scaling (Max 20 chars) */}
                 <h2 style={{
-                color: '#ffffff',
-                fontSize: truncatedMainName.length > 15 ? '30px' : truncatedMainName.length > 10 ? '36px' : '42px',
-                fontWeight: '700',
-                textShadow: '3px 3px 10px rgba(0,0,0,0.9)',
-                margin: 0,
-                letterSpacing: '2px',
-                fontFamily: "'Playfair Display', 'Georgia', serif",
-                maxWidth: '480px',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-                textAlign: 'center'
-              }}>
-                  {truncatedMainName.length > 20 ? truncatedMainName.substring(0, 20).toUpperCase() : truncatedMainName.toUpperCase()}
+                  color: '#ffffff',
+                  fontSize: truncatedMainName.length > 15 ? '30px' : truncatedMainName.length > 10 ? '36px' : '42px',
+                  fontWeight: '700',
+                  textShadow: '3px 3px 10px rgba(0,0,0,0.9)',
+                  margin: 0,
+                  letterSpacing: '2px',
+                  fontFamily: "'Playfair Display', 'Georgia', serif",
+                  maxWidth: '480px',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  textAlign: 'center'
+                }}>
+                  {truncatedMainName.length > 20 
+                    ? truncatedMainName.substring(0, 20).toUpperCase() 
+                    : truncatedMainName.toUpperCase()}
                 </h2>
 
                 {/* Team Name / Tagline - Always Visible */}
-                {bannerData.teamCity && <p style={{
-                fontSize: '18px',
-                fontWeight: '400',
-                color: '#FFD700',
-                textShadow: '1px 1px 4px rgba(0,0,0,0.8)',
-                letterSpacing: '2px',
-                margin: 0,
-                marginTop: '4px',
-                fontFamily: "'Playfair Display', 'Georgia', serif",
-                maxWidth: '400px',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap'
-              }}>
+                {bannerData.teamCity && (
+                  <p style={{
+                    fontSize: '18px',
+                    fontWeight: '400',
+                    color: '#FFD700',
+                    textShadow: '1px 1px 4px rgba(0,0,0,0.8)',
+                    letterSpacing: '2px',
+                    margin: 0,
+                    marginTop: '4px',
+                    fontFamily: "'Playfair Display', 'Georgia', serif",
+                    maxWidth: '400px',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap'
+                  }}>
                     {bannerData.teamCity}
-                  </p>}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -1549,36 +1591,43 @@ export default function BannerPreview() {
     try {
       // STRICT FIXED CANVAS: Force exactly 1350×1350px - no devicePixelRatio influence
       const FIXED_SIZE = 1350;
-
+      
       // Temporarily remove the scale transform for full-resolution capture
       const bannerElement = bannerRef.current;
       const originalTransform = bannerElement.style.transform;
       const originalWidth = bannerElement.style.width;
       const originalHeight = bannerElement.style.height;
-
+      
       // Reset to full size for export
       bannerElement.style.transform = 'scale(1)';
       bannerElement.style.width = `${FIXED_SIZE}px`;
       bannerElement.style.height = `${FIXED_SIZE}px`;
+      
       const dataUrl = await toPng(bannerElement, {
         cacheBust: true,
         width: FIXED_SIZE,
         height: FIXED_SIZE,
         canvasWidth: FIXED_SIZE,
         canvasHeight: FIXED_SIZE,
-        pixelRatio: 2,
-        // HD export quality - 2x resolution for crisp output
+        pixelRatio: 2, // HD export quality - 2x resolution for crisp output
         quality: 1,
         backgroundColor: null,
         filter: node => {
           // Exclude UI elements and ALL watermarks from final export (clean banner)
-          if (node.classList?.contains("slot-selector") || node.classList?.contains("control-buttons") || node.classList?.contains("whatsapp-float") || node.id === "ignore-download" || node.id === "brand-watermark-preview" || node.id === "mobile-watermark-permanent") {
+          if (
+            node.classList?.contains("slot-selector") || 
+            node.classList?.contains("control-buttons") || 
+            node.classList?.contains("whatsapp-float") || 
+            node.id === "ignore-download" ||
+            node.id === "brand-watermark-preview" ||
+            node.id === "mobile-watermark-permanent"
+          ) {
             return false;
           }
           return true;
         }
       });
-
+      
       // Restore the original scale transform after capture
       bannerElement.style.transform = originalTransform;
       bannerElement.style.width = originalWidth;
@@ -1641,7 +1690,10 @@ export default function BannerPreview() {
       <header className="bg-background/95 backdrop-blur-sm z-40 px-4 sm:px-6 py-3 sm:py-4 flex-shrink-0">
         <div className="flex items-center justify-between max-w-[600px] mx-auto">
           {/* Back button: After download, behave like Home (instant redirect, not browser history) */}
-          <button onClick={downloadComplete ? handleGoHome : () => navigate(-1)} className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl border-2 border-foreground flex items-center justify-center hover:bg-foreground/10 transition-colors touch-target active:scale-95">
+          <button 
+            onClick={downloadComplete ? handleGoHome : () => navigate(-1)} 
+            className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl border-2 border-foreground flex items-center justify-center hover:bg-foreground/10 transition-colors touch-target active:scale-95"
+          >
             <ArrowLeft className="w-5 h-5 sm:w-6 sm:h-6 text-foreground" />
           </button>
           
@@ -1662,27 +1714,40 @@ export default function BannerPreview() {
           <div className="border-4 border-primary rounded-2xl shadow-2xl overflow-hidden">
             {/* CSS Transform Scaled HTML Preview - Mimics Canvas behavior */}
             {/* Parent wrapper - exact fit container */}
-            <div ref={bannerContainerRef} className="w-full aspect-square relative overflow-hidden flex items-center justify-center">
+            <div 
+              ref={bannerContainerRef}
+              className="w-full aspect-square relative overflow-hidden flex items-center justify-center"
+            >
               {/* HD Rendering Container - Center-pivot scaling for perfect fit */}
-              <div className="banner-scale-container" style={{
-              position: 'absolute',
-              left: '50%',
-              top: '50%',
-              width: '1350px',
-              height: '1350px',
-              transform: `translate(-50%, -50%) scale(${bannerScale})`,
-              transformOrigin: 'center center',
-              imageRendering: '-webkit-optimize-contrast' as React.CSSProperties['imageRendering'],
-              willChange: 'transform'
-            }}>
-                <div ref={bannerRef} id="banner-canvas" onMouseMove={isAdmin ? handleStickerMouseMove : undefined} onMouseUp={isAdmin ? handleStickerMouseUp : undefined} onMouseLeave={isAdmin ? handleStickerMouseUp : undefined} style={{
-                position: 'relative',
-                width: '1350px',
-                height: '1350px',
-                background: templateColors[selectedTemplate].bgGradient,
-                overflow: 'hidden',
-                cursor: isAdmin && isDragMode ? 'crosshair' : 'default'
-              }}>
+              <div 
+                className="banner-scale-container"
+                style={{
+                  position: 'absolute',
+                  left: '50%',
+                  top: '50%',
+                  width: '1350px',
+                  height: '1350px',
+                  transform: `translate(-50%, -50%) scale(${bannerScale})`,
+                  transformOrigin: 'center center',
+                  imageRendering: '-webkit-optimize-contrast' as React.CSSProperties['imageRendering'],
+                  willChange: 'transform',
+                }}
+              >
+                <div 
+                  ref={bannerRef} 
+                  id="banner-canvas" 
+                  onMouseMove={isAdmin ? handleStickerMouseMove : undefined} 
+                  onMouseUp={isAdmin ? handleStickerMouseUp : undefined} 
+                  onMouseLeave={isAdmin ? handleStickerMouseUp : undefined} 
+                  style={{
+                    position: 'relative',
+                    width: '1350px',
+                    height: '1350px',
+                    background: templateColors[selectedTemplate].bgGradient,
+                    overflow: 'hidden',
+                    cursor: isAdmin && isDragMode ? 'crosshair' : 'default'
+                  }}
+                >
               <div className="absolute inset-0" style={backgroundStyle}>
                 {/* Background automatically from global slot system (image or default color) */}
 
@@ -2257,9 +2322,10 @@ export default function BannerPreview() {
                 
 
                 {/* WATERMARKS - Two layers for preview and download */}
-                <BannerWatermarks showBrandWatermark={true} // Preview only - excluded during download via filter
+                <BannerWatermarks 
+                  showBrandWatermark={true}  // Preview only - excluded during download via filter
                   showMobileWatermark={true} // Permanent - included in final download
-                  />
+                />
 
               </div>
               </div>
@@ -2269,13 +2335,14 @@ export default function BannerPreview() {
       </div>
 
         {/* Profile Avatars (Left) + Download Button (Right) - Hidden after download */}
-        {!downloadComplete && <div className="flex items-center justify-between px-2 sm:px-4 mt-3 sm:mt-4 gap-2">
+        {!downloadComplete && (
+          <div className="flex items-center justify-between px-2 sm:px-4 mt-3 sm:mt-4 gap-2">
             {/* Left: Profile Images Row - Clickable to change main photo */}
             <div className="flex gap-2 sm:gap-3 overflow-x-auto scrollbar-hide">
               {profilePhotos.slice(0, 6).map((photo, idx) => <button key={photo.id} onClick={() => {
-            setSelectedMentorPhotoIndex(idx);
-            setIsMentorPhotoFlipped(!isMentorPhotoFlipped);
-          }} className={`h-8 w-8 sm:h-10 sm:w-10 rounded-full border-2 object-cover flex-shrink-0 shadow-lg ${selectedMentorPhotoIndex === idx ? 'border-[#FFD700] ring-2 ring-[#FFD700] ring-offset-2 ring-offset-[#0B0E15]' : 'border-gray-500'}`}>
+              setSelectedMentorPhotoIndex(idx);
+              setIsMentorPhotoFlipped(!isMentorPhotoFlipped);
+            }} className={`h-8 w-8 sm:h-10 sm:w-10 rounded-full border-2 object-cover flex-shrink-0 shadow-lg ${selectedMentorPhotoIndex === idx ? 'border-[#FFD700] ring-2 ring-[#FFD700] ring-offset-2 ring-offset-[#0B0E15]' : 'border-gray-500'}`}>
                   <img src={photo.photo_url} alt="Profile" className="w-full h-full rounded-full object-cover" />
                 </button>)}
               {profilePhotos.length > 6 && <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full border-2 border-[#FFD700] bg-[#111827] flex items-center justify-center text-[#FFD700] text-[10px] sm:text-xs font-bold flex-shrink-0">
@@ -2287,20 +2354,32 @@ export default function BannerPreview() {
             <button onClick={handleDownload} disabled={isDownloading} className="cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0">
               <img src={downloadIcon} alt="Download" className="h-12 w-auto sm:h-16" />
             </button>
-          </div>}
+          </div>
+        )}
 
         {/* Post-Download Action Buttons - Shown only after successful download */}
         {/* Instant response: No debounce, no waiting state - buttons respond immediately */}
-        {downloadComplete && <div className="flex items-center justify-center gap-4 px-4 mt-4">
-            <Button onClick={handleGoHome} variant="outline" size="lg" className="flex-1 max-w-[160px] h-14 gap-2 border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground font-semibold text-base rounded-xl active:scale-95 transition-transform">
+        {downloadComplete && (
+          <div className="flex items-center justify-center gap-4 px-4 mt-4">
+            <Button
+              onClick={handleGoHome}
+              variant="outline"
+              size="lg"
+              className="flex-1 max-w-[160px] h-14 gap-2 border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground font-semibold text-base rounded-xl active:scale-95 transition-transform"
+            >
               <Home className="w-5 h-5" />
               Home
             </Button>
-            <Button onClick={handleShare} size="lg" className="flex-1 max-w-[160px] h-14 gap-2 bg-[#25D366] hover:bg-[#128C7E] text-white font-semibold text-base rounded-xl shadow-lg active:scale-95 transition-transform">
+            <Button
+              onClick={handleShare}
+              size="lg"
+              className="flex-1 max-w-[160px] h-14 gap-2 bg-[#25D366] hover:bg-[#128C7E] text-white font-semibold text-base rounded-xl shadow-lg active:scale-95 transition-transform"
+            >
               <Share2 className="w-5 h-5" />
               Share
             </Button>
-          </div>}
+          </div>
+        )}
       </div>
 
       {/* Scrollable Slot Selector Box - Hidden after download (preview is frozen) */}
@@ -2311,9 +2390,28 @@ export default function BannerPreview() {
             const isSelected = selectedTemplate === slot.slotNumber - 1;
             // ALL 16 slots show static dummy/proxy content - no user data in mini previews
             // Only the main banner preview shows real achiever data
-            return <SlotPreviewMini key={slot.slotNumber} slot={slot} isSelected={isSelected} onClick={() => setSelectedTemplate(slot.slotNumber - 1)} categoryType={bannerData?.categoryType}
-            // No user/achiever data passed - all slots remain proxy-only
-            rankName="" name="" teamCity="" chequeAmount="" tripName="" message="" quote="" congratulationsImage={undefined} logoLeft={undefined} logoRight={undefined} uplines={[]} stickers={stickerImages[slot.slotNumber] || []} profileName="" profileRank="" />;
+            return <SlotPreviewMini
+                key={slot.slotNumber}
+                slot={slot}
+                isSelected={isSelected}
+                onClick={() => setSelectedTemplate(slot.slotNumber - 1)}
+                categoryType={bannerData?.categoryType}
+                // No user/achiever data passed - all slots remain proxy-only
+                rankName=""
+                name=""
+                teamCity=""
+                chequeAmount=""
+                tripName=""
+                message=""
+                quote=""
+                congratulationsImage={undefined}
+                logoLeft={undefined}
+                logoRight={undefined}
+                uplines={[]}
+                stickers={stickerImages[slot.slotNumber] || []}
+                profileName=""
+                profileRank=""
+              />;
           })}
             </div>
           </div>
