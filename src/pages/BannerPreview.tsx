@@ -8,7 +8,7 @@ import RanksStickersPanel from "@/components/RanksStickersPanel";
 import StickerControl from "@/components/StickerControl";
 import SlotPreviewMini from "@/components/SlotPreviewMini";
 import downloadIcon from "@/assets/download-icon.png";
-import royalNameplateFrame from "@/assets/royal-nameplate-frame.png";
+import anniversaryNameplateFrame from "@/assets/anniversary-nameplate-frame.png";
 import { useProfile } from "@/hooks/useProfile";
 import { useProfilePhotos } from "@/hooks/useProfilePhotos";
 import { useBannerSettings } from "@/hooks/useBannerSettings";
@@ -832,7 +832,7 @@ export default function BannerPreview() {
             }}>
               {/* Layer 1: Ornate Frame Background (Fixed Size) */}
               <img 
-                src={royalNameplateFrame} 
+                src={anniversaryNameplateFrame} 
                 alt="Royal Frame"
                 style={{
                   width: '580px',
