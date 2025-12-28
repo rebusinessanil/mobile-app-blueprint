@@ -824,19 +824,19 @@ export default function BannerPreview() {
               top: '50%',
               left: '978px',
               transform: 'translate(-50%, -50%)',
-              width: '580px',
-              height: '280px',
+              width: '696px',
+              height: '336px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
             }}>
-              {/* Layer 1: Ornate Frame Background (Fixed Size) */}
+              {/* Layer 1: Ornate Frame Background (Fixed Size - 20% larger) */}
               <img 
                 src={anniversaryNameplateFrame} 
                 alt="Royal Frame"
                 style={{
-                  width: '580px',
-                  height: '280px',
+                  width: '696px',
+                  height: '336px',
                   position: 'absolute',
                   top: 0,
                   left: 0,
@@ -846,7 +846,7 @@ export default function BannerPreview() {
                 }}
               />
               
-              {/* Layer 2: Grouped Text Content (Mr. & Mrs. + Name + Team) */}
+              {/* Layer 2: Grouped Text Content (Name + Team) */}
               <div style={{
                 position: 'relative',
                 zIndex: 10,
@@ -855,22 +855,10 @@ export default function BannerPreview() {
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '4px',
+                gap: '8px',
                 width: '100%',
-                padding: '20px 40px'
+                padding: '24px 48px'
               }}>
-                {/* Fixed "Mr. & Mrs." Line */}
-                <p style={{
-                  fontSize: '26px',
-                  fontWeight: '500',
-                  color: '#FFD700',
-                  textShadow: '2px 2px 6px rgba(0,0,0,0.8)',
-                  letterSpacing: '4px',
-                  margin: 0,
-                  fontFamily: "'Playfair Display', 'Georgia', serif"
-                }}>
-                  Mr. & Mrs.
-                </p>
                 
                 {/* Achiever Name - Centered, Auto-scaling (Max 20 chars) */}
                 <h2 style={{
