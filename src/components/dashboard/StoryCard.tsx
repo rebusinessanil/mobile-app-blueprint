@@ -59,8 +59,8 @@ function StoryCardComponent({
 
   const content = (
     <div ref={cardRef} className="story-card">
-      {/* Fixed aspect ratio container - GPU accelerated */}
-      <div className="story-card-image">
+      {/* Image container - no text overlay */}
+      <div className="story-card-image relative">
         {/* Blur placeholder */}
         {thumbnailUrl && !imageLoaded && (
           <img
@@ -73,7 +73,7 @@ function StoryCardComponent({
         )}
         {/* Skeleton fallback */}
         {!imageLoaded && !thumbnailUrl && (
-          <div className="absolute inset-0 bg-secondary/50 animate-pulse" />
+          <div className="absolute inset-0 bg-secondary/50 animate-pulse rounded-2xl" />
         )}
         {/* Main image - only load when in view */}
         {isInView && (
@@ -88,18 +88,18 @@ function StoryCardComponent({
             decoding="async"
           />
         )}
-        {isPreview || isUpcoming ? (
-          <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-            <span className="text-[9px] bg-secondary px-1.5 py-0.5 rounded text-muted-foreground font-medium">
-              {previewLabel || (isUpcoming ? "Coming Soon" : "Preview")}
-            </span>
-          </div>
-        ) : (
+        {/* Status dot only - no text overlay */}
+        {!isPreview && !isUpcoming && (
           <div 
             className={`absolute top-1.5 right-1.5 w-2.5 h-2.5 ${statusDotColor} rounded-full border-2 border-white shadow-lg`} 
           />
         )}
+        {/* Upcoming indicator - small dot instead of overlay */}
+        {(isPreview || isUpcoming) && (
+          <div className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-yellow-500 rounded-full border-2 border-white shadow-lg" />
+        )}
       </div>
+      {/* Title below image - outside card */}
       <div className="story-card-content">
         <p className="story-card-title">
           {title}
