@@ -1420,9 +1420,12 @@ export type Database = {
         Returns: Json
       }
       generate_customer_code: { Args: never; Returns: string }
+      get_ist_date: { Args: never; Returns: string }
+      get_ist_now: { Args: never; Returns: string }
       hash_email: { Args: { email: string }; Returns: string }
       is_admin: { Args: { user_id: string }; Returns: boolean }
       is_email_blocked: { Args: { email: string }; Returns: boolean }
+      update_story_status_ist: { Args: never; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "user"

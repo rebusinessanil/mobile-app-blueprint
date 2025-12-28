@@ -15,6 +15,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import GoldCoinLoader from "@/components/GoldCoinLoader";
 import StoryCard, { StoryCardData, getStatusFromDates } from "@/components/admin/StoryCard";
+import ISTTimeSheet from "@/components/admin/ISTTimeSheet";
+import { getStoryStatusIST } from "@/lib/istUtils";
 
 type StoryType = "event" | "festival";
 type TabType = "events" | "festivals" | "generated" | "backgrounds";
@@ -243,6 +245,22 @@ export default function AdminStories() {
     }
   };
 
+  // Manual trigger for IST status update (runs the same function as midnight cron)
+  const handleManualStatusUpdate = async () => {
+    try {
+      setIsGenerating(true);
+      toast.info("Updating story statuses (IST)...");
+      const { error } = await supabase.rpc('update_story_status_ist' as any);
+      if (error) throw error;
+      toast.success("Story statuses updated based on IST date");
+      await handleRefresh();
+    } catch (error: any) {
+      toast.error("Status update failed: " + error.message);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   // Background management handlers
   const handleStorySlotUpload = async (file: File, slotNumber: number) => {
     if (!selectedStory) {
@@ -307,7 +325,7 @@ export default function AdminStories() {
   const totalSources = events.length + festivals.length;
   const totalStories = totalSources + generatedStories.length;
 
-  // Filter stories based on search and status filter
+  // Filter stories based on search and status filter using IST
   const filteredEvents = useMemo(() => {
     let filtered = events.filter(e => 
       e.person_name?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -315,13 +333,13 @@ export default function AdminStories() {
     
     if (statusFilter === "active") {
       filtered = filtered.filter(e => {
-        const status = getStatusFromDates(e.start_date, e.end_date, e.story_status);
-        return status.label === "Live";
+        const status = getStoryStatusIST(e.event_date, e.story_status);
+        return status.isLive;
       });
     } else if (statusFilter === "preview_only") {
       filtered = filtered.filter(e => {
-        const status = getStatusFromDates(e.start_date, e.end_date, e.story_status);
-        return status.label === "Upcoming";
+        const status = getStoryStatusIST(e.event_date, e.story_status);
+        return status.isUpcoming;
       });
     }
     
@@ -335,13 +353,13 @@ export default function AdminStories() {
     
     if (statusFilter === "active") {
       filtered = filtered.filter(f => {
-        const status = getStatusFromDates(f.start_date, f.end_date, f.story_status);
-        return status.label === "Live";
+        const status = getStoryStatusIST(f.festival_date, f.story_status);
+        return status.isLive;
       });
     } else if (statusFilter === "preview_only") {
       filtered = filtered.filter(f => {
-        const status = getStatusFromDates(f.start_date, f.end_date, f.story_status);
-        return status.label === "Upcoming";
+        const status = getStoryStatusIST(f.festival_date, f.story_status);
+        return status.isUpcoming;
       });
     }
     
@@ -385,6 +403,9 @@ export default function AdminStories() {
       />
 
       <div className="p-4 space-y-4">
+        {/* IST Time Sheet */}
+        <ISTTimeSheet showCountdown={true} />
+
         {/* Stats Cards - Clickable Filters */}
         <div className="grid grid-cols-2 gap-3">
           <div 
@@ -437,10 +458,20 @@ export default function AdminStories() {
             />
           </div>
           <Button 
+            onClick={handleManualStatusUpdate} 
+            disabled={isGenerating}
+            variant="outline"
+            className="border-primary/30"
+            title="Update statuses based on IST date"
+          >
+            {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Calendar className="w-4 h-4" />}
+          </Button>
+          <Button 
             onClick={handleGenerateTestStories} 
             disabled={isGenerating}
             variant="outline"
             className="border-primary/30"
+            title="Generate preview stories"
           >
             {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
           </Button>
