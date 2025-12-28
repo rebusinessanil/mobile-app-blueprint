@@ -819,9 +819,9 @@ export default function BannerPreview() {
               </p>
             </div>
 
-            {/* Royal Nameplate Container - Fixed Size, Perfectly Centered */}
+            {/* Royal Nameplate Container - Fixed Size, Moved Up 10% */}
             <div className="absolute z-30" style={{
-              top: '50%',
+              top: '40%',
               left: '978px',
               transform: 'translate(-50%, -50%)',
               width: '696px',
@@ -846,7 +846,7 @@ export default function BannerPreview() {
                 }}
               />
               
-              {/* Layer 2: Grouped Text Content (Name + Team) */}
+              {/* Layer 2: Grouped Text Content (Name + Team) - Centered with equal padding */}
               <div style={{
                 position: 'relative',
                 zIndex: 10,
@@ -857,7 +857,8 @@ export default function BannerPreview() {
                 justifyContent: 'center',
                 gap: '8px',
                 width: '100%',
-                padding: '24px 48px'
+                height: '100%',
+                padding: '40px'
               }}>
                 
                 {/* Achiever Name - Centered, Auto-scaling (Max 20 chars) */}
