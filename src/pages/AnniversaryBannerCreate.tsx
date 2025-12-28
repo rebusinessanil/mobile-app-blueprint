@@ -239,13 +239,7 @@ export default function AnniversaryBannerCreate() {
               <p className="text-xs text-muted-foreground">{formData.name.length}/20 characters</p>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm text-foreground">Team Name <span className="text-muted-foreground">(Optional)</span></label>
-              <Input value={formData.teamCity} onChange={e => setFormData({
-              ...formData,
-              teamCity: e.target.value
-            })} placeholder="Team Name (Optional)" className="bg-transparent border-0 border-b-2 border-muted rounded-none text-foreground h-12 focus-visible:ring-0 focus-visible:border-primary" />
-            </div>
+            
 
             <div className="space-y-2">
               
