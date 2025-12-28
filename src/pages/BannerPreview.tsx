@@ -861,13 +861,14 @@ export default function BannerPreview() {
                 padding: '40px'
               }}>
                 
-                {/* Achiever Name - Centered, Auto-scaling (Max 20 chars) */}
+                {/* Achiever Name - Centered, Auto-scaling (Max 20 chars), moved 5% down */}
                 <h2 style={{
                   color: '#ffffff',
                   fontSize: truncatedMainName.length > 15 ? '30px' : truncatedMainName.length > 10 ? '36px' : '42px',
                   fontWeight: '700',
                   textShadow: '3px 3px 10px rgba(0,0,0,0.9)',
                   margin: 0,
+                  marginTop: '5%',
                   letterSpacing: '2px',
                   fontFamily: "'Playfair Display', 'Georgia', serif",
                   maxWidth: '480px',
