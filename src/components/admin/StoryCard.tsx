@@ -1,6 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff, Edit, Trash2 } from "lucide-react";
+import { getStoryStatusIST, formatISTDate } from "@/lib/istUtils";
 
 export interface StoryCardData {
   id: string;
@@ -22,46 +23,19 @@ interface StoryCardProps {
   showActions?: boolean;
 }
 
-// Compute status badge based on start_date and end_date
+// Re-export for backward compatibility
 export const getStatusFromDates = (startDate: string | null, endDate: string | null, storyStatus: boolean | null): { label: string; className: string } => {
-  // If we have start_date and end_date, compute from those
-  if (startDate && endDate) {
-    const now = new Date();
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    
-    if (now < start) {
-      return { label: 'Upcoming', className: 'bg-blue-500/20 text-blue-500' };
-    } else if (now >= start && now <= end) {
-      return { label: 'Live', className: 'bg-green-500/20 text-green-500' };
-    } else {
-      return { label: 'Expired', className: 'bg-muted text-muted-foreground' };
-    }
-  }
-  
-  // Fallback to story_status: false = Upcoming, true = Live, null = Expired
-  if (storyStatus === true) return { label: 'Live', className: 'bg-green-500/20 text-green-500' };
-  if (storyStatus === false) return { label: 'Upcoming', className: 'bg-blue-500/20 text-blue-500' };
-  return { label: 'Expired', className: 'bg-muted text-muted-foreground' };
+  // Use event_date based logic with IST
+  const result = getStoryStatusIST(startDate, storyStatus);
+  return { label: result.label, className: result.className };
 };
 
-// Format date to Indian format DD/MM/YYYY
-export const formatIndianDate = (dateString: string | null): string => {
-  if (!dateString) return '-';
-  try {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-IN', { 
-      day: '2-digit', 
-      month: '2-digit', 
-      year: 'numeric' 
-    });
-  } catch {
-    return '-';
-  }
-};
+// Format date to Indian format DD/MM/YYYY using IST
+export const formatIndianDate = formatISTDate;
 
 export default function StoryCard({ story, onToggleActive, onEdit, onDelete, showActions = true }: StoryCardProps) {
-  const statusBadge = getStatusFromDates(story.start_date, story.end_date, story.story_status);
+  // Use event_date for status calculation (IST-based)
+  const statusBadge = getStoryStatusIST(story.event_date || story.start_date, story.story_status);
   
   return (
     <div className="bg-card border border-primary/20 rounded-2xl p-3 hover:border-primary/40 transition-all">
@@ -85,12 +59,21 @@ export default function StoryCard({ story, onToggleActive, onEdit, onDelete, sho
             <p className="text-xs text-muted-foreground capitalize">{story.subtitle}</p>
           )}
           <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
-            <span className="flex items-center gap-1">
-              <span className="text-primary/70">Start:</span> {formatIndianDate(story.start_date)}
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="text-primary/70">End:</span> {formatIndianDate(story.end_date)}
-            </span>
+            {story.event_date && (
+              <span className="flex items-center gap-1">
+                <span className="text-primary/70">Event:</span> {formatISTDate(story.event_date)}
+              </span>
+            )}
+            {!story.event_date && story.start_date && (
+              <>
+                <span className="flex items-center gap-1">
+                  <span className="text-primary/70">Start:</span> {formatISTDate(story.start_date)}
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="text-primary/70">End:</span> {formatISTDate(story.end_date)}
+                </span>
+              </>
+            )}
           </div>
         </div>
         {showActions && (

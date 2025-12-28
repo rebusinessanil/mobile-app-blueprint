@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { getStoryStatusIST } from "@/lib/istUtils";
 
 export interface UnifiedStory {
   id: string;
@@ -13,6 +14,8 @@ export interface UnifiedStory {
   is_active?: boolean;
   created_at: string;
   background_url?: string;
+  // IST-based computed status
+  ist_status?: { label: string; className: string; isLive: boolean; isUpcoming: boolean; isExpired: boolean };
 }
 
 export const useUnifiedStories = () => {
@@ -55,6 +58,7 @@ export const useUnifiedStories = () => {
             expires_at: story.expires_at,
             created_at: story.created_at,
             background_url: slots?.[0]?.image_url || story.poster_url,
+            ist_status: getStoryStatusIST(story.event_date, story.story_status as boolean | null),
           };
         })
       );
