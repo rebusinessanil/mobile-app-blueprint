@@ -276,19 +276,26 @@ export const uploadUnifiedStickerSlot = async (
       .getPublicUrl(filePath);
 
     // Build insert record with correct entity reference
+    // IMPORTANT: When an entity ID is provided, don't set banner_category to avoid unique constraint conflicts
+    // The unique constraint is on (banner_category, slot_number) so entity-specific stickers should not set banner_category
+    const hasEntityId = options.rankId || options.tripId || options.birthdayId || 
+                        options.anniversaryId || options.motivationalBannerId || 
+                        options.festivalId || options.storyId;
+    
     const insertData: any = {
       name: `Slot ${slotNumber} Sticker`,
       image_url: publicUrl,
       slot_number: slotNumber,
       is_active: true,
-      banner_category: options.bannerCategory || null,
+      // Only set banner_category when no specific entity ID is provided
+      banner_category: hasEntityId ? null : (options.bannerCategory || null),
       position_x: 50,
       position_y: 50,
       scale: 1.0,
       rotation: 0,
     };
 
-    // Set the correct entity reference
+    // Set the correct entity reference (mutually exclusive with banner_category for uniqueness)
     if (options.rankId) insertData.rank_id = options.rankId;
     if (options.tripId) insertData.trip_id = options.tripId;
     if (options.birthdayId) insertData.birthday_id = options.birthdayId;
