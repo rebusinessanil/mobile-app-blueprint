@@ -8,19 +8,46 @@ interface DeductionResult {
   success: boolean;
   insufficientBalance: boolean;
   newBalance?: number;
+  isAdminBypass?: boolean;
 }
 
-export function useWalletDeduction() {
+interface WalletDeductionOptions {
+  skipDeductionForAdmin?: boolean;
+}
+
+export function useWalletDeduction(options: WalletDeductionOptions = {}) {
   const [isProcessing, setIsProcessing] = useState(false);
 
   const checkAndDeductBalance = async (
     userId: string,
     categoryName: string,
     bannerUrl?: string,
-    templateId?: string
+    templateId?: string,
+    isAdmin?: boolean
   ): Promise<DeductionResult> => {
     try {
       setIsProcessing(true);
+
+      // ADMIN BYPASS: Admins can download banners without credit deduction
+      // Still record the download for tracking purposes
+      if (isAdmin && options.skipDeductionForAdmin !== false) {
+        // Record download without deducting credits
+        if (categoryName) {
+          await supabase.from('banner_downloads').insert({
+            user_id: userId,
+            category_name: categoryName,
+            banner_url: bannerUrl || null,
+            template_id: templateId || null,
+            downloaded_at: new Date().toISOString()
+          });
+        }
+        
+        return { 
+          success: true, 
+          insufficientBalance: false,
+          isAdminBypass: true
+        };
+      }
 
       // Use the secure SECURITY DEFINER function for atomic credit deduction
       // This prevents client-side manipulation of credits

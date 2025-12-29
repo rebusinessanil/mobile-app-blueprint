@@ -116,11 +116,11 @@ export default function BannerPreview() {
   const [downloadComplete, setDownloadComplete] = useState(false);
   const [downloadedBannerUrl, setDownloadedBannerUrl] = useState<string | null>(null);
 
-  // Wallet deduction hook
+  // Wallet deduction hook - admins bypass credit deduction
   const {
     checkAndDeductBalance,
     isProcessing: isProcessingWallet
-  } = useWalletDeduction();
+  } = useWalletDeduction({ skipDeductionForAdmin: true });
 
   // Handle profile picture drag (admin only, motivational only)
   useEffect(() => {
@@ -1548,13 +1548,15 @@ export default function BannerPreview() {
     }
     const categoryName = bannerData?.categoryType ? bannerData.categoryType.charAt(0).toUpperCase() + bannerData.categoryType.slice(1) : bannerData?.rankName || "Banner";
 
-    // Step 1: Quick balance check first (before generation)
-    const {
-      data: credits
-    } = await supabase.from("user_credits").select("balance").eq("user_id", userId).single();
-    if ((credits?.balance || 0) < 10) {
-      setShowInsufficientBalanceModal(true);
-      return;
+    // Step 1: Quick balance check first (before generation) - SKIP FOR ADMINS
+    if (!isAdmin) {
+      const {
+        data: credits
+      } = await supabase.from("user_credits").select("balance").eq("user_id", userId).single();
+      if ((credits?.balance || 0) < 10) {
+        setShowInsufficientBalanceModal(true);
+        return;
+      }
     }
 
     // Step 2: Generate banner
@@ -1607,11 +1609,13 @@ export default function BannerPreview() {
       toast.dismiss(loadingToast);
 
       // Step 3: Deduct wallet balance and save download record with banner URL
+      // Admin bypass is handled inside the hook - admins don't pay but downloads are recorded
       const templateId = currentTemplateId || bannerData?.templateId;
       const {
         success,
-        insufficientBalance
-      } = await checkAndDeductBalance(userId, categoryName, dataUrl, templateId);
+        insufficientBalance,
+        isAdminBypass
+      } = await checkAndDeductBalance(userId, categoryName, dataUrl, templateId, isAdmin);
 
       // Step 4: If insufficient balance (race condition), show modal
       if (insufficientBalance) {
@@ -1635,15 +1639,23 @@ export default function BannerPreview() {
       // Calculate approximate size (base64 size estimation)
       const sizeMB = (dataUrl.length * 0.75 / (1024 * 1024)).toFixed(2);
 
-      // Get updated balance to show in success message
-      const {
-        data: updatedCredits
-      } = await supabase.from("user_credits").select("balance").eq("user_id", userId).single();
-      const remainingBalance = updatedCredits?.balance || 0;
-      toast.success(`Banner saved to your device! (${sizeMB} MB) • ₹10 deducted`, {
-        description: `Remaining balance: ₹${remainingBalance}. Check your Downloads or Gallery app to access your banner.`,
-        duration: 6000
-      });
+      // Admin gets different success message (no deduction)
+      if (isAdminBypass) {
+        toast.success(`Banner saved to your device! (${sizeMB} MB)`, {
+          description: "Admin download - no credits deducted. Check your Downloads or Gallery app.",
+          duration: 5000
+        });
+      } else {
+        // Get updated balance to show in success message
+        const {
+          data: updatedCredits
+        } = await supabase.from("user_credits").select("balance").eq("user_id", userId).single();
+        const remainingBalance = updatedCredits?.balance || 0;
+        toast.success(`Banner saved to your device! (${sizeMB} MB) • ₹10 deducted`, {
+          description: `Remaining balance: ₹${remainingBalance}. Check your Downloads or Gallery app to access your banner.`,
+          duration: 6000
+        });
+      }
     } catch (error) {
       console.error("Banner download failed:", error);
       toast.dismiss(loadingToast);
