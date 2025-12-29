@@ -34,6 +34,10 @@ const SYNCED_TABLES = [
   
   // Banner Defaults
   "banner_defaults",
+  "banner_carousel_images",
+  
+  // Festivals
+  "festivals",
 ] as const;
 
 type SyncedTable = typeof SYNCED_TABLES[number];
@@ -45,7 +49,7 @@ const TABLE_TO_QUERY_KEYS: Record<SyncedTable, string[][]> = {
   templates: [["templates"], ["template"]],
   template_categories: [["categories"], ["template-categories"]],
   template_backgrounds: [["template-backgrounds"], ["backgrounds"]],
-  stickers: [["stickers"], ["unified-sticker-slots"]],
+  stickers: [["stickers"], ["unified-sticker-slots"], ["global-stickers"]],
   sticker_categories: [["sticker-categories"]],
   stories: [["stories"], ["unified-stories"]],
   stories_events: [["stories-events"], ["unified-stories"], ["auto-stories"]],
@@ -59,6 +63,8 @@ const TABLE_TO_QUERY_KEYS: Record<SyncedTable, string[][]> = {
   Anniversary: [["anniversaries"], ["anniversary"]],
   "Motivational Banner": [["motivational-banners"], ["motivational"]],
   banner_defaults: [["banner-defaults"]],
+  banner_carousel_images: [["banner-carousel"], ["carousel-images"]],
+  festivals: [["festivals"]],
 };
 
 interface UseAdminSyncOptions {

@@ -315,6 +315,28 @@ export const useRanks = () => {
     refetchOnWindowFocus: false,
   });
 
+  // Real-time subscription for admin updates
+  useEffect(() => {
+    const channel = supabase
+      .channel('ranks-realtime-sync')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'ranks',
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['ranks'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+
   return { 
     ranks: ranks || [], 
     loading: isLoading, 

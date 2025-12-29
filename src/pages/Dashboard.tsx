@@ -114,9 +114,10 @@ export default function Dashboard() {
     handleContinue
   } = useWelcomeBonus();
 
-  // Real-time sync for admin updates
+  // Real-time sync for admin updates - enabled for ALL users (guests + authenticated)
+  // This ensures admin changes propagate instantly to everyone
   useAdminSync({
-    enabled: isAuthenticated
+    enabled: true // Always enabled for instant updates
   });
 
   // Use real public data for everyone - no demo fallback
