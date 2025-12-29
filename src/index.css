@@ -489,6 +489,7 @@ html, body {
     @apply border-2 border-primary/60;
     width: 80px;
     height: 80px;
+    aspect-ratio: 1 / 1;
   }
 
   .story-card-image:hover {
