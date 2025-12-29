@@ -151,12 +151,9 @@ export function isPathAllowedForRole(path: string, isAdmin: boolean): boolean {
     return false;
   }
 
-  // User paths not allowed for admins (they should stay in admin area)
-  // But allow profile-edit for all users
-  const allowedForBoth = ["/profile-edit", "/profile-setup", "/change-pin"];
-  if (!isAdminPath && isAdmin && !allowedForBoth.includes(path)) {
-    return false;
-  }
-
+  // SUPER USER ACCESS: Admins can access ALL routes (both admin and user routes)
+  // This allows admins to fully test and use the user app features
+  // No restrictions for admins - they are super users
+  
   return true;
 }
