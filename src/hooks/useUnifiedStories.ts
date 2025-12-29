@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { getStoryStatusIST } from "@/lib/istUtils";
+import { getStoryStatusIST, getISTDateString } from "@/lib/istUtils";
+import { useQueryClient } from "@tanstack/react-query";
 
 export interface UnifiedStory {
   id: string;
@@ -18,21 +19,34 @@ export interface UnifiedStory {
   ist_status?: { label: string; className: string; isLive: boolean; isUpcoming: boolean; isExpired: boolean };
 }
 
-export const useUnifiedStories = () => {
+interface UseUnifiedStoriesOptions {
+  adminMode?: boolean;
+}
+
+export const useUnifiedStories = (options: UseUnifiedStoriesOptions = {}) => {
+  const { adminMode = false } = options;
   const [stories, setStories] = useState<UnifiedStory[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const queryClient = useQueryClient();
 
-  const fetchAllStories = async () => {
+  const fetchAllStories = useCallback(async () => {
     try {
       setLoading(true);
+      const istToday = getISTDateString();
 
-      // Fetch stories where story_status is NOT null (only visible stories)
-      const { data: generatedStories, error: generatedError } = await supabase
+      // Build query based on mode
+      let query = supabase
         .from("stories_generated")
         .select("*")
-        .not("story_status", "is", null) // Only fetch non-null story_status
         .order("event_date", { ascending: true });
+
+      // For user mode: only fetch stories where story_status is NOT null
+      if (!adminMode) {
+        query = query.not("story_status", "is", null);
+      }
+
+      const { data: generatedStories, error: generatedError } = await query;
 
       if (generatedError) throw generatedError;
 
@@ -63,7 +77,21 @@ export const useUnifiedStories = () => {
         })
       );
 
-      setStories(storiesWithBackgrounds);
+      // Apply IST-based filtering for user mode
+      let filteredStories = storiesWithBackgrounds;
+      if (!adminMode) {
+        filteredStories = storiesWithBackgrounds.filter(story => {
+          // Only show stories that are truly Live (event_date = today) or Upcoming (event_date > today)
+          if (story.story_status === true) {
+            return story.event_date === istToday; // Live
+          } else if (story.story_status === false) {
+            return story.event_date && story.event_date > istToday; // Upcoming
+          }
+          return false;
+        });
+      }
+
+      setStories(filteredStories);
       setError(null);
     } catch (err) {
       setError(err as Error);
@@ -71,7 +99,7 @@ export const useUnifiedStories = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [adminMode]);
 
   useEffect(() => {
     fetchAllStories();
@@ -87,7 +115,9 @@ export const useUnifiedStories = () => {
           table: "stories_generated",
         },
         () => {
-          console.log("📡 Generated story update received");
+          console.log("📡 Generated story update received - refreshing");
+          queryClient.invalidateQueries({ queryKey: ["stories"] });
+          queryClient.invalidateQueries({ queryKey: ["stories-generated"] });
           fetchAllStories();
         }
       )
@@ -96,7 +126,7 @@ export const useUnifiedStories = () => {
     return () => {
       supabase.removeChannel(generatedChannel);
     };
-  }, []);
+  }, [fetchAllStories, queryClient]);
 
   return { stories, loading, error, refetch: fetchAllStories };
 };

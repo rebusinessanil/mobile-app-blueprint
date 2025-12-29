@@ -51,12 +51,12 @@ const TABLE_TO_QUERY_KEYS: Record<SyncedTable, string[][]> = {
   template_backgrounds: [["template-backgrounds"], ["backgrounds"]],
   stickers: [["stickers"], ["unified-sticker-slots"], ["global-stickers"]],
   sticker_categories: [["sticker-categories"]],
-  stories: [["stories"], ["unified-stories"]],
-  stories_events: [["stories-events"], ["unified-stories"], ["auto-stories"]],
-  stories_festivals: [["stories-festivals"], ["unified-stories"], ["festivals"]],
-  stories_generated: [["stories-generated"], ["unified-stories"]],
+  stories: [["stories"], ["unified-stories"], ["auto-stories"]],
+  stories_events: [["stories-events"], ["unified-stories"], ["auto-stories"], ["stories"]],
+  stories_festivals: [["stories-festivals"], ["unified-stories"], ["festivals"], ["stories"], ["auto-stories"]],
+  stories_generated: [["stories-generated"], ["unified-stories"], ["stories"], ["auto-stories"]],
   stories_settings: [["stories-settings"]],
-  story_background_slots: [["story-backgrounds"], ["story-background-slots"]],
+  story_background_slots: [["story-backgrounds"], ["story-background-slots"], ["unified-stories"]],
   ranks: [["ranks"]],
   bonanza_trips: [["bonanza-trips"], ["trips"]],
   Birthday: [["birthdays"], ["birthday"]],
@@ -64,7 +64,7 @@ const TABLE_TO_QUERY_KEYS: Record<SyncedTable, string[][]> = {
   "Motivational Banner": [["motivational-banners"], ["motivational"]],
   banner_defaults: [["banner-defaults"]],
   banner_carousel_images: [["banner-carousel"], ["carousel-images"]],
-  festivals: [["festivals"]],
+  festivals: [["festivals"], ["stories-festivals"]],
 };
 
 interface UseAdminSyncOptions {
