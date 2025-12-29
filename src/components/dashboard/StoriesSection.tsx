@@ -1,6 +1,7 @@
 import { memo, useMemo } from "react";
 import StoryCard from "./StoryCard";
 import { useGeneratedStories, useStoriesEvents, useStoriesFestivals } from "@/hooks/useAutoStories";
+import { getISTDateString } from "@/lib/istUtils";
 
 function StoriesSectionContent() {
   // Use realtime hooks - adminMode=false means only show visible stories (story_status IS NOT NULL)
@@ -8,10 +9,16 @@ function StoriesSectionContent() {
   const { events: storiesEvents } = useStoriesEvents(false);
   const { festivals } = useStoriesFestivals(false);
 
-  // Memoized filtered data - Only show LIVE stories (story_status = true) or UPCOMING (story_status = false)
+  // Memoized filtered data - Uses computed_is_live for IST-aware status
   const { birthdayEvents, anniversaryEvents, otherEvents, activeStories, upcomingStories, activeFestivals, upcomingFestivals } = useMemo(() => {
-    // Filter events by type - LIVE stories have story_status = true, UPCOMING have story_status = false
-    // Only show events where is_active is true (admin marked as Active)
+    const istToday = getISTDateString();
+    
+    // Helper to determine if an event is LIVE based on IST date
+    const isLiveByDate = (eventDate: string) => eventDate === istToday;
+    const isUpcomingByDate = (eventDate: string) => eventDate > istToday;
+    
+    // Filter events by type - use computed_is_live or fallback to IST date comparison
+    // Only show events where is_active is true and story_status is not null (not expired)
     const birthday = storiesEvents.filter(e => 
       e.event_type === 'birthday' && 
       e.is_active !== false && 
@@ -29,14 +36,13 @@ function StoriesSectionContent() {
       e.story_status !== null
     );
     
-    // Filter generated stories by status: true = Live (Active), false = Upcoming
-    const active = generatedStories.filter(s => s.story_status === true);
-    const upcoming = generatedStories.filter(s => s.story_status === false);
+    // Filter generated stories - use computed_is_live for accurate IST status
+    const active = generatedStories.filter(s => s.computed_is_live === true);
+    const upcoming = generatedStories.filter(s => s.computed_is_live === false && s.story_status !== null);
     
-    // Filter festivals by status - only show active festivals
-    // story_status = true means LIVE, story_status = false means UPCOMING
-    const festActive = festivals.filter(f => f.is_active !== false && f.story_status === true);
-    const festUpcoming = festivals.filter(f => f.is_active !== false && f.story_status === false);
+    // Filter festivals - use computed_is_live for accurate IST status
+    const festActive = festivals.filter(f => f.is_active !== false && f.computed_is_live === true);
+    const festUpcoming = festivals.filter(f => f.is_active !== false && f.computed_is_live === false && f.story_status !== null);
     
     return {
       birthdayEvents: birthday,
@@ -45,13 +51,16 @@ function StoriesSectionContent() {
       activeStories: active,
       upcomingStories: upcoming,
       activeFestivals: festActive,
-      upcomingFestivals: festUpcoming
+      upcomingFestivals: festUpcoming,
+      // Helper functions for inline filtering
+      isLiveByDate,
+      isUpcomingByDate
     };
   }, [storiesEvents, generatedStories, festivals]);
 
-  // Only show section if there are LIVE or UPCOMING stories
-  const liveEvents = [...birthdayEvents, ...anniversaryEvents, ...otherEvents].filter(e => e.story_status === true);
-  const upcomingEvents = [...birthdayEvents, ...anniversaryEvents, ...otherEvents].filter(e => e.story_status === false);
+  // Only show section if there are LIVE or UPCOMING stories - use computed_is_live
+  const liveEvents = [...birthdayEvents, ...anniversaryEvents, ...otherEvents].filter(e => e.computed_is_live === true);
+  const upcomingEvents = [...birthdayEvents, ...anniversaryEvents, ...otherEvents].filter(e => e.computed_is_live === false);
   
   const hasContent = activeFestivals.length > 0 || upcomingFestivals.length > 0 || 
                      liveEvents.length > 0 || upcomingEvents.length > 0 ||
@@ -111,18 +120,18 @@ function StoriesSectionContent() {
           </div>
         )}
 
-        {/* Birthday Stories - LIVE */}
-        {birthdayEvents.filter(e => e.story_status === true).length > 0 && (
+        {/* Birthday Stories - LIVE (uses computed_is_live for IST-aware status) */}
+        {birthdayEvents.filter(e => e.computed_is_live === true).length > 0 && (
           <div className="flex-shrink-0 space-y-1.5" style={{ scrollSnapAlign: 'start' }}>
             <h3 className="text-xs font-semibold text-primary">Birthday</h3>
             <div className="flex gap-2">
-              {birthdayEvents.filter(e => e.story_status === true).slice(0, 8).map((event) => (
+              {birthdayEvents.filter(e => e.computed_is_live === true).slice(0, 8).map((event) => (
                 <StoryCard
                   key={event.id}
                   id={event.id}
                   title={event.title || event.person_name}
                   imageUrl={event.poster_url}
-                  storyStatus={event.story_status}
+                  storyStatus={true}
                   linkTo={`/story-preview/${event.id}`}
                 />
               ))}
@@ -131,17 +140,17 @@ function StoriesSectionContent() {
         )}
 
         {/* Birthday Stories - UPCOMING */}
-        {birthdayEvents.filter(e => e.story_status === false).length > 0 && (
+        {birthdayEvents.filter(e => e.computed_is_live === false).length > 0 && (
           <div className="flex-shrink-0 space-y-1.5" style={{ scrollSnapAlign: 'start' }}>
             <h3 className="text-xs font-semibold text-primary">Upcoming Birthday</h3>
             <div className="flex gap-2">
-              {birthdayEvents.filter(e => e.story_status === false).slice(0, 8).map((event) => (
+              {birthdayEvents.filter(e => e.computed_is_live === false).slice(0, 8).map((event) => (
                 <StoryCard
                   key={event.id}
                   id={event.id}
                   title={event.title || event.person_name}
                   imageUrl={event.poster_url}
-                  storyStatus={event.story_status}
+                  storyStatus={false}
                   previewLabel="Coming Soon"
                   linkTo=""
                 />
@@ -151,17 +160,17 @@ function StoriesSectionContent() {
         )}
 
         {/* Anniversary Stories - LIVE */}
-        {anniversaryEvents.filter(e => e.story_status === true).length > 0 && (
+        {anniversaryEvents.filter(e => e.computed_is_live === true).length > 0 && (
           <div className="flex-shrink-0 space-y-1.5" style={{ scrollSnapAlign: 'start' }}>
             <h3 className="text-xs font-semibold text-primary">Anniversary</h3>
             <div className="flex gap-2">
-              {anniversaryEvents.filter(e => e.story_status === true).slice(0, 8).map((event) => (
+              {anniversaryEvents.filter(e => e.computed_is_live === true).slice(0, 8).map((event) => (
                 <StoryCard
                   key={event.id}
                   id={event.id}
                   title={event.title || event.person_name}
                   imageUrl={event.poster_url}
-                  storyStatus={event.story_status}
+                  storyStatus={true}
                   linkTo={`/story-preview/${event.id}`}
                 />
               ))}
@@ -170,17 +179,17 @@ function StoriesSectionContent() {
         )}
 
         {/* Anniversary Stories - UPCOMING */}
-        {anniversaryEvents.filter(e => e.story_status === false).length > 0 && (
+        {anniversaryEvents.filter(e => e.computed_is_live === false).length > 0 && (
           <div className="flex-shrink-0 space-y-1.5" style={{ scrollSnapAlign: 'start' }}>
             <h3 className="text-xs font-semibold text-primary">Upcoming Anniversary</h3>
             <div className="flex gap-2">
-              {anniversaryEvents.filter(e => e.story_status === false).slice(0, 8).map((event) => (
+              {anniversaryEvents.filter(e => e.computed_is_live === false).slice(0, 8).map((event) => (
                 <StoryCard
                   key={event.id}
                   id={event.id}
                   title={event.title || event.person_name}
                   imageUrl={event.poster_url}
-                  storyStatus={event.story_status}
+                  storyStatus={false}
                   previewLabel="Coming Soon"
                   linkTo=""
                 />
@@ -229,17 +238,17 @@ function StoriesSectionContent() {
         )}
 
         {/* Other Events - LIVE */}
-        {otherEvents.filter(e => e.story_status === true).length > 0 && (
+        {otherEvents.filter(e => e.computed_is_live === true).length > 0 && (
           <div className="flex-shrink-0 space-y-1.5" style={{ scrollSnapAlign: 'start' }}>
             <h3 className="text-xs font-semibold text-primary">Events</h3>
             <div className="flex gap-2">
-              {otherEvents.filter(e => e.story_status === true).slice(0, 8).map((event) => (
+              {otherEvents.filter(e => e.computed_is_live === true).slice(0, 8).map((event) => (
                 <StoryCard
                   key={event.id}
                   id={event.id}
                   title={event.title || event.person_name}
                   imageUrl={event.poster_url}
-                  storyStatus={event.story_status}
+                  storyStatus={true}
                   linkTo={`/story-preview/${event.id}`}
                 />
               ))}
@@ -248,17 +257,17 @@ function StoriesSectionContent() {
         )}
 
         {/* Other Events - UPCOMING */}
-        {otherEvents.filter(e => e.story_status === false).length > 0 && (
+        {otherEvents.filter(e => e.computed_is_live === false).length > 0 && (
           <div className="flex-shrink-0 space-y-1.5" style={{ scrollSnapAlign: 'start' }}>
             <h3 className="text-xs font-semibold text-primary">Upcoming Events</h3>
             <div className="flex gap-2">
-              {otherEvents.filter(e => e.story_status === false).slice(0, 8).map((event) => (
+              {otherEvents.filter(e => e.computed_is_live === false).slice(0, 8).map((event) => (
                 <StoryCard
                   key={event.id}
                   id={event.id}
                   title={event.title || event.person_name}
                   imageUrl={event.poster_url}
-                  storyStatus={event.story_status}
+                  storyStatus={false}
                   previewLabel="Coming Soon"
                   linkTo=""
                 />

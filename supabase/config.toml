@@ -20,3 +20,9 @@ verify_jwt = true
 
 [functions.check-email-blocked]
 verify_jwt = false
+
+[functions.auto-story-generator]
+verify_jwt = false
+
+[functions.remove-background]
+verify_jwt = true
