@@ -3,49 +3,30 @@ import StoryCard from "./StoryCard";
 import { useGeneratedStories, useStoriesEvents, useStoriesFestivals } from "@/hooks/useAutoStories";
 
 function StoriesSectionContent() {
-  // Use realtime hooks - adminMode=false means only show Live/Upcoming stories with IST validation
+  // Use realtime hooks - adminMode=false means only show visible stories (story_status IS NOT NULL)
   const { stories: generatedStories } = useGeneratedStories(false);
   const { events: storiesEvents } = useStoriesEvents(false);
   const { festivals } = useStoriesFestivals(false);
 
-  // Memoized filtered data - hooks already filter by IST, now just categorize
-  const { 
-    liveBirthdayEvents, 
-    upcomingBirthdayEvents,
-    liveAnniversaryEvents, 
-    upcomingAnniversaryEvents,
-    liveOtherEvents,
-    upcomingOtherEvents,
-    activeStories, 
-    upcomingStories, 
-    activeFestivals, 
-    upcomingFestivals 
-  } = useMemo(() => {
-    // Filter events by type AND status
-    const liveBirthday = storiesEvents.filter(e => e.event_type === 'birthday' && e.story_status === true);
-    const upcomingBirthday = storiesEvents.filter(e => e.event_type === 'birthday' && e.story_status === false);
+  // Memoized filtered data
+  const { birthdayEvents, anniversaryEvents, otherEvents, activeStories, upcomingStories, activeFestivals, upcomingFestivals } = useMemo(() => {
+    // Filter events by type
+    const birthday = storiesEvents.filter(e => e.event_type === 'birthday' && e.story_status !== null);
+    const anniversary = storiesEvents.filter(e => e.event_type === 'anniversary' && e.story_status !== null);
+    const other = storiesEvents.filter(e => e.event_type !== 'birthday' && e.event_type !== 'anniversary' && e.story_status !== null);
     
-    const liveAnniversary = storiesEvents.filter(e => e.event_type === 'anniversary' && e.story_status === true);
-    const upcomingAnniversary = storiesEvents.filter(e => e.event_type === 'anniversary' && e.story_status === false);
-    
-    const liveOther = storiesEvents.filter(e => e.event_type !== 'birthday' && e.event_type !== 'anniversary' && e.story_status === true);
-    const upcomingOther = storiesEvents.filter(e => e.event_type !== 'birthday' && e.event_type !== 'anniversary' && e.story_status === false);
-    
-    // Filter generated stories by status: true = Active/Live, false = Upcoming
+    // Filter generated stories by status: true = Active, false = Upcoming
     const active = generatedStories.filter(s => s.story_status === true);
     const upcoming = generatedStories.filter(s => s.story_status === false);
     
-    // Filter festivals by status: true = Active/Live, false = Upcoming
+    // Filter festivals by status
     const festActive = festivals.filter(f => f.story_status === true);
     const festUpcoming = festivals.filter(f => f.story_status === false);
     
     return {
-      liveBirthdayEvents: liveBirthday,
-      upcomingBirthdayEvents: upcomingBirthday,
-      liveAnniversaryEvents: liveAnniversary,
-      upcomingAnniversaryEvents: upcomingAnniversary,
-      liveOtherEvents: liveOther,
-      upcomingOtherEvents: upcomingOther,
+      birthdayEvents: birthday,
+      anniversaryEvents: anniversary,
+      otherEvents: other,
       activeStories: active,
       upcomingStories: upcoming,
       activeFestivals: festActive,
@@ -53,7 +34,6 @@ function StoriesSectionContent() {
     };
   }, [storiesEvents, generatedStories, festivals]);
 
-  // Combine live and upcoming for display check
   const hasContent = activeFestivals.length > 0 || upcomingFestivals.length > 0 || 
                      storiesEvents.length > 0 || generatedStories.length > 0;
 
@@ -111,18 +91,18 @@ function StoriesSectionContent() {
           </div>
         )}
 
-        {/* Live Birthday Stories (GREEN dot) */}
-        {liveBirthdayEvents.length > 0 && (
+        {/* Birthday Stories */}
+        {birthdayEvents.length > 0 && (
           <div className="flex-shrink-0 space-y-1.5" style={{ scrollSnapAlign: 'start' }}>
             <h3 className="text-xs font-semibold text-primary">Birthday</h3>
             <div className="flex gap-2">
-              {liveBirthdayEvents.slice(0, 8).map((event) => (
+              {birthdayEvents.slice(0, 8).map((event) => (
                 <StoryCard
                   key={event.id}
                   id={event.id}
                   title={event.title || event.person_name}
                   imageUrl={event.poster_url}
-                  storyStatus={true}
+                  storyStatus={event.story_status}
                   linkTo={`/story-preview/${event.id}`}
                 />
               ))}
@@ -130,59 +110,19 @@ function StoriesSectionContent() {
           </div>
         )}
 
-        {/* Upcoming Birthday Stories (YELLOW dot, locked) */}
-        {upcomingBirthdayEvents.length > 0 && (
-          <div className="flex-shrink-0 space-y-1.5" style={{ scrollSnapAlign: 'start' }}>
-            <h3 className="text-xs font-semibold text-primary">Upcoming Birthday</h3>
-            <div className="flex gap-2">
-              {upcomingBirthdayEvents.slice(0, 8).map((event) => (
-                <StoryCard
-                  key={event.id}
-                  id={event.id}
-                  title={event.title || event.person_name}
-                  imageUrl={event.poster_url}
-                  storyStatus={false}
-                  previewLabel="Coming Soon"
-                  linkTo=""
-                />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Live Anniversary Stories (GREEN dot) */}
-        {liveAnniversaryEvents.length > 0 && (
+        {/* Anniversary Stories */}
+        {anniversaryEvents.length > 0 && (
           <div className="flex-shrink-0 space-y-1.5" style={{ scrollSnapAlign: 'start' }}>
             <h3 className="text-xs font-semibold text-primary">Anniversary</h3>
             <div className="flex gap-2">
-              {liveAnniversaryEvents.slice(0, 8).map((event) => (
+              {anniversaryEvents.slice(0, 8).map((event) => (
                 <StoryCard
                   key={event.id}
                   id={event.id}
                   title={event.title || event.person_name}
                   imageUrl={event.poster_url}
-                  storyStatus={true}
+                  storyStatus={event.story_status}
                   linkTo={`/story-preview/${event.id}`}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Upcoming Anniversary Stories (YELLOW dot, locked) */}
-        {upcomingAnniversaryEvents.length > 0 && (
-          <div className="flex-shrink-0 space-y-1.5" style={{ scrollSnapAlign: 'start' }}>
-            <h3 className="text-xs font-semibold text-primary">Upcoming Anniversary</h3>
-            <div className="flex gap-2">
-              {upcomingAnniversaryEvents.slice(0, 8).map((event) => (
-                <StoryCard
-                  key={event.id}
-                  id={event.id}
-                  title={event.title || event.person_name}
-                  imageUrl={event.poster_url}
-                  storyStatus={false}
-                  previewLabel="Coming Soon"
-                  linkTo=""
                 />
               ))}
             </div>
@@ -228,39 +168,19 @@ function StoriesSectionContent() {
           </div>
         )}
 
-        {/* Live Other Events */}
-        {liveOtherEvents.length > 0 && (
+        {/* Other Events */}
+        {otherEvents.length > 0 && (
           <div className="flex-shrink-0 space-y-1.5" style={{ scrollSnapAlign: 'start' }}>
             <h3 className="text-xs font-semibold text-primary">Events</h3>
             <div className="flex gap-2">
-              {liveOtherEvents.slice(0, 8).map((event) => (
+              {otherEvents.slice(0, 8).map((event) => (
                 <StoryCard
                   key={event.id}
                   id={event.id}
                   title={event.title || event.person_name}
                   imageUrl={event.poster_url}
-                  storyStatus={true}
+                  storyStatus={event.story_status}
                   linkTo={`/story-preview/${event.id}`}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Upcoming Other Events */}
-        {upcomingOtherEvents.length > 0 && (
-          <div className="flex-shrink-0 space-y-1.5" style={{ scrollSnapAlign: 'start' }}>
-            <h3 className="text-xs font-semibold text-primary">Upcoming Events</h3>
-            <div className="flex gap-2">
-              {upcomingOtherEvents.slice(0, 8).map((event) => (
-                <StoryCard
-                  key={event.id}
-                  id={event.id}
-                  title={event.title || event.person_name}
-                  imageUrl={event.poster_url}
-                  storyStatus={false}
-                  previewLabel="Coming Soon"
-                  linkTo=""
                 />
               ))}
             </div>
