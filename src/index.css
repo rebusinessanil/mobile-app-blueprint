@@ -389,15 +389,15 @@ html, body {
      Consistent styling across all categories
      ======================================== */
   
-  /* Base Template Card Container - Text Outside Image */
+  /* Base Template Card Container - Text Outside Image - Square Cards */
   .template-card {
     @apply flex-shrink-0 cursor-pointer;
     @apply flex flex-col;
     @apply transition-all duration-200;
     @apply transform-gpu;
-    width: calc(33.333% - 8px);
-    min-width: 110px;
-    max-width: 140px;
+    width: 100px;
+    min-width: 100px;
+    max-width: 100px;
   }
 
   .template-card:hover {
@@ -408,13 +408,13 @@ html, body {
     transform: scale(0.95);
   }
 
-  /* Template Card Image Container - Fixed Aspect Ratio */
+  /* Template Card Image Container - Square 1:1 Aspect Ratio */
   .template-card-image {
     @apply relative w-full overflow-hidden;
     @apply bg-secondary/30;
     @apply rounded-2xl;
     @apply border-2 border-primary/60;
-    aspect-ratio: 4 / 3;
+    aspect-ratio: 1 / 1;
   }
 
   .template-card-image:hover {
@@ -465,13 +465,13 @@ html, body {
     @apply line-clamp-1;
   }
 
-  /* Story Card - Text Outside Image */
+  /* Story Card - Text Outside Image - Square 1:1 */
   .story-card {
     @apply flex-shrink-0 cursor-pointer;
     @apply flex flex-col;
     @apply transition-all duration-200;
     @apply transform-gpu;
-    width: 80px;
+    width: 90px;
   }
 
   .story-card:hover {
@@ -487,8 +487,8 @@ html, body {
     @apply bg-secondary/30;
     @apply rounded-2xl;
     @apply border-2 border-primary/60;
-    width: 80px;
-    height: 80px;
+    width: 90px;
+    height: 90px;
     aspect-ratio: 1 / 1;
   }
 
