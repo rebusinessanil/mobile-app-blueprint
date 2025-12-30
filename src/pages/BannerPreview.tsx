@@ -800,24 +800,6 @@ export default function BannerPreview() {
               💞
             </div>
 
-            {/* Happy Anniversary Text */}
-            <div className="absolute z-20" style={{
-            top: '280px',
-            left: '978px',
-            transform: 'translateX(-50%)',
-            width: '648px',
-            textAlign: 'center'
-          }}>
-              <p style={{
-              fontSize: '48px',
-              fontWeight: '700',
-              color: '#FFD700',
-              textShadow: '3px 3px 10px rgba(0,0,0,0.9)',
-              letterSpacing: '1px'
-            }}>
-                HAPPY ANNIVERSARY
-              </p>
-            </div>
 
             {/* Royal Nameplate Container - Fixed Size, Moved Up 10% */}
             <div className="absolute z-30" style={{
