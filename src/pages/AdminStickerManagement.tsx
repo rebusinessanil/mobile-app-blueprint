@@ -1,11 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
-import { Upload, Trash2, Eye, EyeOff, Move, RefreshCw, Loader2 } from 'lucide-react';
+import { Upload, Trash2, Eye, EyeOff, Move, RefreshCw, Loader2, Layers, Grid3X3, Image, FolderOpen, Search } from 'lucide-react';
 import PremiumGlobalLoader from '@/components/PremiumGlobalLoader';
 import { 
   useUnifiedStickerSlots, 
@@ -15,6 +14,8 @@ import {
   type UnifiedStickerOptions 
 } from '@/hooks/useUnifiedStickerSlots';
 import { Badge } from '@/components/ui/badge';
+import AdminLayout from '@/components/admin/AdminLayout';
+import { AdminGuard } from '@/components/AdminGuard';
 
 export default function AdminStickerManagement() {
   const queryClient = useQueryClient();
@@ -24,7 +25,8 @@ export default function AdminStickerManagement() {
   const [uploading, setUploading] = useState(false);
   const [bulkUploading, setBulkUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number } | null>(null);
-  const [refreshKey, setRefreshKey] = useState(0); // Force refresh key
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Fetch template categories
   const { data: categories, isLoading: categoriesLoading } = useQuery({
@@ -141,7 +143,7 @@ export default function AdminStickerManagement() {
     enabled: selectedCategorySlug === 'motivational',
   });
 
-  // Categories that require entity selection (same rules as rank-promotion)
+  // Categories that require entity selection
   const entityRequiredCategories = [
     'rank-promotion',
     'bonanza', 
@@ -154,11 +156,10 @@ export default function AdminStickerManagement() {
 
   const requiresEntitySelection = entityRequiredCategories.includes(selectedCategorySlug || '');
 
-  // Determine sticker slot options based on selection - applying same rules as rank-promotion
+  // Determine sticker slot options based on selection
   const getStickerSlotOptions = () => {
-    // All entity-based categories follow the same pattern as rank-promotion
     if (!selectedEntity && requiresEntitySelection) {
-      return {}; // Must select entity first
+      return {};
     }
 
     if (selectedCategorySlug === 'rank-promotion' && selectedEntity) {
@@ -176,7 +177,6 @@ export default function AdminStickerManagement() {
     if (selectedCategorySlug === 'motivational' && selectedEntity) {
       return { motivationalBannerId: selectedEntity.id, bannerCategory: 'motivational' };
     }
-    // For other categories without specific entity types, use banner category
     if (selectedCategory && selectedCategorySlug && !requiresEntitySelection) {
       return { bannerCategory: selectedCategorySlug };
     }
@@ -186,17 +186,16 @@ export default function AdminStickerManagement() {
   const slotOptions = getStickerSlotOptions();
   const hasValidSelection = Object.keys(slotOptions).length > 0;
 
-  // Fetch sticker slots using unified hook - key includes entity ID for proper refetching
+  // Fetch sticker slots using unified hook
   const { slots, loading: slotsLoading, refetch } = useUnifiedStickerSlots({
     ...slotOptions,
     enableRealtime: true,
-    activeOnly: false, // Admin needs to see inactive stickers too
+    activeOnly: false,
   });
 
   // Force refetch when entity changes
   useEffect(() => {
     if (hasValidSelection && selectedEntity?.id) {
-      // Clear previous cache and refetch fresh data
       queryClient.invalidateQueries({ queryKey: ['unified-sticker-slots'] });
       refetch();
     }
@@ -209,7 +208,7 @@ export default function AdminStickerManagement() {
     toast.success('Stickers refreshed');
   }, [queryClient, refetch]);
 
-  // Get entity list based on category - same pattern as rank-promotion
+  // Get entity list based on category
   const getEntityList = () => {
     switch (selectedCategorySlug) {
       case 'rank-promotion':
@@ -223,7 +222,6 @@ export default function AdminStickerManagement() {
       case 'motivational':
         return motivationals || [];
       default:
-        // For categories that need templates as entities
         return templates || [];
     }
   };
@@ -265,6 +263,14 @@ export default function AdminStickerManagement() {
     return { title: entity.name, image: entity.cover_thumbnail_url, subtitle: entity.description };
   };
 
+  // Filter entities by search
+  const filteredEntities = entityList.filter((entity: any) => {
+    if (!searchQuery) return true;
+    const display = getEntityDisplay(entity);
+    return display.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+           display.subtitle?.toLowerCase().includes(searchQuery.toLowerCase());
+  });
+
   const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>, slotNumber: number) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -278,7 +284,6 @@ export default function AdminStickerManagement() {
         console.error(error);
       } else {
         toast.success(`Sticker uploaded to slot ${slotNumber}`);
-        // Force immediate refetch
         await refetch();
       }
     } finally {
@@ -331,7 +336,6 @@ export default function AdminStickerManagement() {
     setBulkUploading(false);
     setUploadProgress(null);
     event.target.value = '';
-    // Force immediate refetch after bulk upload
     await queryClient.invalidateQueries({ queryKey: ['unified-sticker-slots'] });
     await refetch();
 
@@ -366,191 +370,278 @@ export default function AdminStickerManagement() {
     }
   };
 
+  // Calculate stats
+  const totalCategories = categories?.length || 0;
+  const totalEntities = entityList.length;
+  const activeSlots = slots.filter(s => s.is_active).length;
+  const totalSlots = slots.length;
+
   if (categoriesLoading) {
-    return <PremiumGlobalLoader message="Loading..." />;
+    return (
+      <AdminGuard>
+        <AdminLayout>
+          <PremiumGlobalLoader message="Loading..." fullScreen={false} />
+        </AdminLayout>
+      </AdminGuard>
+    );
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-foreground mb-2">Sticker Slot Management</h1>
-        <p className="text-muted-foreground">Manage sticker overlays for banner templates (16 slots per entity)</p>
-      </div>
-
-      {/* Category Selection */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Select Category</CardTitle>
-          <CardDescription>Choose a banner category to manage stickers</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {categories?.map((category) => (
-              <Button
-                key={category.id}
-                variant={selectedCategory === category.id ? 'default' : 'outline'}
-                onClick={() => {
-                  setSelectedCategory(category.id);
-                  setSelectedTemplate('');
-                  setSelectedEntity(null);
-                }}
-                className="h-auto py-4 flex flex-col items-center gap-2"
-              >
-                <span className="text-2xl">{category.icon}</span>
-                <span className="text-sm font-medium">{category.name}</span>
-              </Button>
-            ))}
+    <AdminGuard>
+      <AdminLayout>
+        <div className="space-y-4">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">Sticker Slot Management</h1>
+              <p className="text-sm text-muted-foreground">Manage sticker overlays for banner templates (16 slots per entity)</p>
+            </div>
           </div>
-        </CardContent>
-      </Card>
 
-      {/* Entity Selection - Same workflow as rank-promotion for all categories */}
-      {selectedCategory && (
-        <Card>
-          <CardHeader>
-            <CardTitle>
-              Select {getEntityTypeLabel()} ({entityList.length} available)
-            </CardTitle>
-            <CardDescription>
-              Choose an entity to manage its 16 sticker slots. Each entity has dedicated slots following the same rules.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {isEntityLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          {/* Stats Summary - Same pattern as UserManagement */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="gold-border bg-card rounded-xl p-4">
+              <div className="flex items-center gap-2">
+                <FolderOpen className="w-5 h-5 text-primary" />
+                <div>
+                  <p className="text-2xl font-bold text-foreground">{totalCategories}</p>
+                  <p className="text-xs text-muted-foreground">Categories</p>
+                </div>
               </div>
-            ) : entityList.length === 0 ? (
-              <p className="text-muted-foreground text-sm py-4 text-center">No items found for this category</p>
-            ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {entityList.map((entity: any) => {
-                  const display = getEntityDisplay(entity);
-                  const isRank = selectedCategorySlug === 'rank-promotion';
-                  
-                  return (
-                    <Button
-                      key={entity.id}
-                      variant={selectedEntity?.id === entity.id ? 'default' : 'outline'}
-                      onClick={() => setSelectedEntity(entity)}
-                      className={`h-auto p-4 flex flex-col items-center gap-2 ${
-                        selectedEntity?.id === entity.id 
-                          ? 'bg-primary text-primary-foreground border-primary' 
-                          : 'bg-card hover:bg-card/80 border-primary/30'
-                      }`}
-                    >
-                      {isRank ? (
-                        <span className="text-4xl">{display.image}</span>
-                      ) : (
-                        <div className="w-full aspect-square bg-secondary rounded-lg overflow-hidden">
-                          <img
-                            src={display.image}
-                            alt={display.title}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                      )}
-                      <div className="w-full space-y-1">
-                        <span className="text-sm font-medium truncate block text-center">{display.title}</span>
-                        {display.subtitle && (
-                          <span className="text-xs opacity-75 truncate block text-center">{display.subtitle}</span>
-                        )}
-                      </div>
-                    </Button>
-                  );
-                })}
+            </div>
+            <div className="gold-border bg-card rounded-xl p-4">
+              <div className="flex items-center gap-2">
+                <Grid3X3 className="w-5 h-5 text-green-500" />
+                <div>
+                  <p className="text-2xl font-bold text-foreground">{totalEntities}</p>
+                  <p className="text-xs text-muted-foreground">{getEntityTypeLabel()}s</p>
+                </div>
               </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
+            </div>
+            <div className="gold-border bg-card rounded-xl p-4">
+              <div className="flex items-center gap-2">
+                <Image className="w-5 h-5 text-primary" />
+                <div>
+                  <p className="text-2xl font-bold text-foreground">{activeSlots}</p>
+                  <p className="text-xs text-muted-foreground">Active Stickers</p>
+                </div>
+              </div>
+            </div>
+            <div className="gold-border bg-card rounded-xl p-4">
+              <div className="flex items-center gap-2">
+                <Layers className="w-5 h-5 text-blue-500" />
+                <div>
+                  <p className="text-2xl font-bold text-foreground">{totalSlots}/16</p>
+                  <p className="text-xs text-muted-foreground">Slots Filled</p>
+                </div>
+              </div>
+            </div>
+          </div>
 
-      {/* Sticker Slot Management */}
-      {hasValidSelection && selectedEntity && (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  Sticker Slots (16 Slots)
-                  {selectedCategorySlug === 'rank-promotion' && (
-                    <Badge variant="outline" className="ml-2 bg-primary/10">
-                      {selectedEntity?.name || 'Unknown Rank'}
-                    </Badge>
-                  )}
-                </CardTitle>
-                <CardDescription>
-                  Upload and manage sticker overlays for {getEntityTypeLabel()}: <strong>{getEntityDisplay(selectedEntity).title}</strong>
-                </CardDescription>
-              </div>
-              <div className="flex gap-2">
+          {/* Category Selection - Same gold-border styling */}
+          <div className="gold-border bg-card rounded-2xl p-4">
+            <div className="mb-4">
+              <h2 className="text-lg font-semibold text-foreground">Select Category</h2>
+              <p className="text-sm text-muted-foreground">Choose a banner category to manage stickers</p>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+              {categories?.map((category) => (
                 <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleManualRefresh}
-                  disabled={slotsLoading}
+                  key={category.id}
+                  variant={selectedCategory === category.id ? 'default' : 'outline'}
+                  onClick={() => {
+                    setSelectedCategory(category.id);
+                    setSelectedTemplate('');
+                    setSelectedEntity(null);
+                    setSearchQuery('');
+                  }}
+                  className={`h-auto py-3 flex flex-col items-center gap-1.5 ${
+                    selectedCategory === category.id 
+                      ? 'bg-primary text-primary-foreground border-primary' 
+                      : 'border-primary/30 hover:bg-primary/10'
+                  }`}
                 >
-                  <RefreshCw className={`h-4 w-4 ${slotsLoading ? 'animate-spin' : ''}`} />
+                  <span className="text-xl">{category.icon}</span>
+                  <span className="text-xs font-medium">{category.name}</span>
                 </Button>
-                <Input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={handleBulkUpload}
-                  className="hidden"
-                  id="bulk-sticker-upload"
-                  disabled={bulkUploading}
-                />
+              ))}
+            </div>
+          </div>
+
+          {/* Entity Selection - Same workflow with search */}
+          {selectedCategory && (
+            <div className="gold-border bg-card rounded-2xl p-4">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-lg font-semibold text-foreground">
+                    Select {getEntityTypeLabel()} 
+                    <Badge variant="outline" className="ml-2 bg-primary/10 text-primary">
+                      {filteredEntities.length}
+                    </Badge>
+                  </h2>
+                  <p className="text-sm text-muted-foreground">Choose an entity to manage its 16 sticker slots</p>
+                </div>
+              </div>
+
+              {/* Search and Actions - Same pattern as UserManagement */}
+              <div className="flex gap-3 mb-4">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                  <Input
+                    placeholder={`Search ${getEntityTypeLabel().toLowerCase()}s...`}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10 gold-border bg-secondary"
+                  />
+                </div>
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => document.getElementById('bulk-sticker-upload')?.click()}
-                  disabled={bulkUploading || slots.length >= 16}
+                  onClick={handleManualRefresh}
+                  className="border-primary/30 hover:bg-primary/10"
                 >
-                  {bulkUploading ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      {uploadProgress && `${uploadProgress.current}/${uploadProgress.total}`}
-                    </>
-                  ) : (
-                    <>
-                      <Upload className="h-4 w-4 mr-2" />
-                      Bulk Upload
-                    </>
-                  )}
+                  <RefreshCw className="w-4 h-4" />
                 </Button>
               </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="p-4 bg-muted/50 rounded-lg border border-primary/20">
-              <h3 className="font-semibold text-sm mb-2">Selected: {getEntityDisplay(selectedEntity).title}</h3>
-              <p className="text-sm text-muted-foreground">
-                {slots.length} of 16 slots filled
-                {slots.length >= 16 && ' (Maximum reached)'}
-              </p>
-            </div>
 
-            {slotsLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              {isEntityLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                </div>
+              ) : filteredEntities.length === 0 ? (
+                <p className="text-muted-foreground text-sm py-4 text-center">No items found</p>
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                  {filteredEntities.map((entity: any) => {
+                    const display = getEntityDisplay(entity);
+                    const isRank = selectedCategorySlug === 'rank-promotion';
+                    const isSelected = selectedEntity?.id === entity.id;
+                    
+                    return (
+                      <Button
+                        key={entity.id}
+                        variant="outline"
+                        onClick={() => setSelectedEntity(entity)}
+                        className={`h-auto p-3 flex flex-col items-center gap-2 transition-all ${
+                          isSelected 
+                            ? 'bg-primary/20 border-primary ring-2 ring-primary/50' 
+                            : 'border-primary/30 hover:bg-primary/10 hover:border-primary/50'
+                        }`}
+                      >
+                        {isRank ? (
+                          <span className="text-3xl">{display.image}</span>
+                        ) : (
+                          <div className="w-full aspect-square bg-secondary rounded-lg overflow-hidden">
+                            <img
+                              src={display.image}
+                              alt={display.title}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        )}
+                        <div className="w-full space-y-0.5">
+                          <span className="text-xs font-medium truncate block text-center text-foreground">{display.title}</span>
+                          {display.subtitle && (
+                            <span className="text-[10px] text-muted-foreground truncate block text-center">{display.subtitle}</span>
+                          )}
+                        </div>
+                      </Button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Sticker Slot Management */}
+          {hasValidSelection && selectedEntity && (
+            <div className="gold-border bg-card rounded-2xl p-4">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                    Sticker Slots
+                    <Badge variant="outline" className="bg-primary/10 text-primary">
+                      {getEntityDisplay(selectedEntity).title}
+                    </Badge>
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    {slots.length} of 16 slots filled {slots.length >= 16 && '(Maximum reached)'}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleManualRefresh}
+                    disabled={slotsLoading}
+                    className="border-primary/30 hover:bg-primary/10"
+                  >
+                    <RefreshCw className={`h-4 w-4 ${slotsLoading ? 'animate-spin' : ''}`} />
+                  </Button>
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleBulkUpload}
+                    className="hidden"
+                    id="bulk-sticker-upload"
+                    disabled={bulkUploading}
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => document.getElementById('bulk-sticker-upload')?.click()}
+                    disabled={bulkUploading || slots.length >= 16}
+                    className="border-primary/30 hover:bg-primary/10"
+                  >
+                    {bulkUploading ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        {uploadProgress && `${uploadProgress.current}/${uploadProgress.total}`}
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="h-4 w-4 mr-2" />
+                        Bulk Upload
+                      </>
+                    )}
+                  </Button>
+                </div>
               </div>
-            ) : (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {Array.from({ length: 16 }, (_, index) => {
-                  const slotNumber = index + 1;
-                  const slot = slots.find(s => s.slot_number === slotNumber);
-                  
-                  return (
-                    <Card key={slotNumber} className={slot ? (slot.is_active ? '' : 'opacity-50') : 'border-dashed'}>
-                      <CardContent className="p-4 space-y-2">
-                        <div className="flex items-center justify-between mb-1">
+
+              {slotsLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
+                  {Array.from({ length: 16 }, (_, index) => {
+                    const slotNumber = index + 1;
+                    const slot = slots.find(s => s.slot_number === slotNumber);
+                    
+                    return (
+                      <div 
+                        key={slotNumber} 
+                        className={`gold-border rounded-xl p-3 space-y-2 ${
+                          slot 
+                            ? slot.is_active 
+                              ? 'bg-card' 
+                              : 'bg-card/50 opacity-60' 
+                            : 'bg-card/30 border-dashed'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
                           <span className="text-xs font-medium text-muted-foreground">
-                            Slot {slotNumber}
+                            #{slotNumber}
                           </span>
                           {slot && (
-                            <Badge variant={slot.is_active ? 'default' : 'secondary'} className="text-[10px]">
-                              {slot.is_active ? 'Active' : 'Hidden'}
+                            <Badge 
+                              variant={slot.is_active ? 'default' : 'secondary'} 
+                              className={`text-[9px] px-1.5 py-0 ${
+                                slot.is_active ? 'bg-green-500/20 text-green-500' : ''
+                              }`}
+                            >
+                              {slot.is_active ? 'On' : 'Off'}
                             </Badge>
                           )}
                         </div>
@@ -563,36 +654,34 @@ export default function AdminStickerManagement() {
                                 alt={`Sticker ${slotNumber}`}
                                 className="w-full h-full object-contain"
                               />
-                              <div className="absolute bottom-1 right-1 bg-background/80 rounded px-1.5 py-0.5">
-                                <Move className="h-3 w-3 text-muted-foreground" />
-                              </div>
                             </div>
-                            <div className="flex gap-2">
+                            <div className="flex gap-1">
                               <Button
                                 size="sm"
                                 variant="outline"
                                 onClick={() => handleToggleActive(slot.id, slot.is_active, slotNumber)}
-                                className="flex-1"
+                                className="flex-1 h-7 text-xs border-primary/30 hover:bg-primary/10"
                               >
                                 {slot.is_active ? (
-                                  <><EyeOff className="h-4 w-4 mr-1" /> Hide</>
+                                  <EyeOff className="h-3 w-3" />
                                 ) : (
-                                  <><Eye className="h-4 w-4 mr-1" /> Show</>
+                                  <Eye className="h-3 w-3" />
                                 )}
                               </Button>
                               <Button
                                 size="sm"
-                                variant="destructive"
+                                variant="outline"
                                 onClick={() => handleRemove(slot.id, slotNumber)}
+                                className="h-7 text-xs border-destructive/30 text-destructive hover:bg-destructive/10"
                               >
-                                <Trash2 className="h-4 w-4" />
+                                <Trash2 className="h-3 w-3" />
                               </Button>
                             </div>
                           </>
                         ) : (
                           <>
-                            <div className="w-full aspect-square flex items-center justify-center border-2 border-dashed rounded-lg bg-muted/10">
-                              <Upload className="h-8 w-8 text-muted-foreground/50" />
+                            <div className="w-full aspect-square flex items-center justify-center border-2 border-dashed border-primary/20 rounded-lg bg-primary/5">
+                              <Upload className="h-5 w-5 text-muted-foreground/50" />
                             </div>
                             <Input
                               type="file"
@@ -605,30 +694,27 @@ export default function AdminStickerManagement() {
                             <Button
                               variant="outline"
                               size="sm"
-                              className="w-full"
+                              className="w-full h-7 text-xs border-primary/30 hover:bg-primary/10"
                               onClick={() => document.getElementById(`sticker-slot-${slotNumber}`)?.click()}
                               disabled={uploading}
                             >
                               {uploading ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
+                                <Loader2 className="h-3 w-3 animate-spin" />
                               ) : (
-                                <>
-                                  <Upload className="h-4 w-4 mr-2" />
-                                  Upload
-                                </>
+                                <Upload className="h-3 w-3" />
                               )}
                             </Button>
                           </>
                         )}
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
-    </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </AdminLayout>
+    </AdminGuard>
   );
 }
