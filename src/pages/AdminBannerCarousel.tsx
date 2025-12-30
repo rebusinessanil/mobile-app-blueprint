@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 import AdminLayout from '@/components/admin/AdminLayout';
 import AdminHeader from '@/components/admin/AdminHeader';
 import AdminStatsCard from '@/components/admin/AdminStatsCard';
-import GoldCoinLoader from '@/components/GoldCoinLoader';
+import PremiumGlobalLoader from '@/components/PremiumGlobalLoader';
 
 const AdminBannerCarousel = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -101,7 +101,7 @@ const AdminBannerCarousel = () => {
     return (
       <AdminLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <GoldCoinLoader size="lg" message="Loading carousel..." />
+          <PremiumGlobalLoader size="lg" message="Loading carousel..." fullScreen={false} />
         </div>
       </AdminLayout>
     );
