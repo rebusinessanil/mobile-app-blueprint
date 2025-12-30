@@ -649,44 +649,6 @@ export default function BannerPreview() {
             }} />
               </div>}
 
-            {/* Trip Achievement Title */}
-            <div className="absolute z-20" style={{
-            top: '236px',
-            left: '978px',
-            transform: 'translateX(-50%)',
-            width: '648px',
-            textAlign: 'center'
-          }}>
-              <p style={{
-              fontSize: '42px',
-              fontWeight: '600',
-              color: '#ffffff',
-              textShadow: '2px 2px 8px rgba(0,0,0,0.9)',
-              letterSpacing: '1px'
-            }}>
-                BONANZA TRIP WINNER
-              </p>
-            </div>
-
-            {/* Trip Name */}
-            <div className="absolute" style={{
-            top: '337px',
-            left: '978px',
-            transform: 'translateX(-50%)',
-            width: '648px',
-            padding: '0 27px'
-          }}>
-              <h2 style={{
-              color: '#FFD700',
-              textAlign: 'center',
-              fontSize: '48px',
-              fontWeight: '700',
-              textShadow: '3px 3px 10px rgba(0,0,0,0.95)',
-              margin: 0
-            }}>
-                {bannerData.tripName?.toUpperCase() || 'TRIP DESTINATION'}
-              </h2>
-            </div>
 
             {/* Achiever Name & Team */}
             <div className="absolute" style={{
