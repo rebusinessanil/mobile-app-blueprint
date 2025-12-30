@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import GoldCoinLoader from "@/components/GoldCoinLoader";
+import PremiumGlobalLoader from "@/components/PremiumGlobalLoader";
 
 interface BackgroundRemoverModalProps {
   open: boolean;
@@ -82,7 +82,7 @@ export default function BackgroundRemoverModal({
             // Processing UI - auto or manual removal in progress
             <div className="py-8">
               <div className="relative">
-                <GoldCoinLoader size="xl" showMessage={false} />
+                <PremiumGlobalLoader size="lg" showMessage={false} fullScreen={false} />
                 
                 <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-background/90 px-3 py-1 rounded-full border border-primary/50">
                   <span className="text-sm font-bold text-primary">{progress}%</span>

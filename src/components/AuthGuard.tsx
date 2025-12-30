@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { logger } from "@/lib/logger";
 import { getUserRoleAndRedirect, isPathAllowedForRole } from "@/hooks/useUserRole";
 import type { User } from "@supabase/supabase-js";
-import GoldCoinLoader from "@/components/GoldCoinLoader";
+import PremiumGlobalLoader from "@/components/PremiumGlobalLoader";
 
 const PROFILE_GATE_BYPASS_KEY = "rebusiness_profile_completed";
 
@@ -168,11 +168,7 @@ export default function AuthGuard({ children }: AuthGuardProps) {
 
   // Show minimal loading only for non-profile routes
   if (loading || checkingProfile || !roleChecked) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <GoldCoinLoader size="lg" message="Verifying..." />
-      </div>
-    );
+    return <PremiumGlobalLoader message="Verifying..." />;
   }
 
   if (!user) {

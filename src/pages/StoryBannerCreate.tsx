@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Upload, Sparkles } from "lucide-react";
-import GoldCoinLoader from "@/components/GoldCoinLoader";
+import PremiumGlobalLoader from "@/components/PremiumGlobalLoader";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -136,11 +136,7 @@ export default function StoryBannerCreate() {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <GoldCoinLoader size="xl" message="Loading story..." />
-      </div>
-    );
+    return <PremiumGlobalLoader message="Loading story..." />;
   }
 
   if (!story) {

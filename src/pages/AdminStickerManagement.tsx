@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { Upload, Trash2, Eye, EyeOff, Move, RefreshCw, Loader2 } from 'lucide-react';
-import GoldCoinLoader from '@/components/GoldCoinLoader';
+import PremiumGlobalLoader from '@/components/PremiumGlobalLoader';
 import { 
   useUnifiedStickerSlots, 
   uploadUnifiedStickerSlot, 
@@ -367,11 +367,7 @@ export default function AdminStickerManagement() {
   };
 
   if (categoriesLoading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <GoldCoinLoader size="lg" message="Loading..." />
-      </div>
-    );
+    return <PremiumGlobalLoader message="Loading..." />;
   }
 
   return (

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, ImagePlus } from "lucide-react";
-import GoldCoinLoader from "@/components/GoldCoinLoader";
+import PremiumGlobalLoader from "@/components/PremiumGlobalLoader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import UplineCarousel from "@/components/UplineCarousel";
@@ -173,9 +173,7 @@ export default function AnniversaryBannerCreate() {
     toast.success("Form reset to default values");
   };
   if (anniversaryLoading || templatesLoading) {
-    return <div className="min-h-screen bg-navy-dark flex items-center justify-center">
-        <GoldCoinLoader size="xl" message="Loading anniversary details..." />
-      </div>;
+    return <PremiumGlobalLoader message="Loading anniversary details..." />;
   }
   if (!anniversary) {
     return <div className="min-h-screen bg-navy-dark flex items-center justify-center">

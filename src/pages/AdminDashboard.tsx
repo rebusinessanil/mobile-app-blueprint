@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import AdminLayout from "@/components/admin/AdminLayout";
 import AdminHeader from "@/components/admin/AdminHeader";
 import AdminStatsCard from "@/components/admin/AdminStatsCard";
-import GoldCoinLoader from "@/components/GoldCoinLoader";
+import PremiumGlobalLoader from "@/components/PremiumGlobalLoader";
 import { AdminGuard } from "@/components/AdminGuard";
 import { useNavigate } from "react-router-dom";
 
@@ -75,11 +75,7 @@ export default function AdminDashboard() {
   if (loading) {
     return (
       <AdminGuard>
-        <AdminLayout>
-          <div className="flex items-center justify-center min-h-[60vh]">
-            <GoldCoinLoader size="lg" message="Loading dashboard..." />
-          </div>
-        </AdminLayout>
+        <PremiumGlobalLoader message="Loading dashboard..." />
       </AdminGuard>
     );
   }

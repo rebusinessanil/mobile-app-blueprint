@@ -24,7 +24,7 @@ import { useWalletDeduction } from "@/hooks/useWalletDeduction";
 import InsufficientBalanceModal from "@/components/InsufficientBalanceModal";
 import { useBannerAssetPreloader } from "@/hooks/useBannerAssetPreloader";
 import BannerWatermarks from "@/components/BannerWatermarks";
-import GoldCoinLoader from "@/components/GoldCoinLoader";
+import PremiumGlobalLoader from "@/components/PremiumGlobalLoader";
 
 interface Upline {
   id: string;
@@ -2370,8 +2370,8 @@ export default function BannerPreview() {
                   Just a moment!
                 </div>
               </div>
-              {/* Premium Gold Coin Loader */}
-              <GoldCoinLoader size="sm" showMessage={false} />
+              {/* Premium Global Loader */}
+              <PremiumGlobalLoader size="sm" showMessage={false} fullScreen={false} />
             </div>
             <p className="text-muted-foreground text-xs text-center mt-3 pt-3 border-t border-border">
               Preparing your banner — this may take a few seconds.

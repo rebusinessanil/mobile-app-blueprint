@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import AdminLayout from "@/components/admin/AdminLayout";
 import AdminHeader from "@/components/admin/AdminHeader";
 import AdminStatsCard from "@/components/admin/AdminStatsCard";
-import GoldCoinLoader from "@/components/GoldCoinLoader";
+import PremiumGlobalLoader from "@/components/PremiumGlobalLoader";
 import { AdminGuard } from "@/components/AdminGuard";
 import { Badge } from "@/components/ui/badge";
 
@@ -131,11 +131,7 @@ export default function AdminRanks() {
   if (loading) {
     return (
       <AdminGuard>
-        <AdminLayout>
-          <div className="flex items-center justify-center min-h-[60vh]">
-            <GoldCoinLoader size="lg" message="Loading ranks..." />
-          </div>
-        </AdminLayout>
+        <PremiumGlobalLoader message="Loading ranks..." />
       </AdminGuard>
     );
   }

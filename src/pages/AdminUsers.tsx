@@ -10,7 +10,7 @@ import AdminLayout from "@/components/admin/AdminLayout";
 import AdminHeader from "@/components/admin/AdminHeader";
 import AdminUserCard from "@/components/admin/AdminUserCard";
 import AdminStatsCard from "@/components/admin/AdminStatsCard";
-import GoldCoinLoader from "@/components/GoldCoinLoader";
+import PremiumGlobalLoader from "@/components/PremiumGlobalLoader";
 import { useAdminUsersSync } from "@/hooks/useAdminRealtimeSync";
 
 interface AuthUser {
@@ -130,7 +130,7 @@ export default function AdminUsers() {
   const adminCount = users.filter(u => u.is_admin).length;
   const newToday = users.filter(u => new Date(u.created_at).toDateString() === new Date().toDateString()).length;
 
-  if (loading) return <AdminLayout><div className="flex items-center justify-center min-h-[60vh]"><GoldCoinLoader size="lg" message="Loading..." /></div></AdminLayout>;
+  if (loading) return <PremiumGlobalLoader message="Loading..." />;
 
   return (
     <AdminLayout>
@@ -161,7 +161,7 @@ export default function AdminUsers() {
 
       <Dialog open={isPinDialogOpen} onOpenChange={setIsPinDialogOpen}>
         <DialogContent className="bg-card border-primary/20 max-w-sm"><DialogHeader><DialogTitle>PIN Management</DialogTitle></DialogHeader>
-          {pinLoading ? <GoldCoinLoader size="sm" /> : <div className="space-y-4">
+          {pinLoading ? <PremiumGlobalLoader size="sm" showMessage={false} fullScreen={false} /> : <div className="space-y-4">
             <div className="p-3 bg-secondary/50 rounded-xl flex items-center gap-2">{pinStatus?.has_pin ? <><Badge className="bg-green-500/20 text-green-500">PIN Set</Badge>{showPin && pinStatus.plain_pin && <span className="font-mono">{pinStatus.plain_pin}</span>}<Button variant="ghost" size="icon" onClick={() => setShowPin(!showPin)}>{showPin ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button></> : <Badge variant="outline">No PIN</Badge>}</div>
             <Input maxLength={4} value={newPin} onChange={(e) => setNewPin(e.target.value.replace(/\D/g, ''))} placeholder="New 4-digit PIN" className="text-center text-xl tracking-widest" />
           </div>}
