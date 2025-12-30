@@ -26,3 +26,6 @@ verify_jwt = false
 
 [functions.remove-background]
 verify_jwt = true
+
+[functions.reprocess-profile-photos]
+verify_jwt = false

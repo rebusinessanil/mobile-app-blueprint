@@ -74,23 +74,16 @@ export default function PhotoUploadGrid({ photos, onPhotosChange, maxPhotos = 5,
   const handleCropComplete = (croppedImageData: string) => {
     setCroppedImage(croppedImageData);
     setCropModalOpen(false);
+    // Mandatory background removal - open modal which auto-triggers removal
     setBgRemovalModalOpen(true);
   };
 
+  // Keep original is now hidden - background removal is mandatory
+  // This function is kept for backwards compatibility but not exposed in UI
   const handleKeepOriginal = () => {
-    if (editingIndex !== null) {
-      const newPhotos = [...photos];
-      if (editingIndex < photos.length) {
-        newPhotos[editingIndex] = croppedImage;
-      } else {
-        newPhotos.push(croppedImage);
-      }
-      onPhotosChange(newPhotos);
-    }
-    setBgRemovalModalOpen(false);
-    setCroppedImage("");
-    setSelectedImage(null);
-    setEditingIndex(null);
+    // In mandatory mode, this should never be called
+    // But if somehow invoked, just proceed with background removal
+    handleRemoveBackground();
   };
 
   const handleRemoveBackground = async () => {
@@ -254,12 +247,11 @@ export default function PhotoUploadGrid({ photos, onPhotosChange, maxPhotos = 5,
 
       <BackgroundRemoverModal
         open={bgRemovalModalOpen}
-        onKeep={handleKeepOriginal}
         onRemove={handleRemoveBackground}
-        onClose={handleCancelBgRemoval}
         isProcessing={isProcessing}
         progress={processingProgress}
         progressText={processingText}
+        isMandatory={true}
       />
     </>
   );
