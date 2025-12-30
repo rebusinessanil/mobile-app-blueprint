@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useBannerCarousel } from '@/hooks/useBannerCarousel';
-import GoldCoinLoader from '@/components/GoldCoinLoader';
+import PremiumGlobalLoader from '@/components/PremiumGlobalLoader';
 
 const GuestBannerCarousel = () => {
   const { data: images, isLoading } = useBannerCarousel();
@@ -63,7 +63,7 @@ const GuestBannerCarousel = () => {
   if (isLoading) {
     return (
       <div className="w-full aspect-[16/9] bg-background/20 rounded-2xl flex items-center justify-center">
-        <GoldCoinLoader size="md" showMessage={false} />
+        <PremiumGlobalLoader size="md" showMessage={false} fullScreen={false} />
       </div>
     );
   }

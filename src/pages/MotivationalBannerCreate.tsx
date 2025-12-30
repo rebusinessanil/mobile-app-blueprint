@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, ImagePlus } from "lucide-react";
-import GoldCoinLoader from "@/components/GoldCoinLoader";
+import PremiumGlobalLoader from "@/components/PremiumGlobalLoader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -84,11 +84,7 @@ export default function MotivationalBannerCreate() {
   }, [motivationalBanner]);
 
   if (motivationalBannerLoading || templatesLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-navy-dark">
-        <GoldCoinLoader size="lg" message="Loading..." />
-      </div>
-    );
+    return <PremiumGlobalLoader message="Loading..." />;
   }
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {

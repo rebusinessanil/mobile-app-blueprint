@@ -9,7 +9,7 @@ import UplineManager from "@/components/UplineManager";
 import AdminLayout from "@/components/admin/AdminLayout";
 import AdminHeader from "@/components/admin/AdminHeader";
 import AdminStatsCard from "@/components/admin/AdminStatsCard";
-import GoldCoinLoader from "@/components/GoldCoinLoader";
+import PremiumGlobalLoader from "@/components/PremiumGlobalLoader";
 
 export default function AdminBannerDefaults() {
   const navigate = useNavigate();
@@ -106,13 +106,7 @@ export default function AdminBannerDefaults() {
   };
 
   if (!isAdmin || loading) {
-    return (
-      <AdminLayout>
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <GoldCoinLoader size="lg" message="Loading..." />
-        </div>
-      </AdminLayout>
-    );
+    return <PremiumGlobalLoader message="Loading..." />;
   }
 
   return (

@@ -1,10 +1,8 @@
 import { memo } from "react";
-import GoldCoinLoader from "@/components/GoldCoinLoader";
+import PremiumGlobalLoader from "@/components/PremiumGlobalLoader";
 
 const GenericSkeleton = memo(() => (
-  <div className="min-h-screen bg-navy-dark flex items-center justify-center">
-    <GoldCoinLoader size="xl" message="Loading..." />
-  </div>
+  <PremiumGlobalLoader message="Loading..." size="xl" />
 ));
 
 GenericSkeleton.displayName = 'GenericSkeleton';

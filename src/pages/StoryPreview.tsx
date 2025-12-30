@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
 import { useBannerSettings } from "@/hooks/useBannerSettings";
 import { useTemplates } from "@/hooks/useTemplates";
-import GoldCoinLoader from "@/components/GoldCoinLoader";
+import PremiumGlobalLoader from "@/components/PremiumGlobalLoader";
 
 interface Upline {
   id: string;
@@ -106,10 +106,6 @@ export default function StoryPreview() {
   }, [eventId, eventType, profile, templates, bannerSettings, navigate]);
 
   // Loading state
-  return (
-    <div className="min-h-screen bg-navy-dark flex items-center justify-center">
-      <GoldCoinLoader size="xl" message="Loading story banner..." />
-    </div>
-  );
+  return <PremiumGlobalLoader message="Loading story banner..." />;
 }
 

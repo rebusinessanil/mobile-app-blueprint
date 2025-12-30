@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { Upload, Trash2, Eye, EyeOff, Loader2, Search, Image, Layers } from 'lucide-react';
-import GoldCoinLoader from '@/components/GoldCoinLoader';
+import PremiumGlobalLoader from '@/components/PremiumGlobalLoader';
 import { useTemplateBackgrounds, uploadTemplateBackground, removeTemplateBackground, toggleBackgroundActive } from '@/hooks/useTemplateBackgrounds';
 import AdminLayout from "@/components/admin/AdminLayout";
 import AdminHeader from "@/components/admin/AdminHeader";
@@ -183,13 +183,7 @@ export default function AdminTemplateBackgrounds() {
   const activeBackgrounds = backgrounds.filter(b => b.is_active).length;
 
   if (categoriesLoading) {
-    return (
-      <AdminLayout>
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <GoldCoinLoader size="lg" message="Loading..." />
-        </div>
-      </AdminLayout>
-    );
+    return <PremiumGlobalLoader message="Loading..." />;
   }
 
   return (

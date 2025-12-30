@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { logger } from "@/lib/logger";
-import GoldCoinLoader from "@/components/GoldCoinLoader";
+import PremiumGlobalLoader from "@/components/PremiumGlobalLoader";
 
 interface AdminGuardProps {
   children: React.ReactNode;
@@ -56,11 +56,7 @@ export function AdminGuard({ children }: AdminGuardProps) {
   }, [navigate]);
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <GoldCoinLoader size="xl" message="Verifying permissions..." />
-      </div>
-    );
+    return <PremiumGlobalLoader message="Verifying permissions..." />;
   }
 
   if (!isAdmin) {
