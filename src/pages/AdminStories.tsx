@@ -13,7 +13,7 @@ import { useGeneratedStories, useStoriesEvents, useStoriesFestivals } from "@/ho
 import { useStoryBackgroundSlots, uploadStoryBackgroundSlot, removeStoryBackgroundSlot, toggleStoryBackgroundSlotActive } from "@/hooks/useStoryBackgroundSlots";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import GoldCoinLoader from "@/components/GoldCoinLoader";
+import PremiumGlobalLoader from "@/components/PremiumGlobalLoader";
 import StoryCard, { StoryCardData, getStatusFromDates } from "@/components/admin/StoryCard";
 import ISTTimeSheet from "@/components/admin/ISTTimeSheet";
 import { getStoryStatusIST } from "@/lib/istUtils";
@@ -387,7 +387,7 @@ export default function AdminStories() {
     return (
       <AdminLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
-          <GoldCoinLoader size="lg" message="Loading stories..." />
+          <PremiumGlobalLoader size="lg" message="Loading stories..." fullScreen={false} />
         </div>
       </AdminLayout>
     );

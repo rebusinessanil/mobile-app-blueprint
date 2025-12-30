@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import AdminLayout from "@/components/admin/AdminLayout";
 import AdminHeader from "@/components/admin/AdminHeader";
 import AdminStatsCard from "@/components/admin/AdminStatsCard";
-import GoldCoinLoader from "@/components/GoldCoinLoader";
+import PremiumGlobalLoader from "@/components/PremiumGlobalLoader";
 import { AdminGuard } from "@/components/AdminGuard";
 import { Badge } from "@/components/ui/badge";
 
@@ -104,7 +104,7 @@ export default function AdminTemplates() {
       <AdminGuard>
         <AdminLayout>
           <div className="flex items-center justify-center min-h-[60vh]">
-            <GoldCoinLoader size="lg" message="Loading templates..." />
+            <PremiumGlobalLoader size="lg" message="Loading templates..." fullScreen={false} />
           </div>
         </AdminLayout>
       </AdminGuard>
