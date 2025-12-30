@@ -894,34 +894,6 @@ export default function BannerPreview() {
           </>;
       case 'festival':
         return <>
-            {/* Festival Icon */}
-            <div className="absolute z-20" style={{
-            top: '140px',
-            left: '978px',
-            transform: 'translateX(-50%)',
-            fontSize: '120px'
-          }}>
-              🎉
-            </div>
-
-            {/* Festival Greeting */}
-            <div className="absolute z-20" style={{
-            top: '280px',
-            left: '978px',
-            transform: 'translateX(-50%)',
-            width: '648px',
-            textAlign: 'center'
-          }}>
-              <p style={{
-              fontSize: '48px',
-              fontWeight: '700',
-              color: '#FFD700',
-              textShadow: '3px 3px 10px rgba(0,0,0,0.9)',
-              letterSpacing: '1px'
-            }}>
-                FESTIVAL GREETINGS
-              </p>
-            </div>
 
             {/* Name - Only show if name exists */}
             {truncatedMainName && <div className="absolute" style={{
