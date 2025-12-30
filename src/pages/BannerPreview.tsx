@@ -790,15 +790,6 @@ export default function BannerPreview() {
           </>;
       case 'anniversary':
         return <>
-            {/* Anniversary Icon */}
-            <div className="absolute z-20" style={{
-            top: '140px',
-            left: '978px',
-            transform: 'translateX(-50%)',
-            fontSize: '120px'
-          }}>
-              💞
-            </div>
 
 
             {/* Royal Nameplate Container - Fixed Size, Moved Up 10% */}
