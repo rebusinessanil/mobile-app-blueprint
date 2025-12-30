@@ -719,34 +719,6 @@ export default function BannerPreview() {
           </>;
       case 'birthday':
         return <>
-            {/* Birthday Emoji/Icon */}
-            <div className="absolute z-20" style={{
-            top: '140px',
-            left: '978px',
-            transform: 'translateX(-50%)',
-            fontSize: '120px'
-          }}>
-              🎂
-            </div>
-
-            {/* Happy Birthday Text */}
-            <div className="absolute z-20" style={{
-            top: '280px',
-            left: '978px',
-            transform: 'translateX(-50%)',
-            width: '648px',
-            textAlign: 'center'
-          }}>
-              <p style={{
-              fontSize: '52px',
-              fontWeight: '700',
-              color: '#FFD700',
-              textShadow: '3px 3px 10px rgba(0,0,0,0.9)',
-              letterSpacing: '2px'
-            }}>
-                HAPPY BIRTHDAY
-              </p>
-            </div>
 
             {/* Name */}
             <div className="absolute" style={{
