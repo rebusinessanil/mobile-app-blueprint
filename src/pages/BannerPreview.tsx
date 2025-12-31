@@ -724,38 +724,36 @@ export default function BannerPreview() {
           </>;
       case 'anniversary':
         return <>
-            {/* Royal Nameplate Container - Positioned directly above user portrait
-                User photo: bottom: 0, right: 0, 540x540px
-                Nameplate: centered horizontally with photo, small gap above photo */}
+
+
+            {/* Royal Nameplate Container - Fixed Size, Moved Up 10% */}
             <div className="absolute z-30" style={{
-              // Position above the 540x540 photo at bottom-right
-              // Photo bottom edge is at 1350px, photo is 540px tall, so photo top is at 810px
-              // Add 20px gap above photo, nameplate height is ~200px scaled down
-              bottom: '560px', // 540px photo + 20px gap
-              right: '0px',
-              width: '540px', // Same width as photo for perfect centering
+              top: '40%',
+              left: '978px',
+              transform: 'translate(-50%, -50%)',
+              width: '696px',
+              height: '336px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
             }}>
-              {/* Layer 1: Ornate Frame Background - Scaled to fit above photo */}
+              {/* Layer 1: Ornate Frame Background (Fixed Size - 20% larger) */}
               <img 
                 src={anniversaryNameplateFrame} 
                 alt="Royal Frame"
                 style={{
-                  width: '480px',
-                  height: '230px',
+                  width: '696px',
+                  height: '336px',
                   position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  transform: 'translate(-50%, -50%)',
+                  top: 0,
+                  left: 0,
                   objectFit: 'contain',
                   pointerEvents: 'none',
                   zIndex: 1
                 }}
               />
               
-              {/* Layer 2: Grouped Text Content (Name) - Locked as single unit with frame */}
+              {/* Layer 2: Grouped Text Content (Name + Team) - Centered with equal padding */}
               <div style={{
                 position: 'relative',
                 zIndex: 10,
@@ -764,21 +762,23 @@ export default function BannerPreview() {
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                width: '480px',
-                height: '230px',
-                padding: '30px 40px'
+                gap: '8px',
+                width: '100%',
+                height: '100%',
+                padding: '40px'
               }}>
                 
-                {/* Achiever Name - Centered, Auto-scaling (Max 20 chars) */}
+                {/* Achiever Name - Centered, Auto-scaling (Max 20 chars), moved 5% down */}
                 <h2 style={{
                   color: '#ffffff',
-                  fontSize: truncatedMainName.length > 15 ? '28px' : truncatedMainName.length > 10 ? '34px' : '40px',
+                  fontSize: truncatedMainName.length > 15 ? '30px' : truncatedMainName.length > 10 ? '36px' : '42px',
                   fontWeight: '700',
                   textShadow: '3px 3px 10px rgba(0,0,0,0.9)',
                   margin: 0,
+                  marginTop: '5%',
                   letterSpacing: '2px',
                   fontFamily: "'Playfair Display', 'Georgia', serif",
-                  maxWidth: '400px',
+                  maxWidth: '480px',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
@@ -788,25 +788,27 @@ export default function BannerPreview() {
                     ? truncatedMainName.substring(0, 20).toUpperCase() 
                     : truncatedMainName.toUpperCase()}
                 </h2>
+
+                {/* Team Name / Tagline - Hidden for anniversary */}
               </div>
             </div>
 
-            {/* Anniversary Message - Positioned in left section */}
+            {/* Anniversary Message */}
             {bannerData.message && <div className="absolute" style={{
-              top: '50%',
-              left: '350px',
-              transform: 'translate(-50%, -50%)',
-              width: '580px',
-              padding: '0 40px'
-            }}>
+            top: '480px',
+            left: '978px',
+            transform: 'translateX(-50%)',
+            width: '648px',
+            padding: '0 40px'
+          }}>
                 <p style={{
-                  color: '#ffffff',
-                  textAlign: 'center',
-                  fontSize: '24px',
-                  fontStyle: 'italic',
-                  textShadow: '2px 2px 6px rgba(0,0,0,0.9)',
-                  lineHeight: '1.5'
-                }}>
+              color: '#ffffff',
+              textAlign: 'center',
+              fontSize: '22px',
+              fontStyle: 'italic',
+              textShadow: '2px 2px 6px rgba(0,0,0,0.9)',
+              lineHeight: '1.4'
+            }}>
                   {bannerData.message}
                 </p>
               </div>}
