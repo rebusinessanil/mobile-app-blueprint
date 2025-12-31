@@ -233,7 +233,7 @@ export default function AdminStories() {
   // Generated stories handlers
   const handleToggleGenerated = async (id: string, currentStatus: boolean) => {
     try {
-      const newStatus = currentStatus ? "inactive" : "active";
+      const newStatus = currentStatus ? "preview_only" : "active";
       const { error } = await supabase.from("stories_generated").update({ status: newStatus }).eq("id", id);
       if (error) throw error;
       toast.success("Status updated");
