@@ -1576,24 +1576,28 @@ export default function BannerPreview() {
                 overflow: 'hidden',
                 cursor: isAdmin && isDragMode ? 'crosshair' : 'default'
               }}>
-              {/* Background Layer with Blur - Separated for isolation */}
+              {/* Background Layer - Blur only for non-story banners */}
               <div 
                 className="absolute inset-0" 
                 style={{
                   ...backgroundStyle,
-                  filter: 'blur(4px)',
-                  transform: 'scale(1.02)', // Slight scale to prevent blur edge artifacts
+                  ...(bannerData.categoryType !== 'story' ? {
+                    filter: 'blur(4px)',
+                    transform: 'scale(1.02)', // Slight scale to prevent blur edge artifacts
+                  } : {}),
                 }}
               />
 
-              {/* Dark Overlay - Above blurred background, below all foreground elements */}
-              <div 
-                className="absolute inset-0 pointer-events-none"
-                style={{
-                  backgroundColor: 'rgba(0, 0, 0, 0.25)',
-                  zIndex: 1
-                }}
-              />
+              {/* Dark Overlay - Only for non-story banners */}
+              {bannerData.categoryType !== 'story' && (
+                <div 
+                  className="absolute inset-0 pointer-events-none"
+                  style={{
+                    backgroundColor: 'rgba(0, 0, 0, 0.25)',
+                    zIndex: 1
+                  }}
+                />
+              )}
 
               {/* Foreground Content Container - Completely Sharp */}
               <div className="absolute inset-0" style={{ zIndex: 2 }}>
