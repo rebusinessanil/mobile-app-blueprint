@@ -20,7 +20,9 @@ import { getStoryStatusIST } from "@/lib/istUtils";
 
 type StoryType = "event" | "festival";
 type TabType = "events" | "festivals" | "generated" | "backgrounds";
-type StatusFilter = "all" | "active" | "preview_only" | "sources";
+type StatusFilter = "all" | "active" | "preview_only" | "sources" | "inactive";
+type BackgroundStatusFilter = "all" | "active" | "inactive" | "upcoming";
+type BackgroundCategoryFilter = "all" | "birthday" | "anniversary" | "festival" | "auto";
 
 export default function AdminStories() {
   const {
@@ -52,6 +54,8 @@ export default function AdminStories() {
   const [selectedStory, setSelectedStory] = useState<any>(null);
   const [storySlotUploadProgress, setStorySlotUploadProgress] = useState<Record<number, number>>({});
   const [bulkUploading, setBulkUploading] = useState(false);
+  const [bgStatusFilter, setBgStatusFilter] = useState<BackgroundStatusFilter>("all");
+  const [bgCategoryFilter, setBgCategoryFilter] = useState<BackgroundCategoryFilter>("all");
   
   // Fetch story background slots when story is selected
   const { slots: storySlots, loading: storySlotsLoading } = useStoryBackgroundSlots(selectedStory?.id);
@@ -364,6 +368,10 @@ export default function AdminStories() {
   const previewGenerated = generatedStories.filter(s => s.status === "preview_only").length;
   const totalSources = events.length + festivals.length;
   const totalStories = totalSources + generatedStories.length;
+  const inactiveEvents = events.filter(e => !e.is_active).length;
+  const inactiveFestivals = festivals.filter(f => !f.is_active).length;
+  const inactiveGenerated = generatedStories.filter(s => s.story_status === null).length;
+  const totalInactive = inactiveEvents + inactiveFestivals + inactiveGenerated;
 
   // Filter stories based on search and status filter using IST
   const filteredEvents = useMemo(() => {
@@ -381,6 +389,8 @@ export default function AdminStories() {
         const status = getStoryStatusIST(e.event_date, e.story_status);
         return status.isUpcoming;
       });
+    } else if (statusFilter === "inactive") {
+      filtered = filtered.filter(e => !e.is_active || e.story_status === null);
     }
     
     return filtered;
@@ -401,6 +411,8 @@ export default function AdminStories() {
         const status = getStoryStatusIST(f.festival_date, f.story_status);
         return status.isUpcoming;
       });
+    } else if (statusFilter === "inactive") {
+      filtered = filtered.filter(f => !f.is_active || f.story_status === null);
     }
     
     return filtered;
@@ -413,10 +425,68 @@ export default function AdminStories() {
       filtered = filtered.filter(s => s.status === "active");
     } else if (statusFilter === "preview_only") {
       filtered = filtered.filter(s => s.status === "preview_only");
+    } else if (statusFilter === "inactive") {
+      filtered = filtered.filter(s => s.story_status === null);
     }
     
     return filtered;
   }, [generatedStories, statusFilter]);
+
+  // Combined stories for background management with filters
+  const backgroundStories = useMemo(() => {
+    // Combine all stories: events, festivals, and generated
+    let combined: any[] = [];
+    
+    // Add events with category
+    events.forEach(e => {
+      combined.push({
+        ...e,
+        _type: 'event',
+        _category: e.event_type, // 'birthday' or 'anniversary'
+        _title: e.person_name,
+        _status: !e.is_active ? 'inactive' : 
+                 getStoryStatusIST(e.event_date, e.story_status).isLive ? 'active' :
+                 getStoryStatusIST(e.event_date, e.story_status).isUpcoming ? 'upcoming' : 'inactive'
+      });
+    });
+    
+    // Add festivals with category
+    festivals.forEach(f => {
+      combined.push({
+        ...f,
+        _type: 'festival',
+        _category: 'festival',
+        _title: f.festival_name,
+        _status: !f.is_active ? 'inactive' : 
+                 getStoryStatusIST(f.festival_date, f.story_status).isLive ? 'active' :
+                 getStoryStatusIST(f.festival_date, f.story_status).isUpcoming ? 'upcoming' : 'inactive'
+      });
+    });
+    
+    // Add generated stories with category
+    generatedStories.forEach(g => {
+      combined.push({
+        ...g,
+        _type: 'generated',
+        _category: 'auto',
+        _title: g.title,
+        _status: g.story_status === null ? 'inactive' : 
+                 g.status === 'active' ? 'active' : 'upcoming'
+      });
+    });
+    
+    // Apply status filter
+    if (bgStatusFilter !== 'all') {
+      combined = combined.filter(s => s._status === bgStatusFilter);
+    }
+    
+    // Apply category filter
+    if (bgCategoryFilter !== 'all') {
+      combined = combined.filter(s => s._category === bgCategoryFilter);
+    }
+    
+    return combined;
+  }, [events, festivals, generatedStories, bgStatusFilter, bgCategoryFilter]);
 
   // Handle stats card click for filtering
   const handleStatsClick = (filter: StatusFilter) => {
@@ -478,13 +548,26 @@ export default function AdminStories() {
         {statusFilter !== "all" && (
           <div className="flex items-center gap-2">
             <Badge variant="outline" className="border-primary/40">
-              Filter: {statusFilter === "active" ? "Live" : statusFilter === "preview_only" ? "Upcoming" : "Sources"}
+              Filter: {statusFilter === "active" ? "Live" : statusFilter === "preview_only" ? "Upcoming" : statusFilter === "inactive" ? "Inactive" : "Sources"}
             </Badge>
             <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={() => setStatusFilter("all")}>
               Clear
             </Button>
           </div>
         )}
+        
+        {/* Inactive Filter Button - always visible */}
+        <div className="flex items-center gap-2">
+          <Button
+            variant={statusFilter === "inactive" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setStatusFilter(statusFilter === "inactive" ? "all" : "inactive")}
+            className={statusFilter === "inactive" ? "bg-red-600 hover:bg-red-700 text-white" : "border-red-500/30 text-red-500 hover:bg-red-500/10"}
+          >
+            <EyeOff className="w-4 h-4 mr-1" />
+            Inactive ({totalInactive})
+          </Button>
+        </div>
 
         {/* Search and Actions */}
         <div className="flex gap-2">
@@ -682,22 +765,70 @@ export default function AdminStories() {
 
         {activeTab === "backgrounds" && (
           <div className="space-y-3">
+            {/* Status Filters */}
+            <div className="flex gap-2 flex-wrap">
+              <span className="text-xs text-muted-foreground self-center">Status:</span>
+              {(['all', 'active', 'inactive', 'upcoming'] as BackgroundStatusFilter[]).map(status => (
+                <Button
+                  key={status}
+                  variant={bgStatusFilter === status ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setBgStatusFilter(status)}
+                  className={`text-xs h-7 ${bgStatusFilter === status 
+                    ? status === 'inactive' ? 'bg-red-600 text-white' : 'bg-primary text-primary-foreground' 
+                    : 'border-primary/20'}`}
+                >
+                  {status === 'all' ? 'All' : status === 'active' ? 'Active' : status === 'inactive' ? 'Inactive' : 'Upcoming'}
+                </Button>
+              ))}
+            </div>
+            
+            {/* Category Filters */}
+            <div className="flex gap-2 flex-wrap">
+              <span className="text-xs text-muted-foreground self-center">Category:</span>
+              {(['all', 'birthday', 'anniversary', 'festival', 'auto'] as BackgroundCategoryFilter[]).map(cat => (
+                <Button
+                  key={cat}
+                  variant={bgCategoryFilter === cat ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setBgCategoryFilter(cat)}
+                  className={`text-xs h-7 ${bgCategoryFilter === cat ? 'bg-primary text-primary-foreground' : 'border-primary/20'}`}
+                >
+                  {cat === 'all' ? 'All' : cat === 'birthday' ? 'Birthday' : cat === 'anniversary' ? 'Anniversary' : cat === 'festival' ? 'Festival' : 'Auto'}
+                </Button>
+              ))}
+            </div>
+            
             <div className="bg-card border border-primary/20 rounded-2xl p-4">
-              <h3 className="font-semibold text-foreground mb-3">Select a Story</h3>
+              <h3 className="font-semibold text-foreground mb-3">Select a Story ({backgroundStories.length} stories)</h3>
               <div className="grid grid-cols-3 gap-2 max-h-64 overflow-y-auto">
-                {[...events, ...festivals].map((story: any) => {
-                  const isEvent = 'person_name' in story;
-                  const storyTitle = isEvent ? story.person_name : story.festival_name;
+                {backgroundStories.map((story: any) => {
+                  const storyTitle = story._title;
+                  const isInactive = story._status === 'inactive';
                   return (
                     <button
                       key={story.id}
                       onClick={() => setSelectedStory(story)}
-                      className={`text-left rounded-xl overflow-hidden border transition-all ${
+                      className={`text-left rounded-xl overflow-hidden border transition-all relative ${
                         selectedStory?.id === story.id ? 'border-primary shadow-lg' : 'border-primary/20 hover:border-primary/40'
-                      }`}
+                      } ${isInactive ? 'opacity-60' : ''}`}
                     >
-                      <div className="aspect-square bg-muted">
+                      <div className="aspect-square bg-muted relative">
                         <img src={story.poster_url} alt={storyTitle} className="w-full h-full object-cover" />
+                        {/* Status badge */}
+                        <div className={`absolute top-1 left-1 px-1.5 py-0.5 rounded text-[10px] font-medium ${
+                          story._status === 'active' ? 'bg-green-500 text-white' :
+                          story._status === 'inactive' ? 'bg-red-500 text-white' :
+                          'bg-yellow-500 text-black'
+                        }`}>
+                          {story._status === 'active' ? 'Live' : story._status === 'inactive' ? 'Off' : 'Soon'}
+                        </div>
+                        {/* Category badge */}
+                        <div className="absolute top-1 right-1 px-1.5 py-0.5 rounded bg-black/60 text-[10px] text-white font-medium">
+                          {story._category === 'birthday' ? '🎂' : 
+                           story._category === 'anniversary' ? '💍' : 
+                           story._category === 'festival' ? '🎉' : '⚡'}
+                        </div>
                       </div>
                       <div className="p-2 bg-card">
                         <p className="text-xs font-medium truncate">{storyTitle}</p>
@@ -706,6 +837,11 @@ export default function AdminStories() {
                   );
                 })}
               </div>
+              {backgroundStories.length === 0 && (
+                <div className="text-center py-8 text-muted-foreground text-sm">
+                  No stories match the selected filters
+                </div>
+              )}
             </div>
 
             {selectedStory && (
