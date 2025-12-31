@@ -727,7 +727,7 @@ export default function BannerPreview() {
               zIndex: 1
             }} />
               
-              {/* Layer 2: Grouped Text Content (Name + Team) - Centered with equal padding */}
+              {/* Layer 2: Grouped Text Content (Name + Team) - Centered with equal padding, moved 15% down */}
               <div style={{
               position: 'relative',
               zIndex: 10,
@@ -739,17 +739,17 @@ export default function BannerPreview() {
               gap: '8px',
               width: '100%',
               height: '100%',
-              padding: '40px'
+              padding: '40px',
+              marginTop: '15%'
             }}>
                 
-                {/* Achiever Name - Centered, Auto-scaling (Max 20 chars), moved 5% down */}
+                {/* Achiever Name - Centered, Auto-scaling (Max 20 chars) */}
                 <h2 style={{
                 color: '#ffffff',
                 fontSize: truncatedMainName.length > 15 ? '30px' : truncatedMainName.length > 10 ? '36px' : '42px',
                 fontWeight: '700',
                 textShadow: '3px 3px 10px rgba(0,0,0,0.9)',
                 margin: 0,
-                marginTop: '5%',
                 letterSpacing: '2px',
                 fontFamily: "'Playfair Display', 'Georgia', serif",
                 maxWidth: '480px',
