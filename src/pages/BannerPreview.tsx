@@ -1084,12 +1084,12 @@ export default function BannerPreview() {
                   THIS WEEK INCOME 
                 </p>
                 <p style={{
-              fontSize: 'clamp(72px, 12vw, 160px)',
+              fontSize: 'clamp(36px, 6vw, 72px)',
               width: '100%',
-              maxWidth: '500px',
-              lineHeight: '0.95',
+              maxWidth: '400px',
+              lineHeight: '1',
               fontWeight: '700',
-              letterSpacing: '3px',
+              letterSpacing: '2px',
               textAlign: 'left',
               margin: 0,
               fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
@@ -1097,7 +1097,7 @@ export default function BannerPreview() {
               color: '#FFD700',
               textShadow: '2px 2px 4px rgba(0,0,0,0.5)',
               filter: 'drop-shadow(2px 3px 4px rgba(0,0,0,0.6))'
-            }} className="font-extrabold text-7xl">
+            }} className="font-extrabold text-4xl">
                   ₹{Number(bannerData.chequeAmount).toLocaleString('en-IN')}/-
                 </p>
               </div>}
