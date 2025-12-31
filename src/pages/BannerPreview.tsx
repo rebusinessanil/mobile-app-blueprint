@@ -706,7 +706,7 @@ export default function BannerPreview() {
 
             {/* Royal Nameplate Container - Fixed Size, Moved Up 10% */}
             <div className="absolute z-30" style={{
-            top: '65%',
+            top: '40%',
             left: '978px',
             transform: 'translate(-50%, -50%)',
             width: '696px',
