@@ -108,8 +108,10 @@ export const useGeneratedStories = (adminMode: boolean = true) => {
   useEffect(() => {
     fetchStories();
 
+    // Use unique channel name per instance to avoid conflicts
+    const channelId = `stories-generated-${adminMode ? 'admin' : 'user'}-${Date.now()}`;
     const channel = supabase
-      .channel("stories-generated-realtime")
+      .channel(channelId)
       .on(
         "postgres_changes",
         {
@@ -117,8 +119,8 @@ export const useGeneratedStories = (adminMode: boolean = true) => {
           schema: "public",
           table: "stories_generated",
         },
-        () => {
-          console.log("📡 Stories generated update received");
+        (payload) => {
+          console.log("📡 Stories generated update received:", payload.eventType);
           fetchStories();
         }
       )
@@ -127,7 +129,7 @@ export const useGeneratedStories = (adminMode: boolean = true) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [fetchStories]);
+  }, [fetchStories, adminMode]);
 
   return { stories, loading, refetch: fetchStories };
 };
@@ -170,8 +172,10 @@ export const useStoriesEvents = (adminMode: boolean = true) => {
   useEffect(() => {
     fetchEvents();
 
+    // Use unique channel name per instance to avoid conflicts
+    const channelId = `stories-events-${adminMode ? 'admin' : 'user'}-${Date.now()}`;
     const channel = supabase
-      .channel("stories-events-realtime")
+      .channel(channelId)
       .on(
         "postgres_changes",
         {
@@ -179,8 +183,8 @@ export const useStoriesEvents = (adminMode: boolean = true) => {
           schema: "public",
           table: "stories_events",
         },
-        () => {
-          console.log("📡 Stories events update received");
+        (payload) => {
+          console.log("📡 Stories events update received:", payload.eventType);
           fetchEvents();
         }
       )
@@ -189,7 +193,7 @@ export const useStoriesEvents = (adminMode: boolean = true) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [fetchEvents]);
+  }, [fetchEvents, adminMode]);
 
   return { events, loading, refetch: fetchEvents };
 };
@@ -232,8 +236,10 @@ export const useStoriesFestivals = (adminMode: boolean = true) => {
   useEffect(() => {
     fetchFestivals();
 
+    // Use unique channel name per instance to avoid conflicts
+    const channelId = `stories-festivals-${adminMode ? 'admin' : 'user'}-${Date.now()}`;
     const channel = supabase
-      .channel("stories-festivals-realtime")
+      .channel(channelId)
       .on(
         "postgres_changes",
         {
@@ -241,8 +247,8 @@ export const useStoriesFestivals = (adminMode: boolean = true) => {
           schema: "public",
           table: "stories_festivals",
         },
-        () => {
-          console.log("📡 Stories festivals update received");
+        (payload) => {
+          console.log("📡 Stories festivals update received:", payload.eventType);
           fetchFestivals();
         }
       )
@@ -251,7 +257,7 @@ export const useStoriesFestivals = (adminMode: boolean = true) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [fetchFestivals]);
+  }, [fetchFestivals, adminMode]);
 
   return { festivals, loading, refetch: fetchFestivals };
 };
