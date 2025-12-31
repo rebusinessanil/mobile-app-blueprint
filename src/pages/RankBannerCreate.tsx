@@ -41,10 +41,14 @@ export default function RankBannerCreate() {
   const [tempPhoto, setTempPhoto] = useState<string | null>(null);
   const [showCropper, setShowCropper] = useState(false);
   const [slotStickers, setSlotStickers] = useState<Record<number, string[]>>({});
+  const [backgroundRemoved, setBackgroundRemoved] = useState(false);
 
   // Fast backend background removal hook
   const bgRemoval = useBackgroundRemovalFast({
-    onSuccess: processedUrl => setPhoto(processedUrl)
+    onSuccess: processedUrl => {
+      setPhoto(processedUrl);
+      setBackgroundRemoved(true);
+    }
   });
   useEffect(() => {
     const getUser = async () => {
@@ -95,6 +99,7 @@ export default function RankBannerCreate() {
   };
   const handleKeepBackground = () => {
     bgRemoval.closeModal();
+    setBackgroundRemoved(false);
   };
   const handleRemoveBackground = async () => {
     await bgRemoval.processRemoval();
@@ -131,7 +136,8 @@ export default function RankBannerCreate() {
         uplines,
         slotStickers,
         templateId: template?.id,
-        rankId: rankId
+        rankId: rankId,
+        backgroundRemoved
       }
     });
   };
@@ -148,6 +154,7 @@ export default function RankBannerCreate() {
     setPhoto(null);
     setTempPhoto(null);
     setShowCropper(false);
+    setBackgroundRemoved(false);
     if (bannerSettings) {
       const defaultUplines = bannerSettings.upline_avatars.map((upline, index) => ({
         id: `upline-${index}`,

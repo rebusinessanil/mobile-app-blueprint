@@ -56,6 +56,7 @@ interface BannerData {
   motivationalBannerId?: string;
   storyId?: string;
   eventId?: string;
+  backgroundRemoved?: boolean;
 }
 export default function BannerPreview() {
   const navigate = useNavigate();
@@ -1733,8 +1734,11 @@ export default function BannerPreview() {
                       backfaceVisibility: 'hidden',
                       transform: 'translateZ(0)',
                       WebkitFontSmoothing: 'antialiased',
-                      maskImage: 'linear-gradient(to bottom, black 0%, black 88%, transparent 100%)',
-                      WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 88%, transparent 100%)'
+                      // Apply feather fade only if background was removed
+                      ...(bannerData?.backgroundRemoved && {
+                        maskImage: 'linear-gradient(to bottom, black 0%, black 90%, transparent 100%)',
+                        WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 90%, transparent 100%)'
+                      })
                     }} />
                   </div>}
 
