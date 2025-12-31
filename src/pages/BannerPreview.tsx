@@ -1579,6 +1579,15 @@ export default function BannerPreview() {
               <div className="absolute inset-0" style={backgroundStyle}>
                 {/* Background automatically from global slot system (image or default color) */}
 
+                {/* Dark Overlay - Above background, below all foreground elements */}
+                <div 
+                  className="absolute inset-0 pointer-events-none"
+                  style={{
+                    backgroundColor: 'rgba(0, 0, 0, 0.25)',
+                    zIndex: 1
+                  }}
+                />
+
                 {/* Story Category: Three Dark-Theme Upper Bars */}
                 {bannerData.categoryType === 'story' && <>
                     {/* Upper Bar 1 - Top */}
