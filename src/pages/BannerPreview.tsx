@@ -761,12 +761,11 @@ export default function BannerPreview() {
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                justifyContent: 'flex-start',
+                justifyContent: 'center',
                 gap: '8px',
                 width: '100%',
                 height: '100%',
-                padding: '40px',
-                paddingTop: '25%'
+                padding: '40px'
               }}>
                 
                 {/* Achiever Name - Centered, Auto-scaling (Max 20 chars), moved 5% down */}
