@@ -1100,7 +1100,7 @@ export default function BannerPreview() {
               backgroundClip: 'text',
               filter: 'drop-shadow(2px 2px 1px rgba(90,60,20,0.6)) drop-shadow(4px 4px 8px rgba(0,0,0,0.7))',
               textShadow: 'none'
-            }} className="font-extrabold text-7xl">
+            }} className="font-extrabold text-7xl font-sans">
                   ₹{Number(bannerData.chequeAmount).toLocaleString('en-IN')}/-
                 </p>
               </div>}
