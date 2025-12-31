@@ -219,9 +219,14 @@ export default function AdminStories() {
   const handleToggleActive = async (id: string, currentStatus: boolean, type: StoryType) => {
     try {
       const table = type === "event" ? "stories_events" : "stories_festivals";
-      const { error } = await supabase.from(table).update({ is_active: !currentStatus }).eq("id", id);
+      // When deactivating: set is_active=false AND story_status=null (hides from user dashboard)
+      // When activating: set is_active=true AND story_status=false (shows as upcoming)
+      const updateData = currentStatus 
+        ? { is_active: false, story_status: null } 
+        : { is_active: true, story_status: false };
+      const { error } = await supabase.from(table).update(updateData).eq("id", id);
       if (error) throw error;
-      toast.success("Status updated");
+      toast.success(currentStatus ? "Story hidden from users" : "Story visible to users");
       if (type === "event") refetchEvents();
       else refetchFestivals();
       refetchGenerated();
@@ -233,10 +238,16 @@ export default function AdminStories() {
   // Generated stories handlers
   const handleToggleGenerated = async (id: string, currentStatus: boolean) => {
     try {
+      // When deactivating: set story_status=null (hides from user dashboard)
+      // When activating: set story_status=false (shows as upcoming)
+      const newStoryStatus = currentStatus ? null : false;
       const newStatus = currentStatus ? "preview_only" : "active";
-      const { error } = await supabase.from("stories_generated").update({ status: newStatus }).eq("id", id);
+      const { error } = await supabase.from("stories_generated").update({ 
+        status: newStatus,
+        story_status: newStoryStatus
+      }).eq("id", id);
       if (error) throw error;
-      toast.success("Status updated");
+      toast.success(currentStatus ? "Story hidden from users" : "Story visible to users");
       refetchGenerated();
     } catch (error: any) {
       toast.error("Update failed: " + error.message);
