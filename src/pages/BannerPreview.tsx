@@ -1732,7 +1732,9 @@ export default function BannerPreview() {
                       WebkitBackfaceVisibility: 'hidden',
                       backfaceVisibility: 'hidden',
                       transform: 'translateZ(0)',
-                      WebkitFontSmoothing: 'antialiased'
+                      WebkitFontSmoothing: 'antialiased',
+                      maskImage: 'linear-gradient(to bottom, black 0%, black 88%, transparent 100%)',
+                      WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 88%, transparent 100%)'
                     }} />
                   </div>}
 
