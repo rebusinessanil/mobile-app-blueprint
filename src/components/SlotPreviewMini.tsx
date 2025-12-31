@@ -429,13 +429,32 @@ export default function SlotPreviewMini({
                   THIS WEEK INCOME
                 </p>
                 <p style={{
-                  fontSize: '62px',
-                  fontWeight: '800',
-                  color: '#FFD600',
+                  fontSize: '72px',
+                  fontFamily: "'Times New Roman', 'Georgia', serif",
+                  fontWeight: 900,
+                  letterSpacing: '4px',
+                  lineHeight: 1,
                   textAlign: 'left',
-                  margin: 0
+                  margin: 0,
+                  color: '#DAA520',
+                  background: 'linear-gradient(180deg, #FFE5A0 0%, #FFD700 15%, #DAA520 35%, #B8860B 55%, #CD853F 75%, #8B7355 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                  textShadow: `
+                    0 1px 0 rgba(255, 235, 180, 0.9),
+                    0 2px 0 rgba(218, 165, 32, 0.8),
+                    0 3px 0 rgba(184, 134, 11, 0.7),
+                    0 4px 0 rgba(139, 115, 85, 0.6),
+                    0 5px 4px rgba(0, 0, 0, 0.5),
+                    0 6px 8px rgba(0, 0, 0, 0.4),
+                    0 8px 16px rgba(0, 0, 0, 0.3),
+                    0 0 20px rgba(255, 215, 0, 0.3),
+                    0 0 40px rgba(255, 193, 7, 0.2)
+                  `,
+                  filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.8))'
                 }}>
-                  {Number(chequeAmount).toLocaleString('en-IN')}
+                  ₹{Number(chequeAmount).toLocaleString('en-IN')}/-
                 </p>
               </div>
             )}
