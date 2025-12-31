@@ -230,6 +230,35 @@ export default function AdminStories() {
     }
   };
 
+  // Generated stories handlers
+  const handleToggleGenerated = async (id: string, currentStatus: boolean) => {
+    try {
+      const newStatus = currentStatus ? "inactive" : "active";
+      const { error } = await supabase.from("stories_generated").update({ status: newStatus }).eq("id", id);
+      if (error) throw error;
+      toast.success("Status updated");
+      refetchGenerated();
+    } catch (error: any) {
+      toast.error("Update failed: " + error.message);
+    }
+  };
+
+  const handleDeleteGenerated = async (id: string) => {
+    if (!confirm("Delete this generated story?")) return;
+    try {
+      const { error } = await supabase.from("stories_generated").delete().eq("id", id);
+      if (error) throw error;
+      toast.success("Deleted");
+      refetchGenerated();
+    } catch (error: any) {
+      toast.error("Delete failed: " + error.message);
+    }
+  };
+
+  const handleOpenGeneratedDialog = (story: any) => {
+    toast.info("Generated stories are auto-created. Edit the source event/festival instead.");
+  };
+
   const handleGenerateTestStories = async () => {
     try {
       setIsGenerating(true);
@@ -630,7 +659,9 @@ export default function AdminStories() {
                   <StoryCard
                     key={story.id}
                     story={storyCardData}
-                    showActions={false}
+                    onToggleActive={(id, current) => handleToggleGenerated(id, current)}
+                    onEdit={() => handleOpenGeneratedDialog(story)}
+                    onDelete={(id) => handleDeleteGenerated(id)}
                   />
                 );
               })
