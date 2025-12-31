@@ -1112,17 +1112,24 @@ export default function BannerPreview() {
                   THIS WEEK INCOME 
                 </p>
                 <p style={{
-              fontSize: '62px',
-              textShadow: '4px 4px 12px rgba(0,0,0,0.95)',
+              fontSize: 'clamp(48px, 8vw, 110px)',
+              width: '100%',
+              maxWidth: '405px',
               lineHeight: '1',
-              fontWeight: '800',
-              letterSpacing: '2px',
+              fontWeight: '900',
+              letterSpacing: '3px',
               textAlign: 'left',
               margin: 0,
-              color: '#FFD600',
-              fontFamily: 'sans-serif'
+              fontFamily: 'Georgia, "Times New Roman", serif',
+              fontStyle: 'italic',
+              background: 'linear-gradient(180deg, #FFE5A0 0%, #D4A24C 25%, #C4893A 50%, #A66A2E 75%, #8B5A2B 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+              filter: 'drop-shadow(3px 3px 6px rgba(0,0,0,0.8)) drop-shadow(1px 1px 2px rgba(139,90,43,0.5))',
+              textShadow: 'none'
             }}>
-                  {Number(bannerData.chequeAmount).toLocaleString('en-IN')}
+                  ₹{Number(bannerData.chequeAmount).toLocaleString('en-IN')}/-
                 </p>
               </div>}
           </>;
