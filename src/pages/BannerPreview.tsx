@@ -1576,17 +1576,27 @@ export default function BannerPreview() {
                 overflow: 'hidden',
                 cursor: isAdmin && isDragMode ? 'crosshair' : 'default'
               }}>
-              <div className="absolute inset-0" style={backgroundStyle}>
-                {/* Background automatically from global slot system (image or default color) */}
+              {/* Background Layer with Blur - Separated for isolation */}
+              <div 
+                className="absolute inset-0" 
+                style={{
+                  ...backgroundStyle,
+                  filter: 'blur(4px)',
+                  transform: 'scale(1.02)', // Slight scale to prevent blur edge artifacts
+                }}
+              />
 
-                {/* Dark Overlay - Above background, below all foreground elements */}
-                <div 
-                  className="absolute inset-0 pointer-events-none"
-                  style={{
-                    backgroundColor: 'rgba(0, 0, 0, 0.25)',
-                    zIndex: 1
-                  }}
-                />
+              {/* Dark Overlay - Above blurred background, below all foreground elements */}
+              <div 
+                className="absolute inset-0 pointer-events-none"
+                style={{
+                  backgroundColor: 'rgba(0, 0, 0, 0.25)',
+                  zIndex: 1
+                }}
+              />
+
+              {/* Foreground Content Container - Completely Sharp */}
+              <div className="absolute inset-0" style={{ zIndex: 2 }}>
 
                 {/* Story Category: Three Dark-Theme Upper Bars */}
                 {bannerData.categoryType === 'story' && <>
@@ -2164,6 +2174,7 @@ export default function BannerPreview() {
                   />
 
               </div>
+              {/* Close Foreground Container */}
               </div>
             </div>
           </div>
