@@ -43,10 +43,14 @@ export default function BonanzaBannerCreate() {
   const [tempPhoto, setTempPhoto] = useState<string | null>(null);
   const [showCropper, setShowCropper] = useState(false);
   const [slotStickers, setSlotStickers] = useState<Record<number, string[]>>({});
+  const [backgroundRemoved, setBackgroundRemoved] = useState(false);
 
   // Fast backend background removal hook
   const bgRemoval = useBackgroundRemovalFast({
-    onSuccess: (processedUrl) => setPhoto(processedUrl)
+    onSuccess: (processedUrl) => {
+      setPhoto(processedUrl);
+      setBackgroundRemoved(true);
+    }
   });
 
   // Auto-fill trip name when trip is loaded
@@ -106,6 +110,7 @@ export default function BonanzaBannerCreate() {
 
   const handleKeepBackground = () => {
     bgRemoval.closeModal();
+    setBackgroundRemoved(false);
   };
 
   const handleRemoveBackground = async () => {
@@ -144,7 +149,8 @@ export default function BonanzaBannerCreate() {
         uplines,
         slotStickers,
         templateId: tripTemplate?.id,
-        tripId: trip?.id
+        tripId: trip?.id,
+        backgroundRemoved
       }
     });
   };
@@ -161,6 +167,7 @@ export default function BonanzaBannerCreate() {
     });
     setPhoto(null);
     setTempPhoto(null);
+    setBackgroundRemoved(false);
     if (bannerSettings) {
       const defaultUplines = bannerSettings.upline_avatars.map((upline, index) => ({
         id: `upline-${index}`,

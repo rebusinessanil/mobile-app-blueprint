@@ -45,10 +45,14 @@ export default function BirthdayBannerCreate() {
   const [tempPhoto, setTempPhoto] = useState<string | null>(null);
   const [showCropper, setShowCropper] = useState(false);
   const [slotStickers, setSlotStickers] = useState<Record<number, string[]>>({});
+  const [backgroundRemoved, setBackgroundRemoved] = useState(false);
 
   // Fast backend background removal hook
   const bgRemoval = useBackgroundRemovalFast({
-    onSuccess: (processedUrl) => setPhoto(processedUrl)
+    onSuccess: (processedUrl) => {
+      setPhoto(processedUrl);
+      setBackgroundRemoved(true);
+    }
   });
 
   useEffect(() => {
@@ -104,6 +108,7 @@ export default function BirthdayBannerCreate() {
 
   const handleKeepBackground = () => {
     bgRemoval.closeModal();
+    setBackgroundRemoved(false);
   };
 
   const handleRemoveBackground = async () => {
@@ -144,7 +149,8 @@ export default function BirthdayBannerCreate() {
         uplines,
         slotStickers,
         templateId,
-        birthdayId
+        birthdayId,
+        backgroundRemoved
       }
     });
   };
@@ -162,6 +168,7 @@ export default function BirthdayBannerCreate() {
     });
     setPhoto(null);
     setTempPhoto(null);
+    setBackgroundRemoved(false);
     if (bannerSettings) {
       const defaultUplines = bannerSettings.upline_avatars.map((upline, index) => ({
         id: `upline-${index}`,

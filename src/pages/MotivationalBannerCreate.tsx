@@ -47,10 +47,14 @@ export default function MotivationalBannerCreate() {
   const [tempPhoto, setTempPhoto] = useState<string | null>(null);
   const [showCropper, setShowCropper] = useState(false);
   const [slotStickers, setSlotStickers] = useState<Record<number, string[]>>({});
+  const [backgroundRemoved, setBackgroundRemoved] = useState(false);
 
   // Fast backend background removal hook
   const bgRemoval = useBackgroundRemovalFast({
-    onSuccess: (processedUrl) => setPhoto(processedUrl)
+    onSuccess: (processedUrl) => {
+      setPhoto(processedUrl);
+      setBackgroundRemoved(true);
+    }
   });
 
   useEffect(() => {
@@ -113,6 +117,7 @@ export default function MotivationalBannerCreate() {
 
   const handleKeepBackground = () => {
     bgRemoval.closeModal();
+    setBackgroundRemoved(false);
   };
 
   const handleRemoveBackground = async () => {
@@ -154,7 +159,8 @@ export default function MotivationalBannerCreate() {
         templates,
         templateId: firstTemplate?.id || undefined,
         motivationalBannerId: motivationalBannerId,
-        rankId: undefined
+        rankId: undefined,
+        backgroundRemoved
       }
     });
   };
@@ -173,6 +179,7 @@ export default function MotivationalBannerCreate() {
     });
     setPhoto(null);
     setTempPhoto(null);
+    setBackgroundRemoved(false);
     if (bannerSettings) {
       const defaultUplines = bannerSettings.upline_avatars.map((upline, index) => ({
         id: `upline-${index}`,
