@@ -1087,26 +1087,28 @@ export default function BannerPreview() {
               fontSize: (() => {
                 const amount = Number(bannerData.chequeAmount);
                 const formattedLength = amount.toLocaleString('en-IN').length;
-                // Start at 4XL (72px) and scale down based on digit count
-                if (formattedLength <= 5) return 'clamp(48px, 8vw, 72px)';      // Up to 9,999
-                if (formattedLength <= 7) return 'clamp(42px, 7vw, 64px)';      // Up to 9,99,999
-                if (formattedLength <= 9) return 'clamp(36px, 6vw, 56px)';      // Up to 9,99,99,999
-                if (formattedLength <= 12) return 'clamp(30px, 5vw, 48px)';     // Up to 9,99,99,99,999
-                return 'clamp(24px, 4vw, 40px)';                                 // Larger amounts
+                // Start at 4XL (72px) scaled up by 35%, and scale down based on digit count
+                if (formattedLength <= 5) return 'clamp(65px, 10.8vw, 97px)';     // Up to 9,999
+                if (formattedLength <= 7) return 'clamp(57px, 9.5vw, 86px)';      // Up to 9,99,999
+                if (formattedLength <= 9) return 'clamp(49px, 8.1vw, 76px)';      // Up to 9,99,99,999
+                if (formattedLength <= 12) return 'clamp(41px, 6.8vw, 65px)';     // Up to 9,99,99,99,999
+                return 'clamp(32px, 5.4vw, 54px)';                                 // Larger amounts
               })(),
               width: 'fit-content',
-              maxWidth: Number(bannerData.chequeAmount) <= 1000000000 ? 'auto' : '400px',
+              maxWidth: Number(bannerData.chequeAmount) <= 1000000000 ? 'auto' : '540px',
               lineHeight: '1',
               fontWeight: '700',
               letterSpacing: '1px',
-              textAlign: 'left',
+              textAlign: 'center',
               margin: 0,
               fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
               fontStyle: 'normal',
               color: '#FFD700',
               textShadow: '2px 2px 4px rgba(0,0,0,0.5)',
               filter: 'drop-shadow(2px 3px 4px rgba(0,0,0,0.6)',
-              whiteSpace: 'nowrap'
+              whiteSpace: 'nowrap',
+              transform: 'scale(1) translateX(-8%)',
+              transformOrigin: 'center center'
             }} className="font-extrabold">
                   ₹{Number(bannerData.chequeAmount).toLocaleString('en-IN')}/-
                 </p>
