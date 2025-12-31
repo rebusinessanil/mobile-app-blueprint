@@ -1084,23 +1084,20 @@ export default function BannerPreview() {
                   THIS WEEK INCOME 
                 </p>
                 <p style={{
-              fontSize: 'clamp(52px, 9vw, 120px)',
+              fontSize: 'clamp(72px, 12vw, 160px)',
               width: '100%',
-              maxWidth: '450px',
+              maxWidth: '500px',
               lineHeight: '0.95',
               fontWeight: '700',
-              letterSpacing: '2px',
+              letterSpacing: '3px',
               textAlign: 'left',
               margin: 0,
-              fontFamily: '"Victory Striker Sans Demo", "Playfair Display", Georgia, serif',
+              fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
               fontStyle: 'normal',
-              background: 'linear-gradient(175deg, #F5D89A 0%, #E8C478 15%, #D4A855 30%, #C4924A 45%, #B87A3D 60%, #A56832 75%, #8B5528 90%, #6B4420 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-              filter: 'drop-shadow(2px 2px 1px rgba(90,60,20,0.6)) drop-shadow(4px 4px 8px rgba(0,0,0,0.7))',
-              textShadow: 'none'
-            }} className="font-extrabold text-7xl font-sans">
+              color: '#FFD700',
+              textShadow: '2px 2px 4px rgba(0,0,0,0.5)',
+              filter: 'drop-shadow(2px 3px 4px rgba(0,0,0,0.6))'
+            }} className="font-extrabold text-7xl">
                   ₹{Number(bannerData.chequeAmount).toLocaleString('en-IN')}/-
                 </p>
               </div>}
