@@ -1578,20 +1578,20 @@ export default function BannerPreview() {
                 overflow: 'hidden',
                 cursor: isAdmin && isDragMode ? 'crosshair' : 'default'
               }}>
-              {/* Background Layer - Blur only for non-story banners */}
+              {/* Background Layer - Blur only for non-story banners (story & festival are always sharp) */}
               <div 
                 className="absolute inset-0" 
                 style={{
                   ...backgroundStyle,
-                  ...(bannerData.categoryType !== 'story' ? {
+                  ...(!['story', 'festival'].includes(bannerData.categoryType || '') ? {
                     filter: 'blur(4px)',
                     transform: 'scale(1.02)', // Slight scale to prevent blur edge artifacts
                   } : {}),
                 }}
               />
 
-              {/* Dark Overlay - Only for non-story banners */}
-              {bannerData.categoryType !== 'story' && (
+              {/* Dark Overlay - Only for non-story banners (story & festival are always sharp) */}
+              {!['story', 'festival'].includes(bannerData.categoryType || '') && (
                 <div 
                   className="absolute inset-0 pointer-events-none"
                   style={{
