@@ -61,13 +61,13 @@ function StoryCardComponent({
     <div ref={cardRef} className="story-card">
       {/* Image container - no text overlay */}
       <div className="story-card-image relative">
-        {/* Low-res placeholder - no blur for stories */}
+        {/* Blur placeholder */}
         {thumbnailUrl && !imageLoaded && (
           <img
             src={thumbnailUrl}
             alt=""
             aria-hidden="true"
-            className="absolute inset-0 w-full h-full object-cover transform-gpu"
+            className="absolute inset-0 w-full h-full object-cover blur-md scale-110 transform-gpu"
             loading="eager"
           />
         )}
