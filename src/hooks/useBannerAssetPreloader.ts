@@ -18,10 +18,10 @@ interface PreloadState {
   timedOut: boolean;
 }
 
-// Ultra-fast timeouts for instant loading
-const GLOBAL_TIMEOUT_MS = 5000;
-const PER_IMAGE_TIMEOUT_MS = 2000;
-const PROGRESS_THROTTLE_MS = 50;
+// Ultra-fast timeouts for instant loading - aggressive for mobile performance
+const GLOBAL_TIMEOUT_MS = 3000; // Reduced from 5000 for faster fallback
+const PER_IMAGE_TIMEOUT_MS = 1500; // Reduced from 2000 for faster per-image fallback
+const PROGRESS_THROTTLE_MS = 32; // ~30fps update rate for smoother progress
 
 // Global image cache to prevent duplicate requests across renders
 const imageCache = new Map<string, Promise<boolean>>();
