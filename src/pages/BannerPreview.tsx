@@ -356,8 +356,9 @@ export default function BannerPreview() {
     slots: globalBackgroundSlots,
     loading: backgroundsLoading
   } = useGlobalBackgroundSlots({
-    templateId: bannerData?.categoryType !== 'story' ? currentTemplateId : undefined,
+    templateId: bannerData?.categoryType !== 'story' && bannerData?.categoryType !== 'festival' ? currentTemplateId : undefined,
     storyId: bannerData?.categoryType === 'story' ? storyId : undefined,
+    festivalId: bannerData?.categoryType === 'festival' ? bannerData?.festivalId : undefined,
     categoryType: bannerData?.categoryType
   });
 

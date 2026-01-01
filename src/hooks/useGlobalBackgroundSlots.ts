@@ -32,12 +32,14 @@ export interface BackgroundSlot {
 interface UseGlobalBackgroundSlotsOptions {
   templateId?: string;
   storyId?: string;
+  festivalId?: string;
   categoryType?: 'rank' | 'bonanza' | 'birthday' | 'anniversary' | 'meeting' | 'festival' | 'motivational' | 'story';
 }
 
 export const useGlobalBackgroundSlots = ({
   templateId,
   storyId,
+  festivalId,
   categoryType,
 }: UseGlobalBackgroundSlotsOptions = {}) => {
   const [slots, setSlots] = useState<BackgroundSlot[]>(() =>
@@ -64,13 +66,18 @@ export const useGlobalBackgroundSlots = ({
           hasImage: false,
         }));
 
+        // Determine the effective story ID for background slots
+        // Festival stories use festivalId, regular stories use storyId
+        const effectiveStoryId = categoryType === 'festival' ? festivalId : storyId;
+        const useStoryBackgrounds = (categoryType === 'story' || categoryType === 'festival') && effectiveStoryId;
+
         // Fetch from appropriate table based on category
-        if (categoryType === 'story' && storyId) {
-          // Fetch story background slots
+        if (useStoryBackgrounds) {
+          // Fetch story background slots for both 'story' and 'festival' categories
           const { data: storySlots, error: storyError } = await supabase
             .from('story_background_slots')
             .select('*')
-            .eq('story_id', storyId)
+            .eq('story_id', effectiveStoryId)
             .eq('is_active', true)
             .order('slot_number', { ascending: true });
 
@@ -87,7 +94,7 @@ export const useGlobalBackgroundSlots = ({
           });
 
           setSlots(mergedSlots);
-          logger.log(`Loaded ${storySlots?.length || 0} story backgrounds for story ${storyId}`);
+          logger.log(`Loaded ${storySlots?.length || 0} story backgrounds for ${categoryType} ${effectiveStoryId}`);
         } else if (templateId) {
           // Fetch template backgrounds
           const { data: templateBgs, error: templateError } = await supabase
@@ -131,20 +138,24 @@ export const useGlobalBackgroundSlots = ({
     // Set up real-time subscriptions for instant admin updates
     const channels: ReturnType<typeof supabase.channel>[] = [];
 
-    if (categoryType === 'story' && storyId) {
-      // Subscribe to story background slots
+    // Determine the effective story ID for real-time sync
+    const effectiveStoryId = categoryType === 'festival' ? festivalId : storyId;
+    const useStoryBackgrounds = (categoryType === 'story' || categoryType === 'festival') && effectiveStoryId;
+
+    if (useStoryBackgrounds) {
+      // Subscribe to story background slots for both 'story' and 'festival' categories
       const storyChannel = supabase
-        .channel(`story-backgrounds-${storyId}`)
+        .channel(`story-backgrounds-${effectiveStoryId}-${Date.now()}`)
         .on(
           'postgres_changes',
           {
             event: '*',
             schema: 'public',
             table: 'story_background_slots',
-            filter: `story_id=eq.${storyId}`,
+            filter: `story_id=eq.${effectiveStoryId}`,
           },
           (payload) => {
-            logger.log('Story background updated:', payload);
+            logger.log(`${categoryType} background updated:`, payload);
             fetchBackgrounds();
           }
         )
@@ -176,7 +187,7 @@ export const useGlobalBackgroundSlots = ({
     return () => {
       channels.forEach(channel => supabase.removeChannel(channel));
     };
-  }, [templateId, storyId, categoryType]);
+  }, [templateId, storyId, festivalId, categoryType]);
 
   return { slots, loading, error };
 };
