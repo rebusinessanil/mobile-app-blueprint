@@ -1067,8 +1067,8 @@ export default function BannerPreview() {
 
             {/* Income Section */}
             {bannerData.chequeAmount && <div className="absolute" style={{
-            bottom: '144px', /* Moved down 12% (was 164px) */
-            left: '56px', /* Moved left 10% (was 62px) */
+            bottom: '164px', /* Moved down 10% (was 182px) */
+            left: '62px', /* Moved left 8% (was 67px) */
             width: '743px',
             minWidth: '743px',
             maxWidth: '743px'
