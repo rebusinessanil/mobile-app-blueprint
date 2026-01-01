@@ -912,3 +912,43 @@ html, body {
     opacity: 0.7;
   }
 }
+
+/* =====================================================
+   BANNER PREVIEW - INSTANT LOAD & HIGH PERFORMANCE
+   ===================================================== */
+
+/* Force instant switching - no CSS transitions on banner preview */
+.banner-scale-container,
+.banner-scale-container *,
+#banner-canvas,
+#banner-canvas * {
+  transition: none !important;
+  animation-duration: 0s !important;
+}
+
+/* Keep sparkle animations active */
+.banner-scale-container [style*="sparkle"],
+#banner-canvas [style*="sparkle"] {
+  animation-duration: revert !important;
+}
+
+/* GPU acceleration for banner preview */
+.banner-scale-container {
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Instant background switching */
+#banner-canvas > div:first-child {
+  transition: none !important;
+}
+
+/* Mobile touch optimization */
+@media (pointer: coarse) {
+  .banner-scale-container {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+}

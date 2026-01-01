@@ -156,21 +156,31 @@ export default function BannerPreview() {
   const [bannerScale, setBannerScale] = useState(1);
   const bannerContainerRef = useRef<HTMLDivElement>(null);
 
+  // RAF-debounced scale update for mobile performance
+  const rafRef = useRef<number | null>(null);
+  
   // Compute scale factor for display - ensures full banner fits perfectly on all devices
   const updateBannerScale = useCallback(() => {
-    if (!bannerContainerRef.current) return;
-    const parentWidth = bannerContainerRef.current.clientWidth;
+    // Cancel any pending RAF to prevent stacking
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+    }
+    
+    rafRef.current = requestAnimationFrame(() => {
+      if (!bannerContainerRef.current) return;
+      const parentWidth = bannerContainerRef.current.clientWidth;
 
-    // Skip if container not ready
-    if (parentWidth === 0) return;
+      // Skip if container not ready
+      if (parentWidth === 0) return;
 
-    // EXACT FIT: Scale to fill the container width precisely
-    const scale = parentWidth / 1350;
-    setBannerScale(scale);
-    setIsLayoutReady(true);
+      // EXACT FIT: Scale to fill the container width precisely
+      const scale = parentWidth / 1350;
+      setBannerScale(scale);
+      setIsLayoutReady(true);
+    });
   }, []);
 
-  // Handle Home button - Full refresh and cache clear
+  // Handle Home button - SPA navigation (no page reload)
   const handleGoHome = useCallback(() => {
     // Clear all banner preview state immediately
     setDownloadComplete(false);
@@ -180,11 +190,9 @@ export default function BannerPreview() {
     setSlotStickers({});
     setStickerImages({});
 
-    // Replace current history entry to prevent back navigation to banner preview
-    // Then navigate to dashboard with full page refresh to clear all cached state
-    window.history.replaceState(null, '', '/dashboard');
-    window.location.replace('/dashboard');
-  }, []);
+    // SPA navigation - instant, no page reload
+    navigate('/dashboard', { replace: true });
+  }, [navigate]);
 
   // Handle Share button - Share banner with WhatsApp priority
   const handleShare = useCallback(async () => {
@@ -236,7 +244,7 @@ export default function BannerPreview() {
     });
   };
 
-  // ResizeObserver-based scaling - updates on container resize
+  // ResizeObserver-based scaling - updates on container resize (RAF-debounced)
   useLayoutEffect(() => {
     if (!bannerContainerRef.current) return;
 
@@ -248,8 +256,13 @@ export default function BannerPreview() {
       updateBannerScale();
     });
     resizeObserver.observe(bannerContainerRef.current);
+    
+    // Cleanup RAF on unmount
     return () => {
       resizeObserver.disconnect();
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+      }
     };
   }, [updateBannerScale]);
 
@@ -547,26 +560,14 @@ export default function BannerPreview() {
     preloadAssets(assetConfig);
   }, [assetConfig, preloadStarted, preloadAssets]);
 
-  // Trigger scale update immediately on mount and resize
+  // Trigger scale update immediately on mount
   // Using useLayoutEffect ensures scale is applied before browser paint - no flicker
   useLayoutEffect(() => {
     // Calculate scale immediately for layout readiness
     updateBannerScale();
   }, [updateBannerScale]);
 
-  // ResizeObserver for responsive updates on all devices
-  useEffect(() => {
-    if (!bannerContainerRef.current) return;
-    const resizeObserver = new ResizeObserver(() => {
-      updateBannerScale();
-    });
-    resizeObserver.observe(bannerContainerRef.current);
-    window.addEventListener('resize', updateBannerScale);
-    return () => {
-      resizeObserver.disconnect();
-      window.removeEventListener('resize', updateBannerScale);
-    };
-  }, [updateBannerScale]);
+  // NOTE: Duplicate ResizeObserver removed - already handled above with RAF debouncing
   if (!bannerData) {
     navigate("/rank-selection");
     return null;
@@ -576,27 +577,31 @@ export default function BannerPreview() {
   if (!isBannerReady) {
     return <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
         <div className="w-full max-w-md">
-          {/* Loading indicator */}
+          {/* Loading indicator - minimal, no animations for instant feel */}
           <div className="text-center mb-6">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
-              <Sparkles className="w-8 h-8 text-primary animate-pulse" />
+              <Sparkles className="w-8 h-8 text-primary" />
             </div>
             <h2 className="text-lg font-semibold text-foreground mb-2">
               {timedOut ? 'Almost Ready' : 'Preparing Your Banner'}
             </h2>
             <p className="text-sm text-muted-foreground">
-              Loading all assets for smooth preview...
+              Loading assets...
             </p>
           </div>
           
-          {/* Progress bar */}
+          {/* Progress bar - instant update, no transition animation */}
           <div className="w-full bg-muted rounded-full h-3 mb-2 overflow-hidden">
-            <div className="h-full bg-primary rounded-full transition-all duration-100 ease-out" style={{
-            width: `${Math.min(loadingProgress, 100)}%`
-          }} />
+            <div 
+              className="h-full bg-primary rounded-full" 
+              style={{
+                width: `${Math.min(loadingProgress, 100)}%`,
+                transition: 'none'
+              }} 
+            />
           </div>
           <p className="text-sm text-muted-foreground text-center font-medium">
-            {Math.round(loadingProgress)}% complete
+            {Math.round(loadingProgress)}%
           </p>
           
           {/* Hidden container for scale calculation - must be in DOM for ResizeObserver */}
@@ -1586,14 +1591,18 @@ export default function BannerPreview() {
       {/* Header - Fixed */}
       <header className="bg-background/95 backdrop-blur-sm z-40 px-4 sm:px-6 py-3 sm:py-4 flex-shrink-0">
         <div className="flex items-center justify-between max-w-[600px] mx-auto">
-          {/* Back button: After download, behave like Home (instant redirect, not browser history) */}
-          <button onClick={downloadComplete ? handleGoHome : () => navigate(-1)} className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl border-2 border-foreground flex items-center justify-center hover:bg-foreground/10 transition-colors touch-target active:scale-95">
+          {/* Back button: SPA navigation - instant, no page reload */}
+          <button 
+            onClick={downloadComplete ? handleGoHome : () => navigate(-1)} 
+            className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl border-2 border-foreground flex items-center justify-center hover:bg-foreground/10 touch-target"
+            style={{ transition: 'none' }}
+          >
             <ArrowLeft className="w-5 h-5 sm:w-6 sm:h-6 text-foreground" />
           </button>
           
           <h1 className="text-base sm:text-xl md:text-2xl font-bold text-foreground tracking-widest">BANNER PREVIEW</h1>
           
-          {isAdmin && <button onClick={() => setIsStickersOpen(true)} className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl border-2 border-primary bg-primary/10 flex items-center justify-center hover:bg-primary/20 transition-colors touch-target">
+          {isAdmin && <button onClick={() => setIsStickersOpen(true)} className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl border-2 border-primary bg-primary/10 flex items-center justify-center hover:bg-primary/20 touch-target" style={{ transition: 'none' }}>
               <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
             </button>}
           {!isAdmin && <div className="w-10 h-10 sm:w-12 sm:h-12" />}
@@ -1610,6 +1619,7 @@ export default function BannerPreview() {
             {/* Parent wrapper - exact fit container */}
             <div ref={bannerContainerRef} className="w-full aspect-square relative overflow-hidden flex items-center justify-center">
               {/* HD Rendering Container - Center-pivot scaling for perfect fit */}
+              {/* INSTANT SWITCHING: No transitions, will-change for GPU acceleration */}
               <div className="banner-scale-container" style={{
               position: 'absolute',
               left: '50%',
@@ -1619,7 +1629,9 @@ export default function BannerPreview() {
               transform: `translate(-50%, -50%) scale(${bannerScale})`,
               transformOrigin: 'center center',
               imageRendering: '-webkit-optimize-contrast' as React.CSSProperties['imageRendering'],
-              willChange: 'transform'
+              willChange: 'transform',
+              backfaceVisibility: 'hidden',
+              WebkitFontSmoothing: 'antialiased'
             }}>
                 <div ref={bannerRef} id="banner-canvas" onMouseMove={isAdmin ? handleStickerMouseMove : undefined} onMouseUp={isAdmin ? handleStickerMouseUp : undefined} onMouseLeave={isAdmin ? handleStickerMouseUp : undefined} style={{
                 position: 'relative',
@@ -1627,7 +1639,8 @@ export default function BannerPreview() {
                 height: '1350px',
                 background: templateColors[selectedTemplate].bgGradient,
                 overflow: 'hidden',
-                cursor: isAdmin && isDragMode ? 'crosshair' : 'default'
+                cursor: isAdmin && isDragMode ? 'crosshair' : 'default',
+                transition: 'none'
               }}>
               {/* Background Layer - Blur only for non-story banners (story & festival are always sharp) */}
               <div 
@@ -2265,13 +2278,13 @@ export default function BannerPreview() {
           </div>}
 
         {/* Post-Download Action Buttons - Shown only after successful download */}
-        {/* Instant response: No debounce, no waiting state - buttons respond immediately */}
+        {/* Instant response: No animations, buttons respond immediately */}
         {downloadComplete && <div className="flex items-center justify-center gap-4 px-4 mt-4">
-            <Button onClick={handleGoHome} variant="outline" size="lg" className="flex-1 max-w-[160px] h-14 gap-2 border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground font-semibold text-base rounded-xl active:scale-95 transition-transform">
+            <Button onClick={handleGoHome} variant="outline" size="lg" className="flex-1 max-w-[160px] h-14 gap-2 border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground font-semibold text-base rounded-xl" style={{ transition: 'none' }}>
               <Home className="w-5 h-5" />
               Home
             </Button>
-            <Button onClick={handleShare} size="lg" className="flex-1 max-w-[160px] h-14 gap-2 bg-[#25D366] hover:bg-[#128C7E] text-white font-semibold text-base rounded-xl shadow-lg active:scale-95 transition-transform">
+            <Button onClick={handleShare} size="lg" className="flex-1 max-w-[160px] h-14 gap-2 bg-[#25D366] hover:bg-[#128C7E] text-white font-semibold text-base rounded-xl shadow-lg" style={{ transition: 'none' }}>
               <Share2 className="w-5 h-5" />
               Share
             </Button>
