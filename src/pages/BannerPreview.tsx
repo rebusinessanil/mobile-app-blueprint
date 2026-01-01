@@ -1067,53 +1067,104 @@ export default function BannerPreview() {
 
             {/* Income Section */}
             {bannerData.chequeAmount && <div className="absolute" style={{
-            bottom: '202px',
+            bottom: '182px', /* Moved down 10% (was 202px) */
             left: '67px',
             width: '743px',
             minWidth: '743px',
             maxWidth: '743px'
           }}>
                 <p style={{
-              fontSize: '36px',
+              fontSize: '32px', /* Reduced by 10% (was 36px) */
               textShadow: '2px 2px 4px rgba(0,0,0,0.9)',
               color: '#ffffff',
               fontWeight: '500',
               letterSpacing: '1px',
               textAlign: 'left',
               margin: 0,
-              marginBottom: '28px'
+              marginBottom: '25px' /* Adjusted for new spacing */
             }}>
                   THIS WEEK INCOME 
                 </p>
-                <p style={{
-              fontSize: (() => {
-                const amount = Number(bannerData.chequeAmount);
-                const formattedLength = amount.toLocaleString('en-IN').length;
-                // Start at 4XL (72px) scaled up by 35%, and scale down based on digit count
-                if (formattedLength <= 5) return 'clamp(65px, 10.8vw, 97px)';     // Up to 9,999
-                if (formattedLength <= 7) return 'clamp(57px, 9.5vw, 86px)';      // Up to 9,99,999
-                if (formattedLength <= 9) return 'clamp(49px, 8.1vw, 76px)';      // Up to 9,99,99,999
-                if (formattedLength <= 12) return 'clamp(41px, 6.8vw, 65px)';     // Up to 9,99,99,99,999
-                return 'clamp(32px, 5.4vw, 54px)';                                 // Larger amounts
-              })(),
-              width: 'fit-content',
-              maxWidth: Number(bannerData.chequeAmount) <= 1000000000 ? 'auto' : '540px',
-              lineHeight: '1',
-              fontWeight: '700',
-              letterSpacing: '1px',
-              textAlign: 'center',
-              margin: 0,
-              fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-              fontStyle: 'normal',
-              color: '#FFD700',
-              textShadow: '2px 2px 4px rgba(0,0,0,0.5)',
-              filter: 'drop-shadow(2px 3px 4px rgba(0,0,0,0.6)',
-              whiteSpace: 'nowrap',
-              transform: 'scale(1) translateX(-8%)',
-              transformOrigin: 'center center'
-            }} className="font-extrabold">
-                  ₹{Number(bannerData.chequeAmount).toLocaleString('en-IN')}/-
-                </p>
+                {/* Premium Amount with Sparkle Effect */}
+                <div style={{ position: 'relative', display: 'inline-block' }}>
+                  <p style={{
+                fontSize: (() => {
+                  const amount = Number(bannerData.chequeAmount);
+                  const formattedLength = amount.toLocaleString('en-IN').length;
+                  // Start at 4XL (72px) scaled up by 35%, and scale down based on digit count
+                  if (formattedLength <= 5) return 'clamp(65px, 10.8vw, 97px)';     // Up to 9,999
+                  if (formattedLength <= 7) return 'clamp(57px, 9.5vw, 86px)';      // Up to 9,99,999
+                  if (formattedLength <= 9) return 'clamp(49px, 8.1vw, 76px)';      // Up to 9,99,99,999
+                  if (formattedLength <= 12) return 'clamp(41px, 6.8vw, 65px)';     // Up to 9,99,99,99,999
+                  return 'clamp(32px, 5.4vw, 54px)';                                 // Larger amounts
+                })(),
+                width: 'fit-content',
+                maxWidth: Number(bannerData.chequeAmount) <= 1000000000 ? 'auto' : '540px',
+                lineHeight: '1',
+                fontWeight: '800', /* Increased weight */
+                letterSpacing: '2px',
+                textAlign: 'center',
+                margin: 0,
+                fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+                fontStyle: 'normal',
+                background: 'linear-gradient(90deg, #FFD700 0%, #FFF8DC 35%, #FFD700 50%, #FFFACD 70%, #FFD700 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+                textShadow: 'none',
+                filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5)) drop-shadow(0 4px 8px rgba(255,215,0,0.3))',
+                whiteSpace: 'nowrap',
+                transform: 'scale(1) translateX(-8%)',
+                transformOrigin: 'center center'
+              }} className="font-extrabold">
+                    ₹{Number(bannerData.chequeAmount).toLocaleString('en-IN')}/-
+                  </p>
+                  {/* Sparkle/Glitter Effects */}
+                  <div style={{
+                    position: 'absolute',
+                    top: '-8px',
+                    right: '-12px',
+                    width: '24px',
+                    height: '24px',
+                    background: 'radial-gradient(circle, #FFFFFF 0%, #FFD700 40%, transparent 70%)',
+                    borderRadius: '50%',
+                    animation: 'sparkle 1.5s ease-in-out infinite',
+                    opacity: 0.9
+                  }} />
+                  <div style={{
+                    position: 'absolute',
+                    top: '15%',
+                    right: '5%',
+                    width: '16px',
+                    height: '16px',
+                    background: 'radial-gradient(circle, #FFFFFF 0%, #FFF8DC 40%, transparent 70%)',
+                    borderRadius: '50%',
+                    animation: 'sparkle 2s ease-in-out infinite 0.3s',
+                    opacity: 0.8
+                  }} />
+                  <div style={{
+                    position: 'absolute',
+                    bottom: '10%',
+                    right: '15%',
+                    width: '12px',
+                    height: '12px',
+                    background: 'radial-gradient(circle, #FFFFFF 0%, #FFD700 40%, transparent 70%)',
+                    borderRadius: '50%',
+                    animation: 'sparkle 1.8s ease-in-out infinite 0.6s',
+                    opacity: 0.7
+                  }} />
+                  <div style={{
+                    position: 'absolute',
+                    top: '40%',
+                    right: '-5px',
+                    width: '10px',
+                    height: '10px',
+                    background: 'radial-gradient(circle, #FFFFFF 0%, #FFFACD 40%, transparent 70%)',
+                    borderRadius: '50%',
+                    animation: 'sparkle 2.2s ease-in-out infinite 0.9s',
+                    opacity: 0.85
+                  }} />
+                </div>
               </div>}
           </>;
     }
