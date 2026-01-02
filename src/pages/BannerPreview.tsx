@@ -18,8 +18,8 @@ import { useUnifiedStickerSlots, mapBannerDataToStickerOptions } from "@/hooks/u
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Sticker } from "@/hooks/useStickers";
-import { toPng } from "html-to-image";
-import download from "downloadjs";
+import { toJpeg } from "html-to-image";
+import { triggerDownload, base64ToBlob, cleanupBannerMemory } from "@/lib/downloadUtils";
 import { useWalletDeduction } from "@/hooks/useWalletDeduction";
 import InsufficientBalanceModal from "@/components/InsufficientBalanceModal";
 import { useBannerAssetPreloader } from "@/hooks/useBannerAssetPreloader";
@@ -204,19 +204,29 @@ export default function BannerPreview() {
     setSelectedStickerId(null);
   }, []);
 
-  // Handle Home button - SPA navigation (no page reload)
+  // Handle Home button - SPA navigation with full memory cleanup
   const handleGoHome = useCallback(() => {
-    // Clear all banner preview state immediately
+    // Step 1: Clear all banner preview state immediately
     setDownloadComplete(false);
     setDownloadedBannerUrl(null);
     setIsDownloading(false);
     setStickers([]);
     setSlotStickers({});
     setStickerImages({});
+    
+    // Step 2: Destroy banner canvas and release memory
+    if (bannerRef.current) {
+      cleanupBannerMemory(bannerRef.current);
+    }
+    
+    // Step 3: Revoke any blob URLs stored in state
+    if (downloadedBannerUrl && downloadedBannerUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(downloadedBannerUrl);
+    }
 
-    // SPA navigation - instant, no page reload
+    // Step 4: SPA navigation - instant, no page reload
     navigate('/dashboard', { replace: true });
-  }, [navigate]);
+  }, [navigate, downloadedBannerUrl]);
 
   // Handle Share button - Share banner with WhatsApp priority
   const handleShare = useCallback(async () => {
@@ -1571,11 +1581,12 @@ export default function BannerPreview() {
       }
     }
 
-    // Step 2: Generate banner
+    // Step 2: Generate banner with optimized JPEG export
     setIsDownloading(true);
-    const loadingToast = toast.loading("Generating ultra HD banner...");
+    const loadingToast = toast.loading("Creating your banner...");
+    
     try {
-      // STRICT FIXED CANVAS: Force exactly 1350×1350px - no devicePixelRatio influence
+      // OPTIMIZED EXPORT: Use JPEG for faster downloads (smaller file size)
       const FIXED_SIZE = 1350;
 
       // Temporarily remove the scale transform for full-resolution capture
@@ -1588,19 +1599,28 @@ export default function BannerPreview() {
       bannerElement.style.transform = 'scale(1)';
       bannerElement.style.width = `${FIXED_SIZE}px`;
       bannerElement.style.height = `${FIXED_SIZE}px`;
-      const dataUrl = await toPng(bannerElement, {
+
+      // PERFORMANCE: Use JPEG with optimized settings
+      // - pixelRatio 1.5 (instead of 2) = ~40% faster render
+      // - JPEG format = ~60% smaller file size than PNG
+      // - quality 0.92 = excellent quality with compression
+      const dataUrl = await toJpeg(bannerElement, {
         cacheBust: true,
         width: FIXED_SIZE,
         height: FIXED_SIZE,
         canvasWidth: FIXED_SIZE,
         canvasHeight: FIXED_SIZE,
-        pixelRatio: 2,
-        // HD export quality - 2x resolution for crisp output
-        quality: 1,
-        backgroundColor: null,
+        pixelRatio: 1.5, // Optimized for speed
+        quality: 0.92, // High quality JPEG
+        backgroundColor: '#000000', // Required for JPEG
         filter: node => {
-          // Exclude UI elements and ALL watermarks from final export (clean banner)
-          if (node.classList?.contains("slot-selector") || node.classList?.contains("control-buttons") || node.classList?.contains("whatsapp-float") || node.id === "ignore-download" || node.id === "brand-watermark-preview" || node.id === "mobile-watermark-permanent") {
+          // Exclude UI elements and ALL watermarks from final export
+          if (node.classList?.contains("slot-selector") || 
+              node.classList?.contains("control-buttons") || 
+              node.classList?.contains("whatsapp-float") || 
+              node.id === "ignore-download" || 
+              node.id === "brand-watermark-preview" || 
+              node.id === "mobile-watermark-permanent") {
             return false;
           }
           return true;
@@ -1613,8 +1633,7 @@ export default function BannerPreview() {
       bannerElement.style.height = originalHeight;
       toast.dismiss(loadingToast);
 
-      // Step 3: Deduct wallet balance and save download record with banner URL
-      // Admin bypass is handled inside the hook - admins don't pay but downloads are recorded
+      // Step 3: Deduct wallet balance and save download record
       const templateId = currentTemplateId || bannerData?.templateId;
       const {
         success,
@@ -1622,51 +1641,60 @@ export default function BannerPreview() {
         isAdminBypass
       } = await checkAndDeductBalance(userId, categoryName, dataUrl, templateId, isAdmin);
 
-      // Step 4: If insufficient balance (race condition), show modal
       if (insufficientBalance) {
         setShowInsufficientBalanceModal(true);
         return;
       }
 
-      // Step 5: If wallet deduction failed for other reasons, show error
       if (!success) {
-        return; // Error toast already shown by hook
+        return;
       }
 
-      // Step 6: Download the banner after successful deduction
+      // Step 4: Download using optimized blob-based method
       const timestamp = new Date().getTime();
-      download(dataUrl, `ReBusiness-Banner-${categoryName}-${timestamp}.png`);
+      const filename = `ReBusiness-Banner-${categoryName}-${timestamp}.jpg`;
+      
+      // Convert to blob and trigger download
+      const blob = await base64ToBlob(dataUrl, 'image/jpeg');
+      const sizeMB = blob.size / (1024 * 1024);
+      
+      await triggerDownload(blob, filename);
 
       // Store the downloaded banner URL for sharing
       setDownloadedBannerUrl(dataUrl);
       setDownloadComplete(true);
 
-      // Calculate approximate size (base64 size estimation)
-      const sizeMB = (dataUrl.length * 0.75 / (1024 * 1024)).toFixed(2);
-
-      // Admin gets different success message (no deduction)
+      // Admin gets different success message
       if (isAdminBypass) {
-        toast.success(`Banner saved to your device! (${sizeMB} MB)`, {
-          description: "Admin download - no credits deducted. Check your Downloads or Gallery app.",
-          duration: 5000
+        toast.success(`Banner saved! (${sizeMB.toFixed(2)} MB)`, {
+          description: "Admin download - no credits deducted.",
+          duration: 4000
         });
       } else {
-        // Get updated balance to show in success message
-        const {
-          data: updatedCredits
-        } = await supabase.from("user_credits").select("balance").eq("user_id", userId).single();
+        const { data: updatedCredits } = await supabase
+          .from("user_credits")
+          .select("balance")
+          .eq("user_id", userId)
+          .single();
         const remainingBalance = updatedCredits?.balance || 0;
-        toast.success(`Banner saved to your device! (${sizeMB} MB) • ₹10 deducted`, {
-          description: `Remaining balance: ₹${remainingBalance}. Check your Downloads or Gallery app to access your banner.`,
-          duration: 6000
+        toast.success(`Banner saved! (${sizeMB.toFixed(2)} MB) • ₹10 deducted`, {
+          description: `Balance: ₹${remainingBalance}`,
+          duration: 4000
         });
       }
+
+      // Step 5: Memory cleanup after successful download
+      // Schedule cleanup to run in idle time
+      setTimeout(() => {
+        cleanupBannerMemory(bannerRef.current);
+      }, 500);
+
     } catch (error) {
       console.error("Banner download failed:", error);
       toast.dismiss(loadingToast);
-      toast.error("Download failed. Please try again later.", {
-        description: "Check your internet connection and ensure storage access is allowed. If the issue persists, contact support.",
-        duration: 7000
+      toast.error("Download failed. Please try again.", {
+        description: "Check your connection and try again.",
+        duration: 5000
       });
     } finally {
       setIsDownloading(false);
