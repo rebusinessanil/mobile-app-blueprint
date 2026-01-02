@@ -152,8 +152,9 @@ export default function BannerPreview() {
     };
   }, [isDraggingProfile, profileDragStart, profilePicScale]);
 
-  // *** MOBILE-FIRST FIXED SCALE ARCHITECTURE ***
-  // Fixed scale calculated once on mount - no re-renders on resize for stability
+  // *** MOBILE-FIRST UNIVERSAL LAYOUT - FIXED REFERENCE WIDTH ***
+  // Same visual appearance across ALL devices (mobile, tablet, desktop)
+  // Banner canvas is 1350px fixed, scaled down to fit container
   const [bannerScale, setBannerScale] = useState(0);
   const bannerContainerRef = useRef<HTMLDivElement>(null);
   const scaleCalculatedRef = useRef(false);
@@ -162,22 +163,34 @@ export default function BannerPreview() {
   const rafRef = useRef<number | null>(null);
   
   // *** MOBILE-FIRST: Calculate scale ONCE on mount ***
-  // Fixed scale prevents layout shifts and crashes on mobile
-  // Ensures banner NEVER overflows container with 2% safety margin
+  // UNIVERSAL LAYOUT: Same scale logic for all devices
+  // Fixed reference width (1350px) scaled to fit container perfectly
+  // Ensures banner NEVER overflows - mobile appearance is universal
   const calculateInitialScale = useCallback(() => {
     if (scaleCalculatedRef.current) return; // Only calculate once
     if (!bannerContainerRef.current) return;
     
-    const parentWidth = bannerContainerRef.current.clientWidth;
-    if (parentWidth === 0) return;
+    const containerWidth = bannerContainerRef.current.clientWidth;
+    if (containerWidth === 0) return;
 
-    // FIXED SCALE with safety margin - prevents overflow
-    // Use 98% of available width to ensure banner never overflows
-    const safeWidth = parentWidth * 0.98;
-    const scale = Math.min(safeWidth / 1350, 1); // Never scale above 1
-    setBannerScale(scale);
+    // UNIVERSAL FIT: Calculate scale to fit 1350px canvas into container
+    // Use 96% safety margin to prevent any overflow on all devices
+    const CANVAS_SIZE = 1350;
+    const SAFETY_MARGIN = 0.96; // 4% margin for safety
+    const availableWidth = containerWidth * SAFETY_MARGIN;
+    
+    // Calculate scale - same formula for all devices
+    const scale = Math.min(availableWidth / CANVAS_SIZE, 1); // Never > 1
+    
+    // Minimum scale to prevent canvas from being too small
+    const MIN_SCALE = 0.15; // ~200px minimum width
+    const finalScale = Math.max(scale, MIN_SCALE);
+    
+    setBannerScale(finalScale);
     setIsLayoutReady(true);
     scaleCalculatedRef.current = true;
+    
+    console.log(`📐 Universal scale: ${(finalScale * 100).toFixed(1)}% (container: ${containerWidth}px)`);
   }, []);
 
   // Legacy compatibility wrapper
@@ -642,25 +655,27 @@ export default function BannerPreview() {
     return null;
   }
 
-  // *** STRICT ALL-OR-NOTHING: Show skeleton until isBannerReady is TRUE ***
+  // *** INSTANT RENDER STRATEGY: Show loading ONLY if truly needed ***
+  // Mobile-first: Avoid black screen by showing minimal loading state
   if (!isBannerReady) {
-    return <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
         <div className="w-full max-w-md">
-          {/* Loading indicator - minimal, no animations for instant feel */}
+          {/* Minimal loading indicator - no heavy animations */}
           <div className="text-center mb-6">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
-              <Sparkles className="w-8 h-8 text-primary" />
+            <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-primary/10 mb-4">
+              <Sparkles className="w-7 h-7 text-primary" />
             </div>
-            <h2 className="text-lg font-semibold text-foreground mb-2">
-              {timedOut ? 'Almost Ready' : 'Preparing Your Banner'}
+            <h2 className="text-base font-semibold text-foreground mb-1">
+              {timedOut ? 'Almost Ready' : 'Loading Banner'}
             </h2>
-            <p className="text-sm text-muted-foreground">
-              Loading assets...
+            <p className="text-xs text-muted-foreground">
+              {loadingProgress > 80 ? 'Finishing up...' : 'Please wait...'}
             </p>
           </div>
           
-          {/* Progress bar - instant update, no transition animation */}
-          <div className="w-full bg-muted rounded-full h-3 mb-2 overflow-hidden">
+          {/* Lightweight progress bar - instant update, no transitions */}
+          <div className="w-full bg-muted/50 rounded-full h-2 mb-2 overflow-hidden">
             <div 
               className="h-full bg-primary rounded-full" 
               style={{
@@ -669,16 +684,19 @@ export default function BannerPreview() {
               }} 
             />
           </div>
-          <p className="text-sm text-muted-foreground text-center font-medium">
+          <p className="text-xs text-muted-foreground text-center font-medium">
             {Math.round(loadingProgress)}%
           </p>
           
-          {/* Hidden container for scale calculation - must be in DOM for ResizeObserver */}
-          <div ref={bannerContainerRef} className="absolute opacity-0 pointer-events-none w-full max-w-[500px] aspect-square" style={{
-          left: '-9999px'
-        }} />
+          {/* Hidden container for scale calculation - MUST be in DOM with proper width */}
+          <div 
+            ref={bannerContainerRef} 
+            className="fixed left-0 top-0 w-[calc(100vw-32px)] max-w-[500px] aspect-square opacity-0 pointer-events-none"
+            style={{ zIndex: -1 }}
+          />
         </div>
-      </div>;
+      </div>
+    );
   }
 
   // Category-specific content render function
@@ -1678,38 +1696,44 @@ export default function BannerPreview() {
         </div>
       </header>
 
-      {/* Banner Preview Container - Fixed at top, consistent across all devices */}
-      {/* When download is complete, freeze the preview (pointer-events: none) */}
+      {/* *** MOBILE-FIRST UNIVERSAL BANNER CONTAINER ***
+          - Same visual on ALL devices (mobile, tablet, desktop)
+          - Fixed reference width (1350px) scaled to fit
+          - Never overflows, never flickers, never re-renders */}
       <div className={`px-2 sm:px-4 py-2 sm:py-3 flex-shrink-0 bg-background overflow-hidden ${downloadComplete ? 'pointer-events-none' : ''}`}>
-        {/* Display wrapper - fixed max width for consistent laptop-like rendering */}
+        {/* Universal wrapper - consistent max-width for all screens */}
         <div className="relative w-full max-w-[500px] mx-auto overflow-hidden">
-          <div className="border-4 border-primary rounded-2xl shadow-2xl overflow-hidden">
-            {/* CSS Transform Scaled HTML Preview - Mimics Canvas behavior */}
-            {/* Parent wrapper - exact fit container */}
-            <div ref={bannerContainerRef} className="w-full aspect-square relative overflow-hidden flex items-center justify-center">
-              {/* *** MOBILE-FIRST FIXED CANVAS - NEVER OVERFLOWS ***
-                  - Fixed scale computed once on mount with safety margin
-                  - GPU-accelerated transforms for smooth rendering
-                  - Instant slot switching with zero layout shift
-                  - Images cached via preloader - never re-fetched */}
-              <div className="banner-scale-container" style={{
-              position: 'absolute',
-              left: '50%',
-              top: '50%',
-              width: '1350px',
-              height: '1350px',
-              // GPU-safe transform with fixed scale - never overflows
-              transform: `translate(-50%, -50%) scale(${bannerScale})`,
-              transformOrigin: 'center center',
-              // Mobile optimizations for sharpness
-              imageRendering: 'auto',
-              willChange: 'auto',
-              backfaceVisibility: 'hidden',
-              WebkitBackfaceVisibility: 'hidden',
-              WebkitFontSmoothing: 'antialiased',
-              // Prevent any overflow
-              overflow: 'hidden',
-            }}>
+          {/* Gold border container - premium frame */}
+          <div className="border-4 border-primary rounded-2xl shadow-2xl overflow-hidden banner-preview-frame">
+            {/* Aspect ratio container - maintains 1:1 ratio universally */}
+            <div ref={bannerContainerRef} className="w-full aspect-square relative overflow-hidden flex items-center justify-center bg-background/50">
+              {/* *** MOBILE-FIRST UNIVERSAL CANVAS ***
+                  - FIXED 1350x1350px canvas scaled to fit container
+                  - GPU-safe transforms for all devices
+                  - Same visual appearance on mobile, tablet, desktop
+                  - Static layers load once, dynamic layers switch instantly */}
+              <div 
+                className="banner-scale-container" 
+                style={{
+                  position: 'absolute',
+                  left: '50%',
+                  top: '50%',
+                  width: '1350px',
+                  height: '1350px',
+                  // GPU-safe transform - universal scaling
+                  transform: `translate(-50%, -50%) scale(${bannerScale})`,
+                  transformOrigin: 'center center',
+                  // Mobile-safe rendering
+                  imageRendering: 'auto',
+                  willChange: 'auto',
+                  backfaceVisibility: 'hidden',
+                  WebkitBackfaceVisibility: 'hidden',
+                  WebkitFontSmoothing: 'antialiased',
+                  // Strict containment - no overflow
+                  overflow: 'hidden',
+                  contain: 'strict',
+                }}
+              >
                 <div ref={bannerRef} id="banner-canvas" onMouseMove={isAdmin ? handleStickerMouseMove : undefined} onMouseUp={isAdmin ? handleStickerMouseUp : undefined} onMouseLeave={isAdmin ? handleStickerMouseUp : undefined} style={{
                 position: 'relative',
                 width: '1350px',

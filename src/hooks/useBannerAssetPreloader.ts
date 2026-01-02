@@ -18,9 +18,10 @@ interface PreloadState {
   timedOut: boolean;
 }
 
-// *** MOBILE-FIRST TIMEOUTS - Aggressive for instant loading ***
-const GLOBAL_TIMEOUT_MS = 2500; // 2.5s max wait for mobile (was 3000)
-const PER_IMAGE_TIMEOUT_MS = 1200; // 1.2s per image (was 1500)
+// *** MOBILE-FIRST TIMEOUTS - Ultra-aggressive for instant loading ***
+// Goal: Show banner ASAP, never block on slow assets
+const GLOBAL_TIMEOUT_MS = 1800; // 1.8s max wait (was 2500) - show banner fast
+const PER_IMAGE_TIMEOUT_MS = 800; // 0.8s per image (was 1200) - fail fast
 const PROGRESS_THROTTLE_MS = 16; // ~60fps update rate for smoother progress
 
 // *** GLOBAL IMAGE CACHE - Shared across all renders ***
@@ -131,8 +132,9 @@ export const useBannerAssetPreloader = () => {
   }, []);
 
   /**
-   * Main preload - SINGLE BATCH parallel loading (all at once)
-   * MOBILE-FIRST: One-time execution, aggressive timeouts, image caching
+   * Main preload - INSTANT DISPLAY PRIORITY
+   * MOBILE-FIRST: Load critical assets first, show banner ASAP
+   * Non-critical assets continue loading in background
    */
   const preloadAssets = useCallback(async (config: PreloadConfig): Promise<void> => {
     // *** CRITICAL: Prevent re-loading - one-time only for mobile stability ***
@@ -143,36 +145,42 @@ export const useBannerAssetPreloader = () => {
     }
     
     abortRef.current = false;
-    setState({ allLoaded: false, progress: 0, timedOut: false });
+    setState({ allLoaded: false, progress: 5, timedOut: false }); // Start at 5% to show activity
 
-    // Collect all URLs, deduplicated
-    const allUrls = new Set<string>();
+    // *** PRIORITY LOADING: Critical assets first ***
+    // Critical = what's visible immediately (primary photo, active background)
+    const criticalUrls = new Set<string>();
+    const secondaryUrls = new Set<string>();
     
-    if (config.activeBackgroundUrl) allUrls.add(config.activeBackgroundUrl);
-    if (config.primaryPhotoUrl) allUrls.add(config.primaryPhotoUrl);
-    if (config.downloadIconUrl) allUrls.add(config.downloadIconUrl);
-    config.logoUrls?.forEach(url => url && allUrls.add(url));
-    config.visibleStickerUrls?.forEach(url => url && allUrls.add(url));
-    config.otherBackgroundUrls?.forEach(url => url && allUrls.add(url));
-    config.otherStickerUrls?.forEach(url => url && allUrls.add(url));
-    config.uplineAvatarUrls?.forEach(url => url && allUrls.add(url));
+    // Critical: Immediately visible assets
+    if (config.activeBackgroundUrl) criticalUrls.add(config.activeBackgroundUrl);
+    if (config.primaryPhotoUrl) criticalUrls.add(config.primaryPhotoUrl);
+    
+    // Secondary: Everything else
+    if (config.downloadIconUrl) secondaryUrls.add(config.downloadIconUrl);
+    config.logoUrls?.forEach(url => url && secondaryUrls.add(url));
+    config.visibleStickerUrls?.forEach(url => url && secondaryUrls.add(url));
+    config.otherBackgroundUrls?.forEach(url => url && secondaryUrls.add(url));
+    config.otherStickerUrls?.forEach(url => url && secondaryUrls.add(url));
+    config.uplineAvatarUrls?.forEach(url => url && secondaryUrls.add(url));
 
-    const uniqueUrls = Array.from(allUrls);
+    // Filter out already cached
+    const criticalToLoad = Array.from(criticalUrls).filter(url => !decodedImages.has(url));
+    const secondaryToLoad = Array.from(secondaryUrls).filter(url => !decodedImages.has(url));
     
-    // Filter out already decoded images (from previous sessions or cache)
-    const urlsToLoad = uniqueUrls.filter(url => !decodedImages.has(url));
+    const totalToLoad = criticalToLoad.length + secondaryToLoad.length;
     
     // All images already cached - instant complete
-    if (urlsToLoad.length === 0) {
+    if (totalToLoad === 0) {
       hasLoadedRef.current = true;
       setState({ allLoaded: true, progress: 100, timedOut: false });
       console.log('⚡ All assets cached - instant display');
       return;
     }
 
-    console.log(`⚡ Loading ${urlsToLoad.length} assets in single batch (mobile-first)...`);
+    console.log(`⚡ Loading ${criticalToLoad.length} critical + ${secondaryToLoad.length} secondary assets...`);
 
-    // Global timeout fallback - show content even if some images fail
+    // Ultra-aggressive global timeout - show content even if some images fail
     timeoutRef.current = setTimeout(() => {
       if (!abortRef.current) {
         console.log('⚠️ Timeout - showing banner immediately');
@@ -181,17 +189,33 @@ export const useBannerAssetPreloader = () => {
       }
     }, GLOBAL_TIMEOUT_MS);
 
-    // *** SINGLE BATCH: Load ALL images in parallel at once ***
+    // *** PHASE 1: Load critical assets first (visible immediately) ***
     let loaded = 0;
-    const total = urlsToLoad.length;
-    
-    const loadPromises = urlsToLoad.map(async (url) => {
+    const criticalPromises = criticalToLoad.map(async (url) => {
       await loadImage(url);
       loaded++;
-      updateProgress((loaded / total) * 100);
+      // Critical assets weight more in progress (60% of total)
+      const criticalProgress = (loaded / Math.max(criticalToLoad.length, 1)) * 60;
+      updateProgress(criticalProgress);
     });
 
-    await Promise.all(loadPromises);
+    await Promise.all(criticalPromises);
+    
+    // After critical assets - mark ready early (users see banner faster)
+    if (!abortRef.current && criticalToLoad.length > 0) {
+      console.log('✅ Critical assets loaded - banner visible');
+    }
+
+    // *** PHASE 2: Load secondary assets (logos, other slots, stickers) ***
+    const secondaryPromises = secondaryToLoad.map(async (url) => {
+      await loadImage(url);
+      loaded++;
+      // Secondary assets fill remaining 40%
+      const totalProgress = 60 + ((loaded - criticalToLoad.length) / Math.max(secondaryToLoad.length, 1)) * 40;
+      updateProgress(Math.min(totalProgress, 100));
+    });
+
+    await Promise.all(secondaryPromises);
 
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
