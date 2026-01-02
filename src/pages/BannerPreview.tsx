@@ -115,6 +115,9 @@ export default function BannerPreview() {
   // Download success state - shows success screen with image preview
   const [downloadComplete, setDownloadComplete] = useState(false);
   const [downloadedImageUrl, setDownloadedImageUrl] = useState<string | null>(null);
+  
+  // Download progress state - luxury progress UI
+  const [downloadProgress, setDownloadProgress] = useState(0);
 
   // Wallet deduction hook - admins bypass credit deduction
   const {
@@ -1514,7 +1517,7 @@ export default function BannerPreview() {
     }
   };
 
-  // *** DOWNLOAD WITH SUCCESS SCREEN ***
+  // *** DOWNLOAD WITH PROGRESS UI ***
   const handleDownload = async () => {
     if (!bannerRef.current || !userId || isDownloading) return;
 
@@ -1536,8 +1539,11 @@ export default function BannerPreview() {
     }
 
     setIsDownloading(true);
+    setDownloadProgress(0);
     
     try {
+      // Phase 1: Preparing (0-20%)
+      setDownloadProgress(5);
       const FIXED_SIZE = 1350;
       const bannerElement = bannerRef.current;
       
@@ -1545,10 +1551,13 @@ export default function BannerPreview() {
       const originalWidth = bannerElement.style.width;
       const originalHeight = bannerElement.style.height;
 
+      setDownloadProgress(15);
       bannerElement.style.transform = 'scale(1)';
       bannerElement.style.width = `${FIXED_SIZE}px`;
       bannerElement.style.height = `${FIXED_SIZE}px`;
 
+      // Phase 2: Rendering (20-50%)
+      setDownloadProgress(25);
       const dataUrl = await toJpeg(bannerElement, {
         cacheBust: true,
         width: FIXED_SIZE,
@@ -1571,10 +1580,13 @@ export default function BannerPreview() {
         }
       });
 
+      setDownloadProgress(50);
       bannerElement.style.transform = originalTransform;
       bannerElement.style.width = originalWidth;
       bannerElement.style.height = originalHeight;
 
+      // Phase 3: Processing wallet (50-70%)
+      setDownloadProgress(60);
       const templateId = currentTemplateId || bannerData?.templateId;
       const { success, insufficientBalance } = await checkAndDeductBalance(
         userId, categoryName, dataUrl, templateId, isAdmin
@@ -1583,18 +1595,26 @@ export default function BannerPreview() {
       if (insufficientBalance) {
         setShowInsufficientBalanceModal(true);
         setIsDownloading(false);
+        setDownloadProgress(0);
         return;
       }
 
       if (!success) {
         setIsDownloading(false);
+        setDownloadProgress(0);
         return;
       }
 
+      // Phase 4: Compressing (70-90%)
+      setDownloadProgress(75);
       const timestamp = new Date().getTime();
       const filename = `ReBusiness-Banner-${categoryName}-${timestamp}.jpg`;
       const { blob } = await compressToTargetRange(dataUrl, 2, 5, 0.92);
+      
+      // Phase 5: Downloading (90-100%)
+      setDownloadProgress(90);
       await triggerDownload(blob, filename);
+      setDownloadProgress(100);
 
       // Store downloaded image for preview and show success screen
       setDownloadedImageUrl(dataUrl);
@@ -1605,6 +1625,7 @@ export default function BannerPreview() {
     } catch (error) {
       console.error("Download failed:", error);
       toast.error("Download failed");
+      setDownloadProgress(0);
     } finally {
       setIsDownloading(false);
     }
@@ -1692,6 +1713,46 @@ export default function BannerPreview() {
           {!isAdmin && <div className="w-10 h-10 sm:w-12 sm:h-12" />}
         </div>
       </header>
+
+      {/* *** DOWNLOAD PROGRESS OVERLAY - Luxury Style *** */}
+      {isDownloading && (
+        <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex items-center justify-center">
+          <div className="w-full max-w-xs px-6">
+            {/* Premium Progress Container */}
+            <div className="text-center mb-6">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 mb-4 border border-primary/30 shadow-[0_0_30px_rgba(255,215,0,0.15)]">
+                <Sparkles className="w-8 h-8 text-primary" />
+              </div>
+              <h2 className="text-lg font-semibold text-foreground mb-1">
+                Processing Banner
+              </h2>
+              <p className="text-xs text-muted-foreground">
+                {downloadProgress < 30 ? 'Preparing...' : 
+                 downloadProgress < 60 ? 'Rendering...' : 
+                 downloadProgress < 85 ? 'Compressing...' : 
+                 'Saving...'}
+              </p>
+            </div>
+            
+            {/* Luxury Progress Bar */}
+            <div className="relative w-full h-3 bg-muted/50 rounded-full overflow-hidden border border-primary/20 shadow-inner">
+              <div 
+                className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-primary via-yellow-400 to-primary"
+                style={{
+                  width: `${downloadProgress}%`,
+                  transition: 'width 0.15s ease-out',
+                  boxShadow: '0 0 12px rgba(255, 215, 0, 0.5)'
+                }}
+              />
+            </div>
+            
+            {/* Percentage Display */}
+            <p className="text-center mt-3 text-lg font-bold text-primary">
+              {Math.round(downloadProgress)}%
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* *** MOBILE-FIRST UNIVERSAL BANNER CONTAINER ***
           - Same visual on ALL devices (mobile, tablet, desktop)
