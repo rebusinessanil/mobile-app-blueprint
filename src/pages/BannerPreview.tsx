@@ -1,6 +1,6 @@
 import { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { ArrowLeft, Settings, Sparkles } from "lucide-react";
+import { ArrowLeft, Settings, Sparkles, Home, CheckCircle2 } from "lucide-react";
 import BannerPreviewSkeleton from "@/components/skeletons/BannerPreviewSkeleton";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -112,8 +112,9 @@ export default function BannerPreview() {
   const [isProfileControlMinimized, setIsProfileControlMinimized] = useState(false);
   const [showInsufficientBalanceModal, setShowInsufficientBalanceModal] = useState(false);
 
-  // Download state - simplified, no post-download UI
-  // Download happens silently, user stays on same page
+  // Download success state - shows success screen with image preview
+  const [downloadComplete, setDownloadComplete] = useState(false);
+  const [downloadedImageUrl, setDownloadedImageUrl] = useState<string | null>(null);
 
   // Wallet deduction hook - admins bypass credit deduction
   const {
@@ -203,9 +204,22 @@ export default function BannerPreview() {
     setSelectedStickerId(null);
   }, []);
 
+  // Handle Home button - SPA navigation to dashboard
+  const handleGoHome = useCallback(() => {
+    // Cleanup memory
+    if (bannerRef.current) {
+      cleanupBannerMemory(bannerRef.current);
+    }
+    // Revoke blob URL if exists
+    if (downloadedImageUrl) {
+      URL.revokeObjectURL(downloadedImageUrl);
+    }
+    // SPA navigation - instant, no reload
+    navigate('/dashboard', { replace: true });
+  }, [navigate, downloadedImageUrl]);
+
   // Handle back navigation - clean exit
   const handleGoBack = useCallback(() => {
-    // Memory cleanup before leaving
     if (bannerRef.current) {
       cleanupBannerMemory(bannerRef.current);
     }
@@ -1481,9 +1495,7 @@ export default function BannerPreview() {
     }
     const savingToast = toast.loading("Saving profile picture defaults...");
     try {
-      const {
-        error
-      } = await supabase.from('motivational_profile_defaults').upsert({
+      const { error } = await supabase.from('motivational_profile_defaults').upsert({
         motivational_banner_id: bannerData.motivationalBannerId,
         profile_position_x: profilePicPosition.x,
         profile_position_y: profilePicPosition.y,
@@ -1493,9 +1505,7 @@ export default function BannerPreview() {
       });
       if (error) throw error;
       toast.dismiss(savingToast);
-      toast.success("Profile picture defaults saved! All users will see these settings.");
-
-      // Refetch to confirm the save
+      toast.success("Profile picture defaults saved!");
       refetchProfileDefaults();
     } catch (error) {
       console.error("Error saving profile defaults:", error);
@@ -1503,7 +1513,8 @@ export default function BannerPreview() {
       toast.error("Failed to save profile defaults");
     }
   };
-  // *** SILENT FAST DOWNLOAD - No loading UI, no post-download screens ***
+
+  // *** DOWNLOAD WITH SUCCESS SCREEN ***
   const handleDownload = async () => {
     if (!bannerRef.current || !userId || isDownloading) return;
 
@@ -1524,24 +1535,20 @@ export default function BannerPreview() {
       }
     }
 
-    // Silent download - no loading state shown
     setIsDownloading(true);
     
     try {
       const FIXED_SIZE = 1350;
       const bannerElement = bannerRef.current;
       
-      // Store original styles
       const originalTransform = bannerElement.style.transform;
       const originalWidth = bannerElement.style.width;
       const originalHeight = bannerElement.style.height;
 
-      // Reset to full size for export
       bannerElement.style.transform = 'scale(1)';
       bannerElement.style.width = `${FIXED_SIZE}px`;
       bannerElement.style.height = `${FIXED_SIZE}px`;
 
-      // Fast JPEG export
       const dataUrl = await toJpeg(bannerElement, {
         cacheBust: true,
         width: FIXED_SIZE,
@@ -1564,14 +1571,12 @@ export default function BannerPreview() {
         }
       });
 
-      // Restore original styles
       bannerElement.style.transform = originalTransform;
       bannerElement.style.width = originalWidth;
       bannerElement.style.height = originalHeight;
 
-      // Deduct balance
       const templateId = currentTemplateId || bannerData?.templateId;
-      const { success, insufficientBalance, isAdminBypass } = await checkAndDeductBalance(
+      const { success, insufficientBalance } = await checkAndDeductBalance(
         userId, categoryName, dataUrl, templateId, isAdmin
       );
 
@@ -1586,20 +1591,15 @@ export default function BannerPreview() {
         return;
       }
 
-      // Compress and download
       const timestamp = new Date().getTime();
       const filename = `ReBusiness-Banner-${categoryName}-${timestamp}.jpg`;
-      const { blob, sizeMB } = await compressToTargetRange(dataUrl, 2, 5, 0.92);
+      const { blob } = await compressToTargetRange(dataUrl, 2, 5, 0.92);
       await triggerDownload(blob, filename);
 
-      // Silent success toast
-      toast.success(isAdminBypass 
-        ? `Saved! (${sizeMB.toFixed(1)} MB)` 
-        : `Saved! ₹10 deducted`, 
-        { duration: 2000 }
-      );
+      // Store downloaded image for preview and show success screen
+      setDownloadedImageUrl(dataUrl);
+      setDownloadComplete(true);
 
-      // Cleanup in background
       setTimeout(() => cleanupBannerMemory(bannerRef.current), 500);
 
     } catch (error) {
@@ -1609,6 +1609,66 @@ export default function BannerPreview() {
       setIsDownloading(false);
     }
   };
+
+  // *** DOWNLOAD SUCCESS SCREEN - Clean, Premium, Mobile-First ***
+  if (downloadComplete && downloadedImageUrl) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        {/* Success Content */}
+        <div className="flex-1 flex flex-col items-center justify-center px-4 py-8">
+          {/* Success Icon */}
+          <div className="mb-6">
+            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-[0_0_40px_rgba(16,185,129,0.4)]">
+              <CheckCircle2 className="w-10 h-10 text-white" strokeWidth={2.5} />
+            </div>
+          </div>
+          
+          {/* Success Message */}
+          <h1 className="text-2xl font-bold text-foreground mb-2 text-center">
+            Download Successful
+          </h1>
+          <p className="text-muted-foreground text-sm mb-8 text-center">
+            Your banner has been saved to your device
+          </p>
+          
+          {/* Downloaded Image Preview */}
+          <div className="w-full max-w-[320px] mx-auto mb-10">
+            <div className="relative rounded-2xl overflow-hidden border-4 border-primary/50 shadow-[0_8px_32px_rgba(255,215,0,0.15)]">
+              <img 
+                src={downloadedImageUrl} 
+                alt="Downloaded Banner" 
+                className="w-full aspect-square object-cover"
+              />
+            </div>
+          </div>
+          
+          {/* Premium Home Button */}
+          <button
+            onClick={handleGoHome}
+            className="group relative px-10 py-4 rounded-2xl font-semibold text-lg overflow-hidden"
+            style={{
+              background: 'linear-gradient(135deg, #FFD700 0%, #F4A100 50%, #FFD700 100%)',
+              boxShadow: '0 8px 32px rgba(255, 215, 0, 0.35), 0 4px 12px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
+            }}
+          >
+            {/* Inner glow effect */}
+            <span 
+              className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100"
+              style={{
+                background: 'linear-gradient(135deg, #FFE55C 0%, #FFD700 100%)',
+                transition: 'opacity 0.2s ease',
+              }}
+            />
+            {/* Button content */}
+            <span className="relative flex items-center gap-3 text-[#0B0E15]">
+              <Home className="w-5 h-5" strokeWidth={2.5} />
+              <span>Go to Dashboard</span>
+            </span>
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   // *** BANNER IS NOW READY - Render instantly without animations ***
   return <div className="h-screen overflow-hidden bg-background flex flex-col">
