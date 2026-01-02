@@ -1,13 +1,11 @@
 import React from "react";
 import { getSlotBackgroundStyle, BackgroundSlot } from "@/hooks/useGlobalBackgroundSlots";
 
-// Professional proxy model images for privacy-safe 16-slot preview
-import proxyModelAchiever from "@/assets/proxy-model-achiever.png";
-import proxyModelUser from "@/assets/proxy-model-user.png";
+// Universal default model for slot previews (excludes Story & Motivational categories)
+import slotDefaultModel from "@/assets/slot-default-model.png";
 
-// Proxy images: Model 1 = Achiever, Model 2 = User/Mentor
-const PROXY_ACHIEVER = proxyModelAchiever;
-const PROXY_USER = proxyModelUser;
+// Single universal placeholder model for all slots requiring person/image
+const SLOT_DEFAULT_MODEL = slotDefaultModel;
 
 interface Upline {
   id: string;
@@ -499,7 +497,7 @@ export default function SlotPreviewMini({
           contain: 'strict',
         }}
       >
-        {/* Scaled banner content wrapper - fits perfectly to slot box */}
+        {/* Scaled banner content wrapper - CLEAN SLOT PREVIEW: Only background + stickers */}
         <div 
           style={{
             position: 'absolute',
@@ -515,70 +513,9 @@ export default function SlotPreviewMini({
             WebkitBackfaceVisibility: 'hidden',
           }}
         >
-          {/* Top-Left Logo */}
-          {logoLeft && (
-            <div className="absolute z-30" style={{
-              top: '10px',
-              left: '24px',
-              width: '250px',
-              height: 'auto'
-            }}>
-              <img src={logoLeft} alt="Left Logo" style={{
-                width: '250px',
-                height: 'auto',
-                objectFit: 'contain'
-              }} />
-            </div>
-          )}
-
-          {/* Top-Right Logo */}
-          {logoRight && (
-            <div className="absolute z-30" style={{
-              top: '10px',
-              right: '24px',
-              width: '250px',
-              height: 'auto'
-            }}>
-              <img src={logoRight} alt="Right Logo" style={{
-                width: '250px',
-                height: 'auto',
-                objectFit: 'contain'
-              }} />
-            </div>
-          )}
-
-          {/* Top - Upline avatars with PROXY images */}
-          <div className="absolute z-20" style={{
-            top: '10px',
-            left: '675px',
-            transform: 'translateX(-50%)',
-            display: 'flex',
-            gap: '12px'
-          }}>
-            {uplines?.slice(0, 5).map((upline, idx) => (
-              <div key={upline.id || idx} style={{
-                width: '120px',
-                height: '120px',
-                borderRadius: '60px',
-                border: '3px solid #ffffff',
-                overflow: 'hidden',
-                flexShrink: 0
-              }}>
-                <img 
-                  src={PROXY_USER} 
-                  alt="Upline" 
-                  style={{
-                    width: '120px',
-                    height: '120px',
-                    objectFit: 'cover'
-                  }} 
-                />
-              </div>
-            ))}
-          </div>
-
-          {/* LEFT - Main User Photo with PROXY image - Only show for rank, bonanza, birthday, anniversary */}
-          {(categoryType === 'rank' || categoryType === 'bonanza' || categoryType === 'birthday' || categoryType === 'anniversary') && (
+          {/* CLEAN SLOT PREVIEW: Only show default model for categories that need person/image */}
+          {/* EXCLUDED: Story and Motivational categories - they remain unchanged */}
+          {categoryType !== 'story' && categoryType !== 'motivational' && (
             <div className="absolute overflow-hidden" style={{
               left: '40px',
               top: '162px',
@@ -587,62 +524,13 @@ export default function SlotPreviewMini({
               borderRadius: '24px'
             }}>
               <img 
-                src={PROXY_ACHIEVER} 
-                alt="Achiever" 
+                src={SLOT_DEFAULT_MODEL} 
+                alt="Default Model" 
                 style={{
                   width: '594px',
                   height: '792px',
                   objectFit: 'cover',
                   objectPosition: 'center'
-                }} 
-              />
-            </div>
-          )}
-
-          {/* LEFT - User Photo with 2nd model for Motivational category */}
-          {categoryType === 'motivational' && (
-            <div className="absolute overflow-hidden" style={{
-              left: '40px',
-              top: '162px',
-              width: '594px',
-              height: '792px',
-              borderRadius: '24px'
-            }}>
-              <img 
-                src={PROXY_USER} 
-                alt="User" 
-                style={{
-                  width: '594px',
-                  height: '792px',
-                  objectFit: 'cover',
-                  objectPosition: 'center 25%'
-                }} 
-              />
-            </div>
-          )}
-
-          {/* Category-specific content */}
-          {renderCategoryContent()}
-
-          {/* Bottom Profile Nameplate - Removed for proxy banner preview */}
-
-          {/* Mentor Photo (Right Bottom) with PROXY image - shown for all categories except story and motivational */}
-          {categoryType !== 'story' && categoryType !== 'motivational' && (
-            <div className="absolute overflow-hidden" style={{
-              right: '27px',
-              bottom: '0',
-              width: '594px',
-              height: '594px',
-              borderRadius: '24px 24px 0 0'
-            }}>
-              <img 
-                src={PROXY_USER} 
-                alt="User" 
-                style={{
-                  width: '594px',
-                  height: '594px',
-                  objectFit: 'cover',
-                  objectPosition: 'center 25%'
                 }} 
               />
             </div>
@@ -671,8 +559,6 @@ export default function SlotPreviewMini({
             );
           })}
         </div>
-
-        {/* Slot numbers removed - proxy images always show full banner preview */}
       </div>
     </button>
   );
