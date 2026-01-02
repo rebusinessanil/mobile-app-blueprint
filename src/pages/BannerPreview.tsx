@@ -19,7 +19,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Sticker } from "@/hooks/useStickers";
 import { toJpeg } from "html-to-image";
-import { triggerDownload, base64ToBlob, cleanupBannerMemory } from "@/lib/downloadUtils";
+import { triggerDownload, compressToTargetRange, cleanupBannerMemory } from "@/lib/downloadUtils";
 import { useWalletDeduction } from "@/hooks/useWalletDeduction";
 import InsufficientBalanceModal from "@/components/InsufficientBalanceModal";
 import { useBannerAssetPreloader } from "@/hooks/useBannerAssetPreloader";
@@ -543,6 +543,11 @@ export default function BannerPreview() {
   const [staticLayersReady, setStaticLayersReady] = useState(false);
   const hasInitializedRef = useRef(false);
   const imagesLoadedRef = useRef(new Set<string>()); // Track loaded images to prevent re-fetching
+  
+  // *** PREVIEW LOCKED STATE - Prevents ALL re-renders after first load ***
+  // Once locked, the preview is in read-only mode - no data refetch, no re-computation
+  const [isPreviewLocked, setIsPreviewLocked] = useState(false);
+  const previewLockedRef = useRef(false); // Ref for sync checks
 
   // Check if all required data is loaded
   const isDataReady = userId !== null && profile !== undefined && !backgroundsLoading && bannerDefaults !== undefined;
@@ -550,6 +555,9 @@ export default function BannerPreview() {
   // *** STRICT ALL-OR-NOTHING STATE ***
   // Single derived state: show skeleton until EVERYTHING is ready
   const isBannerReady = useMemo(() => {
+    // If preview is locked, always return true (no more loading)
+    if (previewLockedRef.current) return true;
+    
     const assetsReady = allLoaded || timedOut;
     const scaleReady = bannerScale > 0 && isLayoutReady;
     const dataReady = isDataReady && !backgroundsLoading && !stickersLoading;
@@ -595,17 +603,19 @@ export default function BannerPreview() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isDataReady]); // INTENTIONALLY minimal deps - compute once only
 
-  // *** AUTO-SELECT FIRST SLOT AFTER LOAD - ONE TIME ONLY ***
+  // *** AUTO-SELECT FIRST SLOT + LOCK PREVIEW - ONE TIME ONLY ***
   useEffect(() => {
     if (isBannerReady && !hasInitializedRef.current && globalBackgroundSlots.length > 0) {
       // CRITICAL: Mark as initialized IMMEDIATELY to prevent re-runs
       hasInitializedRef.current = true;
+      previewLockedRef.current = true; // Lock preview sync
       setStaticLayersReady(true);
+      setIsPreviewLocked(true); // Lock preview state
       
       // Auto-select slot 1 (index 0) on first load - instant, no animation
       setSelectedTemplate(0);
       
-      console.log('✅ Banner initialized - static layers frozen, first slot selected');
+      console.log('🔒 Banner LOCKED - no more re-renders, stable preview mode activated');
     }
   }, [isBannerReady, globalBackgroundSlots.length]);
 
@@ -1650,13 +1660,12 @@ export default function BannerPreview() {
         return;
       }
 
-      // Step 4: Download using optimized blob-based method
+      // Step 4: Smart compression to ensure file size is STRICTLY between 2-5 MB
       const timestamp = new Date().getTime();
       const filename = `ReBusiness-Banner-${categoryName}-${timestamp}.jpg`;
       
-      // Convert to blob and trigger download
-      const blob = await base64ToBlob(dataUrl, 'image/jpeg');
-      const sizeMB = blob.size / (1024 * 1024);
+      // Use smart compression: 2MB minimum, 5MB maximum
+      const { blob, sizeMB } = await compressToTargetRange(dataUrl, 2, 5, 0.92);
       
       await triggerDownload(blob, filename);
 
