@@ -914,7 +914,10 @@ html, body {
 }
 
 /* =====================================================
-   BANNER PREVIEW - INSTANT LOAD & HIGH PERFORMANCE
+   BANNER PREVIEW - FIXED CANVAS ARCHITECTURE
+   - Static layers: Load once, never re-render
+   - Dynamic layers: Background + stickers update on slot change
+   - Zero blur, zero layout shift, instant switching
    ===================================================== */
 
 /* Force instant switching - no CSS transitions on banner preview */
@@ -923,31 +926,63 @@ html, body {
 #banner-canvas,
 #banner-canvas * {
   transition: none !important;
-  animation-duration: 0s !important;
 }
 
-/* Keep sparkle animations active */
-.banner-scale-container [style*="sparkle"],
-#banner-canvas [style*="sparkle"] {
+/* Keep sparkle animations active (only in download, not during switching) */
+.banner-scale-container [style*="animation: sparkle"],
+#banner-canvas [style*="animation: sparkle"] {
   animation-duration: revert !important;
 }
 
-/* GPU acceleration for banner preview */
+/* GPU acceleration for banner preview container */
 .banner-scale-container {
   will-change: transform;
   transform: translateZ(0);
   backface-visibility: hidden;
   -webkit-font-smoothing: antialiased;
+  contain: layout style paint;
 }
 
-/* Instant background switching */
+/* DYNAMIC LAYER - Background that changes on slot switch */
+.banner-dynamic-layer {
+  will-change: background-image;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+  contain: strict;
+}
+
+/* STATIC LAYERS - User photo, nameplate, logos, uplines - load once */
+.banner-static-layer {
+  backface-visibility: hidden;
+  transform: translateZ(0);
+  will-change: auto;
+}
+
+/* Instant background switching - no transitions whatsoever */
 #banner-canvas > div:first-child {
   transition: none !important;
+  animation: none !important;
+}
+
+/* Slot selector - instant response */
+.slot-preview-mini {
+  transition: none !important;
+  will-change: auto;
+  contain: layout style;
+}
+
+.slot-preview-mini:active {
+  transform: scale(0.98);
 }
 
 /* Mobile touch optimization */
 @media (pointer: coarse) {
   .banner-scale-container {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  .slot-preview-mini {
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
   }
