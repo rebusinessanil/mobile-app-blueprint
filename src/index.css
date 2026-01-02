@@ -914,19 +914,25 @@ html, body {
 }
 
 /* =====================================================
-   BANNER PREVIEW - MOBILE-FIRST FIXED CANVAS ARCHITECTURE
-   - Static layers: Load once, never re-render
-   - Dynamic layers: Background + stickers update on slot change
-   - GPU-safe transforms for mobile stability
-   - Banner always fits within container (no overflow)
+   BANNER PREVIEW - MOBILE-FIRST UNIVERSAL LAYOUT
+   ===================================================== 
+   Core Principles:
+   1. Same visual on ALL devices (mobile, tablet, desktop)
+   2. Fixed 1350px canvas scaled to fit container
+   3. Static layers: Load once, never re-render
+   4. Dynamic layers: Background + stickers update on slot change
+   5. GPU-safe transforms for mobile stability
+   6. Banner ALWAYS fits container (no overflow)
+   7. Instant render - no black screen or delay
    ===================================================== */
 
-/* Force instant switching - no CSS transitions on banner preview */
+/* Force instant switching - NO CSS transitions on banner preview */
 .banner-scale-container,
 .banner-scale-container *,
 #banner-canvas,
 #banner-canvas * {
   transition: none !important;
+  animation-delay: 0s !important;
 }
 
 /* Keep sparkle animations active for premium effect */
@@ -935,7 +941,7 @@ html, body {
   animation-play-state: running !important;
 }
 
-/* GPU acceleration for banner preview container - MOBILE OPTIMIZED */
+/* GPU acceleration for banner preview container - UNIVERSAL */
 .banner-scale-container {
   /* GPU layer promotion */
   transform-style: flat;
@@ -944,13 +950,23 @@ html, body {
   -webkit-font-smoothing: antialiased;
   
   /* Layout containment - prevents reflows */
-  contain: layout style paint;
+  contain: strict;
   
-  /* Mobile: Reduce memory by not hinting will-change after initial render */
+  /* Mobile: Reduce memory by not hinting will-change */
   will-change: auto;
   
   /* Prevent any overflow */
   overflow: hidden;
+  
+  /* Isolation for layer stacking */
+  isolation: isolate;
+}
+
+/* Banner preview frame - consistent styling */
+.banner-preview-frame {
+  /* Smooth container */
+  overflow: hidden;
+  contain: paint;
 }
 
 /* DYNAMIC LAYER - Background that changes on slot switch */
@@ -964,13 +980,20 @@ html, body {
   
   /* No will-change to save memory on mobile */
   will-change: auto;
+  
+  /* Instant transitions */
+  transition: none !important;
 }
 
-/* OVERLAY LAYER - Dark blur overlay for depth effect */
+/* OVERLAY LAYER - Dark transparent blur overlay */
+/* Creates premium depth effect on banner backgrounds */
 .banner-overlay-layer {
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
   contain: strict;
+  
+  /* Ensure overlay is visible on all devices */
+  pointer-events: none;
 }
 
 /* STATIC LAYERS - User photo, nameplate, logos, uplines - load once, never touch */
@@ -1002,7 +1025,15 @@ html, body {
   transform: scale(0.98);
 }
 
-/* Mobile touch optimization */
+/* *** UNIVERSAL IMAGE SHARPNESS *** */
+#banner-canvas img {
+  image-rendering: auto;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+}
+
+/* *** MOBILE TOUCH OPTIMIZATION *** */
 @media (pointer: coarse) {
   .banner-scale-container {
     touch-action: manipulation;
@@ -1024,12 +1055,10 @@ html, body {
   /* Mobile image optimization - keep sharpness */
   #banner-canvas img {
     image-rendering: -webkit-optimize-contrast;
-    -webkit-backface-visibility: hidden;
-    backface-visibility: hidden;
   }
 }
 
-/* Low-end device fallback - keep blur overlay but reduce shadows */
+/* *** SMALL SCREEN OPTIMIZATION (Mobile Phones) *** */
 @media (max-width: 480px) {
   .banner-scale-container {
     /* Force simple rendering path */
@@ -1037,8 +1066,29 @@ html, body {
     isolation: isolate;
   }
   
-  /* Keep blur overlay but reduce heavy shadows */
+  /* Keep dark overlay visible on mobile - lightweight version */
+  .banner-overlay-layer {
+    /* Visible on all devices */
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+  
+  /* Reduce heavy shadows for performance */
   #banner-canvas [style*="box-shadow"] {
-    box-shadow: 0 2px 4px rgba(0,0,0,0.3) !important;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.4) !important;
+  }
+}
+
+/* *** MEDIUM SCREENS (Tablets) *** */
+@media (min-width: 481px) and (max-width: 1024px) {
+  .banner-scale-container {
+    contain: layout style paint;
+  }
+}
+
+/* *** LARGE SCREENS (Desktop) *** */
+@media (min-width: 1025px) {
+  .banner-scale-container {
+    contain: layout style paint;
   }
 }
