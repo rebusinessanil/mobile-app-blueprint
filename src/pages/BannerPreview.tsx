@@ -152,33 +152,33 @@ export default function BannerPreview() {
     };
   }, [isDraggingProfile, profileDragStart, profilePicScale]);
 
-  // Banner scale state for CSS-based scaling (Canvas-like behavior)
-  const [bannerScale, setBannerScale] = useState(1);
+  // *** MOBILE-FIRST FIXED SCALE ARCHITECTURE ***
+  // Fixed scale calculated once on mount - no re-renders on resize for stability
+  const [bannerScale, setBannerScale] = useState(0);
   const bannerContainerRef = useRef<HTMLDivElement>(null);
+  const scaleCalculatedRef = useRef(false);
 
-  // RAF-debounced scale update for mobile performance
+  // RAF ref for cleanup
   const rafRef = useRef<number | null>(null);
   
-  // Compute scale factor for display - ensures full banner fits perfectly on all devices
-  const updateBannerScale = useCallback(() => {
-    // Cancel any pending RAF to prevent stacking
-    if (rafRef.current) {
-      cancelAnimationFrame(rafRef.current);
-    }
+  // *** MOBILE-FIRST: Calculate scale ONCE on mount ***
+  // Fixed scale prevents layout shifts and crashes on mobile
+  const calculateInitialScale = useCallback(() => {
+    if (scaleCalculatedRef.current) return; // Only calculate once
+    if (!bannerContainerRef.current) return;
     
-    rafRef.current = requestAnimationFrame(() => {
-      if (!bannerContainerRef.current) return;
-      const parentWidth = bannerContainerRef.current.clientWidth;
+    const parentWidth = bannerContainerRef.current.clientWidth;
+    if (parentWidth === 0) return;
 
-      // Skip if container not ready
-      if (parentWidth === 0) return;
-
-      // EXACT FIT: Scale to fill the container width precisely
-      const scale = parentWidth / 1350;
-      setBannerScale(scale);
-      setIsLayoutReady(true);
-    });
+    // FIXED SCALE: Calculate once, never change (mobile stability)
+    const scale = parentWidth / 1350;
+    setBannerScale(scale);
+    setIsLayoutReady(true);
+    scaleCalculatedRef.current = true;
   }, []);
+
+  // Legacy compatibility wrapper
+  const updateBannerScale = calculateInitialScale;
 
   // *** INSTANT SLOT SWITCHING - No re-render, only background + stickers update ***
   const handleSlotChange = useCallback((slotIndex: number) => {
@@ -252,27 +252,32 @@ export default function BannerPreview() {
     });
   };
 
-  // ResizeObserver-based scaling - updates on container resize (RAF-debounced)
+  // *** MOBILE-FIRST: Calculate scale ONCE on mount - no resize listener ***
+  // ResizeObserver removed for mobile stability - scale is fixed after initial calculation
   useLayoutEffect(() => {
+    // CRITICAL: Skip if already calculated to prevent infinite loop
+    if (scaleCalculatedRef.current) return;
     if (!bannerContainerRef.current) return;
 
-    // Initial scale calculation
-    updateBannerScale();
+    // Calculate scale once on mount
+    calculateInitialScale();
 
-    // Watch for container size changes
-    const resizeObserver = new ResizeObserver(() => {
-      updateBannerScale();
-    });
-    resizeObserver.observe(bannerContainerRef.current);
+    // Fallback: If container isn't ready, retry ONCE with RAF
+    if (!scaleCalculatedRef.current && !rafRef.current) {
+      rafRef.current = requestAnimationFrame(() => {
+        calculateInitialScale();
+        rafRef.current = null;
+      });
+    }
     
     // Cleanup RAF on unmount
     return () => {
-      resizeObserver.disconnect();
       if (rafRef.current) {
         cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
       }
     };
-  }, [updateBannerScale]);
+  }, [calculateInitialScale]);
 
   // Get authenticated user and check admin status
   useEffect(() => {
@@ -507,10 +512,11 @@ export default function BannerPreview() {
   // Track if preload has started
   const [preloadStarted, setPreloadStarted] = useState(false);
   
-  // *** FIXED CANVAS ARCHITECTURE ***
-  // Track if static layers have been initialized (load once, never re-render)
+  // *** MOBILE-FIRST FIXED CANVAS ARCHITECTURE ***
+  // Static layers load once, never re-render - critical for mobile stability
   const [staticLayersReady, setStaticLayersReady] = useState(false);
   const hasInitializedRef = useRef(false);
+  const imagesLoadedRef = useRef(new Set<string>()); // Track loaded images to prevent re-fetching
 
   // Check if all required data is loaded
   const isDataReady = userId !== null && profile !== undefined && !backgroundsLoading && bannerDefaults !== undefined;
@@ -525,9 +531,11 @@ export default function BannerPreview() {
   }, [allLoaded, timedOut, bannerScale, isLayoutReady, isDataReady, backgroundsLoading, stickersLoading]);
 
   // *** STATIC LAYER MEMOIZATION - Load once, never re-render ***
-  // These values are captured on first load and never change
+  // These values are captured on first load and FROZEN - critical for mobile stability
   const staticLayers = useMemo(() => {
+    // CRITICAL: Only compute once when data is ready, then freeze
     if (!isDataReady || !profile) return null;
+    if (hasInitializedRef.current) return null; // Already initialized, skip re-computation
     
     return {
       // User photo - locked on init
@@ -558,15 +566,20 @@ export default function BannerPreview() {
       message: bannerData?.message || "",
       quote: bannerData?.quote || "",
     };
-  }, [isDataReady, profile, bannerData, profilePhotos, selectedMentorPhotoIndex, bannerSettings, bannerDefaults]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isDataReady]); // INTENTIONALLY minimal deps - compute once only
 
-  // *** AUTO-SELECT FIRST SLOT AFTER LOAD ***
+  // *** AUTO-SELECT FIRST SLOT AFTER LOAD - ONE TIME ONLY ***
   useEffect(() => {
     if (isBannerReady && !hasInitializedRef.current && globalBackgroundSlots.length > 0) {
+      // CRITICAL: Mark as initialized IMMEDIATELY to prevent re-runs
       hasInitializedRef.current = true;
       setStaticLayersReady(true);
-      // Auto-select slot 1 (index 0) on first load
+      
+      // Auto-select slot 1 (index 0) on first load - instant, no animation
       setSelectedTemplate(0);
+      
+      console.log('✅ Banner initialized - static layers frozen, first slot selected');
     }
   }, [isBannerReady, globalBackgroundSlots.length]);
 
@@ -1671,20 +1684,28 @@ export default function BannerPreview() {
             {/* CSS Transform Scaled HTML Preview - Mimics Canvas behavior */}
             {/* Parent wrapper - exact fit container */}
             <div ref={bannerContainerRef} className="w-full aspect-square relative overflow-hidden flex items-center justify-center">
-              {/* HD Rendering Container - Center-pivot scaling for perfect fit */}
-              {/* INSTANT SWITCHING: No transitions, will-change for GPU acceleration */}
+              {/* *** MOBILE-FIRST HD RENDERING CONTAINER ***
+                  - Fixed scale computed once on mount
+                  - GPU-accelerated transforms (translateZ, will-change)
+                  - Instant slot switching with zero layout shift
+                  - Images cached via preloader - never re-fetched */}
               <div className="banner-scale-container" style={{
               position: 'absolute',
               left: '50%',
               top: '50%',
               width: '1350px',
               height: '1350px',
-              transform: `translate(-50%, -50%) scale(${bannerScale})`,
+              // GPU-safe transform: translateZ(0) forces GPU layer, fixed scale prevents recalc
+              transform: `translate(-50%, -50%) scale(${bannerScale}) translateZ(0)`,
               transformOrigin: 'center center',
-              imageRendering: '-webkit-optimize-contrast' as React.CSSProperties['imageRendering'],
-              willChange: 'transform',
+              // Mobile optimizations
+              imageRendering: 'crisp-edges',
+              willChange: 'auto', // Changed from 'transform' - reduces memory on mobile
               backfaceVisibility: 'hidden',
-              WebkitFontSmoothing: 'antialiased'
+              WebkitBackfaceVisibility: 'hidden',
+              WebkitFontSmoothing: 'antialiased',
+              // Prevent layout recalculation
+              contain: 'strict',
             }}>
                 <div ref={bannerRef} id="banner-canvas" onMouseMove={isAdmin ? handleStickerMouseMove : undefined} onMouseUp={isAdmin ? handleStickerMouseUp : undefined} onMouseLeave={isAdmin ? handleStickerMouseUp : undefined} style={{
                 position: 'relative',

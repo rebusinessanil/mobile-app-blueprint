@@ -18,23 +18,26 @@ interface PreloadState {
   timedOut: boolean;
 }
 
-// Ultra-fast timeouts for instant loading - aggressive for mobile performance
-const GLOBAL_TIMEOUT_MS = 3000; // Reduced from 5000 for faster fallback
-const PER_IMAGE_TIMEOUT_MS = 1500; // Reduced from 2000 for faster per-image fallback
-const PROGRESS_THROTTLE_MS = 32; // ~30fps update rate for smoother progress
+// *** MOBILE-FIRST TIMEOUTS - Aggressive for instant loading ***
+const GLOBAL_TIMEOUT_MS = 2500; // 2.5s max wait for mobile (was 3000)
+const PER_IMAGE_TIMEOUT_MS = 1200; // 1.2s per image (was 1500)
+const PROGRESS_THROTTLE_MS = 16; // ~60fps update rate for smoother progress
 
-// Global image cache to prevent duplicate requests across renders
+// *** GLOBAL IMAGE CACHE - Shared across all renders ***
+// Prevents duplicate requests and stores decoded images for instant access
 const imageCache = new Map<string, Promise<boolean>>();
-
-// Pre-decoded image storage for instant rendering
 const decodedImages = new Set<string>();
 
+// *** PRELOADED IMAGE ELEMENTS - For instant rendering without network requests ***
+const preloadedElements = new Map<string, HTMLImageElement>();
+
 /**
- * Ultra-fast Banner asset preloader
- * - Single batch parallel loading (no sequential batches)
+ * MOBILE-FIRST Banner Asset Preloader
+ * - Single batch parallel loading
  * - Global image cache prevents re-fetching
+ * - Stores decoded image elements for instant rendering
  * - One-time load - never re-triggers after initial load
- * - Instant rendering without animations
+ * - Aggressive timeouts for mobile performance
  */
 export const useBannerAssetPreloader = () => {
   const [state, setState] = useState<PreloadState>({
@@ -48,7 +51,7 @@ export const useBannerAssetPreloader = () => {
   const lastProgressUpdate = useRef(0);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const abortRef = useRef(false);
-  const hasLoadedRef = useRef(false); // Prevent re-loading
+  const hasLoadedRef = useRef(false); // Prevent re-loading - CRITICAL for mobile stability
 
   // Cleanup on unmount
   useEffect(() => {
@@ -59,15 +62,16 @@ export const useBannerAssetPreloader = () => {
   }, []);
 
   /**
-   * Load single image with caching and immediate decode
+   * Load single image with caching, decode, and element storage
+   * Returns the cached/decoded image element for instant rendering
    */
   const loadImage = useCallback((url: string): Promise<boolean> => {
     if (!url || typeof url !== 'string' || url.trim() === '') {
       return Promise.resolve(true);
     }
 
-    // Already decoded - instant return
-    if (decodedImages.has(url)) {
+    // Already decoded and cached - instant return
+    if (decodedImages.has(url) && preloadedElements.has(url)) {
       return Promise.resolve(true);
     }
 
@@ -79,30 +83,35 @@ export const useBannerAssetPreloader = () => {
     const promise = new Promise<boolean>((resolve) => {
       const img = new Image();
       img.decoding = 'async';
+      img.crossOrigin = 'anonymous';
       
       const imgTimeout = setTimeout(() => {
-        decodedImages.add(url); // Mark as ready even on timeout
+        // Timeout but still mark as "ready" to prevent UI blocking
+        decodedImages.add(url);
+        preloadedElements.set(url, img);
         resolve(true);
       }, PER_IMAGE_TIMEOUT_MS);
       
       img.onload = async () => {
         clearTimeout(imgTimeout);
         try {
+          // Decode image for instant rendering (no decode delay when displayed)
           await img.decode();
         } catch {
-          // Decode failed but image is loaded
+          // Decode failed but image is loaded - still usable
         }
         decodedImages.add(url);
+        preloadedElements.set(url, img);
         resolve(true);
       };
       
       img.onerror = () => {
         clearTimeout(imgTimeout);
-        decodedImages.add(url); // Mark as ready on error too
+        // Mark as ready even on error to prevent blocking
+        decodedImages.add(url);
         resolve(true);
       };
       
-      img.crossOrigin = 'anonymous';
       img.src = url;
     });
 
@@ -123,12 +132,13 @@ export const useBannerAssetPreloader = () => {
 
   /**
    * Main preload - SINGLE BATCH parallel loading (all at once)
-   * One-time execution - never re-triggers after initial load
+   * MOBILE-FIRST: One-time execution, aggressive timeouts, image caching
    */
   const preloadAssets = useCallback(async (config: PreloadConfig): Promise<void> => {
-    // CRITICAL: Prevent re-loading - one-time only
+    // *** CRITICAL: Prevent re-loading - one-time only for mobile stability ***
     if (hasLoadedRef.current) {
-      console.log('⚡ Assets already loaded - skipping');
+      console.log('⚡ Assets already loaded - instant display');
+      setState({ allLoaded: true, progress: 100, timedOut: false });
       return;
     }
     
@@ -149,27 +159,29 @@ export const useBannerAssetPreloader = () => {
 
     const uniqueUrls = Array.from(allUrls);
     
-    // Filter out already decoded images
+    // Filter out already decoded images (from previous sessions or cache)
     const urlsToLoad = uniqueUrls.filter(url => !decodedImages.has(url));
     
+    // All images already cached - instant complete
     if (urlsToLoad.length === 0) {
       hasLoadedRef.current = true;
       setState({ allLoaded: true, progress: 100, timedOut: false });
+      console.log('⚡ All assets cached - instant display');
       return;
     }
 
-    console.log(`⚡ Loading ${urlsToLoad.length} assets in single batch...`);
+    console.log(`⚡ Loading ${urlsToLoad.length} assets in single batch (mobile-first)...`);
 
-    // Global timeout fallback
+    // Global timeout fallback - show content even if some images fail
     timeoutRef.current = setTimeout(() => {
       if (!abortRef.current) {
-        console.log('⚠️ Timeout - showing preview immediately');
+        console.log('⚠️ Timeout - showing banner immediately');
         hasLoadedRef.current = true;
         setState({ allLoaded: true, progress: 100, timedOut: true });
       }
     }, GLOBAL_TIMEOUT_MS);
 
-    // SINGLE BATCH: Load ALL images in parallel at once
+    // *** SINGLE BATCH: Load ALL images in parallel at once ***
     let loaded = 0;
     const total = urlsToLoad.length;
     
@@ -187,7 +199,7 @@ export const useBannerAssetPreloader = () => {
     }
 
     if (!abortRef.current) {
-      console.log('✅ All assets loaded in single batch');
+      console.log('✅ All assets loaded - ready for instant display');
       hasLoadedRef.current = true;
       setState({ allLoaded: true, progress: 100, timedOut: false });
     }
@@ -195,6 +207,7 @@ export const useBannerAssetPreloader = () => {
 
   /**
    * Reset preloader state (for component unmount/remount)
+   * NOTE: Does NOT reset hasLoadedRef to preserve cache across re-renders
    */
   const reset = useCallback(() => {
     abortRef.current = true;
@@ -202,7 +215,6 @@ export const useBannerAssetPreloader = () => {
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
     }
-    // Note: hasLoadedRef is NOT reset to prevent re-loading on state changes
     setState({ allLoaded: false, progress: 0, timedOut: false });
   }, []);
 
@@ -214,7 +226,16 @@ export const useBannerAssetPreloader = () => {
     timedOut: state.timedOut,
     isMobile,
     criticalLoaded: state.allLoaded,
+    // Expose cache check for external use
+    isImageCached: (url: string) => decodedImages.has(url),
   };
 };
+
+// *** UTILITY: Check if an image is already preloaded ***
+export const isImagePreloaded = (url: string): boolean => decodedImages.has(url);
+
+// *** UTILITY: Get preloaded image element for instant rendering ***
+export const getPreloadedImage = (url: string): HTMLImageElement | undefined => 
+  preloadedElements.get(url);
 
 export default useBannerAssetPreloader;

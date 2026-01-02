@@ -914,10 +914,11 @@ html, body {
 }
 
 /* =====================================================
-   BANNER PREVIEW - FIXED CANVAS ARCHITECTURE
+   BANNER PREVIEW - MOBILE-FIRST FIXED CANVAS ARCHITECTURE
    - Static layers: Load once, never re-render
    - Dynamic layers: Background + stickers update on slot change
    - Zero blur, zero layout shift, instant switching
+   - GPU-safe transforms for mobile stability
    ===================================================== */
 
 /* Force instant switching - no CSS transitions on banner preview */
@@ -926,36 +927,56 @@ html, body {
 #banner-canvas,
 #banner-canvas * {
   transition: none !important;
+  animation-play-state: paused !important;
 }
 
 /* Keep sparkle animations active (only in download, not during switching) */
 .banner-scale-container [style*="animation: sparkle"],
 #banner-canvas [style*="animation: sparkle"] {
-  animation-duration: revert !important;
+  animation-play-state: running !important;
 }
 
-/* GPU acceleration for banner preview container */
+/* GPU acceleration for banner preview container - MOBILE OPTIMIZED */
 .banner-scale-container {
-  will-change: transform;
+  /* GPU layer promotion */
   transform: translateZ(0);
   backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
   -webkit-font-smoothing: antialiased;
-  contain: layout style paint;
+  
+  /* Layout containment - prevents reflows */
+  contain: strict;
+  
+  /* Disable pointer events during rendering for performance */
+  pointer-events: auto;
+  
+  /* Mobile: Reduce memory by not hinting will-change after initial render */
+  will-change: auto;
 }
 
 /* DYNAMIC LAYER - Background that changes on slot switch */
 .banner-dynamic-layer {
-  will-change: background-image;
+  /* GPU layer for instant background swap */
   backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
   transform: translateZ(0);
+  
+  /* Strict containment - isolated from rest of page */
   contain: strict;
+  
+  /* No will-change to save memory on mobile */
+  will-change: auto;
 }
 
-/* STATIC LAYERS - User photo, nameplate, logos, uplines - load once */
+/* STATIC LAYERS - User photo, nameplate, logos, uplines - load once, never touch */
 .banner-static-layer {
   backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
   transform: translateZ(0);
   will-change: auto;
+  
+  /* Content never changes - full isolation */
+  contain: layout style;
 }
 
 /* Instant background switching - no transitions whatsoever */
@@ -964,11 +985,14 @@ html, body {
   animation: none !important;
 }
 
-/* Slot selector - instant response */
+/* Slot selector - instant response with minimal style */
 .slot-preview-mini {
   transition: none !important;
   will-change: auto;
   contain: layout style;
+  
+  /* Prevent double-tap zoom on mobile */
+  touch-action: manipulation;
 }
 
 .slot-preview-mini:active {
@@ -980,10 +1004,42 @@ html, body {
   .banner-scale-container {
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
+    
+    /* Disable overscroll for smoother experience */
+    overscroll-behavior: contain;
   }
   
   .slot-preview-mini {
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
+    
+    /* Larger touch targets on mobile */
+    min-height: 60px;
+    min-width: 60px;
+  }
+  
+  /* Aggressive mobile image optimization */
+  #banner-canvas img {
+    image-rendering: crisp-edges;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+  }
+}
+
+/* Low-end device fallback - maximum performance */
+@media (max-width: 480px) {
+  .banner-scale-container {
+    /* Force simple rendering path */
+    contain: strict;
+    isolation: isolate;
+  }
+  
+  /* Disable all effects on very small screens */
+  #banner-canvas [style*="filter: blur"] {
+    filter: none !important;
+  }
+  
+  #banner-canvas [style*="box-shadow"] {
+    box-shadow: none !important;
   }
 }
