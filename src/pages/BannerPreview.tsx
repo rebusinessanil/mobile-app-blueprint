@@ -116,10 +116,6 @@ export default function BannerPreview() {
   const [downloadComplete, setDownloadComplete] = useState(false);
   const [downloadedImageUrl, setDownloadedImageUrl] = useState<string | null>(null);
 
-  // Download progress state - real-time percentage display
-  const [downloadProgress, setDownloadProgress] = useState(0);
-  const [isShowingProgress, setIsShowingProgress] = useState(false);
-
   // Wallet deduction hook - admins bypass credit deduction
   const {
     checkAndDeductBalance,
@@ -1518,7 +1514,7 @@ export default function BannerPreview() {
     }
   };
 
-  // *** DOWNLOAD WITH PROGRESS UI ***
+  // *** DOWNLOAD WITH SUCCESS SCREEN ***
   const handleDownload = async () => {
     if (!bannerRef.current || !userId || isDownloading) return;
 
@@ -1540,18 +1536,10 @@ export default function BannerPreview() {
     }
 
     setIsDownloading(true);
-    setIsShowingProgress(true);
-    setDownloadProgress(0);
     
     try {
-      // Progress: 0% - Starting
-      setDownloadProgress(5);
-      
       const FIXED_SIZE = 1350;
       const bannerElement = bannerRef.current;
-      
-      // Progress: 10% - Preparing canvas
-      setDownloadProgress(10);
       
       const originalTransform = bannerElement.style.transform;
       const originalWidth = bannerElement.style.width;
@@ -1560,9 +1548,6 @@ export default function BannerPreview() {
       bannerElement.style.transform = 'scale(1)';
       bannerElement.style.width = `${FIXED_SIZE}px`;
       bannerElement.style.height = `${FIXED_SIZE}px`;
-
-      // Progress: 20% - Rendering
-      setDownloadProgress(20);
 
       const dataUrl = await toJpeg(bannerElement, {
         cacheBust: true,
@@ -1586,15 +1571,9 @@ export default function BannerPreview() {
         }
       });
 
-      // Progress: 50% - Image captured
-      setDownloadProgress(50);
-
       bannerElement.style.transform = originalTransform;
       bannerElement.style.width = originalWidth;
       bannerElement.style.height = originalHeight;
-
-      // Progress: 60% - Processing wallet
-      setDownloadProgress(60);
 
       const templateId = currentTemplateId || bannerData?.templateId;
       const { success, insufficientBalance } = await checkAndDeductBalance(
@@ -1604,37 +1583,21 @@ export default function BannerPreview() {
       if (insufficientBalance) {
         setShowInsufficientBalanceModal(true);
         setIsDownloading(false);
-        setIsShowingProgress(false);
         return;
       }
 
       if (!success) {
         setIsDownloading(false);
-        setIsShowingProgress(false);
         return;
       }
-
-      // Progress: 75% - Compressing image
-      setDownloadProgress(75);
 
       const timestamp = new Date().getTime();
       const filename = `ReBusiness-Banner-${categoryName}-${timestamp}.jpg`;
       const { blob } = await compressToTargetRange(dataUrl, 2, 5, 0.92);
-      
-      // Progress: 90% - Saving to device
-      setDownloadProgress(90);
-      
       await triggerDownload(blob, filename);
-
-      // Progress: 100% - Complete
-      setDownloadProgress(100);
-
-      // Small delay to show 100%
-      await new Promise(resolve => setTimeout(resolve, 300));
 
       // Store downloaded image for preview and show success screen
       setDownloadedImageUrl(dataUrl);
-      setIsShowingProgress(false);
       setDownloadComplete(true);
 
       setTimeout(() => cleanupBannerMemory(bannerRef.current), 500);
@@ -1642,54 +1605,10 @@ export default function BannerPreview() {
     } catch (error) {
       console.error("Download failed:", error);
       toast.error("Download failed");
-      setIsShowingProgress(false);
     } finally {
       setIsDownloading(false);
     }
   };
-
-  // *** DOWNLOAD PROGRESS UI - Clean, Luxury, Mobile-First ***
-  if (isShowingProgress) {
-    return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6">
-        {/* Progress Container */}
-        <div className="w-full max-w-[300px]">
-          {/* Icon */}
-          <div className="flex justify-center mb-6">
-            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-              <Sparkles className="w-8 h-8 text-primary" />
-            </div>
-          </div>
-
-          {/* Title */}
-          <h2 className="text-lg font-semibold text-foreground text-center mb-2">
-            Downloading Banner
-          </h2>
-          <p className="text-sm text-muted-foreground text-center mb-8">
-            Please wait...
-          </p>
-
-          {/* Progress Bar - Clean Gold Style */}
-          <div className="w-full h-3 bg-muted/50 rounded-full overflow-hidden mb-4 border border-border/50">
-            <div 
-              className="h-full rounded-full"
-              style={{
-                width: `${downloadProgress}%`,
-                background: 'linear-gradient(90deg, #FFD700, #F4A100)',
-                boxShadow: '0 0 12px rgba(255, 215, 0, 0.4)',
-                transition: 'width 0.15s linear',
-              }}
-            />
-          </div>
-
-          {/* Percentage Text - Large, Bold */}
-          <p className="text-3xl font-bold text-primary text-center">
-            {Math.round(downloadProgress)}%
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   // *** DOWNLOAD SUCCESS SCREEN - Clean, Premium, Mobile-First ***
   if (downloadComplete && downloadedImageUrl) {
