@@ -1,5 +1,5 @@
 import { useState, memo, useRef, useEffect, useCallback, useMemo } from "react";
-import { getThumbnailUrl } from "@/lib/imageOptimizer";
+import { getOptimizedImageUrl, getThumbnailUrl } from "@/lib/imageOptimizer";
 import LoginPromptModal from "@/components/LoginPromptModal";
 
 // Static proxy placeholder SVG - instant display, no network
@@ -32,8 +32,15 @@ function GuestBannerCardComponent({
   onAuthenticatedClick
 }: GuestBannerCardProps) {
   const [showLoginModal, setShowLoginModal] = useState(false);
+  
+  // Optimized image URL - 300px width, 80% quality for thumbnails
+  const optimizedUrl = useMemo(() => 
+    imageUrl ? getOptimizedImageUrl(imageUrl, { width: 300, quality: 80 }) : '',
+    [imageUrl]
+  );
+  
   // Check if image is already cached - instant display
-  const isCached = useMemo(() => imageUrl ? imageCache.has(imageUrl) : false, [imageUrl]);
+  const isCached = useMemo(() => optimizedUrl ? imageCache.has(optimizedUrl) : false, [optimizedUrl]);
   const [imageLoaded, setImageLoaded] = useState(isCached);
   const [isInView, setIsInView] = useState(isCached);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -73,8 +80,8 @@ function GuestBannerCardComponent({
 
   const handleImageLoad = useCallback(() => {
     setImageLoaded(true);
-    if (imageUrl) imageCache.add(imageUrl);
-  }, [imageUrl]);
+    if (optimizedUrl) imageCache.add(optimizedUrl);
+  }, [optimizedUrl]);
 
   const thumbnailUrl = useMemo(() => 
     imageUrl ? getThumbnailUrl(imageUrl, 40) : '', 
@@ -106,7 +113,7 @@ function GuestBannerCardComponent({
               )}
               {(isInView || isCached) && (
                 <img
-                  src={imageUrl}
+                  src={optimizedUrl}
                   alt={title}
                   className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-150 transform-gpu ${
                     imageLoaded ? 'opacity-100' : 'opacity-0'
