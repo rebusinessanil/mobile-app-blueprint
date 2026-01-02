@@ -917,8 +917,8 @@ html, body {
    BANNER PREVIEW - MOBILE-FIRST FIXED CANVAS ARCHITECTURE
    - Static layers: Load once, never re-render
    - Dynamic layers: Background + stickers update on slot change
-   - Zero blur, zero layout shift, instant switching
    - GPU-safe transforms for mobile stability
+   - Banner always fits within container (no overflow)
    ===================================================== */
 
 /* Force instant switching - no CSS transitions on banner preview */
@@ -927,10 +927,9 @@ html, body {
 #banner-canvas,
 #banner-canvas * {
   transition: none !important;
-  animation-play-state: paused !important;
 }
 
-/* Keep sparkle animations active (only in download, not during switching) */
+/* Keep sparkle animations active for premium effect */
 .banner-scale-container [style*="animation: sparkle"],
 #banner-canvas [style*="animation: sparkle"] {
   animation-play-state: running !important;
@@ -939,19 +938,19 @@ html, body {
 /* GPU acceleration for banner preview container - MOBILE OPTIMIZED */
 .banner-scale-container {
   /* GPU layer promotion */
-  transform: translateZ(0);
+  transform-style: flat;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
   -webkit-font-smoothing: antialiased;
   
   /* Layout containment - prevents reflows */
-  contain: strict;
-  
-  /* Disable pointer events during rendering for performance */
-  pointer-events: auto;
+  contain: layout style paint;
   
   /* Mobile: Reduce memory by not hinting will-change after initial render */
   will-change: auto;
+  
+  /* Prevent any overflow */
+  overflow: hidden;
 }
 
 /* DYNAMIC LAYER - Background that changes on slot switch */
@@ -959,20 +958,25 @@ html, body {
   /* GPU layer for instant background swap */
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
-  transform: translateZ(0);
   
-  /* Strict containment - isolated from rest of page */
-  contain: strict;
+  /* Containment for isolation */
+  contain: layout style paint;
   
   /* No will-change to save memory on mobile */
   will-change: auto;
+}
+
+/* OVERLAY LAYER - Dark blur overlay for depth effect */
+.banner-overlay-layer {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  contain: strict;
 }
 
 /* STATIC LAYERS - User photo, nameplate, logos, uplines - load once, never touch */
 .banner-static-layer {
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
-  transform: translateZ(0);
   will-change: auto;
   
   /* Content never changes - full isolation */
@@ -982,7 +986,6 @@ html, body {
 /* Instant background switching - no transitions whatsoever */
 #banner-canvas > div:first-child {
   transition: none !important;
-  animation: none !important;
 }
 
 /* Slot selector - instant response with minimal style */
@@ -1018,15 +1021,15 @@ html, body {
     min-width: 60px;
   }
   
-  /* Aggressive mobile image optimization */
+  /* Mobile image optimization - keep sharpness */
   #banner-canvas img {
-    image-rendering: crisp-edges;
+    image-rendering: -webkit-optimize-contrast;
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
   }
 }
 
-/* Low-end device fallback - maximum performance */
+/* Low-end device fallback - keep blur overlay but reduce shadows */
 @media (max-width: 480px) {
   .banner-scale-container {
     /* Force simple rendering path */
@@ -1034,12 +1037,8 @@ html, body {
     isolation: isolate;
   }
   
-  /* Disable all effects on very small screens */
-  #banner-canvas [style*="filter: blur"] {
-    filter: none !important;
-  }
-  
+  /* Keep blur overlay but reduce heavy shadows */
   #banner-canvas [style*="box-shadow"] {
-    box-shadow: none !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3) !important;
   }
 }
