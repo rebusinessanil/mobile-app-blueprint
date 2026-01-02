@@ -33,7 +33,101 @@ export const base64ToBlob = async (
 };
 
 /**
- * Compress image to target size using canvas
+ * Smart compression to ensure JPEG file size is STRICTLY between 2-5 MB
+ * Uses bidirectional quality adjustment for precise size targeting
+ */
+export const compressToTargetRange = async (
+  dataUrl: string,
+  minSizeMB: number = 2,
+  maxSizeMB: number = 5,
+  initialQuality: number = 0.92
+): Promise<{ blob: Blob; quality: number; sizeMB: number }> => {
+  const minBytes = minSizeMB * 1024 * 1024;
+  const maxBytes = maxSizeMB * 1024 * 1024;
+  
+  // Load image from dataUrl
+  const img = new Image();
+  await new Promise<void>((resolve, reject) => {
+    img.onload = () => resolve();
+    img.onerror = reject;
+    img.src = dataUrl;
+  });
+
+  // Create canvas for recompression
+  const canvas = document.createElement('canvas');
+  canvas.width = img.width;
+  canvas.height = img.height;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('Canvas context unavailable');
+  ctx.drawImage(img, 0, 0);
+
+  let quality = initialQuality;
+  const maxQuality = 0.98; // Maximum quality cap
+  const minQuality = 0.55; // Never go below 55% quality
+  const mimeType = 'image/jpeg';
+  
+  // Helper to get blob at specific quality
+  const getBlobAtQuality = (q: number): Promise<Blob> => {
+    return new Promise((resolve, reject) => {
+      canvas.toBlob(
+        (b) => b ? resolve(b) : reject(new Error('JPEG export failed')),
+        mimeType,
+        q
+      );
+    });
+  };
+
+  // Initial blob
+  let blob = await getBlobAtQuality(quality);
+  let attempts = 0;
+  const maxAttempts = 10;
+
+  // PHASE 1: If too large, reduce quality until under maxBytes
+  while (blob.size > maxBytes && quality > minQuality && attempts < maxAttempts) {
+    quality -= 0.05;
+    blob = await getBlobAtQuality(quality);
+    attempts++;
+    console.log(`📉 Reducing quality to ${(quality * 100).toFixed(0)}% → ${(blob.size / 1024 / 1024).toFixed(2)}MB`);
+  }
+
+  // PHASE 2: If too small, increase quality until above minBytes
+  attempts = 0;
+  while (blob.size < minBytes && quality < maxQuality && attempts < maxAttempts) {
+    quality += 0.03;
+    blob = await getBlobAtQuality(quality);
+    attempts++;
+    console.log(`📈 Increasing quality to ${(quality * 100).toFixed(0)}% → ${(blob.size / 1024 / 1024).toFixed(2)}MB`);
+  }
+
+  // PHASE 3: Final check - if still under 2MB, use max quality with resolution boost
+  if (blob.size < minBytes && quality >= maxQuality) {
+    // Scale up canvas for larger file (1.25x resolution boost)
+    const scaleFactor = 1.25;
+    const upscaledCanvas = document.createElement('canvas');
+    upscaledCanvas.width = Math.round(img.width * scaleFactor);
+    upscaledCanvas.height = Math.round(img.height * scaleFactor);
+    const upCtx = upscaledCanvas.getContext('2d');
+    if (upCtx) {
+      upCtx.drawImage(img, 0, 0, upscaledCanvas.width, upscaledCanvas.height);
+      blob = await new Promise((resolve, reject) => {
+        upscaledCanvas.toBlob(
+          (b) => b ? resolve(b) : reject(new Error('Upscale export failed')),
+          mimeType,
+          maxQuality
+        );
+      });
+      console.log(`📐 Resolution boost applied → ${(blob.size / 1024 / 1024).toFixed(2)}MB`);
+    }
+  }
+
+  const sizeMB = blob.size / (1024 * 1024);
+  console.log(`✅ Final: ${sizeMB.toFixed(2)}MB @ ${(quality * 100).toFixed(0)}% quality`);
+  
+  return { blob, quality, sizeMB };
+};
+
+/**
+ * Compress image to target size using canvas (legacy support)
  * Uses iterative quality reduction for smart compression
  */
 export const compressToTargetSize = async (
