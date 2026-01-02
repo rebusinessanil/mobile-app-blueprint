@@ -444,23 +444,33 @@ export default function SlotPreviewMini({
     }
   };
 
-  // Use ref to calculate dynamic scale based on container size
+  // *** MOBILE-FIRST: Fixed scale calculated once on mount ***
   const containerRef = React.useRef<HTMLDivElement>(null);
   const [dynamicScale, setDynamicScale] = React.useState(SCALE_FACTOR);
+  const scaleCalculatedRef = React.useRef(false);
 
-  React.useEffect(() => {
-    const updateScale = () => {
+  React.useLayoutEffect(() => {
+    // Calculate scale ONCE on mount - no resize listener for mobile stability
+    if (scaleCalculatedRef.current) return;
+    
+    const calculateScale = () => {
       if (containerRef.current) {
         const containerWidth = containerRef.current.offsetWidth;
-        // Scale banner (1350px) to fit container width perfectly
-        const newScale = containerWidth / 1350;
-        setDynamicScale(newScale);
+        if (containerWidth > 0) {
+          // Scale banner (1350px) to fit container width perfectly
+          const newScale = containerWidth / 1350;
+          setDynamicScale(newScale);
+          scaleCalculatedRef.current = true;
+        }
       }
     };
 
-    updateScale();
-    window.addEventListener('resize', updateScale);
-    return () => window.removeEventListener('resize', updateScale);
+    calculateScale();
+    
+    // Fallback: If container not ready, retry once with RAF
+    if (!scaleCalculatedRef.current) {
+      requestAnimationFrame(calculateScale);
+    }
   }, []);
 
   return (
@@ -471,7 +481,11 @@ export default function SlotPreviewMini({
           ? 'border-4 border-[#FFD700] scale-105 shadow-[0_0_20px_rgba(255,215,0,0.5)]' 
           : 'border-2 border-gray-600'
       }`}
-      style={{ transition: 'none' }}
+      style={{ 
+        transition: 'none',
+        WebkitTapHighlightColor: 'transparent',
+        touchAction: 'manipulation',
+      }}
     >
       <div 
         ref={containerRef}
@@ -480,7 +494,9 @@ export default function SlotPreviewMini({
           ...getSlotBackgroundStyle(slot),
           position: 'relative',
           willChange: 'auto',
-          backfaceVisibility: 'hidden'
+          backfaceVisibility: 'hidden',
+          WebkitBackfaceVisibility: 'hidden',
+          contain: 'strict',
         }}
       >
         {/* Scaled banner content wrapper - fits perfectly to slot box */}
@@ -491,10 +507,12 @@ export default function SlotPreviewMini({
             left: 0,
             width: '1350px',
             height: '1350px',
-            transform: `scale(${dynamicScale})`,
+            transform: `scale(${dynamicScale}) translateZ(0)`,
             transformOrigin: 'top left',
             pointerEvents: 'none',
-            transition: 'none'
+            transition: 'none',
+            backfaceVisibility: 'hidden',
+            WebkitBackfaceVisibility: 'hidden',
           }}
         >
           {/* Top-Left Logo */}
