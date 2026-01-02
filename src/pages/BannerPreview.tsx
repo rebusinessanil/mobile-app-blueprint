@@ -1,6 +1,6 @@
 import { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { ArrowLeft, Settings, Sparkles, Home, Share2 } from "lucide-react";
+import { ArrowLeft, Settings, Sparkles } from "lucide-react";
 import BannerPreviewSkeleton from "@/components/skeletons/BannerPreviewSkeleton";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -112,9 +112,8 @@ export default function BannerPreview() {
   const [isProfileControlMinimized, setIsProfileControlMinimized] = useState(false);
   const [showInsufficientBalanceModal, setShowInsufficientBalanceModal] = useState(false);
 
-  // Post-download action states
-  const [downloadComplete, setDownloadComplete] = useState(false);
-  const [downloadedBannerUrl, setDownloadedBannerUrl] = useState<string | null>(null);
+  // Download state - simplified, no post-download UI
+  // Download happens silently, user stays on same page
 
   // Wallet deduction hook - admins bypass credit deduction
   const {
@@ -204,79 +203,14 @@ export default function BannerPreview() {
     setSelectedStickerId(null);
   }, []);
 
-  // Handle Home button - SPA navigation with full memory cleanup
-  const handleGoHome = useCallback(() => {
-    // Step 1: Clear all banner preview state immediately
-    setDownloadComplete(false);
-    setDownloadedBannerUrl(null);
-    setIsDownloading(false);
-    setStickers([]);
-    setSlotStickers({});
-    setStickerImages({});
-    
-    // Step 2: Destroy banner canvas and release memory
+  // Handle back navigation - clean exit
+  const handleGoBack = useCallback(() => {
+    // Memory cleanup before leaving
     if (bannerRef.current) {
       cleanupBannerMemory(bannerRef.current);
     }
-    
-    // Step 3: Revoke any blob URLs stored in state
-    if (downloadedBannerUrl && downloadedBannerUrl.startsWith('blob:')) {
-      URL.revokeObjectURL(downloadedBannerUrl);
-    }
-
-    // Step 4: SPA navigation - instant, no page reload
-    navigate('/dashboard', { replace: true });
-  }, [navigate, downloadedBannerUrl]);
-
-  // Handle Share button - Share banner with WhatsApp priority
-  const handleShare = useCallback(async () => {
-    if (!downloadedBannerUrl) {
-      toast.error("No banner to share. Please download first.");
-      return;
-    }
-    const appLink = "https://rebusiness.in/";
-    const shareText = `🎉 Check out my achievement banner created with ReBusiness!\n\n📲 Create your own stunning banners: ${appLink}`;
-
-    // Convert base64 to blob for sharing
-    const base64Response = await fetch(downloadedBannerUrl);
-    const blob = await base64Response.blob();
-    const file = new File([blob], 'ReBusiness-Banner.png', {
-      type: 'image/png'
-    });
-
-    // Check if native sharing is supported (mobile browsers)
-    if (navigator.share && navigator.canShare && navigator.canShare({
-      files: [file]
-    })) {
-      try {
-        await navigator.share({
-          title: 'My ReBusiness Banner',
-          text: shareText,
-          files: [file]
-        });
-        toast.success("Shared successfully!");
-      } catch (error) {
-        // User cancelled or share failed
-        if ((error as Error).name !== 'AbortError') {
-          console.error("Share failed:", error);
-          // Fallback to WhatsApp
-          openWhatsAppShare(shareText);
-        }
-      }
-    } else {
-      // Fallback: Open WhatsApp with text (image sharing not supported in web)
-      openWhatsAppShare(shareText);
-    }
-  }, [downloadedBannerUrl]);
-
-  // WhatsApp share fallback
-  const openWhatsAppShare = (text: string) => {
-    const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
-    window.open(whatsappUrl, '_blank');
-    toast.info("Opening WhatsApp... Share your downloaded banner along with the message!", {
-      duration: 5000
-    });
-  };
+    navigate(-1);
+  }, [navigate]);
 
   // *** MOBILE-FIRST: Calculate scale ONCE on mount - no resize listener ***
   // ResizeObserver removed for mobile stability - scale is fixed after initial calculation
@@ -1569,38 +1503,35 @@ export default function BannerPreview() {
       toast.error("Failed to save profile defaults");
     }
   };
+  // *** SILENT FAST DOWNLOAD - No loading UI, no post-download screens ***
   const handleDownload = async () => {
-    if (!bannerRef.current) {
-      toast.error("Banner not ready for download");
-      return;
-    }
-    if (!userId) {
-      toast.error("Please login to download banners");
-      return;
-    }
-    const categoryName = bannerData?.categoryType ? bannerData.categoryType.charAt(0).toUpperCase() + bannerData.categoryType.slice(1) : bannerData?.rankName || "Banner";
+    if (!bannerRef.current || !userId || isDownloading) return;
 
-    // Step 1: Quick balance check first (before generation) - SKIP FOR ADMINS
+    const categoryName = bannerData?.categoryType 
+      ? bannerData.categoryType.charAt(0).toUpperCase() + bannerData.categoryType.slice(1) 
+      : bannerData?.rankName || "Banner";
+
+    // Quick balance check (non-admins only)
     if (!isAdmin) {
-      const {
-        data: credits
-      } = await supabase.from("user_credits").select("balance").eq("user_id", userId).single();
+      const { data: credits } = await supabase
+        .from("user_credits")
+        .select("balance")
+        .eq("user_id", userId)
+        .single();
       if ((credits?.balance || 0) < 10) {
         setShowInsufficientBalanceModal(true);
         return;
       }
     }
 
-    // Step 2: Generate banner with optimized JPEG export
+    // Silent download - no loading state shown
     setIsDownloading(true);
-    const loadingToast = toast.loading("Creating your banner...");
     
     try {
-      // OPTIMIZED EXPORT: Use JPEG for faster downloads (smaller file size)
       const FIXED_SIZE = 1350;
-
-      // Temporarily remove the scale transform for full-resolution capture
       const bannerElement = bannerRef.current;
+      
+      // Store original styles
       const originalTransform = bannerElement.style.transform;
       const originalWidth = bannerElement.style.width;
       const originalHeight = bannerElement.style.height;
@@ -1610,21 +1541,17 @@ export default function BannerPreview() {
       bannerElement.style.width = `${FIXED_SIZE}px`;
       bannerElement.style.height = `${FIXED_SIZE}px`;
 
-      // PERFORMANCE: Use JPEG with optimized settings
-      // - pixelRatio 1.5 (instead of 2) = ~40% faster render
-      // - JPEG format = ~60% smaller file size than PNG
-      // - quality 0.92 = excellent quality with compression
+      // Fast JPEG export
       const dataUrl = await toJpeg(bannerElement, {
         cacheBust: true,
         width: FIXED_SIZE,
         height: FIXED_SIZE,
         canvasWidth: FIXED_SIZE,
         canvasHeight: FIXED_SIZE,
-        pixelRatio: 1.5, // Optimized for speed
-        quality: 0.92, // High quality JPEG
-        backgroundColor: '#000000', // Required for JPEG
+        pixelRatio: 1.5,
+        quality: 0.92,
+        backgroundColor: '#000000',
         filter: node => {
-          // Exclude UI elements and ALL watermarks from final export
           if (node.classList?.contains("slot-selector") || 
               node.classList?.contains("control-buttons") || 
               node.classList?.contains("whatsapp-float") || 
@@ -1637,74 +1564,47 @@ export default function BannerPreview() {
         }
       });
 
-      // Restore the original scale transform after capture
+      // Restore original styles
       bannerElement.style.transform = originalTransform;
       bannerElement.style.width = originalWidth;
       bannerElement.style.height = originalHeight;
-      toast.dismiss(loadingToast);
 
-      // Step 3: Deduct wallet balance and save download record
+      // Deduct balance
       const templateId = currentTemplateId || bannerData?.templateId;
-      const {
-        success,
-        insufficientBalance,
-        isAdminBypass
-      } = await checkAndDeductBalance(userId, categoryName, dataUrl, templateId, isAdmin);
+      const { success, insufficientBalance, isAdminBypass } = await checkAndDeductBalance(
+        userId, categoryName, dataUrl, templateId, isAdmin
+      );
 
       if (insufficientBalance) {
         setShowInsufficientBalanceModal(true);
+        setIsDownloading(false);
         return;
       }
 
       if (!success) {
+        setIsDownloading(false);
         return;
       }
 
-      // Step 4: Smart compression to ensure file size is STRICTLY between 2-5 MB
+      // Compress and download
       const timestamp = new Date().getTime();
       const filename = `ReBusiness-Banner-${categoryName}-${timestamp}.jpg`;
-      
-      // Use smart compression: 2MB minimum, 5MB maximum
       const { blob, sizeMB } = await compressToTargetRange(dataUrl, 2, 5, 0.92);
-      
       await triggerDownload(blob, filename);
 
-      // Store the downloaded banner URL for sharing
-      setDownloadedBannerUrl(dataUrl);
-      setDownloadComplete(true);
+      // Silent success toast
+      toast.success(isAdminBypass 
+        ? `Saved! (${sizeMB.toFixed(1)} MB)` 
+        : `Saved! ₹10 deducted`, 
+        { duration: 2000 }
+      );
 
-      // Admin gets different success message
-      if (isAdminBypass) {
-        toast.success(`Banner saved! (${sizeMB.toFixed(2)} MB)`, {
-          description: "Admin download - no credits deducted.",
-          duration: 4000
-        });
-      } else {
-        const { data: updatedCredits } = await supabase
-          .from("user_credits")
-          .select("balance")
-          .eq("user_id", userId)
-          .single();
-        const remainingBalance = updatedCredits?.balance || 0;
-        toast.success(`Banner saved! (${sizeMB.toFixed(2)} MB) • ₹10 deducted`, {
-          description: `Balance: ₹${remainingBalance}`,
-          duration: 4000
-        });
-      }
-
-      // Step 5: Memory cleanup after successful download
-      // Schedule cleanup to run in idle time
-      setTimeout(() => {
-        cleanupBannerMemory(bannerRef.current);
-      }, 500);
+      // Cleanup in background
+      setTimeout(() => cleanupBannerMemory(bannerRef.current), 500);
 
     } catch (error) {
-      console.error("Banner download failed:", error);
-      toast.dismiss(loadingToast);
-      toast.error("Download failed. Please try again.", {
-        description: "Check your connection and try again.",
-        duration: 5000
-      });
+      console.error("Download failed:", error);
+      toast.error("Download failed");
     } finally {
       setIsDownloading(false);
     }
@@ -1717,7 +1617,7 @@ export default function BannerPreview() {
         <div className="flex items-center justify-between max-w-[600px] mx-auto">
           {/* Back button: SPA navigation - instant, no page reload */}
           <button 
-            onClick={downloadComplete ? handleGoHome : () => navigate(-1)} 
+            onClick={handleGoBack} 
             className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl border-2 border-foreground flex items-center justify-center hover:bg-foreground/10 touch-target"
             style={{ transition: 'none' }}
           >
@@ -1737,7 +1637,7 @@ export default function BannerPreview() {
           - Same visual on ALL devices (mobile, tablet, desktop)
           - Fixed reference width (1350px) scaled to fit
           - Never overflows, never flickers, never re-renders */}
-      <div className={`px-2 sm:px-4 py-2 sm:py-3 flex-shrink-0 bg-background overflow-hidden ${downloadComplete ? 'pointer-events-none' : ''}`}>
+      <div className="px-2 sm:px-4 py-2 sm:py-3 flex-shrink-0 bg-background overflow-hidden">
         {/* Universal wrapper - consistent max-width for all screens */}
         <div className="relative w-full max-w-[500px] mx-auto overflow-hidden">
           {/* Gold border container - premium frame */}
@@ -2405,8 +2305,8 @@ export default function BannerPreview() {
         </div>
       </div>
 
-        {/* Profile Avatars (Left) + Download Button (Right) - Hidden after download */}
-        {!downloadComplete && <div className="flex items-center justify-between px-2 sm:px-4 mt-3 sm:mt-4 gap-2">
+        {/* Profile Avatars (Left) + Download Button (Right) - Always visible */}
+        <div className="flex items-center justify-between px-2 sm:px-4 mt-3 sm:mt-4 gap-2">
             {/* Left: Profile Images Row - Clickable to change main photo */}
             <div className="flex gap-2 sm:gap-3 overflow-x-auto scrollbar-hide">
               {profilePhotos.slice(0, 6).map((photo, idx) => <button key={photo.id} onClick={() => {
@@ -2420,29 +2320,16 @@ export default function BannerPreview() {
                 </div>}
             </div>
 
-            {/* Right: Download Button */}
+            {/* Right: Download Button - Always visible */}
             <button onClick={handleDownload} disabled={isDownloading} className="cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0">
               <img src={downloadIcon} alt="Download" className="h-12 w-auto sm:h-16" />
             </button>
-          </div>}
-
-        {/* Post-Download Action Buttons - Shown only after successful download */}
-        {/* Instant response: No animations, buttons respond immediately */}
-        {downloadComplete && <div className="flex items-center justify-center gap-4 px-4 mt-4">
-            <Button onClick={handleGoHome} variant="outline" size="lg" className="flex-1 max-w-[160px] h-14 gap-2 border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground font-semibold text-base rounded-xl" style={{ transition: 'none' }}>
-              <Home className="w-5 h-5" />
-              Home
-            </Button>
-            <Button onClick={handleShare} size="lg" className="flex-1 max-w-[160px] h-14 gap-2 bg-[#25D366] hover:bg-[#128C7E] text-white font-semibold text-base rounded-xl shadow-lg" style={{ transition: 'none' }}>
-              <Share2 className="w-5 h-5" />
-              Share
-            </Button>
-          </div>}
+          </div>
       </div>
 
-      {/* Scrollable Slot Selector Box - Hidden after download (preview is frozen) */}
+      {/* Scrollable Slot Selector Box - Always visible */}
       {/* INSTANT SLOT SWITCHING: Uses handleSlotChange callback for zero-delay updates */}
-      {!downloadComplete && globalBackgroundSlots.length > 0 && <div className="flex-1 min-h-0 px-3 sm:px-4 pb-3 sm:pb-4">
+      {globalBackgroundSlots.length > 0 && <div className="flex-1 min-h-0 px-3 sm:px-4 pb-3 sm:pb-4">
           <div className="h-full overflow-y-auto rounded-2xl sm:rounded-3xl bg-[#111827]/50 border-2 border-[#FFD700]/20 p-3 sm:p-4 shadow-[0_0_30px_rgba(255,215,0,0.1)] scrollbar-thin scrollbar-thumb-[#FFD700]/30 scrollbar-track-transparent">
             <div className="grid grid-cols-4 gap-2 sm:gap-3">
               {globalBackgroundSlots.map(slot => {
@@ -2530,30 +2417,5 @@ export default function BannerPreview() {
 
       {/* Insufficient Balance Modal */}
       <InsufficientBalanceModal open={showInsufficientBalanceModal} onClose={() => setShowInsufficientBalanceModal(false)} />
-
-      {/* Loading Overlay - Shows during banner export */}
-      {isDownloading && <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="w-[86%] max-w-[420px] bg-[#0f1720] rounded-xl p-5 shadow-2xl border border-primary/20">
-            <div className="flex items-center gap-3 mb-3">
-              {/* Logo placeholder - replace with actual ReBusiness logo */}
-              <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center flex-shrink-0">
-                <span className="text-background font-bold text-sm">RB</span>
-              </div>
-              <div className="flex-1">
-                <div className="text-foreground font-bold text-base leading-tight">
-                  ReBusiness • Creating your success banner…
-                </div>
-                <div className="text-muted-foreground text-sm mt-1">
-                  Just a moment!
-                </div>
-              </div>
-              {/* Premium Global Loader */}
-              <PremiumGlobalLoader size="sm" showMessage={false} fullScreen={false} />
-            </div>
-            <p className="text-muted-foreground text-xs text-center mt-3 pt-3 border-t border-border">
-              Preparing your banner — this may take a few seconds.
-            </p>
-          </div>
-        </div>}
     </div>;
 }
