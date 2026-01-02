@@ -180,6 +180,14 @@ export default function BannerPreview() {
     });
   }, []);
 
+  // *** INSTANT SLOT SWITCHING - No re-render, only background + stickers update ***
+  const handleSlotChange = useCallback((slotIndex: number) => {
+    // Direct state update - React batches this efficiently
+    setSelectedTemplate(slotIndex);
+    // Clear sticker selection on slot change for clean experience
+    setSelectedStickerId(null);
+  }, []);
+
   // Handle Home button - SPA navigation (no page reload)
   const handleGoHome = useCallback(() => {
     // Clear all banner preview state immediately
@@ -498,6 +506,11 @@ export default function BannerPreview() {
 
   // Track if preload has started
   const [preloadStarted, setPreloadStarted] = useState(false);
+  
+  // *** FIXED CANVAS ARCHITECTURE ***
+  // Track if static layers have been initialized (load once, never re-render)
+  const [staticLayersReady, setStaticLayersReady] = useState(false);
+  const hasInitializedRef = useRef(false);
 
   // Check if all required data is loaded
   const isDataReady = userId !== null && profile !== undefined && !backgroundsLoading && bannerDefaults !== undefined;
@@ -511,16 +524,66 @@ export default function BannerPreview() {
     return assetsReady && scaleReady && dataReady;
   }, [allLoaded, timedOut, bannerScale, isLayoutReady, isDataReady, backgroundsLoading, stickersLoading]);
 
-  // Memoize asset URLs - collect once to prevent duplicate requests
+  // *** STATIC LAYER MEMOIZATION - Load once, never re-render ***
+  // These values are captured on first load and never change
+  const staticLayers = useMemo(() => {
+    if (!isDataReady || !profile) return null;
+    
+    return {
+      // User photo - locked on init
+      primaryPhoto: bannerData?.categoryType === 'festival' || bannerData?.categoryType === 'motivational' || bannerData?.categoryType === 'story' 
+        ? bannerData?.photo || null 
+        : bannerData?.photo || profile?.profile_photo || profilePhotos[0]?.photo_url || null,
+      // Mentor photo - locked on init  
+      mentorPhoto: profilePhotos[selectedMentorPhotoIndex]?.photo_url || profilePhotos[0]?.photo_url || profile?.profile_photo || null,
+      // Uplines - locked on init
+      uplines: bannerData?.uplines && bannerData.uplines.length > 0 
+        ? bannerData.uplines 
+        : (bannerSettings?.upline_avatars || []).map((u, idx) => ({
+            id: `settings-${idx}`,
+            name: u.name || '',
+            avatar: u.avatar_url || ''
+          })),
+      // Logos - locked on init
+      logoLeft: bannerSettings?.logo_left,
+      logoRight: bannerSettings?.logo_right,
+      congratsImage: bannerDefaults?.congratulations_image,
+      // Text content - locked on init
+      mainName: bannerData?.name || "",
+      teamCity: bannerData?.teamCity || "",
+      chequeAmount: bannerData?.chequeAmount || "",
+      profileName: profile?.name || "",
+      profileRank: (profile?.rank || "").replace(/[-–—]/g, ' '),
+      displayContact: profile?.mobile || profile?.whatsapp || "",
+      message: bannerData?.message || "",
+      quote: bannerData?.quote || "",
+    };
+  }, [isDataReady, profile, bannerData, profilePhotos, selectedMentorPhotoIndex, bannerSettings, bannerDefaults]);
+
+  // *** AUTO-SELECT FIRST SLOT AFTER LOAD ***
+  useEffect(() => {
+    if (isBannerReady && !hasInitializedRef.current && globalBackgroundSlots.length > 0) {
+      hasInitializedRef.current = true;
+      setStaticLayersReady(true);
+      // Auto-select slot 1 (index 0) on first load
+      setSelectedTemplate(0);
+    }
+  }, [isBannerReady, globalBackgroundSlots.length]);
+
+  // Memoize asset URLs - collect ALL assets once to preload everything upfront
   const assetConfig = useMemo(() => {
     if (!bannerData || !isDataReady) return null;
 
-    // Current slot background
-    const activeSlot = globalBackgroundSlots.find(slot => slot.slotNumber === selectedTemplate + 1);
-    const activeBackgroundUrl = activeSlot?.imageUrl || undefined;
+    // ALL background URLs for all slots (preload everything for instant switching)
+    const allBackgroundUrls = globalBackgroundSlots
+      .filter(slot => slot.imageUrl)
+      .map(slot => slot.imageUrl!);
 
-    // Visible stickers for current slot
-    const visibleStickerUrls = (stickerImages[selectedTemplate + 1] || []).map(s => s.url).filter(Boolean);
+    // ALL sticker URLs for all slots
+    const allStickerUrls: string[] = [];
+    Object.values(stickerImages).forEach(stickers => {
+      stickers.forEach(s => s.url && allStickerUrls.push(s.url));
+    });
 
     // Logo URLs
     const logoUrls = [bannerDefaults?.logo_left, bannerDefaults?.logo_right, bannerDefaults?.congratulations_image].filter(Boolean) as string[];
@@ -528,30 +591,20 @@ export default function BannerPreview() {
     // Primary photo
     const primaryPhotoUrl = bannerData?.photo || profile?.profile_photo || undefined;
 
-    // Other backgrounds for slot switching
-    const otherBackgroundUrls = globalBackgroundSlots.filter(slot => slot.slotNumber !== selectedTemplate + 1 && slot.imageUrl).map(slot => slot.imageUrl!);
-
-    // Other stickers
-    const otherStickerUrls: string[] = [];
-    Object.entries(stickerImages).forEach(([slotNum, stickers]) => {
-      if (Number(slotNum) !== selectedTemplate + 1) {
-        stickers.forEach(s => s.url && otherStickerUrls.push(s.url));
-      }
-    });
-
     // Upline avatars
     const uplineAvatarUrls = displayUplines.map(u => u.avatar).filter(Boolean) as string[];
+    
     return {
-      activeBackgroundUrl,
+      activeBackgroundUrl: allBackgroundUrls[0], // First slot as primary
       primaryPhotoUrl,
       downloadIconUrl: downloadIcon,
       logoUrls,
-      visibleStickerUrls,
-      otherBackgroundUrls,
-      otherStickerUrls,
+      visibleStickerUrls: allStickerUrls.slice(0, 8), // First 8 as priority
+      otherBackgroundUrls: allBackgroundUrls.slice(1), // Rest as secondary
+      otherStickerUrls: allStickerUrls.slice(8),
       uplineAvatarUrls
     };
-  }, [bannerData, isDataReady, globalBackgroundSlots, selectedTemplate, stickerImages, bannerDefaults, profile, displayUplines]);
+  }, [bannerData, isDataReady, globalBackgroundSlots, stickerImages, bannerDefaults, profile, displayUplines]);
 
   // Trigger preload once when config is ready
   useEffect(() => {
@@ -1642,14 +1695,17 @@ export default function BannerPreview() {
                 cursor: isAdmin && isDragMode ? 'crosshair' : 'default',
                 transition: 'none'
               }}>
-              {/* Background Layer - Blur only for non-story banners (story & festival are always sharp) */}
+              {/* *** LAYER 1: DYNAMIC BACKGROUND - Updates on slot change ONLY *** */}
+              {/* GPU-accelerated, no blur/transitions for instant switching */}
               <div 
-                className="absolute inset-0" 
+                className="absolute inset-0 banner-dynamic-layer" 
                 style={{
                   ...backgroundStyle,
+                  willChange: 'background-image',
+                  backfaceVisibility: 'hidden',
+                  transform: !['story', 'festival'].includes(bannerData.categoryType || '') ? 'scale(1.02) translateZ(0)' : 'translateZ(0)',
                   ...(!['story', 'festival'].includes(bannerData.categoryType || '') ? {
                     filter: 'blur(4px)',
-                    transform: 'scale(1.02)', // Slight scale to prevent blur edge artifacts
                   } : {}),
                 }}
               />
@@ -1665,8 +1721,9 @@ export default function BannerPreview() {
                 />
               )}
 
-              {/* Foreground Content Container - Completely Sharp */}
-              <div className="absolute inset-0" style={{ zIndex: 2 }}>
+              {/* *** LAYER 2: STATIC CONTENT - Loads once, never re-renders on slot change *** */}
+              {/* User photo, nameplate, logos, uplines, text - all memoized */}
+              <div className="absolute inset-0 banner-static-layer" style={{ zIndex: 2 }}>
 
                 {/* Story Category: Three Dark-Theme Upper Bars */}
                 {bannerData.categoryType === 'story' && <>
@@ -2213,11 +2270,12 @@ export default function BannerPreview() {
                     </p>
                   </div>}
 
-                {/* Achievement Stickers - Right side of achiever photo, near right edge */}
+                {/* *** LAYER 3: DYNAMIC STICKERS - Updates on slot change ONLY *** */}
+                {/* Stickers are slot-specific and update instantly with background */}
                 {stickerImages[selectedTemplate + 1]?.map((sticker, index) => {
                     const finalScale = stickerScale[sticker.id] ?? sticker.scale ?? 9.3;
                     const isSelected = selectedStickerId === sticker.id;
-                    return <img key={sticker.id} src={sticker.url} alt="Achievement Sticker" className={`absolute ${isAdmin && isDragMode ? 'cursor-move' : 'pointer-events-none'} ${isAdmin && isSelected ? 'ring-4 ring-primary ring-offset-2 ring-offset-background' : ''}`} onMouseDown={isAdmin ? e => handleStickerMouseDown(e, sticker.id) : undefined} onClick={isAdmin ? e => {
+                    return <img key={sticker.id} src={sticker.url} alt="Achievement Sticker" className={`absolute banner-dynamic-layer ${isAdmin && isDragMode ? 'cursor-move' : 'pointer-events-none'} ${isAdmin && isSelected ? 'ring-4 ring-primary ring-offset-2 ring-offset-background' : ''}`} onMouseDown={isAdmin ? e => handleStickerMouseDown(e, sticker.id) : undefined} onClick={isAdmin ? e => {
                       if (isDragMode) {
                         e.stopPropagation();
                         setSelectedStickerId(sticker.id);
@@ -2236,7 +2294,9 @@ export default function BannerPreview() {
                       objectFit: 'contain',
                       filter: 'drop-shadow(0 6px 9px rgba(0,0,0,0.4))',
                       zIndex: isSelected ? 20 : 10,
-                      userSelect: 'none'
+                      userSelect: 'none',
+                      willChange: 'auto',
+                      backfaceVisibility: 'hidden'
                     }} />;
                   })}
 
@@ -2292,6 +2352,7 @@ export default function BannerPreview() {
       </div>
 
       {/* Scrollable Slot Selector Box - Hidden after download (preview is frozen) */}
+      {/* INSTANT SLOT SWITCHING: Uses handleSlotChange callback for zero-delay updates */}
       {!downloadComplete && globalBackgroundSlots.length > 0 && <div className="flex-1 min-h-0 px-3 sm:px-4 pb-3 sm:pb-4">
           <div className="h-full overflow-y-auto rounded-2xl sm:rounded-3xl bg-[#111827]/50 border-2 border-[#FFD700]/20 p-3 sm:p-4 shadow-[0_0_30px_rgba(255,215,0,0.1)] scrollbar-thin scrollbar-thumb-[#FFD700]/30 scrollbar-track-transparent">
             <div className="grid grid-cols-4 gap-2 sm:gap-3">
@@ -2299,7 +2360,7 @@ export default function BannerPreview() {
             const isSelected = selectedTemplate === slot.slotNumber - 1;
             // ALL 16 slots show static dummy/proxy content - no user data in mini previews
             // Only the main banner preview shows real achiever data
-            return <SlotPreviewMini key={slot.slotNumber} slot={slot} isSelected={isSelected} onClick={() => setSelectedTemplate(slot.slotNumber - 1)} categoryType={bannerData?.categoryType}
+            return <SlotPreviewMini key={slot.slotNumber} slot={slot} isSelected={isSelected} onClick={() => handleSlotChange(slot.slotNumber - 1)} categoryType={bannerData?.categoryType}
             // No user/achiever data passed - all slots remain proxy-only
             rankName="" name="" teamCity="" chequeAmount="" tripName="" message="" quote="" congratulationsImage={undefined} logoLeft={undefined} logoRight={undefined} uplines={[]} stickers={stickerImages[slot.slotNumber] || []} profileName="" profileRank="" />;
           })}

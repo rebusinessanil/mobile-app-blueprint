@@ -466,18 +466,21 @@ export default function SlotPreviewMini({
   return (
     <button
       onClick={onClick}
-      className={`aspect-square rounded-lg overflow-hidden ${
+      className={`slot-preview-mini aspect-square rounded-lg overflow-hidden ${
         isSelected 
           ? 'border-4 border-[#FFD700] scale-105 shadow-[0_0_20px_rgba(255,215,0,0.5)]' 
           : 'border-2 border-gray-600'
       }`}
+      style={{ transition: 'none' }}
     >
       <div 
         ref={containerRef}
         className="w-full h-full relative overflow-hidden"
         style={{ 
           ...getSlotBackgroundStyle(slot),
-          position: 'relative'
+          position: 'relative',
+          willChange: 'auto',
+          backfaceVisibility: 'hidden'
         }}
       >
         {/* Scaled banner content wrapper - fits perfectly to slot box */}
@@ -490,7 +493,8 @@ export default function SlotPreviewMini({
             height: '1350px',
             transform: `scale(${dynamicScale})`,
             transformOrigin: 'top left',
-            pointerEvents: 'none'
+            pointerEvents: 'none',
+            transition: 'none'
           }}
         >
           {/* Top-Left Logo */}
