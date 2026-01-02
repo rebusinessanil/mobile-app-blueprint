@@ -163,6 +163,7 @@ export default function BannerPreview() {
   
   // *** MOBILE-FIRST: Calculate scale ONCE on mount ***
   // Fixed scale prevents layout shifts and crashes on mobile
+  // Ensures banner NEVER overflows container with 2% safety margin
   const calculateInitialScale = useCallback(() => {
     if (scaleCalculatedRef.current) return; // Only calculate once
     if (!bannerContainerRef.current) return;
@@ -170,8 +171,10 @@ export default function BannerPreview() {
     const parentWidth = bannerContainerRef.current.clientWidth;
     if (parentWidth === 0) return;
 
-    // FIXED SCALE: Calculate once, never change (mobile stability)
-    const scale = parentWidth / 1350;
+    // FIXED SCALE with safety margin - prevents overflow
+    // Use 98% of available width to ensure banner never overflows
+    const safeWidth = parentWidth * 0.98;
+    const scale = Math.min(safeWidth / 1350, 1); // Never scale above 1
     setBannerScale(scale);
     setIsLayoutReady(true);
     scaleCalculatedRef.current = true;
@@ -1684,9 +1687,9 @@ export default function BannerPreview() {
             {/* CSS Transform Scaled HTML Preview - Mimics Canvas behavior */}
             {/* Parent wrapper - exact fit container */}
             <div ref={bannerContainerRef} className="w-full aspect-square relative overflow-hidden flex items-center justify-center">
-              {/* *** MOBILE-FIRST HD RENDERING CONTAINER ***
-                  - Fixed scale computed once on mount
-                  - GPU-accelerated transforms (translateZ, will-change)
+              {/* *** MOBILE-FIRST FIXED CANVAS - NEVER OVERFLOWS ***
+                  - Fixed scale computed once on mount with safety margin
+                  - GPU-accelerated transforms for smooth rendering
                   - Instant slot switching with zero layout shift
                   - Images cached via preloader - never re-fetched */}
               <div className="banner-scale-container" style={{
@@ -1695,17 +1698,17 @@ export default function BannerPreview() {
               top: '50%',
               width: '1350px',
               height: '1350px',
-              // GPU-safe transform: translateZ(0) forces GPU layer, fixed scale prevents recalc
-              transform: `translate(-50%, -50%) scale(${bannerScale}) translateZ(0)`,
+              // GPU-safe transform with fixed scale - never overflows
+              transform: `translate(-50%, -50%) scale(${bannerScale})`,
               transformOrigin: 'center center',
-              // Mobile optimizations
-              imageRendering: 'crisp-edges',
-              willChange: 'auto', // Changed from 'transform' - reduces memory on mobile
+              // Mobile optimizations for sharpness
+              imageRendering: 'auto',
+              willChange: 'auto',
               backfaceVisibility: 'hidden',
               WebkitBackfaceVisibility: 'hidden',
               WebkitFontSmoothing: 'antialiased',
-              // Prevent layout recalculation
-              contain: 'strict',
+              // Prevent any overflow
+              overflow: 'hidden',
             }}>
                 <div ref={bannerRef} id="banner-canvas" onMouseMove={isAdmin ? handleStickerMouseMove : undefined} onMouseUp={isAdmin ? handleStickerMouseUp : undefined} onMouseLeave={isAdmin ? handleStickerMouseUp : undefined} style={{
                 position: 'relative',
@@ -1717,27 +1720,31 @@ export default function BannerPreview() {
                 transition: 'none'
               }}>
               {/* *** LAYER 1: DYNAMIC BACKGROUND - Updates on slot change ONLY *** */}
-              {/* GPU-accelerated, no blur/transitions for instant switching */}
+              {/* GPU-accelerated with blur overlay for non-story banners */}
               <div 
                 className="absolute inset-0 banner-dynamic-layer" 
                 style={{
                   ...backgroundStyle,
-                  willChange: 'background-image',
                   backfaceVisibility: 'hidden',
-                  transform: !['story', 'festival'].includes(bannerData.categoryType || '') ? 'scale(1.02) translateZ(0)' : 'translateZ(0)',
+                  WebkitBackfaceVisibility: 'hidden',
+                  transform: !['story', 'festival'].includes(bannerData.categoryType || '') ? 'scale(1.05) translateZ(0)' : 'translateZ(0)',
+                  // Blur ONLY for non-story/non-festival banners - creates depth effect
                   ...(!['story', 'festival'].includes(bannerData.categoryType || '') ? {
-                    filter: 'blur(4px)',
+                    filter: 'blur(6px)',
                   } : {}),
                 }}
               />
 
-              {/* Dark Overlay - Only for non-story banners (story & festival are always sharp) */}
+              {/* Dark Transparent Blur Overlay - Creates premium depth effect */}
+              {/* Always visible for non-story banners - restored from previous version */}
               {!['story', 'festival'].includes(bannerData.categoryType || '') && (
                 <div 
-                  className="absolute inset-0 pointer-events-none"
+                  className="absolute inset-0 pointer-events-none banner-overlay-layer"
                   style={{
-                    backgroundColor: 'rgba(0, 0, 0, 0.25)',
-                    zIndex: 1
+                    background: 'linear-gradient(to bottom, rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.4))',
+                    zIndex: 1,
+                    backfaceVisibility: 'hidden',
+                    WebkitBackfaceVisibility: 'hidden',
                   }}
                 />
               )}
