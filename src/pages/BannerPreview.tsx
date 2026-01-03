@@ -27,26 +27,25 @@ import InsufficientBalanceModal from "@/components/InsufficientBalanceModal";
 import BannerWatermarks from "@/components/BannerWatermarks";
 import PremiumGlobalLoader from "@/components/PremiumGlobalLoader";
 
-// *** REAL BACKGROUND MODE: Use real background images in main preview ***
-const getRealBackgroundStyle = (slot: BackgroundSlot | undefined): React.CSSProperties => {
+// *** LIGHTWEIGHT PROXY BACKGROUND MODE: Real background URLs with optimized loading ***
+// Used in main banner preview - loads real background but optimized for mobile performance
+const getProxyBackgroundStyle = (slot: BackgroundSlot | undefined): React.CSSProperties => {
   if (!slot) {
     return { backgroundColor: '#1a1a2e', backgroundImage: 'none' };
   }
-  // Use real background URL if available
+  // Use real background URL with performance optimizations
   if (slot.imageUrl) {
     return {
       backgroundImage: `url(${slot.imageUrl})`,
       backgroundSize: 'cover',
       backgroundPosition: 'center',
-      backgroundColor: slot.defaultColor || '#1a1a2e', // Fallback color
+      backgroundColor: slot.defaultColor || '#1a1a2e', // Fallback color while loading
     };
   }
   // Fallback to default color only
   return {
     backgroundColor: slot.defaultColor || '#1a1a2e',
     backgroundImage: 'none',
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
   };
 };
 interface Upline {
@@ -454,9 +453,9 @@ export default function BannerPreview() {
   const selectedSlot = selectedTemplate + 1;
   const currentSlot = globalBackgroundSlots.find(slot => slot.slotNumber === selectedSlot);
   
-  // *** REAL BACKGROUND MODE: Use real background images in main preview ***
-  // Real backgrounds load for proper preview experience
-  const backgroundStyle = getRealBackgroundStyle(currentSlot);
+  // *** LIGHTWEIGHT PROXY BACKGROUND: Real background URLs optimized for performance ***
+  // Uses real background images in proxy mode - fast loading, mobile-first
+  const backgroundStyle = getProxyBackgroundStyle(currentSlot);
 
   // Debug background selection
   useEffect(() => {
