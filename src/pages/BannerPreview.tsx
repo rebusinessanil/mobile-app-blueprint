@@ -9,10 +9,12 @@ import StickerControl from "@/components/StickerControl";
 import SlotPreviewMini from "@/components/SlotPreviewMini";
 import downloadIcon from "@/assets/download-icon.png";
 import anniversaryNameplateFrame from "@/assets/anniversary-nameplate-frame.png";
+// *** PROXY MODEL: Universal placeholder for preview - real photo loads only at download ***
+import slotDefaultModel from "@/assets/slot-default-model.png";
 import { useProfile } from "@/hooks/useProfile";
 import { useProfilePhotos } from "@/hooks/useProfilePhotos";
 import { useBannerSettings } from "@/hooks/useBannerSettings";
-import { useGlobalBackgroundSlots, getSlotBackgroundStyle } from "@/hooks/useGlobalBackgroundSlots";
+import { useGlobalBackgroundSlots, getSlotBackgroundStyle, BackgroundSlot } from "@/hooks/useGlobalBackgroundSlots";
 import { useBannerDefaults } from "@/hooks/useBannerDefaults";
 import { useUnifiedStickerSlots, mapBannerDataToStickerOptions } from "@/hooks/useUnifiedStickerSlots";
 import { useQuery } from "@tanstack/react-query";
@@ -22,9 +24,22 @@ import { toJpeg } from "html-to-image";
 import { triggerDownload, compressToTargetRange, cleanupBannerMemory } from "@/lib/downloadUtils";
 import { useWalletDeduction } from "@/hooks/useWalletDeduction";
 import InsufficientBalanceModal from "@/components/InsufficientBalanceModal";
-import { useBannerAssetPreloader } from "@/hooks/useBannerAssetPreloader";
 import BannerWatermarks from "@/components/BannerWatermarks";
 import PremiumGlobalLoader from "@/components/PremiumGlobalLoader";
+
+// *** PURE PROXY MODE: Use proxy background color only - no real image loading in preview ***
+const getProxyBackgroundStyle = (slot: BackgroundSlot | undefined): React.CSSProperties => {
+  if (!slot) {
+    return { backgroundColor: '#1a1a2e', backgroundImage: 'none' };
+  }
+  // ALWAYS use default color - never load real background images in preview
+  return {
+    backgroundColor: slot.defaultColor || '#1a1a2e',
+    backgroundImage: 'none', // STRICT: No real images in proxy mode
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+  };
+};
 interface Upline {
   id: string;
   name: string;
@@ -429,16 +444,17 @@ export default function BannerPreview() {
   // Map selectedTemplate (0-15) to slot_number (1-16) and get background from global slots
   const selectedSlot = selectedTemplate + 1;
   const currentSlot = globalBackgroundSlots.find(slot => slot.slotNumber === selectedSlot);
-  const backgroundStyle = currentSlot ? getSlotBackgroundStyle(currentSlot) : {};
+  
+  // *** PURE PROXY MODE: Use proxy background color only - no real image loading in preview ***
+  // Real backgrounds load ONLY at download time
+  const backgroundStyle = getProxyBackgroundStyle(currentSlot);
 
   // Debug background selection
   useEffect(() => {
-    console.log('🎨 Global background selection:', {
+    console.log('🎨 PROXY background selection:', {
       selectedSlot,
       categoryType: bannerData?.categoryType,
-      hasImage: currentSlot?.hasImage,
-      imageUrl: currentSlot?.imageUrl ? currentSlot.imageUrl.substring(0, 60) + '...' : 'none',
-      defaultColor: currentSlot?.defaultColor,
+      proxyColor: currentSlot?.defaultColor || '#1a1a2e',
       templateId: currentTemplateId,
       storyId
     });
@@ -476,24 +492,13 @@ export default function BannerPreview() {
   // Fetch selected stickers - removed, now using slotStickers structure
   // Each slot has its own stickers independently
 
-  // Use asset preloader - waits for 100% loading
-  const {
-    preloadAssets,
-    allLoaded,
-    progress: loadingProgress,
-    timedOut,
-    isMobile,
-    reset: resetPreloader
-  } = useBannerAssetPreloader();
-
-  // Track if preload has started
-  const [preloadStarted, setPreloadStarted] = useState(false);
+  // *** PURE PROXY MODE: No asset preloading - preview uses proxy assets only ***
+  // Real assets load ONLY at download time for instant preview performance
   
   // *** MOBILE-FIRST FIXED CANVAS ARCHITECTURE ***
   // Static layers load once, never re-render - critical for mobile stability
   const [staticLayersReady, setStaticLayersReady] = useState(false);
   const hasInitializedRef = useRef(false);
-  const imagesLoadedRef = useRef(new Set<string>()); // Track loaded images to prevent re-fetching
   
   // *** PREVIEW LOCKED STATE - Prevents ALL re-renders after first load ***
   // Once locked, the preview is in read-only mode - no data refetch, no re-computation
@@ -503,17 +508,16 @@ export default function BannerPreview() {
   // Check if all required data is loaded
   const isDataReady = userId !== null && profile !== undefined && !backgroundsLoading && bannerDefaults !== undefined;
 
-  // *** STRICT ALL-OR-NOTHING STATE ***
-  // Single derived state: show skeleton until EVERYTHING is ready
+  // *** PURE PROXY MODE: Instant ready - no asset preloading needed ***
   const isBannerReady = useMemo(() => {
     // If preview is locked, always return true (no more loading)
     if (previewLockedRef.current) return true;
     
-    const assetsReady = allLoaded || timedOut;
     const scaleReady = bannerScale > 0 && isLayoutReady;
     const dataReady = isDataReady && !backgroundsLoading && !stickersLoading;
-    return assetsReady && scaleReady && dataReady;
-  }, [allLoaded, timedOut, bannerScale, isLayoutReady, isDataReady, backgroundsLoading, stickersLoading]);
+    // PROXY MODE: No asset loading required - instant display
+    return scaleReady && dataReady;
+  }, [bannerScale, isLayoutReady, isDataReady, backgroundsLoading, stickersLoading]);
 
   // *** STATIC LAYER MEMOIZATION - Load once, never re-render ***
   // These values are captured on first load and FROZEN - critical for mobile stability
@@ -570,48 +574,8 @@ export default function BannerPreview() {
     }
   }, [isBannerReady, globalBackgroundSlots.length]);
 
-  // Memoize asset URLs - collect ALL assets once to preload everything upfront
-  const assetConfig = useMemo(() => {
-    if (!bannerData || !isDataReady) return null;
-
-    // ALL background URLs for all slots (preload everything for instant switching)
-    const allBackgroundUrls = globalBackgroundSlots
-      .filter(slot => slot.imageUrl)
-      .map(slot => slot.imageUrl!);
-
-    // ALL sticker URLs for all slots
-    const allStickerUrls: string[] = [];
-    Object.values(stickerImages).forEach(stickers => {
-      stickers.forEach(s => s.url && allStickerUrls.push(s.url));
-    });
-
-    // Logo URLs
-    const logoUrls = [bannerDefaults?.logo_left, bannerDefaults?.logo_right, bannerDefaults?.congratulations_image].filter(Boolean) as string[];
-
-    // Primary photo
-    const primaryPhotoUrl = bannerData?.photo || profile?.profile_photo || undefined;
-
-    // Upline avatars
-    const uplineAvatarUrls = displayUplines.map(u => u.avatar).filter(Boolean) as string[];
-    
-    return {
-      activeBackgroundUrl: allBackgroundUrls[0], // First slot as primary
-      primaryPhotoUrl,
-      downloadIconUrl: downloadIcon,
-      logoUrls,
-      visibleStickerUrls: allStickerUrls.slice(0, 8), // First 8 as priority
-      otherBackgroundUrls: allBackgroundUrls.slice(1), // Rest as secondary
-      otherStickerUrls: allStickerUrls.slice(8),
-      uplineAvatarUrls
-    };
-  }, [bannerData, isDataReady, globalBackgroundSlots, stickerImages, bannerDefaults, profile, displayUplines]);
-
-  // Trigger preload once when config is ready
-  useEffect(() => {
-    if (preloadStarted || !assetConfig) return;
-    setPreloadStarted(true);
-    preloadAssets(assetConfig);
-  }, [assetConfig, preloadStarted, preloadAssets]);
+  // *** PURE PROXY MODE: Asset config removed - no preloading needed ***
+  // Real assets load ONLY at download time for instant preview performance
 
   // Trigger scale update immediately on mount
   // Using useLayoutEffect ensures scale is applied before browser paint - no flicker
@@ -626,8 +590,8 @@ export default function BannerPreview() {
     return null;
   }
 
-  // *** INSTANT RENDER STRATEGY: Show loading ONLY if truly needed ***
-  // Mobile-first: Avoid black screen by showing minimal loading state
+  // *** PURE PROXY MODE: Minimal loading - instant display ***
+  // No asset preloading needed - preview uses proxy assets only
   if (!isBannerReady) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
@@ -638,26 +602,12 @@ export default function BannerPreview() {
               <Sparkles className="w-7 h-7 text-primary" />
             </div>
             <h2 className="text-base font-semibold text-foreground mb-1">
-              {timedOut ? 'Almost Ready' : 'Loading Banner'}
+              Loading Banner
             </h2>
             <p className="text-xs text-muted-foreground">
-              {loadingProgress > 80 ? 'Finishing up...' : 'Please wait...'}
+              Preparing preview...
             </p>
           </div>
-          
-          {/* Lightweight progress bar - instant update, no transitions */}
-          <div className="w-full bg-muted/50 rounded-full h-2 mb-2 overflow-hidden">
-            <div 
-              className="h-full bg-primary rounded-full" 
-              style={{
-                width: `${Math.min(loadingProgress, 100)}%`,
-                transition: 'none'
-              }} 
-            />
-          </div>
-          <p className="text-xs text-muted-foreground text-center font-medium">
-            {Math.round(loadingProgress)}%
-          </p>
           
           {/* Hidden container for scale calculation - MUST be in DOM with proper width */}
           <div 
@@ -1517,7 +1467,7 @@ export default function BannerPreview() {
     }
   };
 
-  // *** DOWNLOAD WITH PROGRESS UI ***
+  // *** DOWNLOAD WITH REAL ASSETS - Loads real images only at download time ***
   const handleDownload = async () => {
     if (!bannerRef.current || !userId || isDownloading) return;
 
@@ -1542,22 +1492,94 @@ export default function BannerPreview() {
     setDownloadProgress(0);
     
     try {
-      // Phase 1: Preparing (0-20%)
+      // Phase 1: Load real assets (0-30%)
       setDownloadProgress(5);
-      const FIXED_SIZE = 1350;
-      const bannerElement = bannerRef.current;
       
+      // Get real background URL for current slot
+      const realBackgroundUrl = currentSlot?.imageUrl || null;
+      const realPrimaryPhoto = primaryPhoto;
+      const realMentorPhoto = mentorPhoto;
+      
+      // Preload real assets before rendering
+      const assetsToPreload: string[] = [];
+      if (realBackgroundUrl) assetsToPreload.push(realBackgroundUrl);
+      if (realPrimaryPhoto) assetsToPreload.push(realPrimaryPhoto);
+      if (realMentorPhoto) assetsToPreload.push(realMentorPhoto);
+      
+      // Preload upline avatars
+      displayUplines.forEach(u => {
+        if (u.avatar) assetsToPreload.push(u.avatar);
+      });
+      
+      setDownloadProgress(10);
+      
+      // Load all assets in parallel
+      await Promise.all(assetsToPreload.map(url => {
+        return new Promise<void>((resolve) => {
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          img.onload = () => resolve();
+          img.onerror = () => resolve(); // Continue even if image fails
+          img.src = url;
+        });
+      }));
+      
+      setDownloadProgress(30);
+      
+      // Phase 2: Temporarily swap proxy to real assets in DOM
+      const bannerElement = bannerRef.current;
+      const FIXED_SIZE = 1350;
+      
+      // Store original values
       const originalTransform = bannerElement.style.transform;
       const originalWidth = bannerElement.style.width;
       const originalHeight = bannerElement.style.height;
-
-      setDownloadProgress(15);
+      
+      // Find and update background layer with real image
+      const bgLayer = bannerElement.querySelector('.banner-dynamic-layer') as HTMLElement;
+      const originalBgStyle = bgLayer?.style.cssText || '';
+      if (bgLayer && realBackgroundUrl) {
+        bgLayer.style.backgroundImage = `url(${realBackgroundUrl})`;
+        bgLayer.style.backgroundSize = 'cover';
+        bgLayer.style.backgroundPosition = 'center';
+      }
+      
+      // Find and update all proxy images with real photos
+      const proxyImages = bannerElement.querySelectorAll('img[alt="Preview Model"]') as NodeListOf<HTMLImageElement>;
+      const originalProxySrcs: string[] = [];
+      
+      proxyImages.forEach((img, index) => {
+        originalProxySrcs.push(img.src);
+        // Use real photo based on position - achiever photo for left, mentor for bottom-right
+        if (index === 0 && realPrimaryPhoto) {
+          img.src = realPrimaryPhoto;
+        } else if (realMentorPhoto) {
+          img.src = realMentorPhoto;
+        }
+      });
+      
+      // Update upline avatar images with real photos
+      const uplineImages = bannerElement.querySelectorAll('div[style*="borderRadius: 60px"] img') as NodeListOf<HTMLImageElement>;
+      const originalUplineSrcs: string[] = [];
+      
+      uplineImages.forEach((img, index) => {
+        originalUplineSrcs.push(img.src);
+        if (displayUplines[index]?.avatar) {
+          img.src = displayUplines[index].avatar;
+        }
+      });
+      
+      setDownloadProgress(40);
+      
+      // Wait for images to load in DOM
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
+      // Phase 3: Render with real assets (40-60%)
+      setDownloadProgress(50);
       bannerElement.style.transform = 'scale(1)';
       bannerElement.style.width = `${FIXED_SIZE}px`;
       bannerElement.style.height = `${FIXED_SIZE}px`;
 
-      // Phase 2: Rendering (20-50%)
-      setDownloadProgress(25);
       const dataUrl = await toJpeg(bannerElement, {
         cacheBust: true,
         width: FIXED_SIZE,
@@ -1580,13 +1602,34 @@ export default function BannerPreview() {
         }
       });
 
-      setDownloadProgress(50);
+      setDownloadProgress(60);
+      
+      // Phase 4: Restore proxy assets immediately after render
       bannerElement.style.transform = originalTransform;
       bannerElement.style.width = originalWidth;
       bannerElement.style.height = originalHeight;
+      
+      // Restore background to proxy
+      if (bgLayer) {
+        bgLayer.style.cssText = originalBgStyle;
+      }
+      
+      // Restore proxy images
+      proxyImages.forEach((img, index) => {
+        if (originalProxySrcs[index]) {
+          img.src = originalProxySrcs[index];
+        }
+      });
+      
+      // Restore upline proxy images
+      uplineImages.forEach((img, index) => {
+        if (originalUplineSrcs[index]) {
+          img.src = originalUplineSrcs[index];
+        }
+      });
 
-      // Phase 3: Processing wallet (50-70%)
-      setDownloadProgress(60);
+      // Phase 5: Processing wallet (60-75%)
+      setDownloadProgress(70);
       const templateId = currentTemplateId || bannerData?.templateId;
       const { success, insufficientBalance } = await checkAndDeductBalance(
         userId, categoryName, dataUrl, templateId, isAdmin
@@ -1605,14 +1648,14 @@ export default function BannerPreview() {
         return;
       }
 
-      // Phase 4: Compressing (70-90%)
-      setDownloadProgress(75);
+      // Phase 6: Compressing (75-90%)
+      setDownloadProgress(80);
       const timestamp = new Date().getTime();
       const filename = `ReBusiness-Banner-${categoryName}-${timestamp}.jpg`;
       const { blob } = await compressToTargetRange(dataUrl, 2, 5, 0.92);
       
-      // Phase 5: Downloading (90-100%)
-      setDownloadProgress(90);
+      // Phase 7: Downloading (90-100%)
+      setDownloadProgress(95);
       await triggerDownload(blob, filename);
       setDownloadProgress(100);
 
@@ -1898,6 +1941,7 @@ export default function BannerPreview() {
                   </div>}
 
                 {/* Top - Upline avatars - FIXED SIZE AND POSITION - Auto-loaded from profile settings */}
+                {/* *** PURE PROXY MODE: Use proxy model for upline avatars *** */}
                 <div className="absolute z-20" style={{
                     top: '10px',
                     left: '675px',
@@ -1907,9 +1951,7 @@ export default function BannerPreview() {
                   }}>
                   {displayUplines?.slice(0, 5).map((upline, idx) => <div key={upline.id} style={{
                       width: '120px',
-                      /* LOCKED */
                       height: '120px',
-                      /* LOCKED */
                       minWidth: '120px',
                       minHeight: '120px',
                       maxWidth: '120px',
@@ -1920,7 +1962,7 @@ export default function BannerPreview() {
                       boxShadow: '0 6px 12px rgba(0,0,0,0.5)',
                       flexShrink: 0
                     }}>
-                      <img src={upline.avatar || primaryPhoto || "/placeholder.svg"} alt={upline.name} style={{
+                      <img src={slotDefaultModel} alt={upline.name} style={{
                         width: '120px',
                         height: '120px',
                         objectFit: 'cover',
@@ -1936,28 +1978,25 @@ export default function BannerPreview() {
                 </div>
 
                 {/* LEFT - Main User Photo - FIXED SIZE AND POSITION - 3:4 RATIO - REDUCED BY 12% */}
-                {/* Profile/Achiever photo displays for all categories including Story (same as Festival) */}
-                {primaryPhoto && <div className="absolute overflow-hidden cursor-pointer transition-transform duration-500 ease-in-out" onClick={() => setIsPhotoFlipped(!isPhotoFlipped)} style={{
+                {/* *** PURE PROXY MODE: Show proxy model in preview - real photo loads only at download *** */}
+                {/* Proxy model shown for categories that need person/image (excludes story, festival, motivational) */}
+                {(bannerData.categoryType === 'rank' || bannerData.categoryType === 'bonanza' || bannerData.categoryType === 'birthday' || bannerData.categoryType === 'anniversary' || bannerData.categoryType === 'meeting') && (
+                  <div className="absolute overflow-hidden" style={{
                     left: '40px',
-                    /* LOCKED */
                     top: '162px',
-                    /* LOCKED */
                     width: '594px',
-                    /* LOCKED - 3:4 ratio, 12% reduction */
                     height: '792px',
-                    /* LOCKED - 3:4 ratio, 12% reduction */
                     minWidth: '594px',
                     minHeight: '792px',
                     maxWidth: '594px',
                     maxHeight: '792px',
                     borderRadius: '24px',
-                    transform: isPhotoFlipped ? 'scaleX(-1)' : 'scaleX(1)',
                     border: 'none'
                   }}>
-                    <img src={primaryPhoto} alt={mainBannerName} style={{
+                    <img src={slotDefaultModel} alt="Preview Model" style={{
                       width: '594px',
                       height: '792px',
-                      objectFit: 'cover',
+                      objectFit: 'contain',
                       objectPosition: 'center',
                       imageRendering: 'crisp-edges',
                       border: 'none',
@@ -1965,14 +2004,10 @@ export default function BannerPreview() {
                       WebkitBackfaceVisibility: 'hidden',
                       backfaceVisibility: 'hidden',
                       transform: 'translateZ(0)',
-                      WebkitFontSmoothing: 'antialiased',
-                      // Apply feather fade only if background was removed
-                      ...(bannerData?.backgroundRemoved && {
-                        maskImage: 'linear-gradient(to bottom, black 0%, black 90%, transparent 100%)',
-                        WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 90%, transparent 100%)'
-                      })
+                      WebkitFontSmoothing: 'antialiased'
                     }} />
-                  </div>}
+                  </div>
+                )}
 
                 {/* Golden Crown below user photo */}
                 <div className="absolute" style={{
@@ -2025,6 +2060,7 @@ export default function BannerPreview() {
                 </div>
 
                 {/* LEFT SIDE - Profile Photo - 75% HEIGHT - Motivational Layout */}
+                {/* *** PROXY MODE: Motivational category keeps original behavior - uses real mentor photo *** */}
                 {mentorPhoto && bannerData.categoryType === 'motivational' && <div className="absolute overflow-hidden transition-transform duration-500 ease-in-out" onClick={() => !isDraggingProfile && setIsMentorPhotoFlipped(!isMentorPhotoFlipped)} onMouseDown={e => {
                     if (isAdmin) {
                       e.stopPropagation();
@@ -2062,8 +2098,9 @@ export default function BannerPreview() {
                   </div>}
 
                 {/* BOTTOM RIGHT - Mentor Photo - FIXED SIZE AND POSITION - SQUARE 1:1 RATIO - All Categories including Story */}
-                {/* Profile photo displays for all categories including Story (same as Festival) */}
-                {mentorPhoto && bannerData.categoryType !== 'motivational' && <div className="absolute overflow-hidden cursor-pointer transition-transform duration-500 ease-in-out" onClick={() => setIsMentorPhotoFlipped(!isMentorPhotoFlipped)} style={{
+                {/* *** PURE PROXY MODE: Use proxy model for mentor photo (excludes story, festival, motivational) *** */}
+                {(bannerData.categoryType === 'rank' || bannerData.categoryType === 'bonanza' || bannerData.categoryType === 'birthday' || bannerData.categoryType === 'anniversary' || bannerData.categoryType === 'meeting') && (
+                  <div className="absolute overflow-hidden" style={{
                     bottom: 0,
                     right: 0,
                     width: '540px',
@@ -2073,15 +2110,14 @@ export default function BannerPreview() {
                     maxWidth: '540px',
                     maxHeight: '540px',
                     borderRadius: '16px',
-                    transform: isMentorPhotoFlipped ? 'scaleX(-1)' : 'scaleX(1)',
                     border: 'none',
                     zIndex: 5
                   }}>
-                    <img src={mentorPhoto} alt={profileName} style={{
+                    <img src={slotDefaultModel} alt="Preview Model" style={{
                       width: '540px',
                       height: '540px',
                       objectFit: 'cover',
-                      objectPosition: 'center',
+                      objectPosition: 'center top',
                       imageRendering: 'crisp-edges',
                       border: 'none',
                       outline: 'none',
@@ -2090,7 +2126,8 @@ export default function BannerPreview() {
                       transform: 'translateZ(0)',
                       WebkitFontSmoothing: 'antialiased'
                     }} />
-                  </div>}
+                  </div>
+                )}
 
 
                 {/* ALL CATEGORIES (EXCEPT MOTIVATIONAL): Lower-Third Redesigned - Clean Modern Layout */}

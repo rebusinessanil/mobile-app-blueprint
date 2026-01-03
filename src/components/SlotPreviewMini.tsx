@@ -1,11 +1,20 @@
 import React from "react";
-import { getSlotBackgroundStyle, BackgroundSlot } from "@/hooks/useGlobalBackgroundSlots";
+import { BackgroundSlot } from "@/hooks/useGlobalBackgroundSlots";
 
 // Universal default model for slot previews (excludes Story & Motivational categories)
 import slotDefaultModel from "@/assets/slot-default-model.png";
 
 // Single universal placeholder model for all slots requiring person/image
 const SLOT_DEFAULT_MODEL = slotDefaultModel;
+
+// *** PURE PROXY PREVIEW: Only use proxy background color, no real image loading ***
+const getProxyBackgroundStyle = (slot: BackgroundSlot): React.CSSProperties => {
+  // ALWAYS use default color - never load real background images in preview
+  return {
+    backgroundColor: slot.defaultColor || '#1a1a2e',
+    backgroundImage: 'none', // STRICT: No real images in proxy mode
+  };
+};
 
 interface Upline {
   id: string;
@@ -489,7 +498,8 @@ export default function SlotPreviewMini({
         ref={containerRef}
         className="w-full h-full relative overflow-hidden"
         style={{ 
-          ...getSlotBackgroundStyle(slot),
+          // *** PURE PROXY MODE: Only use proxy background color, no real image loading ***
+          ...getProxyBackgroundStyle(slot),
           position: 'relative',
           willChange: 'auto',
           backfaceVisibility: 'hidden',
