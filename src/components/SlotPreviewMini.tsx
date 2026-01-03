@@ -1,29 +1,11 @@
 import React from "react";
-import { BackgroundSlot } from "@/hooks/useGlobalBackgroundSlots";
+import { getSlotBackgroundStyle, BackgroundSlot } from "@/hooks/useGlobalBackgroundSlots";
 
 // Universal default model for slot previews (excludes Story & Motivational categories)
 import slotDefaultModel from "@/assets/slot-default-model.png";
 
 // Single universal placeholder model for all slots requiring person/image
 const SLOT_DEFAULT_MODEL = slotDefaultModel;
-
-// *** LIGHTWEIGHT PROXY PREVIEW: Use real background but optimized for performance ***
-const getSlotBackgroundStyle = (slot: BackgroundSlot): React.CSSProperties => {
-  // Use real background URL if available, with performance optimizations
-  if (slot.imageUrl) {
-    return {
-      backgroundImage: `url(${slot.imageUrl})`,
-      backgroundSize: 'cover',
-      backgroundPosition: 'center',
-      backgroundColor: slot.defaultColor || '#1a1a2e', // Fallback color while loading
-    };
-  }
-  // Fallback to default color only if no image URL
-  return {
-    backgroundColor: slot.defaultColor || '#1a1a2e',
-    backgroundImage: 'none',
-  };
-};
 
 interface Upline {
   id: string;
@@ -507,7 +489,6 @@ export default function SlotPreviewMini({
         ref={containerRef}
         className="w-full h-full relative overflow-hidden"
         style={{ 
-          // *** LIGHTWEIGHT PROXY: Real background with performance optimizations ***
           ...getSlotBackgroundStyle(slot),
           position: 'relative',
           willChange: 'auto',
@@ -532,7 +513,7 @@ export default function SlotPreviewMini({
             WebkitBackfaceVisibility: 'hidden',
           }}
         >
-          {/* CLEAN SLOT PREVIEW: Show default model fit-to-slot for person-required categories */}
+          {/* CLEAN SLOT PREVIEW: Show default model ONLY for categories requiring achiever/person photo */}
           {/* STRICTLY EXCLUDED: Story, Festival, Motivational - keep previous behavior exactly */}
           {(categoryType === 'rank' || categoryType === 'bonanza' || categoryType === 'birthday' || categoryType === 'anniversary' || categoryType === 'meeting') && (
             <div className="absolute overflow-hidden" style={{
@@ -543,20 +524,16 @@ export default function SlotPreviewMini({
               borderRadius: '24px',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: 'rgba(0,0,0,0.1)'
+              justifyContent: 'center'
             }}>
               <img 
                 src={SLOT_DEFAULT_MODEL} 
-                alt="Slot Preview Model" 
-                loading="eager"
-                decoding="sync"
+                alt="Default Model" 
                 style={{
                   width: '100%',
                   height: '100%',
                   objectFit: 'contain',
-                  objectPosition: 'center',
-                  imageRendering: 'auto'
+                  objectPosition: 'center'
                 }} 
               />
             </div>
