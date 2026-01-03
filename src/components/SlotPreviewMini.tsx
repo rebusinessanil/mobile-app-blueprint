@@ -7,12 +7,21 @@ import slotDefaultModel from "@/assets/slot-default-model.png";
 // Single universal placeholder model for all slots requiring person/image
 const SLOT_DEFAULT_MODEL = slotDefaultModel;
 
-// *** PURE PROXY PREVIEW: Only use proxy background color, no real image loading ***
-const getProxyBackgroundStyle = (slot: BackgroundSlot): React.CSSProperties => {
-  // ALWAYS use default color - never load real background images in preview
+// *** LIGHTWEIGHT PROXY PREVIEW: Use real background but optimized for performance ***
+const getSlotBackgroundStyle = (slot: BackgroundSlot): React.CSSProperties => {
+  // Use real background URL if available, with performance optimizations
+  if (slot.imageUrl) {
+    return {
+      backgroundImage: `url(${slot.imageUrl})`,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      backgroundColor: slot.defaultColor || '#1a1a2e', // Fallback color while loading
+    };
+  }
+  // Fallback to default color only if no image URL
   return {
     backgroundColor: slot.defaultColor || '#1a1a2e',
-    backgroundImage: 'none', // STRICT: No real images in proxy mode
+    backgroundImage: 'none',
   };
 };
 
@@ -498,8 +507,8 @@ export default function SlotPreviewMini({
         ref={containerRef}
         className="w-full h-full relative overflow-hidden"
         style={{ 
-          // *** PURE PROXY MODE: Only use proxy background color, no real image loading ***
-          ...getProxyBackgroundStyle(slot),
+          // *** LIGHTWEIGHT PROXY: Real background with performance optimizations ***
+          ...getSlotBackgroundStyle(slot),
           position: 'relative',
           willChange: 'auto',
           backfaceVisibility: 'hidden',

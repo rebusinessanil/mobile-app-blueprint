@@ -27,15 +27,24 @@ import InsufficientBalanceModal from "@/components/InsufficientBalanceModal";
 import BannerWatermarks from "@/components/BannerWatermarks";
 import PremiumGlobalLoader from "@/components/PremiumGlobalLoader";
 
-// *** PURE PROXY MODE: Use proxy background color only - no real image loading in preview ***
-const getProxyBackgroundStyle = (slot: BackgroundSlot | undefined): React.CSSProperties => {
+// *** REAL BACKGROUND MODE: Use real background images in main preview ***
+const getRealBackgroundStyle = (slot: BackgroundSlot | undefined): React.CSSProperties => {
   if (!slot) {
     return { backgroundColor: '#1a1a2e', backgroundImage: 'none' };
   }
-  // ALWAYS use default color - never load real background images in preview
+  // Use real background URL if available
+  if (slot.imageUrl) {
+    return {
+      backgroundImage: `url(${slot.imageUrl})`,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      backgroundColor: slot.defaultColor || '#1a1a2e', // Fallback color
+    };
+  }
+  // Fallback to default color only
   return {
     backgroundColor: slot.defaultColor || '#1a1a2e',
-    backgroundImage: 'none', // STRICT: No real images in proxy mode
+    backgroundImage: 'none',
     backgroundSize: 'cover',
     backgroundPosition: 'center',
   };
@@ -445,16 +454,17 @@ export default function BannerPreview() {
   const selectedSlot = selectedTemplate + 1;
   const currentSlot = globalBackgroundSlots.find(slot => slot.slotNumber === selectedSlot);
   
-  // *** PURE PROXY MODE: Use proxy background color only - no real image loading in preview ***
-  // Real backgrounds load ONLY at download time
-  const backgroundStyle = getProxyBackgroundStyle(currentSlot);
+  // *** REAL BACKGROUND MODE: Use real background images in main preview ***
+  // Real backgrounds load for proper preview experience
+  const backgroundStyle = getRealBackgroundStyle(currentSlot);
 
   // Debug background selection
   useEffect(() => {
-    console.log('🎨 PROXY background selection:', {
+    console.log('🎨 REAL background selection:', {
       selectedSlot,
       categoryType: bannerData?.categoryType,
-      proxyColor: currentSlot?.defaultColor || '#1a1a2e',
+      imageUrl: currentSlot?.imageUrl || 'none',
+      defaultColor: currentSlot?.defaultColor || '#1a1a2e',
       templateId: currentTemplateId,
       storyId
     });
@@ -1941,7 +1951,7 @@ export default function BannerPreview() {
                   </div>}
 
                 {/* Top - Upline avatars - FIXED SIZE AND POSITION - Auto-loaded from profile settings */}
-                {/* *** PURE PROXY MODE: Use proxy model for upline avatars *** */}
+                {/* *** REAL DATA MODE: Show real upline avatars in main preview *** */}
                 <div className="absolute z-20" style={{
                     top: '10px',
                     left: '675px',
@@ -1962,7 +1972,7 @@ export default function BannerPreview() {
                       boxShadow: '0 6px 12px rgba(0,0,0,0.5)',
                       flexShrink: 0
                     }}>
-                      <img src={slotDefaultModel} alt={upline.name} style={{
+                      <img src={upline.avatar || slotDefaultModel} alt={upline.name} style={{
                         width: '120px',
                         height: '120px',
                         objectFit: 'cover',
@@ -1978,8 +1988,8 @@ export default function BannerPreview() {
                 </div>
 
                 {/* LEFT - Main User Photo - FIXED SIZE AND POSITION - 3:4 RATIO - REDUCED BY 12% */}
-                {/* *** PURE PROXY MODE: Show proxy model in preview - real photo loads only at download *** */}
-                {/* Proxy model shown for categories that need person/image (excludes story, festival, motivational) */}
+                {/* *** REAL DATA MODE: Show real achiever photo in main preview *** */}
+                {/* Real photo shown for categories that need person/image (excludes story, festival, motivational) */}
                 {(bannerData.categoryType === 'rank' || bannerData.categoryType === 'bonanza' || bannerData.categoryType === 'birthday' || bannerData.categoryType === 'anniversary' || bannerData.categoryType === 'meeting') && (
                   <div className="absolute overflow-hidden" style={{
                     left: '40px',
@@ -1993,19 +2003,19 @@ export default function BannerPreview() {
                     borderRadius: '24px',
                     border: 'none'
                   }}>
-                    <img src={slotDefaultModel} alt="Preview Model" style={{
+                    <img src={primaryPhoto || slotDefaultModel} alt="Achiever Photo" style={{
                       width: '594px',
                       height: '792px',
-                      objectFit: 'contain',
+                      objectFit: 'cover',
                       objectPosition: 'center',
                       imageRendering: 'crisp-edges',
                       border: 'none',
                       outline: 'none',
                       WebkitBackfaceVisibility: 'hidden',
                       backfaceVisibility: 'hidden',
-                      transform: 'translateZ(0)',
+                      transform: `translateZ(0)${isPhotoFlipped ? ' scaleX(-1)' : ''}`,
                       WebkitFontSmoothing: 'antialiased'
-                    }} />
+                    }} onClick={() => setIsPhotoFlipped(!isPhotoFlipped)} />
                   </div>
                 )}
 
@@ -2098,7 +2108,7 @@ export default function BannerPreview() {
                   </div>}
 
                 {/* BOTTOM RIGHT - Mentor Photo - FIXED SIZE AND POSITION - SQUARE 1:1 RATIO - All Categories including Story */}
-                {/* *** PURE PROXY MODE: Use proxy model for mentor photo (excludes story, festival, motivational) *** */}
+                {/* *** REAL DATA MODE: Show real mentor/user photo in main preview *** */}
                 {(bannerData.categoryType === 'rank' || bannerData.categoryType === 'bonanza' || bannerData.categoryType === 'birthday' || bannerData.categoryType === 'anniversary' || bannerData.categoryType === 'meeting') && (
                   <div className="absolute overflow-hidden" style={{
                     bottom: 0,
@@ -2113,7 +2123,7 @@ export default function BannerPreview() {
                     border: 'none',
                     zIndex: 5
                   }}>
-                    <img src={slotDefaultModel} alt="Preview Model" style={{
+                    <img src={mentorPhoto || slotDefaultModel} alt="Mentor Photo" style={{
                       width: '540px',
                       height: '540px',
                       objectFit: 'cover',
@@ -2123,9 +2133,9 @@ export default function BannerPreview() {
                       outline: 'none',
                       WebkitBackfaceVisibility: 'hidden',
                       backfaceVisibility: 'hidden',
-                      transform: 'translateZ(0)',
+                      transform: `translateZ(0)${isMentorPhotoFlipped ? ' scaleX(-1)' : ''}`,
                       WebkitFontSmoothing: 'antialiased'
-                    }} />
+                    }} onClick={() => setIsMentorPhotoFlipped(!isMentorPhotoFlipped)} />
                   </div>
                 )}
 
