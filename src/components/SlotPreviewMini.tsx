@@ -532,7 +532,7 @@ export default function SlotPreviewMini({
             WebkitBackfaceVisibility: 'hidden',
           }}
         >
-          {/* CLEAN SLOT PREVIEW: Show default model ONLY for categories requiring achiever/person photo */}
+          {/* CLEAN SLOT PREVIEW: Show default model fit-to-slot for person-required categories */}
           {/* STRICTLY EXCLUDED: Story, Festival, Motivational - keep previous behavior exactly */}
           {(categoryType === 'rank' || categoryType === 'bonanza' || categoryType === 'birthday' || categoryType === 'anniversary' || categoryType === 'meeting') && (
             <div className="absolute overflow-hidden" style={{
@@ -543,16 +543,20 @@ export default function SlotPreviewMini({
               borderRadius: '24px',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center'
+              justifyContent: 'center',
+              backgroundColor: 'rgba(0,0,0,0.1)'
             }}>
               <img 
                 src={SLOT_DEFAULT_MODEL} 
-                alt="Default Model" 
+                alt="Slot Preview Model" 
+                loading="eager"
+                decoding="sync"
                 style={{
                   width: '100%',
                   height: '100%',
                   objectFit: 'contain',
-                  objectPosition: 'center'
+                  objectPosition: 'center',
+                  imageRendering: 'auto'
                 }} 
               />
             </div>
